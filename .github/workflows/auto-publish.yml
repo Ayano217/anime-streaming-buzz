@@ -2,10 +2,7 @@ name: Auto Publish Anime Articles
 
 on:
   schedule:
-    # Every 6 hours
     - cron: '0 */6 * * *'
-
-  # Manual trigger
   workflow_dispatch:
     inputs:
       force_run:
@@ -17,19 +14,16 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     permissions:
       contents: write
 
     steps:
-      # Step 1: Checkout repo
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      # Step 2: Setup Python
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -37,19 +31,18 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'scripts/requirements.txt'
 
-      # Step 3: Install dependencies
       - name: Install Python Dependencies
         run: |
+          pip install --upgrade pip
           pip install -r scripts/requirements.txt
+          pip check
 
-      # Step 4: Run automation
       - name: Run Auto Publisher
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
           python scripts/main.py
 
-      # Step 5: Check if new files were created
       - name: Check for New Articles
         id: check_changes
         run: |
@@ -60,7 +53,6 @@ jobs:
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
 
-      # Step 6: Commit and push new articles
       - name: Commit New Articles
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
@@ -71,7 +63,6 @@ jobs:
           git commit -m "Auto: Add new anime articles - $(date +'%Y-%m-%d %H:%M')"
           git push
 
-      # Step 7: Done
       - name: Summary
         run: |
           echo "Auto publish completed!"
