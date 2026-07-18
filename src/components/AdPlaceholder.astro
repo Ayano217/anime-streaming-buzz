@@ -16,7 +16,29 @@ const {
   <div class="ad-wrapper">
     <span class="ad-label">{label}</span>
     <div class="ad-content" id={`ad-${adSlot}`}>
-      <!-- Ad scripts will be injected here via config -->
+      <!--
+        =============================================
+        HOW TO ADD HILLTOP ADS:
+        =============================================
+
+        Step 1: Go to HilltopAds.com
+        Step 2: Login to your publisher account
+        Step 3: Add your domain: anime-streaming-buzz.pages.dev
+        Step 4: Create an Ad Zone
+        Step 5: Copy the JavaScript code they give you
+        Step 6: Replace this comment with that code
+
+        Example (DO NOT USE THIS - use YOUR code):
+        <script async src="https://example.hilltopads.net/your-code.js"></script>
+
+        You can also use:
+        - Monetag
+        - Adsterra
+        - Google AdSense
+
+        Just paste the script inside this div.
+        =============================================
+      -->
     </div>
   </div>
 </div>
@@ -54,19 +76,16 @@ const {
     color: var(--text-muted);
     font-size: 0.85rem;
     background: var(--bg-card);
+    overflow: hidden;
   }
 
-  .ad-content::after {
+  /* Hide placeholder text when ad is loaded */
+  .ad-content:empty::after {
     content: 'Ad Space';
   }
 
   @media (max-width: 768px) {
-    .ad-wrapper {
-      max-width: 100%;
-    }
-
-    .ad-content {
-      min-height: 60px;
-    }
+    .ad-wrapper { max-width: 100%; }
+    .ad-content { min-height: 60px; }
   }
 </style>
