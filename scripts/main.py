@@ -22,8 +22,6 @@ def main():
         print("ERROR: OPENROUTER_API_KEY not set!")
         sys.exit(1)
 
-    print(f"API Key loaded: {'yes' if api_key else 'no'}")
-
     print("\n[Step 1] Fetching RSS sources...")
     articles, published = fetch_all_sources()
 
@@ -31,23 +29,21 @@ def main():
         print("No new articles found. Exiting.")
         return
 
-    print(f"Found {len(articles)} new articles to process")
+    print(f"Found {len(articles)} new articles")
 
     print("\n[Step 2] Generating AI articles...")
     processed = process_articles(articles)
 
     if not processed:
-        print("No articles were processed successfully. Exiting.")
+        print("No articles processed. Exiting.")
         return
 
-    print("\n[Step 3] Updating published database...")
+    print("\n[Step 3] Updating database...")
     update_published(processed)
 
-    print("\n" + "=" * 50)
-    print(f"DONE! Published {len(processed)} new articles")
+    print(f"\nDONE! Published {len(processed)} articles")
     for article in processed:
         print(f"  - {article['slug']}")
-    print("=" * 50)
 
 
 if __name__ == "__main__":
