@@ -34,14 +34,20 @@ jobs:
           pip install -r scripts/requirements.txt
           pip check
 
-      - name: Debug files
+      - name: Debug current commit and files
         run: |
-          echo "===== main.py ====="
-          sed -n '1,40p' scripts/main.py
-          echo "===== generate_article_requests.py ====="
-          sed -n '1,40p' scripts/generate_article_requests.py
-          echo "===== requirements.txt ====="
-          cat scripts/requirements.txt
+          echo "===== CURRENT BRANCH ====="
+          git branch --show-current
+          echo "===== CURRENT COMMIT ====="
+          git rev-parse HEAD
+          echo "===== LATEST COMMIT ====="
+          git log -1 --oneline
+          echo "===== scripts/main.py ====="
+          sed -n '1,25p' scripts/main.py
+          echo "===== scripts folder ====="
+          ls -la scripts
+          echo "===== grep generate_article in main.py ====="
+          grep -n "generate_article" scripts/main.py || true
 
       - name: Run Auto Publisher
         env:
