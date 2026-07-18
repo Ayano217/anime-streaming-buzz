@@ -1,0 +1,125 @@
+---
+const trendingPosts = [
+  {
+    rank: 1,
+    title: "Attack on Titan: New Spin-Off Manga Announced",
+    category: "Manga",
+    views: "125K",
+  },
+  {
+    rank: 2,
+    title: "Demon Slayer Infinity Castle Movie Release Date Confirmed",
+    category: "Movies",
+    views: "98K",
+  },
+  {
+    rank: 3,
+    title: "Solo Leveling Ragnarok Manhwa Chapter 45 Recap",
+    category: "Manhwa",
+    views: "87K",
+  },
+  {
+    rank: 4,
+    title: "Chainsaw Man Season 2 New Key Visual Revealed",
+    category: "Anime",
+    views: "76K",
+  },
+  {
+    rank: 5,
+    title: "Crunchyroll vs Funimation: Best Anime Streaming in 2025",
+    category: "Streaming",
+    views: "65K",
+  },
+];
+---
+
+<section class="trending-section section">
+  <div class="container">
+    <h2 class="section-title">🔥 Trending Now</h2>
+    <div class="trending-list">
+      {trendingPosts.map((post) => (
+        <a href="#" class="trending-item">
+          <span class="trending-rank">{String(post.rank).padStart(2, '0')}</span>
+          <div class="trending-info">
+            <span class="badge badge-purple">{post.category}</span>
+            <h3 class="trending-title">{post.title}</h3>
+          </div>
+          <span class="trending-views">{post.views} views</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .trending-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .trending-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .trending-item:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent-secondary);
+    box-shadow: 0 0 15px rgba(123, 45, 255, 0.2);
+    transform: translateX(4px);
+  }
+
+  .trending-rank {
+    font-family: var(--font-heading);
+    font-size: 1.8rem;
+    font-weight: 800;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    min-width: 45px;
+  }
+
+  .trending-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .trending-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.4;
+  }
+
+  .trending-views {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 600px) {
+    .trending-item {
+      padding: 12px 16px;
+    }
+
+    .trending-rank {
+      font-size: 1.4rem;
+      min-width: 35px;
+    }
+
+    .trending-views {
+      display: none;
+    }
+  }
+</style>

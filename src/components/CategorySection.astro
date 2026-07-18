@@ -1,0 +1,89 @@
+---
+import NewsCard from './NewsCard.astro';
+
+export interface Props {
+  title: string;
+  emoji: string;
+  posts: Array<{
+    title: string;
+    excerpt: string;
+    category: string;
+    date: string;
+    readTime: string;
+    image: string;
+    slug: string;
+    badgeType?: string;
+  }>;
+}
+
+const { title, emoji, posts } = Astro.props;
+---
+
+<section class="category-section section" id={title.toLowerCase().replace(/\s+/g, '-')}>
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">{emoji} {title}</h2>
+      <a href={`#${title.toLowerCase()}`} class="view-all-btn">
+        View All →
+      </a>
+    </div>
+    <div class="cards-grid">
+      {posts.map((post) => (
+        <NewsCard {...post} />
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .section-header .section-title {
+    margin-bottom: 0;
+  }
+
+  .view-all-btn {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255, 45, 117, 0.3);
+    transition: all var(--transition-fast);
+  }
+
+  .view-all-btn:hover {
+    background: rgba(255, 45, 117, 0.1);
+    box-shadow: var(--shadow-glow-pink);
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .cards-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .cards-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+  }
+</style>

@@ -1,0 +1,106 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout title="About Us">
+  <Header />
+
+  <main class="about-page">
+    <div class="container">
+      <div class="about-content">
+        <h1 class="gradient-text">About AniTube Buzz</h1>
+
+        <div class="about-text glass">
+          <p>
+            <strong>AniTube Buzz</strong> is your ultimate destination for anime recaps,
+            streaming news, manhwa updates, and everything otaku culture.
+          </p>
+
+          <p>
+            We use cutting-edge AI technology combined with passionate editorial oversight
+            to deliver the freshest anime and manga content — fast, accurate, and beautifully presented.
+          </p>
+
+          <h2>What We Cover</h2>
+          <ul>
+            <li>🎬 Anime Episode Recaps & Reviews</li>
+            <li>📖 Manhwa & Webtoon Chapter Breakdowns</li>
+            <li>📺 Streaming Platform News & Updates</li>
+            <li>🎮 Anime Gaming News</li>
+            <li>🔥 Trending Otaku Culture</li>
+          </ul>
+
+          <h2>Our Mission</h2>
+          <p>
+            To be the fastest and most reliable source of anime and manga news,
+            powered by AI but guided by human passion for the medium.
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .about-page {
+    padding-top: calc(var(--header-height) + 40px);
+    padding-bottom: 40px;
+  }
+
+  .about-content {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .about-content h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 30px;
+    text-align: center;
+  }
+
+  .about-text {
+    padding: 40px;
+    line-height: 1.8;
+  }
+
+  .about-text p {
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+    font-size: 1rem;
+  }
+
+  .about-text h2 {
+    font-size: 1.4rem;
+    margin: 30px 0 16px;
+    color: var(--text-primary);
+  }
+
+  .about-text ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .about-text li {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    padding: 8px 0;
+  }
+
+  @media (max-width: 600px) {
+    .about-content h1 {
+      font-size: 1.8rem;
+    }
+
+    .about-text {
+      padding: 24px;
+    }
+  }
+</style>

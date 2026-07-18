@@ -1,0 +1,244 @@
+---
+const heroPost = {
+  title: "Solo Leveling Season 2 Breaks All Streaming Records — Here's What You Missed",
+  excerpt: "The most anticipated anime sequel of 2025 has finally arrived, and it's shattering every record in sight. Our full recap and analysis inside.",
+  category: "Trending",
+  date: "2025-01-15",
+  readTime: "5 min read",
+  image: "https://picsum.photos/seed/anime-hero/1200/600",
+  slug: "#",
+};
+
+const sideNews = [
+  {
+    title: "One Piece Chapter 1120 Recap: The Final Saga Intensifies",
+    category: "Manga",
+    image: "https://picsum.photos/seed/onepiece/400/250",
+    slug: "#",
+  },
+  {
+    title: "Jujutsu Kaisen Season 3 Confirmed with New Studio",
+    category: "News",
+    image: "https://picsum.photos/seed/jjk/400/250",
+    slug: "#",
+  },
+  {
+    title: "Top 10 Manhwa That Deserve an Anime Adaptation",
+    category: "Manhwa",
+    image: "https://picsum.photos/seed/manhwa/400/250",
+    slug: "#",
+  },
+];
+---
+
+<section class="hero-section">
+  <div class="container">
+    <div class="hero-grid">
+      <!-- Main Hero -->
+      <a href={heroPost.slug} class="hero-main">
+        <div class="hero-image-wrapper">
+          <img src={heroPost.image} alt={heroPost.title} loading="eager" />
+          <div class="hero-overlay"></div>
+        </div>
+        <div class="hero-content">
+          <span class="badge badge-pink">{heroPost.category}</span>
+          <h1 class="hero-title">{heroPost.title}</h1>
+          <p class="hero-excerpt">{heroPost.excerpt}</p>
+          <div class="hero-meta">
+            <span>{heroPost.date}</span>
+            <span>•</span>
+            <span>{heroPost.readTime}</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Side Posts -->
+      <div class="hero-sidebar">
+        {sideNews.map((post) => (
+          <a href={post.slug} class="hero-side-card">
+            <div class="side-card-image">
+              <img src={post.image} alt={post.title} loading="lazy" />
+            </div>
+            <div class="side-card-content">
+              <span class="badge badge-blue">{post.category}</span>
+              <h3 class="side-card-title">{post.title}</h3>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero-section {
+    padding-top: calc(var(--header-height) + 30px);
+    padding-bottom: 20px;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    min-height: 450px;
+  }
+
+  /* Main hero */
+  .hero-main {
+    position: relative;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    display: block;
+    text-decoration: none;
+    transition: transform var(--transition-normal);
+  }
+
+  .hero-main:hover {
+    transform: scale(1.01);
+  }
+
+  .hero-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 450px;
+  }
+
+  .hero-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 70%;
+    background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+  }
+
+  .hero-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    padding: 30px;
+    z-index: 2;
+  }
+
+  .hero-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 12px 0;
+    line-height: 1.3;
+  }
+
+  .hero-excerpt {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.7);
+    max-width: 600px;
+    margin-bottom: 12px;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* Sidebar */
+  .hero-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .hero-side-card {
+    flex: 1;
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    overflow: hidden;
+  }
+
+  .hero-side-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-glow-pink);
+  }
+
+  .side-card-image {
+    width: 100px;
+    min-height: 80px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .side-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .side-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .side-card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-image-wrapper {
+      min-height: 300px;
+    }
+
+    .hero-title {
+      font-size: 1.4rem;
+    }
+
+    .hero-sidebar {
+      flex-direction: row;
+      overflow-x: auto;
+      gap: 12px;
+      padding-bottom: 8px;
+    }
+
+    .hero-side-card {
+      min-width: 280px;
+      flex-direction: column;
+    }
+
+    .side-card-image {
+      width: 100%;
+      height: 120px;
+    }
+  }
+</style>

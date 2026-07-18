@@ -1,0 +1,124 @@
+---
+export interface Props {
+  title: string;
+  excerpt: string;
+  category: string;
+  date: string;
+  readTime: string;
+  image: string;
+  slug: string;
+  badgeType?: string;
+}
+
+const {
+  title,
+  excerpt,
+  category,
+  date,
+  readTime,
+  image,
+  slug,
+  badgeType = "pink"
+} = Astro.props;
+
+const badgeClass = `badge badge-${badgeType}`;
+---
+
+<a href={slug} class="news-card">
+  <div class="card-image">
+    <img src={image} alt={title} loading="lazy" />
+    <span class={badgeClass}>{category}</span>
+  </div>
+  <div class="card-body">
+    <h3 class="card-title">{title}</h3>
+    <p class="card-excerpt">{excerpt}</p>
+    <div class="card-meta">
+      <span>{date}</span>
+      <span>•</span>
+      <span>{readTime}</span>
+    </div>
+  </div>
+</a>
+
+<style>
+  .news-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+    text-decoration: none;
+    transition: all var(--transition-normal);
+    height: 100%;
+  }
+
+  .news-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-glow-pink);
+    background: var(--bg-card-hover);
+  }
+
+  .card-image {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+  }
+
+  .card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+  }
+
+  .news-card:hover .card-image img {
+    transform: scale(1.05);
+  }
+
+  .card-image .badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+  }
+
+  .card-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-excerpt {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-meta {
+    display: flex;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: auto;
+    padding-top: 8px;
+  }
+</style>

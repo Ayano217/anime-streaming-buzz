@@ -1,0 +1,212 @@
+---
+const currentYear = new Date().getFullYear();
+
+const footerLinks = {
+  categories: [
+    { name: "Anime Recaps", href: "#" },
+    { name: "Manga News", href: "#" },
+    { name: "Manhwa Updates", href: "#" },
+    { name: "Streaming", href: "#" },
+    { name: "Gaming", href: "#" },
+  ],
+  company: [
+    { name: "About Us", href: "/about" },
+    { name: "Contact", href: "#" },
+    { name: "Privacy Policy", href: "#" },
+    { name: "Terms of Service", href: "#" },
+    { name: "DMCA", href: "#" },
+  ],
+};
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <!-- Brand -->
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <span class="logo-icon">⚡</span>
+          <span class="logo-text">
+            <span class="gradient-text">AniTube</span>
+            <span style="color: var(--accent-neon-blue);">Buzz</span>
+          </span>
+        </div>
+        <p class="footer-desc">
+          Your ultimate source for anime recaps, streaming news, manhwa updates, and everything otaku culture.
+        </p>
+      </div>
+
+      <!-- Categories -->
+      <div class="footer-col">
+        <h4 class="footer-col-title">Categories</h4>
+        <ul class="footer-links">
+          {footerLinks.categories.map(link => (
+            <li><a href={link.href}>{link.name}</a></li>
+          ))}
+        </ul>
+      </div>
+
+      <!-- Company -->
+      <div class="footer-col">
+        <h4 class="footer-col-title">Company</h4>
+        <ul class="footer-links">
+          {footerLinks.company.map(link => (
+            <li><a href={link.href}>{link.name}</a></li>
+          ))}
+        </ul>
+      </div>
+
+      <!-- Newsletter -->
+      <div class="footer-col">
+        <h4 class="footer-col-title">Stay Updated</h4>
+        <p class="newsletter-text">Get the latest anime news delivered to your inbox.</p>
+        <form class="newsletter-form" onsubmit="event.preventDefault()">
+          <input type="email" placeholder="your@email.com" class="newsletter-input" />
+          <button type="submit" class="newsletter-btn">Subscribe</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Bottom -->
+    <div class="footer-bottom">
+      <p>© {currentYear} AniTube Buzz. All rights reserved.</p>
+      <p class="footer-powered">
+        Powered by <span class="gradient-text">AI</span> • Built with Astro
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    padding: 60px 0 30px;
+    margin-top: 60px;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr;
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+
+  .footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    font-weight: 800;
+  }
+
+  .footer-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .footer-col-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+  }
+
+  .footer-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .footer-links a {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+  }
+
+  .footer-links a:hover {
+    color: var(--accent-primary);
+  }
+
+  .newsletter-text {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+  }
+
+  .newsletter-form {
+    display: flex;
+    gap: 8px;
+  }
+
+  .newsletter-input {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    outline: none;
+    font-family: var(--font-main);
+  }
+
+  .newsletter-input:focus {
+    border-color: var(--accent-primary);
+  }
+
+  .newsletter-btn {
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: var(--accent-gradient);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+  }
+
+  .newsletter-btn:hover {
+    opacity: 0.9;
+    box-shadow: var(--shadow-glow-pink);
+  }
+
+  .footer-bottom {
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .footer-powered {
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 900px) {
+    .footer-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .footer-grid {
+      grid-template-columns: 1fr;
+      gap: 30px;
+    }
+
+    .footer-bottom {
+      flex-direction: column;
+      gap: 8px;
+      text-align: center;
+    }
+  }
+</style>
