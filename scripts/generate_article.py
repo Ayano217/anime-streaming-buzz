@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-AniTube Buzz - AI Article Generator
-Uses OpenRouter free open-source models via direct HTTP requests
-"""
 
 import os
 import json
@@ -23,8 +19,6 @@ FREE_MODELS = [
 
 
 def call_ai(prompt, max_tokens=1200):
-    """Call OpenRouter using plain requests"""
-
     if not OPENROUTER_API_KEY:
         print("ERROR: OPENROUTER_API_KEY missing")
         return None
@@ -93,8 +87,6 @@ def call_ai(prompt, max_tokens=1200):
 
 
 def generate_article_content(article_data):
-    """Generate article body"""
-
     prompt = f"""Write a detailed anime news article based on this source info.
 
 TITLE: {article_data['title']}
@@ -116,13 +108,10 @@ Requirements:
 
 Now write the article.
 """
-
     return call_ai(prompt, max_tokens=1400)
 
 
 def generate_metadata(article_data, content):
-    """Generate SEO metadata"""
-
     preview = content[:500] if content else article_data["summary"]
 
     prompt = f"""Generate SEO metadata for this anime article.
@@ -176,8 +165,6 @@ Return ONLY valid JSON in this exact format:
 
 
 def create_markdown_file(article_data, content, metadata):
-    """Create markdown file content"""
-
     slug = slugify(metadata.get("title", article_data["title"]))
     if not slug:
         slug = slugify(article_data["title"])
@@ -255,8 +242,6 @@ Stories like this often shape streaming trends, community discussions, and futur
 
 
 def save_article(slug, content):
-    """Save markdown file"""
-
     posts_dir = os.path.join(
         os.path.dirname(__file__),
         "..",
@@ -276,8 +261,6 @@ def save_article(slug, content):
 
 
 def process_articles(articles):
-    """Process fetched articles"""
-
     if not articles:
         print("No articles to process")
         return []
