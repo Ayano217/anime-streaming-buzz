@@ -1,0 +1,51 @@
+{
+  "rss_feeds": [
+    {
+      "name": "Anime News Network",
+      "url": "https://www.animenewsnetwork.com/all/rss.xml?ann-edition=us",
+      "category": "News",
+      "tags": ["anime", "news", "anime news network"]
+    },
+    {
+      "name": "Crunchyroll News",
+      "url": "https://cr-news-api-service.prd.crunchyrollsvc.com/v1/en-US/rss",
+      "category": "Streaming",
+      "tags": ["crunchyroll", "streaming", "anime"]
+    },
+    {
+      "name": "MyAnimeList News",
+      "url": "https://myanimelist.net/rss/news.xml",
+      "category": "News",
+      "tags": ["anime", "manga", "myanimelist"]
+    },
+    {
+      "name": "ComicBook Anime",
+      "url": "https://comicbook.com/category/anime/feed/",
+      "category": "News",
+      "tags": ["anime", "news", "comicbook"]
+    },
+    {
+      "name": "Anime Corner",
+      "url": "https://animecorner.me/feed/",
+      "category": "News",
+      "tags": ["anime", "rankings", "seasonal"]
+    },
+    {
+      "name": "Otaku USA",
+      "url": "https://otakuusamagazine.com/feed/",
+      "category": "News",
+      "tags": ["anime", "manga", "otaku culture"]
+    },
+    {
+      "name": "The Fandom Post",
+      "url": "https://www.fandompost.com/feed/",
+      "category": "Anime Recap",
+      "tags": ["anime", "review", "recap"]
+    }
+  ],
+  "settings": {
+    "max_articles_per_run": 3,
+    "min_content_length": 100,
+    "language": "en"
+  }
+}
