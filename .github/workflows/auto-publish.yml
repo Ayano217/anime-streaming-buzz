@@ -1,0 +1,67 @@
+name: Auto Publish Anime Articles
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install feedparser==6.0.11 requests==2.31.0 python-slugify==8.0.4 python-dateutil==2.9.0
+
+      - name: Show installed files
+        run: |
+          ls scripts/
+          echo "--- main.py ---"
+          cat scripts/main.py
+
+      - name: Run Auto Publisher
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          python scripts/main.py
+
+      - name: Check for New Articles
+        id: check_changes
+        run: |
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit New Articles
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git config user.name "AniTube Buzz Bot"
+          git config user.email "bot@anitubebuzz.com"
+          git add src/content/posts/
+          git add data/published.json
+          git commit -m "Auto: Add new anime articles - $(date +'%Y-%m-%d %H:%M')"
+          git push
+
+      - name: Summary
+        run: |
+          echo "Done!"
+          echo "Time: $(date)"
