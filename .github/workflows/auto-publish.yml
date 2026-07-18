@@ -4,11 +4,6 @@ on:
   schedule:
     - cron: '0 */6 * * *'
   workflow_dispatch:
-    inputs:
-      force_run:
-        description: 'Force run even if no new articles'
-        required: false
-        default: 'false'
 
 jobs:
   publish:
@@ -35,8 +30,18 @@ jobs:
       - name: Install Python Dependencies
         run: |
           pip install --upgrade pip
+          pip uninstall -y openai httpx || true
           pip install -r scripts/requirements.txt
           pip check
+
+      - name: Debug files
+        run: |
+          echo "===== main.py ====="
+          sed -n '1,40p' scripts/main.py
+          echo "===== generate_article_requests.py ====="
+          sed -n '1,40p' scripts/generate_article_requests.py
+          echo "===== requirements.txt ====="
+          cat scripts/requirements.txt
 
       - name: Run Auto Publisher
         env:
