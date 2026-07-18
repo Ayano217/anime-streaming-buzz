@@ -1,0 +1,108 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import NewsCard from '../../components/NewsCard.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+
+  const allTags = [...new Set(posts.flatMap(p => p.data.tags))];
+
+  return allTags.map(tag => {
+    const slug = tag.toLowerCase().replace(/\s+/g, '-');
+    const filteredPosts = posts
+      .filter(p => p.data.tags.includes(tag))
+      .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+
+    return {
+      params: { tag: slug },
+      props: { tag, posts: filteredPosts },
+    };
+  });
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<BaseLayout title={`#${tag} - Tagged Articles`} description={`All articles tagged with ${tag} on AniTube Buzz.`}>
+  <Header />
+
+  <main class="tag-page">
+    <div class="container">
+      <div class="page-header">
+        <span class="tag-hash">#</span>
+        <h1>{tag}</h1>
+        <p class="page-subtitle">{posts.length} article{posts.length !== 1 ? 's' : ''}</p>
+      </div>
+
+      <div class="posts-grid">
+        {posts.map(post => (
+          <NewsCard
+            title={post.data.title}
+            excerpt={post.data.excerpt}
+            category={post.data.category}
+            date={post.data.date}
+            readTime={`${Math.ceil(post.body.split(/\s+/).length / 200)} min read`}
+            image={post.data.image}
+            slug={`/posts/${post.slug}`}
+            badgeType="purple"
+          />
+        ))}
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .tag-page {
+    padding-top: calc(var(--header-height) + 40px);
+    padding-bottom: 40px;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .tag-hash {
+    font-size: 3rem;
+    font-weight: 800;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .page-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .page-subtitle {
+    color: var(--text-muted);
+    font-size: 1rem;
+  }
+
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  @media (max-width: 900px) {
+    .posts-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .posts-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
