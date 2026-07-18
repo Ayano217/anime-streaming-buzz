@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AniTube Buzz - AI Article Generator
-Uses OpenRouter free open-source models to generate articles
+Uses OpenRouter free open-source models
 """
 
 import os
@@ -10,16 +10,22 @@ import re
 import time
 from datetime import datetime
 from slugify import slugify
+
+import httpx
 from openai import OpenAI
 
 
-# OpenRouter client setup
+# OpenRouter client
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.environ.get("OPENROUTER_API_KEY", ""),
+    http_client=httpx.Client(
+        timeout=60.0,
+        follow_redirects=True,
+    )
 )
 
-# Free models to try in order
+# Free models — priority order
 FREE_MODELS = [
     "meta-llama/llama-3.2-3b-instruct:free",
     "qwen/qwen-2.5-7b-instruct:free",
@@ -46,7 +52,7 @@ def call_ai(prompt, max_tokens=2000):
                             "Write engaging, accurate, SEO-optimized articles about anime, "
                             "manga, manhwa, and streaming news. "
                             "Use markdown formatting. Be informative and enthusiastic. "
-                            "Never make up specific facts — if you are not sure, write generally."
+                            "Never make up specific facts — if unsure, write generally."
                         )
                     },
                     {
@@ -64,7 +70,7 @@ def call_ai(prompt, max_tokens=2000):
 
             content = response.choices[0].message.content
             if content and len(content) > 100:
-                print(f"Success with model: {model}")
+                print(f"Success with: {model}")
                 return content
 
         except Exception as e:
@@ -78,7 +84,7 @@ def call_ai(prompt, max_tokens=2000):
 def generate_article_content(article_data):
     """Generate full article from source data"""
 
-    prompt = f"""Write a detailed, engaging anime news article based on this information:
+    prompt = f"""Write a detailed anime news article based on this:
 
 TITLE: {article_data['title']}
 SOURCE: {article_data['source']}
@@ -88,65 +94,52 @@ DATE: {article_data['date']}
 
 Requirements:
 1. Write 400-600 words
-2. Use markdown formatting with ## headings
-3. Start with an engaging introduction
-4. Include 2-3 relevant sections with ## headings
-5. Add analysis/commentary for anime fans
-6. End with a conclusion
-7. Do NOT copy the summary directly - expand and analyze it
-8. Write for anime fans who want context and analysis
-9. Use only facts that can be reasonably inferred from the title and summary
-10. Do NOT include frontmatter - just the article body
+2. Use markdown with ## headings
+3. Engaging introduction
+4. 2-3 sections with ## headings
+5. Analysis for anime fans
+6. Strong conclusion
+7. Do NOT copy summary directly
+8. Do NOT include frontmatter
+9. Only use facts from the title and summary
 
 Write the article now:"""
 
-    content = call_ai(prompt, max_tokens=1500)
-    return content
+    return call_ai(prompt, max_tokens=1500)
 
 
 def generate_metadata(article_data, content):
-    """Generate SEO metadata for the article"""
+    """Generate SEO metadata"""
 
-    prompt = f"""Based on this anime article, generate SEO metadata.
+    prompt = f"""Generate SEO metadata for this anime article.
 
-ORIGINAL TITLE: {article_data['title']}
+TITLE: {article_data['title']}
 CATEGORY: {article_data['category']}
-CONTENT PREVIEW: {content[:300] if content else article_data['summary']}
+PREVIEW: {content[:300] if content else article_data['summary']}
 
-Generate and return ONLY a valid JSON object with these exact fields:
+Return ONLY this JSON (no other text):
 {{
-  "title": "SEO optimized title (max 60 chars)",
-  "excerpt": "Meta description (max 155 chars)",
+  "title": "SEO title max 60 chars",
+  "excerpt": "Meta description max 155 chars",
   "tags": ["tag1", "tag2", "tag3", "tag4", "tag5"]
-}}
-
-Rules:
-- title should be catchy and include main keywords
-- excerpt should be compelling and include keywords
-- tags should be relevant anime/manga keywords in lowercase
-- Return ONLY the JSON, no other text"""
+}}"""
 
     response = call_ai(prompt, max_tokens=300)
 
     if not response:
-        # Fallback metadata
         return {
             "title": article_data['title'][:60],
             "excerpt": article_data['summary'][:155],
             "tags": article_data['tags']
         }
 
-    # Extract JSON from response
     try:
-        # Try to find JSON in response
         json_match = re.search(r'\{[^{}]*\}', response, re.DOTALL)
         if json_match:
-            metadata = json.loads(json_match.group())
-            return metadata
+            return json.loads(json_match.group())
     except:
         pass
 
-    # Fallback
     return {
         "title": article_data['title'][:60],
         "excerpt": article_data['summary'][:155],
@@ -155,38 +148,34 @@ Rules:
 
 
 def create_markdown_file(article_data, content, metadata):
-    """Create the markdown file with frontmatter"""
+    """Create markdown with frontmatter"""
 
-    # Generate slug
     slug = slugify(metadata.get('title', article_data['title']))
     if not slug:
         slug = slugify(article_data['title'])
-
-    # Ensure slug is not too long
     slug = slug[:80]
 
-    # Add date prefix to avoid conflicts
     date_prefix = article_data['date'].replace('-', '')[:8]
     full_slug = f"{date_prefix}-{slug}"
 
-    # Prepare tags
     tags = metadata.get('tags', article_data['tags'])
-    if isinstance(tags, list):
-        tags_yaml = json.dumps(tags)
-    else:
-        tags_yaml = json.dumps(article_data['tags'])
+    if not isinstance(tags, list):
+        tags = article_data['tags']
+    tags_yaml = json.dumps(tags)
 
-    # Prepare image
     image = article_data.get('image', '')
     if not image:
         seed = re.sub(r'[^a-z0-9]', '', slug[:20])
         image = f"https://picsum.photos/seed/{seed}/800/450"
 
-    # Clean title and excerpt for YAML
-    clean_title = metadata.get('title', article_data['title']).replace('"', "'")
-    clean_excerpt = metadata.get('excerpt', article_data['summary'][:155]).replace('"', "'")
+    clean_title = metadata.get(
+        'title', article_data['title']
+    ).replace('"', "'")
 
-    # Build frontmatter
+    clean_excerpt = metadata.get(
+        'excerpt', article_data['summary'][:155]
+    ).replace('"', "'")
+
     frontmatter = f"""---
 title: "{clean_title}"
 excerpt: "{clean_excerpt}"
@@ -204,17 +193,13 @@ source: "{article_data['url']}"
 
 """
 
-    # Clean content
     if content:
-        # Remove any accidental frontmatter from AI response
         if content.startswith('---'):
             parts = content.split('---', 2)
             if len(parts) >= 3:
                 content = parts[2].strip()
-
         full_content = frontmatter + content
     else:
-        # Fallback content
         full_content = frontmatter + f"""## {article_data['title']}
 
 {article_data['summary']}
@@ -223,22 +208,21 @@ source: "{article_data['url']}"
 
 ---
 
-*Stay tuned to AniTube Buzz for the latest anime and manga news.*
+*Stay tuned to AniTube Buzz for the latest anime news.*
 """
 
-    # Add attribution footer
     full_content += f"""
 
 ---
 
-*Source: [{article_data['source']}]({article_data['url']}) | Published on AniTube Buzz*
+*Source: [{article_data['source']}]({article_data['url']}) | AniTube Buzz*
 """
 
     return full_slug, full_content
 
 
 def save_article(slug, content):
-    """Save article to content/posts directory"""
+    """Save article to posts directory"""
 
     posts_dir = os.path.join(
         os.path.dirname(__file__),
@@ -246,8 +230,7 @@ def save_article(slug, content):
     )
     os.makedirs(posts_dir, exist_ok=True)
 
-    filename = f"{slug}.md"
-    filepath = os.path.join(posts_dir, filename)
+    filepath = os.path.join(posts_dir, f"{slug}.md")
 
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content)
@@ -257,35 +240,26 @@ def save_article(slug, content):
 
 
 def process_articles(articles):
-    """Process all fetched articles"""
+    """Process all articles"""
 
     if not articles:
-        print("No new articles to process")
+        print("No articles to process")
         return []
 
     processed = []
 
     for i, article in enumerate(articles):
-        print(f"\n--- Processing article {i+1}/{len(articles)} ---")
+        print(f"\n--- Article {i+1}/{len(articles)} ---")
         print(f"Title: {article['title']}")
 
-        # Generate content
-        print("Generating article content...")
+        print("Generating content...")
         content = generate_article_content(article)
 
-        if not content:
-            print(f"Failed to generate content, using summary fallback")
-            content = None
-
-        # Generate metadata
         print("Generating metadata...")
         metadata = generate_metadata(article, content)
         print(f"SEO Title: {metadata.get('title', 'N/A')}")
 
-        # Create markdown
         slug, markdown = create_markdown_file(article, content, metadata)
-
-        # Save file
         filepath = save_article(slug, markdown)
 
         processed.append({
@@ -295,30 +269,8 @@ def process_articles(articles):
             'filepath': filepath
         })
 
-        # Rate limit between articles
         if i < len(articles) - 1:
             print("Waiting 3 seconds...")
             time.sleep(3)
 
     return processed
-
-
-if __name__ == "__main__":
-    # Test with sample data
-    test_article = {
-        'title': 'Test Anime Article',
-        'summary': 'This is a test article about anime news.',
-        'url': 'https://example.com/test',
-        'date': datetime.now().strftime('%Y-%m-%d'),
-        'image': 'https://picsum.photos/seed/test/800/450',
-        'source': 'Test Source',
-        'category': 'News',
-        'tags': ['anime', 'test', 'news']
-    }
-
-    content = generate_article_content(test_article)
-    if content:
-        print("Content generated successfully!")
-        print(content[:200])
-    else:
-        print("Content generation failed")
