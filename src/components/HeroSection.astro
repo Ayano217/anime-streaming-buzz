@@ -1,74 +1,72 @@
 ---
-const heroPost = {
-  title: "Solo Leveling Season 2 Breaks All Streaming Records — Here's What You Missed",
-  excerpt: "The most anticipated anime sequel of 2025 has finally arrived, and it's shattering every record in sight. Our full recap and analysis inside.",
-  category: "Trending",
-  date: "2025-01-15",
-  readTime: "5 min read",
-  image: "https://picsum.photos/seed/anime-hero/1200/600",
-  slug: "#",
-};
+export interface HeroPost {
+  title: string;
+  excerpt: string;
+  category: string;
+  date: string;
+  readTime: string;
+  image: string;
+  slug: string;
+}
 
-const sideNews = [
-  {
-    title: "One Piece Chapter 1120 Recap: The Final Saga Intensifies",
-    category: "Manga",
-    image: "https://picsum.photos/seed/onepiece/400/250",
-    slug: "#",
-  },
-  {
-    title: "Jujutsu Kaisen Season 3 Confirmed with New Studio",
-    category: "News",
-    image: "https://picsum.photos/seed/jjk/400/250",
-    slug: "#",
-  },
-  {
-    title: "Top 10 Manhwa That Deserve an Anime Adaptation",
-    category: "Manhwa",
-    image: "https://picsum.photos/seed/manhwa/400/250",
-    slug: "#",
-  },
-];
+export interface Props {
+  mainPost: HeroPost | null;
+  sidePosts?: HeroPost[];
+}
+
+const { mainPost, sidePosts = [] } = Astro.props;
+
+const categoryLink = (category: string) =>
+  `/category/${category.toLowerCase().replace(/\s+/g, '-')}`;
 ---
 
-<section class="hero-section">
-  <div class="container">
-    <div class="hero-grid">
-      <!-- Main Hero -->
-      <a href={heroPost.slug} class="hero-main">
-        <div class="hero-image-wrapper">
-          <img src={heroPost.image} alt={heroPost.title} loading="eager" />
-          <div class="hero-overlay"></div>
-        </div>
-        <div class="hero-content">
-          <span class="badge badge-pink">{heroPost.category}</span>
-          <h1 class="hero-title">{heroPost.title}</h1>
-          <p class="hero-excerpt">{heroPost.excerpt}</p>
-          <div class="hero-meta">
-            <span>{heroPost.date}</span>
-            <span>•</span>
-            <span>{heroPost.readTime}</span>
+{mainPost && (
+  <section class="hero-section">
+    <div class="container">
+      <div class="hero-grid">
+        <!-- Main Hero -->
+        <a href={mainPost.slug} class="hero-main">
+          <div class="hero-image-wrapper">
+            <img src={mainPost.image} alt={mainPost.title} loading="eager" />
+            <div class="hero-overlay"></div>
           </div>
-        </div>
-      </a>
+          <div class="hero-content">
+            <span class="badge badge-pink">{mainPost.category}</span>
+            <h1 class="hero-title">{mainPost.title}</h1>
+            <p class="hero-excerpt">{mainPost.excerpt}</p>
+            <div class="hero-meta">
+              <span>{mainPost.date}</span>
+              <span>•</span>
+              <span>{mainPost.readTime}</span>
+              <span>•</span>
+              <span>
+                <a href={categoryLink(mainPost.category)} class="hero-cat-link">
+                  Browse {mainPost.category}
+                </a>
+              </span>
+            </div>
+          </div>
+        </a>
 
-      <!-- Side Posts -->
-      <div class="hero-sidebar">
-        {sideNews.map((post) => (
-          <a href={post.slug} class="hero-side-card">
-            <div class="side-card-image">
-              <img src={post.image} alt={post.title} loading="lazy" />
-            </div>
-            <div class="side-card-content">
-              <span class="badge badge-blue">{post.category}</span>
-              <h3 class="side-card-title">{post.title}</h3>
-            </div>
-          </a>
-        ))}
+        <!-- Side Posts -->
+        <div class="hero-sidebar">
+          {sidePosts.map((post) => (
+            <a href={post.slug} class="hero-side-card">
+              <div class="side-card-image">
+                <img src={post.image} alt={post.title} loading="lazy" />
+              </div>
+              <div class="side-card-content">
+                <span class="badge badge-blue">{post.category}</span>
+                <h3 class="side-card-title">{post.title}</h3>
+                <p class="side-card-meta">{post.date} • {post.readTime}</p>
+              </div>
+            </a>
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
+)}
 
 <style>
   .hero-section {
@@ -83,7 +81,6 @@ const sideNews = [
     min-height: 450px;
   }
 
-  /* Main hero */
   .hero-main {
     position: relative;
     border-radius: var(--radius-xl);
@@ -109,8 +106,7 @@ const sideNews = [
     height: 100%;
     object-fit: cover;
     position: absolute;
-    top: 0;
-    left: 0;
+    inset: 0;
   }
 
   .hero-overlay {
@@ -118,7 +114,7 @@ const sideNews = [
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 70%;
+    height: 75%;
     background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
   }
 
@@ -140,19 +136,27 @@ const sideNews = [
 
   .hero-excerpt {
     font-size: 0.95rem;
-    color: rgba(255,255,255,0.7);
-    max-width: 600px;
+    color: rgba(255,255,255,0.75);
+    max-width: 650px;
     margin-bottom: 12px;
   }
 
   .hero-meta {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     font-size: 0.85rem;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255,255,255,0.55);
   }
 
-  /* Sidebar */
+  .hero-cat-link {
+    color: rgba(255,255,255,0.75);
+  }
+
+  .hero-cat-link:hover {
+    color: #fff;
+  }
+
   .hero-sidebar {
     display: flex;
     flex-direction: column;
@@ -210,14 +214,18 @@ const sideNews = [
     overflow: hidden;
   }
 
-  /* Responsive */
+  .side-card-meta {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
   @media (max-width: 900px) {
     .hero-grid {
       grid-template-columns: 1fr;
     }
 
     .hero-image-wrapper {
-      min-height: 300px;
+      min-height: 320px;
     }
 
     .hero-title {
