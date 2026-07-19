@@ -1,45 +1,72 @@
-#!/usr/bin/env python3
+name: Auto Publish Anime Articles
 
-import sys
-import os
-from datetime import datetime
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
 
-sys.path.insert(0, os.path.dirname(__file__))
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
 
-from fetcher import fetch_all_sources
-from writer import process_articles
-from tracker import update_published
+    permissions:
+      contents: write
 
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
-def main():
-    print("=" * 60)
-    print("AniTube Buzz - Auto Publisher (Open Source AI)")
-    print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 60)
+      - name: Cache GGUF Model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/gguf-models
+          key: gguf-qwen25-1.5b-v1
 
-    print("\n[Step 1] Fetching sources...")
-    articles = fetch_all_sources()
+      - name: Setup Model and llama.cpp
+        run: |
+          chmod +x scripts/setup_model.sh
+          bash scripts/setup_model.sh
 
-    if not articles:
-        print("No new articles. Exiting.")
-        return
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    print(f"Found {len(articles)} articles")
+      - name: Install Dependencies
+        run: |
+          pip install feedparser==6.0.11 requests==2.31.0 python-slugify==8.0.4 python-dateutil==2.9.0
 
-    print("\n[Step 2] Generating articles with local GGUF model...")
-    processed = process_articles(articles)
+      - name: Show scripts
+        run: |
+          ls -la scripts
+          echo "----- main.py -----"
+          sed -n '1,40p' scripts/main.py
 
-    if not processed:
-        print("No articles processed. Exiting.")
-        return
+      - name: Run Auto Publisher
+        run: |
+          python scripts/main.py
 
-    print("\n[Step 3] Updating database...")
-    update_published(processed)
+      - name: Check for Changes
+        id: check
+        run: |
+          if [ -n "$(git status --porcelain src/content/posts data/published.json)" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
 
-    print(f"\nDONE! Published {len(processed)} articles")
-    for a in processed:
-        print(f"  - {a['slug']}")
+      - name: Commit and Push
+        if: steps.check.outputs.has_changes == 'true'
+        run: |
+          git config user.name "AniTube Buzz Bot"
+          git config user.email "bot@anitubebuzz.com"
+          git add src/content/posts data/published.json
+          git commit -m "Auto: New anime articles - $(date +'%Y-%m-%d %H:%M')"
+          git push
 
-
-if __name__ == "__main__":
-    main()
+      - name: Done
+        run: echo "Done!"
