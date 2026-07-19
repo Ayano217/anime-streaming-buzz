@@ -1,69 +1,45 @@
-{
-  "rss_feeds": [
-    {
-      "name": "Anime News Network",
-      "url": "https://www.animenewsnetwork.com/all/rss.xml?ann-edition=us",
-      "category": "News",
-      "tags": ["anime", "news"]
-    },
-    {
-      "name": "Crunchyroll News",
-      "url": "https://cr-news-api-service.prd.crunchyrollsvc.com/v1/en-US/rss",
-      "category": "Streaming",
-      "tags": ["crunchyroll", "streaming"]
-    },
-    {
-      "name": "MyAnimeList News",
-      "url": "https://myanimelist.net/rss/news.xml",
-      "category": "News",
-      "tags": ["anime", "manga"]
-    },
-    {
-      "name": "Anime Corner",
-      "url": "https://animecorner.me/feed/",
-      "category": "News",
-      "tags": ["anime", "rankings"]
-    },
-    {
-      "name": "Reddit r/anime",
-      "url": "https://www.reddit.com/r/anime/hot.rss",
-      "category": "News",
-      "tags": ["anime", "community"]
-    },
-    {
-      "name": "Reddit r/manga",
-      "url": "https://www.reddit.com/r/manga/hot.rss",
-      "category": "Manhwa",
-      "tags": ["manga", "manhwa"]
-    },
-    {
-      "name": "Reddit r/manhwa",
-      "url": "https://www.reddit.com/r/manhwa/hot.rss",
-      "category": "Manhwa",
-      "tags": ["manhwa", "webtoon"]
-    },
-    {
-      "name": "ComicBook Anime",
-      "url": "https://comicbook.com/category/anime/feed/",
-      "category": "News",
-      "tags": ["anime", "news"]
-    },
-    {
-      "name": "Otaku USA",
-      "url": "https://otakuusamagazine.com/feed/",
-      "category": "News",
-      "tags": ["anime", "manga"]
-    },
-    {
-      "name": "Siliconera",
-      "url": "https://www.siliconera.com/feed/",
-      "category": "Gaming",
-      "tags": ["anime", "gaming"]
-    }
-  ],
-  "settings": {
-    "max_articles_per_run": 5,
-    "min_content_length": 100,
-    "language": "en"
-  }
-}
+#!/usr/bin/env python3
+
+import sys
+import os
+from datetime import datetime
+
+sys.path.insert(0, os.path.dirname(__file__))
+
+from fetcher import fetch_all_sources
+from writer import process_articles
+from tracker import update_published
+
+
+def main():
+    print("=" * 60)
+    print("AniTube Buzz - Auto Publisher (Open Source AI)")
+    print(f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("=" * 60)
+
+    print("\n[Step 1] Fetching sources...")
+    articles = fetch_all_sources()
+
+    if not articles:
+        print("No new articles. Exiting.")
+        return
+
+    print(f"Found {len(articles)} articles")
+
+    print("\n[Step 2] Generating articles with local GGUF model...")
+    processed = process_articles(articles)
+
+    if not processed:
+        print("No articles processed. Exiting.")
+        return
+
+    print("\n[Step 3] Updating database...")
+    update_published(processed)
+
+    print(f"\nDONE! Published {len(processed)} articles")
+    for a in processed:
+        print(f"  - {a['slug']}")
+
+
+if __name__ == "__main__":
+    main()
