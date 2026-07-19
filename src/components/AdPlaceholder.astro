@@ -1,4 +1,6 @@
 ---
+import { adSlots } from '../config/ads';
+
 export interface Props {
   slot?: string;
   size?: string;
@@ -10,36 +12,20 @@ const {
   size = "728x90",
   label = "Advertisement"
 } = Astro.props;
+
+const adMarkup = adSlots[adSlot] ?? '';
+const hasAd = adMarkup.trim().length > 0;
 ---
 
 <div class="ad-container" data-ad-slot={adSlot} data-ad-size={size}>
   <div class="ad-wrapper">
     <span class="ad-label">{label}</span>
-    <div class="ad-content" id={`ad-${adSlot}`}>
-      <!--
-        =============================================
-        HOW TO ADD HILLTOP ADS:
-        =============================================
 
-        Step 1: Go to HilltopAds.com
-        Step 2: Login to your publisher account
-        Step 3: Add your domain: anime-streaming-buzz.pages.dev
-        Step 4: Create an Ad Zone
-        Step 5: Copy the JavaScript code they give you
-        Step 6: Replace this comment with that code
-
-        Example (DO NOT USE THIS - use YOUR code):
-        <script async src="https://example.hilltopads.net/your-code.js"></script>
-
-        You can also use:
-        - Monetag
-        - Adsterra
-        - Google AdSense
-
-        Just paste the script inside this div.
-        =============================================
-      -->
-    </div>
+    {hasAd ? (
+      <div class="ad-live" set:html={adMarkup}></div>
+    ) : (
+      <div class="ad-content">Ad Space</div>
+    )}
   </div>
 </div>
 
@@ -66,26 +52,26 @@ const {
     margin-bottom: 6px;
   }
 
-  .ad-content {
+  .ad-content,
+  .ad-live {
     min-height: 90px;
     border-radius: var(--radius-sm);
-    border: 1px dashed var(--border-color);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-muted);
-    font-size: 0.85rem;
     background: var(--bg-card);
     overflow: hidden;
   }
 
-  /* Hide placeholder text when ad is loaded */
-  .ad-content:empty::after {
-    content: 'Ad Space';
+  .ad-content {
+    border: 1px dashed var(--border-color);
+    color: var(--text-muted);
+    font-size: 0.85rem;
   }
 
   @media (max-width: 768px) {
     .ad-wrapper { max-width: 100%; }
-    .ad-content { min-height: 60px; }
+    .ad-content,
+    .ad-live { min-height: 60px; }
   }
 </style>
