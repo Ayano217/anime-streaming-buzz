@@ -94,8 +94,18 @@ def fetch_all_sources():
                     image = entry.media_content[0].get('url', '')
 
                 if not image:
-                    seed = re.sub(r'[^a-z0-9]', '', title.lower())[:20]
-                    image = f"https://picsum.photos/seed/{seed}/800/450"
+    anime_seeds = [
+        'anime-city', 'anime-sunset', 'anime-sky',
+        'manga-art', 'tokyo-night', 'japan-temple',
+        'sakura-tree', 'neon-city', 'anime-world',
+        'cyber-tokyo', 'anime-school', 'fantasy-world',
+        'dragon-realm', 'sword-hero', 'magic-girl',
+        'mecha-battle', 'ninja-shadow', 'demon-fight',
+        'ocean-adventure', 'space-anime'
+    ]
+    import random
+    seed = random.choice(anime_seeds)
+    image = f"https://picsum.photos/seed/{seed}/800/450"
 
                 all_articles.append({
                     'title': title,
