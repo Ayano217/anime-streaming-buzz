@@ -8,62 +8,98 @@ import CategorySection from '../components/CategorySection.astro';
 import AdPlaceholder from '../components/AdPlaceholder.astro';
 import Footer from '../components/Footer.astro';
 
-// Get all published posts
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
-const sortedPosts = allPosts.sort((a, b) =>
-  new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+
+const sortedPosts = allPosts.sort(
+  (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
 );
 
-// Helper function
-function formatPosts(posts: typeof sortedPosts) {
-  return posts.map(post => ({
-    title: post.data.title,
-    excerpt: post.data.excerpt,
-    category: post.data.category,
-    date: post.data.date,
-    readTime: `${Math.ceil(post.body.split(/\s+/).length / 200)} min read`,
-    image: post.data.image,
-    slug: `/posts/${post.slug}`,
-  }));
-}
+const formatDate = (date: string) =>
+  new Date(date).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
 
-// Filter by category
-const animeRecaps = formatPosts(
-  sortedPosts.filter(p => p.data.category === 'Anime Recap').slice(0, 3)
-);
+const readingTime = (body: string) => `${Math.max(1, Math.ceil(body.split(/\s+/).length / 200))} min read`;
 
-const manhwaPosts = formatPosts(
-  sortedPosts.filter(p => p.data.category === 'Manhwa').slice(0, 3)
-);
+const badgeTypeFromCategory = (category: string) => {
+  if (category === 'Streaming') return 'blue';
+  if (category === 'Manhwa') return 'purple';
+  return 'pink';
+};
 
-const streamingNews = formatPosts(
-  sortedPosts.filter(p => p.data.category === 'Streaming').slice(0, 3)
-);
+const toCardPost = (post: any) => ({
+  title: post.data.title,
+  excerpt: post.data.excerpt,
+  category: post.data.category,
+  date: formatDate(post.data.date),
+  readTime: readingTime(post.body),
+  image: post.data.image,
+  slug: `/posts/${post.slug}`,
+  badgeType: badgeTypeFromCategory(post.data.category),
+});
 
-const gamingPosts = formatPosts(
-  sortedPosts.filter(p => p.data.category === 'Gaming').slice(0, 3)
-);
+const featuredPosts = sortedPosts.filter(p => p.data.featured);
+const mainHeroRaw = featuredPosts[0] || sortedPosts[0] || null;
 
-const newsPosts = formatPosts(
-  sortedPosts.filter(p => p.data.category === 'News').slice(0, 3)
-);
+const sideHeroRaw = [
+  ...featuredPosts.filter(p => p.slug !== mainHeroRaw?.slug),
+  ...sortedPosts.filter(p => p.slug !== mainHeroRaw?.slug),
+].slice(0, 3);
 
-const latestPosts = formatPosts(sortedPosts.slice(0, 6));
+const heroMain = mainHeroRaw ? toCardPost(mainHeroRaw) : null;
+const heroSide = sideHeroRaw.map(toCardPost);
+
+const trendingRaw = sortedPosts.filter(p => p.data.trending).slice(0, 5);
+const fallbackTrendingRaw = sortedPosts.slice(0, 5);
+const trendingPosts = (trendingRaw.length ? trendingRaw : fallbackTrendingRaw).map(post => ({
+  title: post.data.title,
+  category: post.data.category,
+  slug: `/posts/${post.slug}`,
+  date: formatDate(post.data.date),
+}));
+
+const latestPosts = sortedPosts.slice(0, 6).map(toCardPost);
+
+const animeRecaps = sortedPosts
+  .filter(p => p.data.category === 'Anime Recap')
+  .slice(0, 3)
+  .map(toCardPost);
+
+const manhwaPosts = sortedPosts
+  .filter(p => p.data.category === 'Manhwa')
+  .slice(0, 3)
+  .map(toCardPost);
+
+const streamingPosts = sortedPosts
+  .filter(p => p.data.category === 'Streaming')
+  .slice(0, 3)
+  .map(toCardPost);
+
+const gamingPosts = sortedPosts
+  .filter(p => p.data.category === 'Gaming')
+  .slice(0, 3)
+  .map(toCardPost);
+
+const newsPosts = sortedPosts
+  .filter(p => p.data.category === 'News')
+  .slice(0, 3)
+  .map(toCardPost);
 ---
 
 <BaseLayout>
   <Header />
 
   <main>
-    <HeroSection />
+    <HeroSection mainPost={heroMain} sidePosts={heroSide} />
 
     <div class="container">
       <AdPlaceholder slot="after-hero" size="728x90" />
     </div>
 
-    <TrendingSection />
+    <TrendingSection posts={trendingPosts} />
 
-    <!-- Latest Posts -->
     {latestPosts.length > 0 && (
       <CategorySection
         title="Latest Articles"
@@ -72,7 +108,6 @@ const latestPosts = formatPosts(sortedPosts.slice(0, 6));
       />
     )}
 
-    <!-- Anime Recaps -->
     {animeRecaps.length > 0 && (
       <CategorySection
         title="Anime Recaps"
@@ -85,7 +120,6 @@ const latestPosts = formatPosts(sortedPosts.slice(0, 6));
       <AdPlaceholder slot="mid-page-1" size="728x90" />
     </div>
 
-    <!-- Manhwa -->
     {manhwaPosts.length > 0 && (
       <CategorySection
         title="Manhwa & Webtoon"
@@ -94,12 +128,11 @@ const latestPosts = formatPosts(sortedPosts.slice(0, 6));
       />
     )}
 
-    <!-- Streaming -->
-    {streamingNews.length > 0 && (
+    {streamingPosts.length > 0 && (
       <CategorySection
         title="Streaming News"
         emoji="📺"
-        posts={streamingNews}
+        posts={streamingPosts}
       />
     )}
 
@@ -107,7 +140,6 @@ const latestPosts = formatPosts(sortedPosts.slice(0, 6));
       <AdPlaceholder slot="mid-page-2" size="728x90" />
     </div>
 
-    <!-- News -->
     {newsPosts.length > 0 && (
       <CategorySection
         title="Anime News"
@@ -116,7 +148,6 @@ const latestPosts = formatPosts(sortedPosts.slice(0, 6));
       />
     )}
 
-    <!-- Gaming -->
     {gamingPosts.length > 0 && (
       <CategorySection
         title="Anime Gaming"
