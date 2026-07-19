@@ -1,34 +1,25 @@
 // Ad Configuration
-// Paste your ad network scripts here
-// Then import and use in components
+// Paste your ad network scripts here when ready
 
 export const adConfig = {
-  // HilltopAds
   hilltopads: {
-    enabled: false, // Set to true when you have the code
-    script: '', // Paste your HilltopAds script URL here
+    enabled: false,
+    script: '',
   },
-
-  // Monetag
   monetag: {
     enabled: false,
     script: '',
   },
-
-  // Adsterra
   adsterra: {
     enabled: false,
     script: '',
   },
-
-  // Google AdSense
   adsense: {
     enabled: false,
-    publisherId: '', // ca-pub-XXXXXXX
+    publisherId: '',
   },
 };
 
-// Ad placements
 export const adPlacements = {
   'after-hero': { size: '728x90', provider: 'hilltopads' },
   'mid-page-1': { size: '728x90', provider: 'hilltopads' },
@@ -36,4 +27,14 @@ export const adPlacements = {
   'post-top': { size: '728x90', provider: 'hilltopads' },
   'post-bottom': { size: '728x90', provider: 'hilltopads' },
   'sidebar': { size: '300x250', provider: 'hilltopads' },
+};
+
+// This is what AdPlaceholder.astro will use directly
+export const adSlots: Record<string, string> = {
+  'after-hero': '',
+  'mid-page-1': '',
+  'mid-page-2': '',
+  'post-top': '',
+  'post-bottom': '',
+  'sidebar': '',
 };
