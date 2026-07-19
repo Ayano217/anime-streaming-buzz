@@ -1,55 +1,38 @@
 ---
-const trendingPosts = [
-  {
-    rank: 1,
-    title: "Attack on Titan: New Spin-Off Manga Announced",
-    category: "Manga",
-    views: "125K",
-  },
-  {
-    rank: 2,
-    title: "Demon Slayer Infinity Castle Movie Release Date Confirmed",
-    category: "Movies",
-    views: "98K",
-  },
-  {
-    rank: 3,
-    title: "Solo Leveling Ragnarok Manhwa Chapter 45 Recap",
-    category: "Manhwa",
-    views: "87K",
-  },
-  {
-    rank: 4,
-    title: "Chainsaw Man Season 2 New Key Visual Revealed",
-    category: "Anime",
-    views: "76K",
-  },
-  {
-    rank: 5,
-    title: "Crunchyroll vs Funimation: Best Anime Streaming in 2025",
-    category: "Streaming",
-    views: "65K",
-  },
-];
+export interface TrendingPost {
+  title: string;
+  category: string;
+  slug: string;
+  date: string;
+}
+
+export interface Props {
+  posts?: TrendingPost[];
+}
+
+const { posts = [] } = Astro.props;
 ---
 
-<section class="trending-section section">
-  <div class="container">
-    <h2 class="section-title">🔥 Trending Now</h2>
-    <div class="trending-list">
-      {trendingPosts.map((post) => (
-        <a href="#" class="trending-item">
-          <span class="trending-rank">{String(post.rank).padStart(2, '0')}</span>
-          <div class="trending-info">
-            <span class="badge badge-purple">{post.category}</span>
-            <h3 class="trending-title">{post.title}</h3>
-          </div>
-          <span class="trending-views">{post.views} views</span>
-        </a>
-      ))}
+{posts.length > 0 && (
+  <section class="trending-section section">
+    <div class="container">
+      <h2 class="section-title">🔥 Trending Now</h2>
+
+      <div class="trending-list">
+        {posts.map((post, index) => (
+          <a href={post.slug} class="trending-item">
+            <span class="trending-rank">{String(index + 1).padStart(2, '0')}</span>
+            <div class="trending-info">
+              <span class="badge badge-purple">{post.category}</span>
+              <h3 class="trending-title">{post.title}</h3>
+            </div>
+            <span class="trending-date">{post.date}</span>
+          </a>
+        ))}
+      </div>
     </div>
-  </div>
-</section>
+  </section>
+)}
 
 <style>
   .trending-list {
@@ -102,7 +85,7 @@ const trendingPosts = [
     line-height: 1.4;
   }
 
-  .trending-views {
+  .trending-date {
     font-size: 0.8rem;
     color: var(--text-muted);
     white-space: nowrap;
@@ -118,7 +101,7 @@ const trendingPosts = [
       min-width: 35px;
     }
 
-    .trending-views {
+    .trending-date {
       display: none;
     }
   }
