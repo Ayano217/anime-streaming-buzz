@@ -79,7 +79,9 @@ const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
         <!-- Tags -->
         <div class="post-tags">
           {post.data.tags.map(tag => (
-            <a href={`/tags/${tag.toLowerCase().replace(/\s+/g, '-')}`} class="tag-link">
+            <a
+              href={`/tags/${tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`}
+              class="tag-link">
               #{tag}
             </a>
           ))}
