@@ -19,10 +19,12 @@ export async function GET({ site }: { site: URL }) {
     `/category/${post.data.category.toLowerCase().replace(/\s+/g, '-')}`
   ))];
 
-  const tagPages = [...new Set(posts.flatMap(post =>
-    post.data.tags.map(tag => `/tags/${tag.toLowerCase().replace(/\s+/g, '-')}`)
-  ))];
+  const toSlug = (value: string) =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
+const tagPages = [...new Set(posts.flatMap(post =>
+  post.data.tags.map(tag => `/tags/${toSlug(tag)}`)
+))];
   const allUrls = [...staticPages, ...postPages, ...categoryPages, ...tagPages];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
