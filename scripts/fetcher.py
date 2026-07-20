@@ -114,7 +114,7 @@ def fetch_all_sources():
                             break
 
                 if not image:
-                    image = get_fallback_image()
+    image = ""
 
                 all_articles.append({
                     'title': title,
