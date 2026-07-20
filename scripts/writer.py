@@ -10,152 +10,14 @@ import requests
 from slugify import slugify
 
 
-MODEL_PATH = os.path.expanduser("~/.cache/gguf-models/qwen2.5-1.5b-instruct-q4_k_m.gguf")
+MODEL_PATH = os.path.expanduser(
+    "~/.cache/gguf-models/qwen2.5-1.5b-instruct-q4_k_m.gguf"
+)
 
 
-def get_anime_image(title):
-    search_terms = extract_search_terms(title)
-
-    # Anime search
-    for term in search_terms:
-        try:
-            url = f"https://api.jikan.moe/v4/anime?q={term}&limit=5"
-            res = requests.get(url, timeout=8)
-            if res.status_code == 200:
-                data = res.json()
-                for item in data.get("data", []):
-                    img = item.get("images", {}).get("jpg", {}).get("large_image_url", "")
-                    if img and "questionmark" not in img:
-                        print(f"Found anime image for '{term}': {item.get('title', '')}")
-                        return img
-            time.sleep(1)
-        except Exception as e:
-            print(f"Anime image search error: {e}")
-
-    # Manga search
-    for term in search_terms[:3]:
-        try:
-            url = f"https://api.jikan.moe/v4/manga?q={term}&limit=5"
-            res = requests.get(url, timeout=8)
-            if res.status_code == 200:
-                data = res.json()
-                for item in data.get("data", []):
-                    img = item.get("images", {}).get("jpg", {}).get("large_image_url", "")
-                    if img and "questionmark" not in img:
-                        print(f"Found manga image for '{term}': {item.get('title', '')}")
-                        return img
-            time.sleep(1)
-        except Exception as e:
-            print(f"Manga image search error: {e}")
-
-    return ""
-
-    # Try anime search
-    for term in search_terms:
-        try:
-            url = f"https://api.jikan.moe/v4/anime?q={term}&limit=3"
-            res = requests.get(url, timeout=8)
-            if res.status_code == 200:
-                data = res.json()
-                for item in data.get("data", []):
-                    img = item.get("images", {}).get("jpg", {}).get("large_image_url", "")
-                    if img and "questionmark" not in img:
-                        print(f"Found anime image: {item.get('title', '')[:30]}")
-                        return img
-            time.sleep(1)
-        except:
-            pass
-
-    # Try manga search
-    for term in search_terms[:2]:
-        try:
-            url = f"https://api.jikan.moe/v4/manga?q={term}&limit=3"
-            res = requests.get(url, timeout=8)
-            if res.status_code == 200:
-                data = res.json()
-                for item in data.get("data", []):
-                    img = item.get("images", {}).get("jpg", {}).get("large_image_url", "")
-                    if img and "questionmark" not in img:
-                        print(f"Found manga image: {item.get('title', '')[:30]}")
-                        return img
-            time.sleep(1)
-        except:
-            pass
-
-    # Try characters search
-    try:
-        first_word = clean_title.split()[0] if clean_title.split() else "anime"
-        url = f"https://api.jikan.moe/v4/characters?q={first_word}&limit=1"
-        res = requests.get(url, timeout=8)
-        if res.status_code == 200:
-            data = res.json()
-            if data.get("data"):
-                img = data["data"][0].get("images", {}).get("jpg", {}).get("image_url", "")
-                if img:
-                    return img
-    except:
-        pass
-
-    # Final fallback - themed placeholder
-    seeds = [
-        'anime-action', 'anime-hero', 'anime-battle',
-        'manga-cover', 'tokyo-neon', 'sakura-night',
-        'anime-girl', 'anime-boy', 'dragon-fire',
-        'sword-fight', 'magic-spell', 'mecha-robot',
-        'ninja-run', 'pirate-ship', 'demon-king',
-        'school-anime', 'fantasy-castle', 'space-ship'
-    ]
-    return f"https://picsum.photos/seed/{random.choice(seeds)}/800/450"
-    except:
-        pass
-
-    try:
-        query = re.sub(r'[^\w\s]', '', title)[:50]
-        url = f"https://api.jikan.moe/v4/manga?q={query}&limit=1"
-        res = requests.get(url, timeout=8)
-        if res.status_code == 200:
-            data = res.json()
-            if data.get("data"):
-                img = data["data"][0].get("images", {}).get("jpg", {}).get("large_image_url", "")
-                if img:
-                    return img
-    except:
-        pass
-
-    seeds = [
-        'anime-city', 'anime-sunset', 'manga-art', 'tokyo-night',
-        'neon-city', 'sakura-tree', 'cyber-tokyo', 'fantasy-world'
-    ]
-    return f"https://picsum.photos/seed/{random.choice(seeds)}/800/450"
-
-
-def get_anime_details(title):
-    try:
-        query = re.sub(r'[^\w\s]', '', title)[:50]
-        url = f"https://api.jikan.moe/v4/anime?q={query}&limit=1"
-        res = requests.get(url, timeout=8)
-        if res.status_code == 200:
-            data = res.json()
-            if data.get("data"):
-                anime = data["data"][0]
-                return {
-                    "title_jp": anime.get("title_japanese", ""),
-                    "episodes": anime.get("episodes", "Unknown"),
-                    "status": anime.get("status", "Unknown"),
-                    "score": anime.get("score", "N/A"),
-                    "synopsis": anime.get("synopsis", "")[:320],
-                    "genres": [g["name"] for g in anime.get("genres", [])][:5],
-                    "studios": [s["name"] for s in anime.get("studios", [])][:3],
-                    "type": anime.get("type", ""),
-                    "url": anime.get("url", ""),
-                }
-    except:
-        pass
-    return None
 def extract_search_terms(title):
     clean = re.sub(r'[^\w\s:-]', '', title).strip()
-
-    parts = re.split(r'[:\-–—|]', clean)
+    parts = re.split(r'[:\-]', clean)
     candidates = []
 
     if parts:
@@ -167,8 +29,8 @@ def extract_search_terms(title):
     candidates.append(' '.join(clean.split()[:2]))
 
     noise = [
-        'episode', 'season', 'chapter', 'review', 'recap',
-        'news', 'officially', 'confirmed', 'trailer', 'movie'
+        'episode', 'season', 'chapter', 'review',
+        'recap', 'news', 'confirmed', 'trailer'
     ]
 
     final_terms = []
@@ -179,6 +41,88 @@ def extract_search_terms(title):
             final_terms.append(term[:50])
 
     return final_terms[:5]
+
+
+def get_anime_image(title):
+    search_terms = extract_search_terms(title)
+
+    for term in search_terms:
+        try:
+            url = f"https://api.jikan.moe/v4/anime?q={term}&limit=5"
+            res = requests.get(url, timeout=8)
+            if res.status_code == 200:
+                data = res.json()
+                for item in data.get("data", []):
+                    img = (
+                        item.get("images", {})
+                        .get("jpg", {})
+                        .get("large_image_url", "")
+                    )
+                    if img and "questionmark" not in img:
+                        print(f"Anime image found: {item.get('title', '')[:30]}")
+                        return img
+            time.sleep(1)
+        except Exception as e:
+            print(f"Anime search error: {e}")
+
+    for term in search_terms[:3]:
+        try:
+            url = f"https://api.jikan.moe/v4/manga?q={term}&limit=5"
+            res = requests.get(url, timeout=8)
+            if res.status_code == 200:
+                data = res.json()
+                for item in data.get("data", []):
+                    img = (
+                        item.get("images", {})
+                        .get("jpg", {})
+                        .get("large_image_url", "")
+                    )
+                    if img and "questionmark" not in img:
+                        print(f"Manga image found: {item.get('title', '')[:30]}")
+                        return img
+            time.sleep(1)
+        except Exception as e:
+            print(f"Manga search error: {e}")
+
+    seeds = [
+        'anime-city', 'anime-sunset', 'manga-art',
+        'tokyo-night', 'neon-city', 'sakura-tree',
+        'cyber-tokyo', 'fantasy-world', 'sword-hero'
+    ]
+    return f"https://picsum.photos/seed/{random.choice(seeds)}/800/450"
+
+
+def get_anime_details(title):
+    search_terms = extract_search_terms(title)
+
+    for term in search_terms[:3]:
+        try:
+            url = f"https://api.jikan.moe/v4/anime?q={term}&limit=1"
+            res = requests.get(url, timeout=8)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get("data"):
+                    anime = data["data"][0]
+                    return {
+                        "title_jp": anime.get("title_japanese", ""),
+                        "episodes": anime.get("episodes", "Unknown"),
+                        "status": anime.get("status", "Unknown"),
+                        "score": anime.get("score", "N/A"),
+                        "synopsis": anime.get("synopsis", "")[:320],
+                        "genres": [
+                            g["name"] for g in anime.get("genres", [])
+                        ][:5],
+                        "studios": [
+                            s["name"] for s in anime.get("studios", [])
+                        ][:3],
+                        "type": anime.get("type", ""),
+                        "url": anime.get("url", ""),
+                    }
+            time.sleep(1)
+        except Exception as e:
+            print(f"Anime details error: {e}")
+
+    return None
 
 
 def get_streaming_links(title):
@@ -193,18 +137,21 @@ def get_streaming_links(title):
 
 def call_llama(prompt, max_tokens=700):
     if not os.path.exists(MODEL_PATH):
-        print(f"ERROR: Model not found at {MODEL_PATH}")
+        print(f"Model not found: {MODEL_PATH}")
         return None
 
     try:
         print("Running local GGUF model...")
 
-        full_prompt = f"""<|im_start|>system
-You are an expert anime journalist. Write clear, useful, SEO-friendly anime articles in markdown. Do not invent facts. Keep details practical and relevant.<|im_end|>
-<|im_start|>user
-{prompt}<|im_end|>
-<|im_start|>assistant
-"""
+        full_prompt = (
+            "<|im_start|>system\n"
+            "You are an expert anime journalist. "
+            "Write clear, useful, SEO-friendly anime articles in markdown. "
+            "Do not invent facts.<|im_end|>\n"
+            "<|im_start|>user\n"
+            f"{prompt}<|im_end|>\n"
+            "<|im_start|>assistant\n"
+        )
 
         result = subprocess.run(
             [
@@ -238,7 +185,7 @@ You are an expert anime journalist. Write clear, useful, SEO-friendly anime arti
             print(f"Model stderr: {result.stderr[:300]}")
 
     except subprocess.TimeoutExpired:
-        print("Model timeout (3 min)")
+        print("Model timeout after 3 minutes")
     except Exception as e:
         print(f"Model error: {e}")
 
@@ -248,38 +195,40 @@ You are an expert anime journalist. Write clear, useful, SEO-friendly anime arti
 def make_article(data, anime_info=None):
     extra = ""
     if anime_info:
-        extra = f"""
-Anime details:
-- Japanese title: {anime_info.get('title_jp', '')}
-- Type: {anime_info.get('type', '')}
-- Episodes: {anime_info.get('episodes', '')}
-- Score: {anime_info.get('score', '')}
-- Genres: {', '.join(anime_info.get('genres', []))}
-- Studios: {', '.join(anime_info.get('studios', []))}
-- Synopsis: {anime_info.get('synopsis', '')}
-"""
+        genres = ', '.join(anime_info.get('genres', []))
+        studios = ', '.join(anime_info.get('studios', []))
+        extra = (
+            f"\nAnime details:\n"
+            f"- Japanese: {anime_info.get('title_jp', '')}\n"
+            f"- Type: {anime_info.get('type', '')}\n"
+            f"- Episodes: {anime_info.get('episodes', '')}\n"
+            f"- Score: {anime_info.get('score', '')}\n"
+            f"- Genres: {genres}\n"
+            f"- Studios: {studios}\n"
+            f"- Synopsis: {anime_info.get('synopsis', '')}\n"
+        )
 
-    prompt = f"""Write a detailed anime article from this source info.
-
-Title: {data['title']}
-Source: {data['source']}
-Category: {data['category']}
-Summary: {data['summary']}
-{extra}
-
-Rules:
-- 500 to 800 words
-- markdown only
-- no frontmatter
-- use these sections:
-## Introduction
-## Main Details
-## Why Fans Care
-## Where to Watch
-## What Happens Next
-- mention only official platforms
-- do not invent specific facts
-- make it readable and useful"""
+    prompt = (
+        f"Write a detailed anime article from this source info.\n\n"
+        f"Title: {data['title']}\n"
+        f"Source: {data['source']}\n"
+        f"Category: {data['category']}\n"
+        f"Summary: {data['summary']}\n"
+        f"{extra}\n"
+        f"Rules:\n"
+        f"- 500 to 800 words\n"
+        f"- markdown only\n"
+        f"- no frontmatter\n"
+        f"- use these sections:\n"
+        f"## Introduction\n"
+        f"## Main Details\n"
+        f"## Why Fans Care\n"
+        f"## Where to Watch\n"
+        f"## What Happens Next\n"
+        f"- mention only official platforms\n"
+        f"- do not invent specific facts\n"
+        f"- make it readable and useful"
+    )
 
     return call_llama(prompt, 700)
 
@@ -290,13 +239,17 @@ def make_metadata(data, content):
 
     words = data["title"].lower().split()
     base_tags = data.get("tags", ["anime", "news"])
+
+    skip_words = [
+        'the', 'and', 'for', 'with', 'from',
+        'this', 'that', 'episode', 'season'
+    ]
+
     extra_tags = [
         w for w in words
-        if len(w) > 3 and w not in [
-            'the', 'and', 'for', 'with', 'from', 'this',
-            'that', 'episode', 'season'
-        ]
+        if len(w) > 3 and w not in skip_words
     ]
+
     all_tags = list(set(base_tags + extra_tags[:5]))[:8]
 
     return {
@@ -307,7 +260,8 @@ def make_metadata(data, content):
 
 
 def build_markdown(data, content, meta, anime_info=None, streaming_links=None):
-    slug = slugify(meta.get("title", data["title"]))[:80]
+    title_str = meta.get("title", data["title"])
+    slug = slugify(title_str)[:80]
     date_prefix = data["date"].replace("-", "")[:8]
     full_slug = f"{date_prefix}-{slug}"
 
@@ -319,25 +273,27 @@ def build_markdown(data, content, meta, anime_info=None, streaming_links=None):
     if not image:
         image = get_anime_image(data["title"])
 
-    title_clean = meta.get("title", data["title"]).replace('"', "'")
-    excerpt_clean = meta.get("excerpt", data["summary"][:155]).replace('"', "'")
+    title_clean = title_str.replace('"', "'")
+    excerpt_clean = meta.get(
+        "excerpt", data["summary"][:155]
+    ).replace('"', "'")
 
-    fm = f"""---
-title: "{title_clean}"
-excerpt: "{excerpt_clean}"
-category: "{data['category']}"
-tags: {json.dumps(tags)}
-author: "AniTube Buzz"
-date: "{data['date']}"
-image: "{image}"
-imageAlt: "{title_clean}"
-featured: false
-trending: false
-draft: false
-source: "{data['url']}"
----
-
-"""
+    fm = (
+        "---\n"
+        f'title: "{title_clean}"\n'
+        f'excerpt: "{excerpt_clean}"\n'
+        f'category: "{data["category"]}"\n'
+        f'tags: {json.dumps(tags)}\n'
+        'author: "AniTube Buzz"\n'
+        f'date: "{data["date"]}"\n'
+        f'image: "{image}"\n'
+        f'imageAlt: "{title_clean}"\n'
+        "featured: false\n"
+        "trending: false\n"
+        "draft: false\n"
+        f'source: "{data["url"]}"\n'
+        "---\n\n"
+    )
 
     if content:
         if content.startswith("---"):
@@ -346,68 +302,70 @@ source: "{data['url']}"
                 content = parts[2].strip()
         body = fm + content.strip()
     else:
-        body = fm + f"""## {data['title']}
-
-{data['summary']}
-
-"""
+        rows = ""
         if anime_info:
-            body += f"""### Anime Information
-
-| Detail | Info |
-|--------|------|
-| Japanese Title | {anime_info.get('title_jp', 'N/A')} |
-| Type | {anime_info.get('type', 'N/A')} |
-| Episodes | {anime_info.get('episodes', 'N/A')} |
-| Status | {anime_info.get('status', 'N/A')} |
-| Score | {anime_info.get('score', 'N/A')}/10 |
-| Genres | {', '.join(anime_info.get('genres', []))} |
-| Studios | {', '.join(anime_info.get('studios', []))} |
-
-"""
+            genres = ', '.join(anime_info.get('genres', []))
+            studios = ', '.join(anime_info.get('studios', []))
+            rows = (
+                "\n### Anime Information\n\n"
+                "| Detail | Info |\n"
+                "|--------|------|\n"
+                f"| Japanese Title | {anime_info.get('title_jp', 'N/A')} |\n"
+                f"| Type | {anime_info.get('type', 'N/A')} |\n"
+                f"| Episodes | {anime_info.get('episodes', 'N/A')} |\n"
+                f"| Status | {anime_info.get('status', 'N/A')} |\n"
+                f"| Score | {anime_info.get('score', 'N/A')}/10 |\n"
+                f"| Genres | {genres} |\n"
+                f"| Studios | {studios} |\n\n"
+            )
 
             if anime_info.get("synopsis"):
-                body += f"""### Synopsis
+                rows += (
+                    "### Synopsis\n\n"
+                    f"{anime_info['synopsis']}\n\n"
+                )
 
-{anime_info['synopsis']}
-
-"""
-
-        body += """### Why Fans Care
-
-This update matters for anime fans because it affects viewing trends, community discussion, and future expectations around the series.
-
-### What Happens Next
-
-More updates may follow as additional announcements, release details, or official confirmations become available.
-
-"""
+        body = (
+            fm
+            + f"## {data['title']}\n\n"
+            + f"{data['summary']}\n\n"
+            + rows
+            + "### Why Fans Care\n\n"
+            + "This update matters for fans following the series.\n\n"
+            + "### What Happens Next\n\n"
+            + "More details will follow as official announcements arrive.\n\n"
+        )
 
     if streaming_links:
-        body += f"""
-### Where to Watch (Official Only)
-
-| Platform | Link |
-|----------|------|
-| Crunchyroll | [Search on Crunchyroll]({streaming_links['crunchyroll']}) |
-| Netflix | [Search on Netflix]({streaming_links['netflix']}) |
-| Amazon Prime | [Search on Amazon]({streaming_links['amazon']}) |
-| HIDIVE | [Search on HIDIVE]({streaming_links['hidive']}) |
-
-> Availability depends on your region.
-
-"""
+        body += (
+            "\n### Where to Watch (Official Only)\n\n"
+            "| Platform | Link |\n"
+            "|----------|------|\n"
+            f"| Crunchyroll | [Search]({streaming_links['crunchyroll']}) |\n"
+            f"| Netflix | [Search]({streaming_links['netflix']}) |\n"
+            f"| Amazon | [Search]({streaming_links['amazon']}) |\n"
+            f"| HIDIVE | [Search]({streaming_links['hidive']}) |\n\n"
+            "> Availability depends on your region.\n\n"
+        )
 
     body += f"\n---\n\n*Source: [{data['source']}]({data['url']}) | AniTube Buzz*\n"
     return full_slug, body
 
 
 def save_article(slug, content):
-    posts_dir = os.path.join(os.path.dirname(__file__), "..", "src", "content", "posts")
+    posts_dir = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "src",
+        "content",
+        "posts"
+    )
     os.makedirs(posts_dir, exist_ok=True)
     path = os.path.join(posts_dir, f"{slug}.md")
+
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
+
     print(f"Saved: {path}")
     return path
 
@@ -436,7 +394,9 @@ def process_articles(articles):
         content = make_article(article, anime_info)
         meta = make_metadata(article, content)
 
-        slug, markdown = build_markdown(article, content, meta, anime_info, streaming_links)
+        slug, markdown = build_markdown(
+            article, content, meta, anime_info, streaming_links
+        )
         path = save_article(slug, markdown)
 
         processed.append({
