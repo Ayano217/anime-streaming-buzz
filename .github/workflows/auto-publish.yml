@@ -5,6 +5,10 @@ on:
     - cron: '0 */6 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: auto-publish-main
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -19,6 +23,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+          ref: main
 
       - name: Cache GGUF Model
         uses: actions/cache@v4
@@ -58,15 +63,26 @@ jobs:
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
+          git status --porcelain src/content/posts data/published.json
 
-      - name: Commit and Push
+      - name: Commit Changes
         if: steps.check.outputs.has_changes == 'true'
         run: |
           git config user.name "AniTube Buzz Bot"
           git config user.email "bot@anitubebuzz.com"
           git add src/content/posts data/published.json
-          git commit -m "Auto: New anime articles - $(date +'%Y-%m-%d %H:%M')"
-          git push
+          git commit -m "Auto: New anime articles - $(date +'%Y-%m-%d %H:%M')" || echo "Nothing to commit"
+
+      - name: Rebase with remote
+        if: steps.check.outputs.has_changes == 'true'
+        run: |
+          git fetch origin main
+          git pull --rebase origin main
+
+      - name: Push Changes
+        if: steps.check.outputs.has_changes == 'true'
+        run: |
+          git push origin main
 
       - name: Done
         run: echo "Done!"
