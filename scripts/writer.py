@@ -17,7 +17,7 @@ def get_anime_image(title):
     try:
         query = re.sub(r'[^\w\s]', '', title)[:50]
         url = f"https://api.jikan.moe/v4/anime?q={query}&limit=1"
-        res = requests.get(url, timeout=10)
+        res = requests.get(url, timeout=8)
         if res.status_code == 200:
             data = res.json()
             if data.get("data"):
@@ -30,7 +30,7 @@ def get_anime_image(title):
     try:
         query = re.sub(r'[^\w\s]', '', title)[:50]
         url = f"https://api.jikan.moe/v4/manga?q={query}&limit=1"
-        res = requests.get(url, timeout=10)
+        res = requests.get(url, timeout=8)
         if res.status_code == 200:
             data = res.json()
             if data.get("data"):
@@ -40,8 +40,10 @@ def get_anime_image(title):
     except:
         pass
 
-    seeds = ['anime-city', 'anime-sunset', 'manga-art', 'tokyo-night',
-             'neon-city', 'sakura-tree', 'cyber-tokyo', 'fantasy-world']
+    seeds = [
+        'anime-city', 'anime-sunset', 'manga-art', 'tokyo-night',
+        'neon-city', 'sakura-tree', 'cyber-tokyo', 'fantasy-world'
+    ]
     return f"https://picsum.photos/seed/{random.choice(seeds)}/800/450"
 
 
@@ -49,7 +51,7 @@ def get_anime_details(title):
     try:
         query = re.sub(r'[^\w\s]', '', title)[:50]
         url = f"https://api.jikan.moe/v4/anime?q={query}&limit=1"
-        res = requests.get(url, timeout=10)
+        res = requests.get(url, timeout=8)
         if res.status_code == 200:
             data = res.json()
             if data.get("data"):
@@ -59,13 +61,12 @@ def get_anime_details(title):
                     "episodes": anime.get("episodes", "Unknown"),
                     "status": anime.get("status", "Unknown"),
                     "score": anime.get("score", "N/A"),
-                    "synopsis": anime.get("synopsis", "")[:500],
-                    "genres": [g["name"] for g in anime.get("genres", [])],
-                    "studios": [s["name"] for s in anime.get("studios", [])],
+                    "synopsis": anime.get("synopsis", "")[:320],
+                    "genres": [g["name"] for g in anime.get("genres", [])][:5],
+                    "studios": [s["name"] for s in anime.get("studios", [])][:3],
                     "type": anime.get("type", ""),
                     "url": anime.get("url", ""),
                 }
-        time.sleep(1)
     except:
         pass
     return None
@@ -81,7 +82,7 @@ def get_streaming_links(title):
     }
 
 
-def call_llama(prompt, max_tokens=1500):
+def call_llama(prompt, max_tokens=700):
     if not os.path.exists(MODEL_PATH):
         print(f"ERROR: Model not found at {MODEL_PATH}")
         return None
@@ -90,7 +91,7 @@ def call_llama(prompt, max_tokens=1500):
         print("Running local GGUF model...")
 
         full_prompt = f"""<|im_start|>system
-You are an expert anime and manga journalist. Write detailed, engaging, SEO-friendly articles. Use markdown formatting with ## headings. Be enthusiastic but factual. Never invent specific facts.<|im_end|>
+You are an expert anime journalist. Write clear, useful, SEO-friendly anime articles in markdown. Do not invent facts. Keep details practical and relevant.<|im_end|>
 <|im_start|>user
 {prompt}<|im_end|>
 <|im_start|>assistant
@@ -101,16 +102,18 @@ You are an expert anime and manga journalist. Write detailed, engaging, SEO-frie
                 "llama-cli",
                 "-m", MODEL_PATH,
                 "-p", full_prompt,
+                "-c", "2048",
                 "-n", str(max_tokens),
-                "--temp", "0.7",
+                "-t", "2",
+                "--temp", "0.6",
                 "--top-p", "0.9",
-                "--repeat-penalty", "1.1",
+                "--repeat-penalty", "1.08",
                 "--no-display-prompt",
                 "-ngl", "0"
             ],
             capture_output=True,
             text=True,
-            timeout=300
+            timeout=180
         )
 
         output = result.stdout.strip()
@@ -123,10 +126,10 @@ You are an expert anime and manga journalist. Write detailed, engaging, SEO-frie
             return output
 
         if result.stderr:
-            print(f"Model stderr: {result.stderr[:200]}")
+            print(f"Model stderr: {result.stderr[:300]}")
 
     except subprocess.TimeoutExpired:
-        print("Model timeout (5 min)")
+        print("Model timeout (3 min)")
     except Exception as e:
         print(f"Model error: {e}")
 
@@ -137,17 +140,17 @@ def make_article(data, anime_info=None):
     extra = ""
     if anime_info:
         extra = f"""
-Anime Details:
-- Japanese: {anime_info.get('title_jp', '')}
+Anime details:
+- Japanese title: {anime_info.get('title_jp', '')}
 - Type: {anime_info.get('type', '')}
 - Episodes: {anime_info.get('episodes', '')}
 - Score: {anime_info.get('score', '')}
 - Genres: {', '.join(anime_info.get('genres', []))}
 - Studios: {', '.join(anime_info.get('studios', []))}
-- Synopsis: {anime_info.get('synopsis', '')[:300]}
+- Synopsis: {anime_info.get('synopsis', '')}
 """
 
-    prompt = f"""Write a detailed anime news article about this:
+    prompt = f"""Write a detailed anime article from this source info.
 
 Title: {data['title']}
 Source: {data['source']}
@@ -155,17 +158,21 @@ Category: {data['category']}
 Summary: {data['summary']}
 {extra}
 
-Write 600-1000 words with these sections:
+Rules:
+- 500 to 800 words
+- markdown only
+- no frontmatter
+- use these sections:
 ## Introduction
-## Story & Details
-## Why Fans Should Care
-## Community Reactions
+## Main Details
+## Why Fans Care
 ## Where to Watch
-## What to Expect Next
+## What Happens Next
+- mention only official platforms
+- do not invent specific facts
+- make it readable and useful"""
 
-Use markdown. Be detailed. No frontmatter."""
-
-    return call_llama(prompt, 1500)
+    return call_llama(prompt, 700)
 
 
 def make_metadata(data, content):
@@ -174,7 +181,13 @@ def make_metadata(data, content):
 
     words = data["title"].lower().split()
     base_tags = data.get("tags", ["anime", "news"])
-    extra_tags = [w for w in words if len(w) > 3 and w not in ['the', 'and', 'for', 'with', 'from', 'this', 'that', 'episode', 'season']]
+    extra_tags = [
+        w for w in words
+        if len(w) > 3 and w not in [
+            'the', 'and', 'for', 'with', 'from', 'this',
+            'that', 'episode', 'season'
+        ]
+    ]
     all_tags = list(set(base_tags + extra_tags[:5]))[:8]
 
     return {
@@ -230,8 +243,7 @@ source: "{data['url']}"
 
 """
         if anime_info:
-            body += f"""
-### Anime Information
+            body += f"""### Anime Information
 
 | Detail | Info |
 |--------|------|
@@ -244,6 +256,7 @@ source: "{data['url']}"
 | Studios | {', '.join(anime_info.get('studios', []))} |
 
 """
+
             if anime_info.get("synopsis"):
                 body += f"""### Synopsis
 
@@ -251,13 +264,13 @@ source: "{data['url']}"
 
 """
 
-        body += """### What Fans Should Know
+        body += """### Why Fans Care
 
-This is a developing story. Stay tuned for more updates as new information becomes available.
+This update matters for anime fans because it affects viewing trends, community discussion, and future expectations around the series.
 
-### Community Discussion
+### What Happens Next
 
-Fans across social media are actively discussing this news. Join the conversation on Reddit, Twitter, and Discord.
+More updates may follow as additional announcements, release details, or official confirmations become available.
 
 """
 
@@ -272,7 +285,7 @@ Fans across social media are actively discussing this news. Join the conversatio
 | Amazon Prime | [Search on Amazon]({streaming_links['amazon']}) |
 | HIDIVE | [Search on HIDIVE]({streaming_links['hidive']}) |
 
-> Availability varies by region.
+> Availability depends on your region.
 
 """
 
@@ -295,16 +308,15 @@ def process_articles(articles):
         return []
 
     processed = []
+
     for i, article in enumerate(articles):
         print(f"\n{'='*60}")
         print(f"Article {i+1}/{len(articles)}: {article['title'][:60]}")
         print(f"{'='*60}")
 
-        print("Fetching anime details...")
         anime_info = get_anime_details(article['title'])
         time.sleep(1)
 
-        print("Fetching image...")
         real_image = get_anime_image(article['title'])
         if real_image:
             article['image'] = real_image
@@ -312,9 +324,7 @@ def process_articles(articles):
 
         streaming_links = get_streaming_links(article['title'])
 
-        print("Generating article with local model...")
         content = make_article(article, anime_info)
-
         meta = make_metadata(article, content)
 
         slug, markdown = build_markdown(article, content, meta, anime_info, streaming_links)
@@ -328,6 +338,6 @@ def process_articles(articles):
         })
 
         if i < len(articles) - 1:
-            time.sleep(3)
+            time.sleep(2)
 
     return processed
