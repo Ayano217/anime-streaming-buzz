@@ -1,0 +1,114 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout title="Terms of Service">
+  <Header />
+
+  <main class="legal-page">
+    <div class="container">
+      <div class="legal-content glass">
+        <h1 class="gradient-text">Terms of Service</h1>
+        <p class="legal-date">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+
+        <h2>Acceptance of Terms</h2>
+        <p>By accessing AniTube Buzz, you agree to these terms. If you disagree, please do not use our website.</p>
+
+        <h2>Content</h2>
+        <p>All articles, images, and content on this website are for informational and entertainment purposes only. We aggregate and report on anime, manga, and streaming news from publicly available sources.</p>
+
+        <h2>Intellectual Property</h2>
+        <ul>
+          <li>Anime/manga images belong to their respective creators and studios</li>
+          <li>We use images under fair use for news reporting and commentary</li>
+          <li>Original articles and site design are owned by AniTube Buzz</li>
+          <li>All trademarks belong to their respective owners</li>
+        </ul>
+
+        <h2>User Conduct</h2>
+        <p>Users must not:</p>
+        <ul>
+          <li>Use the site for illegal purposes</li>
+          <li>Attempt to disrupt the site's functionality</li>
+          <li>Copy or redistribute our content without permission</li>
+          <li>Use automated tools to scrape our content</li>
+        </ul>
+
+        <h2>Third-Party Links</h2>
+        <p>Our site contains links to official streaming platforms and external sources. We are not responsible for the content or privacy practices of these sites.</p>
+
+        <h2>Disclaimers</h2>
+        <ul>
+          <li>Content is provided "as is" without warranties</li>
+          <li>We strive for accuracy but cannot guarantee all information is correct</li>
+          <li>Streaming availability varies by region</li>
+          <li>We are not affiliated with any anime studio or streaming platform</li>
+        </ul>
+
+        <h2>Changes</h2>
+        <p>We may modify these terms at any time. Continued use of the site constitutes acceptance of updated terms.</p>
+
+        <h2>Contact</h2>
+        <p>Questions about these terms: <strong>anitubebuzz@gmail.com</strong></p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .legal-page {
+    padding-top: calc(var(--header-height) + 40px);
+    padding-bottom: 40px;
+  }
+
+  .legal-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px;
+    line-height: 1.8;
+  }
+
+  .legal-content h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .legal-date {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 30px;
+  }
+
+  .legal-content h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 30px 0 12px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+  }
+
+  .legal-content p {
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+  }
+
+  .legal-content ul {
+    margin: 12px 0;
+    padding-left: 24px;
+  }
+
+  .legal-content li {
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+  }
+
+  @media (max-width: 600px) {
+    .legal-content { padding: 24px; }
+    .legal-content h1 { font-size: 1.8rem; }
+  }
+</style>
