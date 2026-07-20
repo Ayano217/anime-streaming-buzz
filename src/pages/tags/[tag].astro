@@ -5,13 +5,20 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import NewsCard from '../../components/NewsCard.astro';
 
+function toSlug(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export async function getStaticPaths() {
   const posts = await getCollection('posts', ({ data }) => !data.draft);
 
   const allTags = [...new Set(posts.flatMap(p => p.data.tags))];
 
   return allTags.map(tag => {
-    const slug = tag.toLowerCase().replace(/\s+/g, '-');
+    const slug = toSlug(tag);
     const filteredPosts = posts
       .filter(p => p.data.tags.includes(tag))
       .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
