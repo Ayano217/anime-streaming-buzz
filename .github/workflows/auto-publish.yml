@@ -7,7 +7,7 @@ on:
 
 concurrency:
   group: auto-publish-main
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   publish:
@@ -24,6 +24,11 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
           ref: main
+
+      - name: Sync latest main
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
 
       - name: Cache GGUF Model
         uses: actions/cache@v4
@@ -70,19 +75,13 @@ jobs:
         run: |
           git config user.name "AniTube Buzz Bot"
           git config user.email "bot@anitubebuzz.com"
-          git add src/content/posts data/published.json
+          git add -A src/content/posts data/published.json
           git commit -m "Auto: New anime articles - $(date +'%Y-%m-%d %H:%M')" || echo "Nothing to commit"
-
-      - name: Rebase with remote
-        if: steps.check.outputs.has_changes == 'true'
-        run: |
-          git fetch origin main
-          git pull --rebase origin main
 
       - name: Push Changes
         if: steps.check.outputs.has_changes == 'true'
         run: |
-          git push origin main
+          git push origin HEAD:main
 
       - name: Done
         run: echo "Done!"
