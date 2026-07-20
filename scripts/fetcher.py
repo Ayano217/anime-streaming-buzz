@@ -5,6 +5,7 @@ import requests
 import json
 import os
 import re
+import random
 from datetime import datetime
 from dateutil import parser as dateparser
 
@@ -38,11 +39,25 @@ def is_anime_related(title, summary):
         'funimation', 'one piece', 'naruto', 'demon slayer',
         'attack on titan', 'jujutsu', 'solo leveling', 'blue lock',
         'chainsaw man', 'my hero academia', 'bleach', 'dragon ball',
-        'season', 'episode', 'chapter', 'adaptation', 'simulcast',
-        'ova', 'movie', 'studio', 'mappa', 'wit', 'ufotable'
+        'episode', 'season', 'chapter', 'adaptation', 'simulcast',
+        'ova', 'movie', 'studio', 'mappa', 'wit', 'ufotable',
+        'webtoon', 'manhwa', 'light novel', 'isekai'
     ]
     text = f"{title} {summary}".lower()
     return any(kw in text for kw in keywords)
+
+
+def get_fallback_image():
+    anime_seeds = [
+        'anime-city', 'anime-sunset', 'anime-sky',
+        'manga-art', 'tokyo-night', 'japan-temple',
+        'sakura-tree', 'neon-city', 'anime-world',
+        'cyber-tokyo', 'anime-school', 'fantasy-world',
+        'dragon-realm', 'sword-hero', 'magic-girl',
+        'mecha-battle', 'ninja-shadow', 'demon-fight'
+    ]
+    seed = random.choice(anime_seeds)
+    return f"https://picsum.photos/seed/{seed}/800/450"
 
 
 def fetch_all_sources():
@@ -92,24 +107,18 @@ def fetch_all_sources():
                     image = entry.media_thumbnail[0].get('url', '')
                 elif hasattr(entry, 'media_content') and entry.media_content:
                     image = entry.media_content[0].get('url', '')
+                elif hasattr(entry, 'enclosures') and entry.enclosures:
+                    for enc in entry.enclosures:
+                        if 'image' in enc.get('type', ''):
+                            image = enc.get('href', '')
+                            break
 
                 if not image:
-    anime_seeds = [
-        'anime-city', 'anime-sunset', 'anime-sky',
-        'manga-art', 'tokyo-night', 'japan-temple',
-        'sakura-tree', 'neon-city', 'anime-world',
-        'cyber-tokyo', 'anime-school', 'fantasy-world',
-        'dragon-realm', 'sword-hero', 'magic-girl',
-        'mecha-battle', 'ninja-shadow', 'demon-fight',
-        'ocean-adventure', 'space-anime'
-    ]
-    import random
-    seed = random.choice(anime_seeds)
-    image = f"https://picsum.photos/seed/{seed}/800/450"
+                    image = get_fallback_image()
 
                 all_articles.append({
                     'title': title,
-                    'summary': summary[:500] if summary else title,
+                    'summary': summary[:700] if summary else title,
                     'url': link,
                     'date': date_str,
                     'image': image,
@@ -122,11 +131,10 @@ def fetch_all_sources():
             print(f"Error fetching {source['name']}: {e}")
             continue
 
-    # Remove duplicates
     seen = set()
     unique = []
     for a in all_articles:
-        key = a['title'].lower()[:50]
+        key = a['title'].lower()[:60]
         if key not in seen:
             seen.add(key)
             unique.append(a)
