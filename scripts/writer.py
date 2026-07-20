@@ -14,16 +14,73 @@ MODEL_PATH = os.path.expanduser("~/.cache/gguf-models/qwen2.5-1.5b-instruct-q4_k
 
 
 def get_anime_image(title):
+    """Try multiple searches to find real anime image"""
+
+    clean_title = re.sub(r'[^\w\s]', '', title).strip()
+
+    # Split title into searchable parts
+    search_terms = [
+        clean_title[:50],
+        ' '.join(clean_title.split()[:3]),
+        ' '.join(clean_title.split()[:2]),
+    ]
+
+    # Try anime search
+    for term in search_terms:
+        try:
+            url = f"https://api.jikan.moe/v4/anime?q={term}&limit=3"
+            res = requests.get(url, timeout=8)
+            if res.status_code == 200:
+                data = res.json()
+                for item in data.get("data", []):
+                    img = item.get("images", {}).get("jpg", {}).get("large_image_url", "")
+                    if img and "questionmark" not in img:
+                        print(f"Found anime image: {item.get('title', '')[:30]}")
+                        return img
+            time.sleep(1)
+        except:
+            pass
+
+    # Try manga search
+    for term in search_terms[:2]:
+        try:
+            url = f"https://api.jikan.moe/v4/manga?q={term}&limit=3"
+            res = requests.get(url, timeout=8)
+            if res.status_code == 200:
+                data = res.json()
+                for item in data.get("data", []):
+                    img = item.get("images", {}).get("jpg", {}).get("large_image_url", "")
+                    if img and "questionmark" not in img:
+                        print(f"Found manga image: {item.get('title', '')[:30]}")
+                        return img
+            time.sleep(1)
+        except:
+            pass
+
+    # Try characters search
     try:
-        query = re.sub(r'[^\w\s]', '', title)[:50]
-        url = f"https://api.jikan.moe/v4/anime?q={query}&limit=1"
+        first_word = clean_title.split()[0] if clean_title.split() else "anime"
+        url = f"https://api.jikan.moe/v4/characters?q={first_word}&limit=1"
         res = requests.get(url, timeout=8)
         if res.status_code == 200:
             data = res.json()
             if data.get("data"):
-                img = data["data"][0].get("images", {}).get("jpg", {}).get("large_image_url", "")
+                img = data["data"][0].get("images", {}).get("jpg", {}).get("image_url", "")
                 if img:
                     return img
+    except:
+        pass
+
+    # Final fallback - themed placeholder
+    seeds = [
+        'anime-action', 'anime-hero', 'anime-battle',
+        'manga-cover', 'tokyo-neon', 'sakura-night',
+        'anime-girl', 'anime-boy', 'dragon-fire',
+        'sword-fight', 'magic-spell', 'mecha-robot',
+        'ninja-run', 'pirate-ship', 'demon-king',
+        'school-anime', 'fantasy-castle', 'space-ship'
+    ]
+    return f"https://picsum.photos/seed/{random.choice(seeds)}/800/450"
     except:
         pass
 
