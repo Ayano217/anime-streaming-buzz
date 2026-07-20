@@ -1,0 +1,73 @@
+---
+export interface Props {
+  url: string;
+  title?: string;
+}
+
+const { url, title = "Video" } = Astro.props;
+
+function getEmbedUrl(videoUrl: string): string | null {
+  // YouTube
+  const ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+
+  // Dailymotion
+  const dmMatch = videoUrl.match(/dailymotion\.com\/video\/([a-zA-Z0-9]+)/);
+  if (dmMatch) return `https://www.dailymotion.com/embed/video/${dmMatch[1]}`;
+
+  // Rumble
+  const rmMatch = videoUrl.match(/rumble\.com\/embed\/([a-zA-Z0-9]+)/);
+  if (rmMatch) return videoUrl;
+
+  return null;
+}
+
+const embedUrl = getEmbedUrl(url);
+---
+
+{embedUrl && (
+  <div class="video-embed">
+    <p class="video-title">▶️ {title}</p>
+    <div class="video-wrapper">
+      <iframe
+        src={embedUrl}
+        title={title}
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        loading="lazy"
+      ></iframe>
+    </div>
+  </div>
+)}
+
+<style>
+  .video-embed {
+    margin: 24px 0;
+  }
+
+  .video-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+  }
+
+  .video-wrapper {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+  }
+
+  .video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+</style>
