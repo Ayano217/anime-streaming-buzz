@@ -14,16 +14,41 @@ MODEL_PATH = os.path.expanduser("~/.cache/gguf-models/qwen2.5-1.5b-instruct-q4_k
 
 
 def get_anime_image(title):
-    """Try multiple searches to find real anime image"""
+    search_terms = extract_search_terms(title)
 
-    clean_title = re.sub(r'[^\w\s]', '', title).strip()
+    # Anime search
+    for term in search_terms:
+        try:
+            url = f"https://api.jikan.moe/v4/anime?q={term}&limit=5"
+            res = requests.get(url, timeout=8)
+            if res.status_code == 200:
+                data = res.json()
+                for item in data.get("data", []):
+                    img = item.get("images", {}).get("jpg", {}).get("large_image_url", "")
+                    if img and "questionmark" not in img:
+                        print(f"Found anime image for '{term}': {item.get('title', '')}")
+                        return img
+            time.sleep(1)
+        except Exception as e:
+            print(f"Anime image search error: {e}")
 
-    # Split title into searchable parts
-    search_terms = [
-        clean_title[:50],
-        ' '.join(clean_title.split()[:3]),
-        ' '.join(clean_title.split()[:2]),
-    ]
+    # Manga search
+    for term in search_terms[:3]:
+        try:
+            url = f"https://api.jikan.moe/v4/manga?q={term}&limit=5"
+            res = requests.get(url, timeout=8)
+            if res.status_code == 200:
+                data = res.json()
+                for item in data.get("data", []):
+                    img = item.get("images", {}).get("jpg", {}).get("large_image_url", "")
+                    if img and "questionmark" not in img:
+                        print(f"Found manga image for '{term}': {item.get('title', '')}")
+                        return img
+            time.sleep(1)
+        except Exception as e:
+            print(f"Manga image search error: {e}")
+
+    return ""
 
     # Try anime search
     for term in search_terms:
@@ -127,6 +152,33 @@ def get_anime_details(title):
     except:
         pass
     return None
+def extract_search_terms(title):
+    clean = re.sub(r'[^\w\s:-]', '', title).strip()
+
+    parts = re.split(r'[:\-–—|]', clean)
+    candidates = []
+
+    if parts:
+        candidates.append(parts[0].strip())
+
+    candidates.append(clean)
+    candidates.append(' '.join(clean.split()[:4]))
+    candidates.append(' '.join(clean.split()[:3]))
+    candidates.append(' '.join(clean.split()[:2]))
+
+    noise = [
+        'episode', 'season', 'chapter', 'review', 'recap',
+        'news', 'officially', 'confirmed', 'trailer', 'movie'
+    ]
+
+    final_terms = []
+    for c in candidates:
+        words = [w for w in c.split() if w.lower() not in noise]
+        term = ' '.join(words).strip()
+        if term and term not in final_terms:
+            final_terms.append(term[:50])
+
+    return final_terms[:5]
 
 
 def get_streaming_links(title):
