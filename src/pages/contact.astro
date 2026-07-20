@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout title="Contact Us">
+  <Header />
+
+  <main class="legal-page">
+    <div class="container">
+      <div class="legal-content glass">
+        <h1 class="gradient-text">Contact Us</h1>
+
+        <p>Have questions, feedback, or business inquiries? We'd love to hear from you!</p>
+
+        <h2>General Inquiries</h2>
+        <p>📧 Email: <strong>anitubebuzz@gmail.com</strong></p>
+
+        <h2>DMCA / Copyright</h2>
+        <p>For copyright-related concerns, please visit our <a href="/dmca">DMCA Policy</a> page.</p>
+
+        <h2>Advertising</h2>
+        <p>For advertising and partnership opportunities, contact us at the email above.</p>
+
+        <h2>Social Media</h2>
+        <ul>
+          <li>Reddit: Follow anime discussions on r/anime</li>
+          <li>Twitter/X: Follow us for updates</li>
+        </ul>
+
+        <h2>Response Time</h2>
+        <p>We typically respond within 24-48 hours.</p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .legal-page {
+    padding-top: calc(var(--header-height) + 40px);
+    padding-bottom: 40px;
+  }
+
+  .legal-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px;
+    line-height: 1.8;
+  }
+
+  .legal-content h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 20px; }
+  .legal-content h2 { font-size: 1.4rem; font-weight: 700; margin: 30px 0 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+  .legal-content p { margin-bottom: 16px; color: var(--text-secondary); }
+  .legal-content ul { margin: 12px 0; padding-left: 24px; }
+  .legal-content li { margin-bottom: 6px; color: var(--text-secondary); }
+  .legal-content a { color: var(--accent-primary); }
+
+  @media (max-width: 600px) {
+    .legal-content { padding: 24px; }
+    .legal-content h1 { font-size: 1.8rem; }
+  }
+</style>
