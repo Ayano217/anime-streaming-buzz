@@ -1,0 +1,72 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout title="DMCA Policy">
+  <Header />
+
+  <main class="legal-page">
+    <div class="container">
+      <div class="legal-content glass">
+        <h1 class="gradient-text">DMCA Policy</h1>
+
+        <h2>Copyright Notice</h2>
+        <p>AniTube Buzz respects the intellectual property rights of others. All anime and manga images, names, and trademarks belong to their respective creators, studios, and publishers.</p>
+
+        <h2>Fair Use</h2>
+        <p>We use images and references under fair use for:</p>
+        <ul>
+          <li>News reporting and commentary</li>
+          <li>Educational and informational purposes</li>
+          <li>Non-commercial use</li>
+        </ul>
+
+        <h2>Filing a DMCA Complaint</h2>
+        <p>If you believe content on our site infringes your copyright, please send a DMCA notice to:</p>
+        <p><strong>Email: anitubebuzz@gmail.com</strong></p>
+
+        <p>Your notice must include:</p>
+        <ul>
+          <li>Description of the copyrighted work</li>
+          <li>URL of the infringing content on our site</li>
+          <li>Your contact information</li>
+          <li>A statement that you have a good faith belief the use is unauthorized</li>
+          <li>A statement under penalty of perjury that the information is accurate</li>
+          <li>Your physical or electronic signature</li>
+        </ul>
+
+        <h2>Response</h2>
+        <p>We will respond to valid DMCA notices within 48 hours and remove infringing content promptly.</p>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</BaseLayout>
+
+<style>
+  .legal-page {
+    padding-top: calc(var(--header-height) + 40px);
+    padding-bottom: 40px;
+  }
+
+  .legal-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px;
+    line-height: 1.8;
+  }
+
+  .legal-content h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 20px; }
+  .legal-content h2 { font-size: 1.4rem; font-weight: 700; margin: 30px 0 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+  .legal-content p { margin-bottom: 16px; color: var(--text-secondary); }
+  .legal-content ul { margin: 12px 0; padding-left: 24px; }
+  .legal-content li { margin-bottom: 6px; color: var(--text-secondary); }
+
+  @media (max-width: 600px) {
+    .legal-content { padding: 24px; }
+    .legal-content h1 { font-size: 1.8rem; }
+  }
+</style>
