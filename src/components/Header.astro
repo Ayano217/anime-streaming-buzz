@@ -199,7 +199,9 @@ const navLinks = [
 </style>
 
 <script is:inline>
-  document.getElementById('themeToggle')?.addEventListener('click', () => {
+  document.getElementById('searchToggle')?.addEventListener('click', () => {
+    window.location.href = '/search';
+});
     const html = document.documentElement;
     const current = html.getAttribute('data-theme');
     const next = current === 'dark' ? 'light' : 'dark';
