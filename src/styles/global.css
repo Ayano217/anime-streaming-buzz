@@ -98,12 +98,25 @@ body::before {
   width: 100%;
   height: 100%;
   background:
-    radial-gradient(ellipse at 15% 50%, rgba(136, 51, 255, 0.07) 0%, transparent 50%),
-    radial-gradient(ellipse at 85% 20%, rgba(255, 51, 102, 0.05) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 80%, rgba(0, 204, 255, 0.04) 0%, transparent 50%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M50 15 L55 30 L70 30 L58 40 L62 55 L50 45 L38 55 L42 40 L30 30 L45 30Z' fill='rgba(255,51,102,0.02)'/%3E%3C/svg%3E");
+    radial-gradient(ellipse at 10% 20%, rgba(255, 51, 102, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 80%, rgba(136, 51, 255, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(0, 204, 255, 0.03) 0%, transparent 60%),
+    radial-gradient(circle at 20% 70%, rgba(255, 204, 0, 0.03) 0%, transparent 40%);
   pointer-events: none;
   z-index: -2;
+  animation: bg-shift 15s ease-in-out infinite alternate;
+}
+
+@keyframes bg-shift {
+  0% {
+    filter: hue-rotate(0deg) brightness(1);
+  }
+  50% {
+    filter: hue-rotate(15deg) brightness(1.02);
+  }
+  100% {
+    filter: hue-rotate(-10deg) brightness(0.98);
+  }
 }
 
 body::after {
@@ -114,17 +127,36 @@ body::after {
   width: 100%;
   height: 100%;
   background-image:
-    linear-gradient(rgba(255, 51, 102, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 51, 102, 0.02) 1px, transparent 1px);
-  background-size: 60px 60px;
+    radial-gradient(1.5px 1.5px at 10% 15%, rgba(255, 51, 102, 0.15), transparent),
+    radial-gradient(1.5px 1.5px at 30% 45%, rgba(0, 204, 255, 0.12), transparent),
+    radial-gradient(1.5px 1.5px at 50% 75%, rgba(136, 51, 255, 0.1), transparent),
+    radial-gradient(1.5px 1.5px at 70% 25%, rgba(255, 204, 0, 0.08), transparent),
+    radial-gradient(1.5px 1.5px at 85% 65%, rgba(0, 255, 136, 0.08), transparent),
+    radial-gradient(1px 1px at 15% 85%, rgba(255, 51, 102, 0.06), transparent),
+    radial-gradient(1px 1px at 60% 10%, rgba(0, 204, 255, 0.06), transparent),
+    radial-gradient(1px 1px at 90% 90%, rgba(136, 51, 255, 0.06), transparent);
   pointer-events: none;
   z-index: -1;
-  animation: grid-move 20s linear infinite;
+  animation: particles-float 20s ease-in-out infinite alternate;
 }
 
-@keyframes grid-move {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(60px, 60px); }
+@keyframes particles-float {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.7;
+  }
+  33% {
+    transform: translate(10px, -15px) scale(1.02);
+    opacity: 0.85;
+  }
+  66% {
+    transform: translate(-8px, 10px) scale(0.98);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate(5px, -5px) scale(1.01);
+    opacity: 0.8;
+  }
 }
 
 /* ---------- Links ---------- */
