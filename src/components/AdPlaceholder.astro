@@ -1,47 +1,118 @@
 ---
-import { adSlots } from '../config/ads';
+import NewsCard from './NewsCard.astro';
 
 export interface Props {
-  slot?: string;
-  size?: string;
-  label?: string;
+  title: string;
+  emoji: string;
+  posts: Array<{
+    title: string;
+    excerpt: string;
+    category: string;
+    date: string;
+    readTime: string;
+    image: string;
+    slug: string;
+    badgeType?: string;
+  }>;
 }
 
-const {
-  slot: adSlot = "default"
-} = Astro.props;
+const { title, emoji, posts } = Astro.props;
 
-const adMarkup = adSlots[adSlot] ?? '';
-const hasAd = adMarkup.trim().length > 0;
+const categorySlug = title
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-+|-+$/g, '');
 ---
 
-{hasAd && (
-  <div class="ad-container" data-ad-slot={adSlot}>
-    <div class="ad-wrapper">
-      <div class="ad-live" set:html={adMarkup}></div>
+{posts.length > 0 && (
+  <section class="cat-section section" id={categorySlug}>
+    <div class="cat-header">
+      <div class="cat-header-left">
+        <span class="cat-emoji">{emoji}</span>
+        <h2 class="cat-title">{title}</h2>
+        <div class="cat-line"></div>
+      </div>
+      <a href={`/category/${categorySlug}`} class="btn-outline">
+        View All →
+      </a>
     </div>
-  </div>
+    <div class="cat-grid">
+      {posts.map((post, index) => (
+        <div class="cat-card-wrap" style={`animation-delay: ${index * 0.08}s`}>
+          <NewsCard {...post} />
+        </div>
+      ))}
+    </div>
+  </section>
 )}
 
 <style>
-  .ad-container {
-    width: 100%;
+  .cat-section {
+    padding: 40px 0;
+  }
+
+  .cat-header {
     display: flex;
-    justify-content: center;
-    padding: 20px 0;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 16px;
   }
 
-  .ad-wrapper {
-    width: 100%;
-    max-width: 728px;
+  .cat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
-  .ad-live {
-    min-height: 90px;
-    overflow: hidden;
+  .cat-emoji {
+    font-size: 1.5rem;
+    animation: float 3s ease-in-out infinite;
   }
 
-  @media (max-width: 768px) {
-    .ad-live { min-height: 60px; }
+  .cat-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+
+  .cat-line {
+    height: 3px;
+    width: 40px;
+    background: var(--accent-gradient);
+    border-radius: 2px;
+    margin-left: 4px;
+  }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .cat-card-wrap {
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+  }
+
+  @media (max-width: 900px) {
+    .cat-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    .cat-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .cat-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .cat-title {
+      font-size: 1.25rem;
+    }
   }
 </style>
