@@ -5,75 +5,53 @@
 <section class="video-section section">
   <div class="container">
     <div class="video-header">
-      <h2 class="section-title">🎬 Video Updates</h2>
-      <p class="video-subtitle">Latest videos from our channel</p>
+      <h2 class="section-title">🎬 Our Videos</h2>
+      <p class="video-subtitle">Watch our latest anime content</p>
     </div>
-
     <div class="video-grid" id="videoGrid">
-      <!-- Skeleton loading -->
-      <div class="video-skeleton skeleton"></div>
-      <div class="video-skeleton skeleton"></div>
-      <div class="video-skeleton skeleton"></div>
+      <div class="vid-empty">
+        <span class="vid-empty-icon">🎬</span>
+        <p>Loading videos...</p>
+      </div>
     </div>
-
-    <div class="video-load-more-wrap" id="loadMoreWrap" style="display:none;">
-      <button class="btn-primary" id="loadMoreBtn">Load More Videos</button>
+    <div class="video-load-wrap" id="loadWrap" style="display:none;">
+      <button class="btn-primary" id="loadBtn">Load More Videos</button>
     </div>
   </div>
 </section>
 
 <style>
   .video-section {
-    padding: 56px 0;
+    padding: 48px 0;
     position: relative;
-    overflow: hidden;
-  }
-
-  .video-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background:
-      radial-gradient(ellipse at 30% 50%, rgba(24, 119, 242, 0.04) 0%, transparent 60%),
-      radial-gradient(ellipse at 70% 50%, rgba(136, 51, 255, 0.04) 0%, transparent 60%);
-    pointer-events: none;
   }
 
   .video-header {
-    margin-bottom: 32px;
+    margin-bottom: 28px;
   }
 
   .video-subtitle {
     color: var(--text-muted);
     font-size: 0.92rem;
-    margin-top: -20px;
+    margin-top: -18px;
     margin-left: 16px;
   }
 
   .video-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 24px;
-    position: relative;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
   }
 
-  .video-skeleton {
-    height: 320px;
-    border-radius: var(--radius-lg);
-  }
-
-  /* Video Card */
   .vid-card {
-    border-radius: var(--radius-lg);
-    overflow: hidden;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
     transition: all var(--transition-normal);
+    text-decoration: none;
+    display: block;
     position: relative;
-    cursor: pointer;
   }
 
   .vid-card::before {
@@ -83,63 +61,46 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #1877f2, #8833ff, #00ccff);
+    background: linear-gradient(90deg, #1877f2, #8833ff);
     opacity: 0;
     transition: opacity var(--transition-fast);
-    z-index: 3;
+    z-index: 2;
   }
 
   .vid-card:hover {
     transform: translateY(-6px);
     border-color: rgba(24, 119, 242, 0.3);
-    box-shadow:
-      0 12px 40px rgba(0, 0, 0, 0.3),
-      0 0 20px rgba(24, 119, 242, 0.1);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(24, 119, 242, 0.1);
   }
 
   .vid-card:hover::before {
     opacity: 1;
   }
 
-  /* Thumbnail */
   .vid-thumb {
     position: relative;
     width: 100%;
     height: 200px;
     overflow: hidden;
-    background: #000;
+    background: var(--bg-secondary);
   }
 
-  .vid-thumb iframe {
+  .vid-thumb-img {
     width: 100%;
     height: 100%;
-    border: none;
+    object-fit: cover;
     transition: transform var(--transition-slow);
   }
 
-  .vid-card:hover .vid-thumb iframe {
-    transform: scale(1.03);
+  .vid-card:hover .vid-thumb-img {
+    transform: scale(1.08);
   }
 
-  /* Play overlay */
-  .vid-play-overlay {
+  .vid-play-btn {
     position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity var(--transition-fast);
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  .vid-card:hover .vid-play-overlay {
-    opacity: 1;
-  }
-
-  .play-icon {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: 56px;
     height: 56px;
     border-radius: 50%;
@@ -148,24 +109,39 @@
     align-items: center;
     justify-content: center;
     box-shadow: 0 0 30px rgba(255, 51, 102, 0.4);
-    animation: pulse-glow 2s infinite;
+    transition: all var(--transition-fast);
   }
 
-  .play-icon svg {
+  .vid-card:hover .vid-play-btn {
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 0 0 40px rgba(255, 51, 102, 0.6);
+  }
+
+  .vid-play-btn svg {
     width: 24px;
     height: 24px;
     fill: #fff;
     margin-left: 3px;
   }
 
-  /* Info */
+  .vid-duration {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
   .vid-info {
-    padding: 16px 18px;
-    position: relative;
+    padding: 14px 16px;
   }
 
   .vid-title {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 600;
     color: var(--text-primary);
     line-height: 1.4;
@@ -189,10 +165,7 @@
     color: var(--text-muted);
   }
 
-  .vid-source {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+  .vid-source-badge {
     padding: 2px 10px;
     border-radius: var(--radius-round);
     background: rgba(24, 119, 242, 0.1);
@@ -201,40 +174,34 @@
     font-size: 0.7rem;
   }
 
-  /* No videos */
   .vid-empty {
     grid-column: 1 / -1;
     text-align: center;
-    padding: 60px 24px;
+    padding: 48px;
     background: var(--bg-card);
     border-radius: var(--radius-lg);
     border: 1px dashed var(--border-color);
   }
 
   .vid-empty-icon {
-    font-size: 3rem;
+    font-size: 2.5rem;
     display: block;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     animation: float 3s ease-in-out infinite;
   }
 
   .vid-empty p {
     color: var(--text-muted);
-    font-size: 1rem;
   }
 
-  .video-load-more-wrap {
+  .video-load-wrap {
     text-align: center;
-    margin-top: 32px;
+    margin-top: 28px;
   }
 
   @media (max-width: 600px) {
     .video-grid {
       grid-template-columns: 1fr;
-    }
-
-    .vid-thumb {
-      height: 180px;
     }
   }
 </style>
@@ -242,111 +209,101 @@
 <script is:inline>
   document.addEventListener('DOMContentLoaded', function() {
     var grid = document.getElementById('videoGrid');
-    var loadMoreWrap = document.getElementById('loadMoreWrap');
-    var loadMoreBtn = document.getElementById('loadMoreBtn');
+    var loadWrap = document.getElementById('loadWrap');
+    var loadBtn = document.getElementById('loadBtn');
     if (!grid) return;
 
     var allVideos = [];
-    var showCount = 6;
+    var showCount = 9;
 
     function timeAgo(dateStr) {
       if (!dateStr) return '';
-      var now = new Date();
-      var date = new Date(dateStr);
-      var diff = Math.floor((now - date) / 1000);
+      var diff = Math.floor((new Date() - new Date(dateStr)) / 1000);
       if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
       if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
       if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric'
+      });
+    }
+
+    function formatDuration(seconds) {
+      if (!seconds) return '';
+      var m = Math.floor(seconds / 60);
+      var s = Math.floor(seconds % 60);
+      return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function getVideoThumb(video) {
+      var id = video.id || '';
+      return 'https://graph.facebook.com/' + id + '/thumbnails';
     }
 
     function renderVideos() {
       var visible = allVideos.slice(0, showCount);
 
-      grid.innerHTML = visible.map(function(video, index) {
-        var embedUrl = 'https://www.facebook.com/plugins/video.php?href='
-          + encodeURIComponent(video.permalink_url)
-          + '&show_text=false&width=560&height=314';
+      grid.innerHTML = visible.map(function(video, i) {
         var title = (video.title || video.description || 'Video Update').substring(0, 80);
         var time = timeAgo(video.created_time);
-        var delay = index * 0.08;
+        var duration = formatDuration(video.length);
+        var fbUrl = 'https://www.facebook.com' + (video.permalink_url || '');
+        var thumbUrl = 'https://picsum.photos/seed/fb-' + (video.id || i) + '/600/340';
+        var delay = i * 0.06;
 
         return ''
-          + '<div class="vid-card" style="animation:fadeInUp 0.5s ease forwards;animation-delay:' + delay + 's;opacity:0;">'
+          + '<a href="' + fbUrl + '" target="_blank" rel="noopener" class="vid-card"'
+          + ' style="animation:fadeInUp 0.5s ease forwards;animation-delay:' + delay + 's;opacity:0;">'
 
           + '<div class="vid-thumb">'
-          + '<iframe src="' + embedUrl + '"'
-          + ' scrolling="no"'
-          + ' allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"'
-          + ' allowfullscreen loading="lazy"></iframe>'
-          + '<div class="vid-play-overlay">'
-          + '<div class="play-icon">'
+          + '<img class="vid-thumb-img" src="' + thumbUrl + '" alt="' + title + '" loading="lazy" />'
+          + '<div class="vid-play-btn">'
           + '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'
           + '</div>'
-          + '</div>'
+          + (duration ? '<span class="vid-duration">' + duration + '</span>' : '')
           + '</div>'
 
           + '<div class="vid-info">'
           + '<p class="vid-title">' + title + '</p>'
           + '<div class="vid-meta">'
-          + '<span class="vid-source">📘 Facebook</span>'
+          + '<span class="vid-source-badge">📘 Facebook</span>'
           + (time ? '<span>' + time + '</span>' : '')
           + '</div>'
           + '</div>'
 
-          + '</div>';
+          + '</a>';
       }).join('');
 
-      // Load more button
       if (showCount < allVideos.length) {
         var remaining = allVideos.length - showCount;
-        loadMoreBtn.textContent = 'Load More (' + remaining + ' more)';
-        loadMoreWrap.style.display = 'block';
+        loadBtn.textContent = 'Load More (' + remaining + ' remaining)';
+        loadWrap.style.display = 'block';
       } else {
-        loadMoreWrap.style.display = 'none';
+        loadWrap.style.display = 'none';
       }
     }
 
-    if (loadMoreBtn) {
-      loadMoreBtn.addEventListener('click', function() {
-        showCount += 6;
+    if (loadBtn) {
+      loadBtn.addEventListener('click', function() {
+        showCount += 9;
         renderVideos();
-        // Smooth scroll to new content
-        setTimeout(function() {
-          var cards = grid.querySelectorAll('.vid-card');
-          if (cards.length > 0) {
-            cards[cards.length - 1].scrollIntoView({
-              behavior: 'smooth',
-              block: 'center'
-            });
-          }
-        }, 100);
       });
     }
 
     fetch('/facebook-videos.json')
       .then(function(r) {
-        if (!r.ok) throw new Error('not found');
+        if (!r.ok) throw new Error('fail');
         return r.json();
       })
       .then(function(videos) {
         if (!videos || videos.length === 0) {
-          grid.innerHTML = ''
-            + '<div class="vid-empty">'
-            + '<span class="vid-empty-icon">🎬</span>'
-            + '<p>Videos coming soon! Stay tuned.</p>'
-            + '</div>';
+          grid.innerHTML = '<div class="vid-empty"><span class="vid-empty-icon">🎬</span><p>Videos coming soon!</p></div>';
           return;
         }
         allVideos = videos;
         renderVideos();
       })
       .catch(function() {
-        grid.innerHTML = ''
-          + '<div class="vid-empty">'
-          + '<span class="vid-empty-icon">🎬</span>'
-          + '<p>Videos coming soon! Stay tuned.</p>'
-          + '</div>';
+        grid.innerHTML = '<div class="vid-empty"><span class="vid-empty-icon">🎬</span><p>Videos coming soon!</p></div>';
       });
   });
 </script>
