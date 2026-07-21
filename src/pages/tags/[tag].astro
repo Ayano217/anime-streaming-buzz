@@ -5,35 +5,38 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import NewsCard from '../../components/NewsCard.astro';
 
-function toSlug(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
 export async function getStaticPaths() {
   const posts = await getCollection('posts', ({ data }) => !data.draft);
 
   const allTags = [...new Set(posts.flatMap(p => p.data.tags))];
 
-  return allTags.map(tag => {
-    const slug = toSlug(tag);
-    const filteredPosts = posts
-      .filter(p => p.data.tags.includes(tag))
-      .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+  return allTags
+    .map(tag => {
+      const slug = tag
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
 
-    return {
-      params: { tag: slug },
-      props: { tag, posts: filteredPosts },
-    };
-  });
+      const filteredPosts = posts
+        .filter(p => p.data.tags.includes(tag))
+        .sort((a, b) =>
+          new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+        );
+
+      return {
+        params: { tag: slug },
+        props: { tag, posts: filteredPosts },
+      };
+    });
 }
 
 const { tag, posts } = Astro.props;
 ---
 
-<BaseLayout title={`#${tag} - Tagged Articles`} description={`All articles tagged with ${tag} on AniTube Buzz.`}>
+<BaseLayout
+  title={`#${tag} - Tagged Articles`}
+  description={`All articles tagged with ${tag} on AniTube Buzz.`}
+>
   <Header />
 
   <main class="tag-page">
@@ -41,7 +44,9 @@ const { tag, posts } = Astro.props;
       <div class="page-header">
         <span class="tag-hash">#</span>
         <h1>{tag}</h1>
-        <p class="page-subtitle">{posts.length} article{posts.length !== 1 ? 's' : ''}</p>
+        <p class="page-subtitle">
+          {posts.length} article{posts.length !== 1 ? 's' : ''}
+        </p>
       </div>
 
       <div class="posts-grid">
@@ -102,14 +107,10 @@ const { tag, posts } = Astro.props;
   }
 
   @media (max-width: 900px) {
-    .posts-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
+    .posts-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 600px) {
-    .posts-grid {
-      grid-template-columns: 1fr;
-    }
+    .posts-grid { grid-template-columns: 1fr; }
   }
 </style>
