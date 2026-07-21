@@ -11,28 +11,31 @@ const { title = "" } = Astro.props;
     <p>Share your thoughts about this anime!</p>
   </div>
 
-  <script
-    src="https://giscus.app/client.js"
-    data-repo="Ayano217/anime-streaming-buzz"
-    data-repo-id="YOUR_REPO_ID"
-    data-category="General"
-    data-category-id="YOUR_CATEGORY_ID"
-    data-mapping="pathname"
-    data-strict="0"
-    data-reactions-enabled="1"
-    data-emit-metadata="0"
-    data-input-position="top"
-    data-theme="dark"
-    data-lang="en"
-    data-loading="lazy"
-    crossorigin="anonymous"
-    async>
-  </script>
+  <div class="giscus-wrapper">
+    <script
+      src="https://giscus.app/client.js"
+      data-repo="Ayano217/anime-streaming-buzz"
+      data-repo-id="R_kgDOTcRihQ"
+      data-category="General"
+      data-category-id="DIC_kwDOTcRihc4DBokk"
+      data-mapping="pathname"
+      data-strict="0"
+      data-reactions-enabled="1"
+      data-emit-metadata="0"
+      data-input-position="top"
+      data-theme="dark"
+      data-lang="en"
+      data-loading="lazy"
+      crossorigin="anonymous"
+      async>
+    </script>
+  </div>
 </section>
 
 <style>
   .comments-section {
-    margin-top: 40px;
+    max-width: 760px;
+    margin: 40px auto;
     padding-top: 30px;
     border-top: 1px solid var(--border-color);
   }
@@ -50,5 +53,9 @@ const { title = "" } = Astro.props;
   .comments-header p {
     color: var(--text-muted);
     font-size: 0.9rem;
+  }
+
+  .giscus-wrapper {
+    min-height: 200px;
   }
 </style>
