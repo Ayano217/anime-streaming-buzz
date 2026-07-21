@@ -18,8 +18,9 @@ const { postSlug = "" } = Astro.props;
           type="text"
           id="commentName"
           class="comment-input"
-          placeholder="Your name"
+          placeholder="Your name (min 2 chars)"
           required
+          minlength="2"
           maxlength="50"
         />
         <input
@@ -34,26 +35,30 @@ const { postSlug = "" } = Astro.props;
       <textarea
         id="commentText"
         class="comment-textarea"
-        placeholder="Write your comment..."
+        placeholder="Write your comment (min 5 chars)..."
         required
+        minlength="5"
         maxlength="1000"
         rows="4"
       ></textarea>
       <div class="form-footer">
-        <span class="form-note">🔒 Your email is never shown or shared</span>
+        <span class="form-note">🔒 Email is never shown. Only your first name appears.</span>
         <button type="submit" class="btn-primary comment-submit-btn">
           Post Comment
         </button>
       </div>
+      <div class="form-error" id="formError"></div>
+      <div class="form-success" id="formSuccess"></div>
     </form>
   </div>
 
-  <div class="comments-list" id="commentsList">
-    <!-- Comments loaded from localStorage -->
-  </div>
+  <div class="comments-count" id="commentsCount"></div>
+
+  <div class="comments-list" id="commentsList"></div>
 
   <div class="no-comments" id="noComments">
-    <p>No comments yet. Be the first! 🎉</p>
+    <span class="no-comments-icon">💭</span>
+    <p>No comments yet. Be the first to share your thoughts!</p>
   </div>
 </section>
 
@@ -80,13 +85,17 @@ const { postSlug = "" } = Astro.props;
     font-size: 0.88rem;
   }
 
-  /* Form */
   .comment-form-wrap {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: 20px;
     margin-bottom: 28px;
+    transition: border-color var(--transition-fast);
+  }
+
+  .comment-form-wrap:focus-within {
+    border-color: rgba(255, 51, 102, 0.2);
   }
 
   .form-row {
@@ -107,7 +116,7 @@ const { postSlug = "" } = Astro.props;
     font-size: 0.92rem;
     font-family: var(--font-main);
     outline: none;
-    transition: border-color var(--transition-fast);
+    transition: all var(--transition-fast);
   }
 
   .comment-input:focus,
@@ -119,6 +128,14 @@ const { postSlug = "" } = Astro.props;
   .comment-input::placeholder,
   .comment-textarea::placeholder {
     color: var(--text-muted);
+  }
+
+  .comment-input:invalid:not(:placeholder-shown) {
+    border-color: #ff4444;
+  }
+
+  .comment-input:valid:not(:placeholder-shown) {
+    border-color: var(--accent-green);
   }
 
   .comment-textarea {
@@ -143,7 +160,45 @@ const { postSlug = "" } = Astro.props;
     flex-shrink: 0;
   }
 
-  /* Comments list */
+  .form-error {
+    margin-top: 12px;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 68, 68, 0.08);
+    border: 1px solid rgba(255, 68, 68, 0.2);
+    color: #ff4444;
+    font-size: 0.85rem;
+    display: none;
+  }
+
+  .form-error.visible {
+    display: block;
+    animation: fadeInUp 0.3s ease;
+  }
+
+  .form-success {
+    margin-top: 12px;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    background: rgba(0, 255, 136, 0.08);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    color: var(--accent-green);
+    font-size: 0.85rem;
+    display: none;
+  }
+
+  .form-success.visible {
+    display: block;
+    animation: fadeInUp 0.3s ease;
+  }
+
+  .comments-count {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+
   .comments-list {
     display: flex;
     flex-direction: column;
@@ -152,13 +207,20 @@ const { postSlug = "" } = Astro.props;
 
   .no-comments {
     text-align: center;
-    padding: 32px;
+    padding: 40px;
     color: var(--text-muted);
     font-size: 0.92rem;
   }
 
   .no-comments.hidden {
     display: none;
+  }
+
+  .no-comments-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 12px;
+    animation: float 3s ease-in-out infinite;
   }
 
   @media (max-width: 600px) {
@@ -182,6 +244,9 @@ const { postSlug = "" } = Astro.props;
     var form = document.getElementById('commentForm');
     var list = document.getElementById('commentsList');
     var noComments = document.getElementById('noComments');
+    var countDiv = document.getElementById('commentsCount');
+    var errorDiv = document.getElementById('formError');
+    var successDiv = document.getElementById('formSuccess');
     var pageKey = 'comments_' + window.location.pathname;
 
     function getComments() {
@@ -196,6 +261,24 @@ const { postSlug = "" } = Astro.props;
       localStorage.setItem(pageKey, JSON.stringify(comments));
     }
 
+    function showError(msg) {
+      errorDiv.textContent = '⚠️ ' + msg;
+      errorDiv.className = 'form-error visible';
+      successDiv.className = 'form-success';
+      setTimeout(function() {
+        errorDiv.className = 'form-error';
+      }, 4000);
+    }
+
+    function showSuccess(msg) {
+      successDiv.textContent = '✅ ' + msg;
+      successDiv.className = 'form-success visible';
+      errorDiv.className = 'form-error';
+      setTimeout(function() {
+        successDiv.className = 'form-success';
+      }, 3000);
+    }
+
     function timeAgo(dateStr) {
       var now = new Date();
       var date = new Date(dateStr);
@@ -204,17 +287,20 @@ const { postSlug = "" } = Astro.props;
       if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
       if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
       if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
-      return date.toLocaleDateString();
+      return date.toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric'
+      });
     }
 
-    function getInitials(name) {
-      return name.charAt(0).toUpperCase();
+    function getFirstName(name) {
+      return name.split(' ')[0];
     }
 
     function getAvatarColor(name) {
       var colors = [
         '#ff3366', '#8833ff', '#00ccff', '#ffcc00',
-        '#00ff88', '#ff6633', '#3366ff', '#ff33cc'
+        '#00ff88', '#ff6633', '#3366ff', '#ff33cc',
+        '#33ccff', '#cc33ff', '#ff9933', '#33ff99'
       ];
       var hash = 0;
       for (var i = 0; i < name.length; i++) {
@@ -229,35 +315,61 @@ const { postSlug = "" } = Astro.props;
       if (comments.length === 0) {
         list.innerHTML = '';
         noComments.className = 'no-comments';
+        countDiv.textContent = '';
         return;
       }
 
       noComments.className = 'no-comments hidden';
+      countDiv.textContent = comments.length + ' comment' + (comments.length !== 1 ? 's' : '');
 
-      list.innerHTML = comments.map(function(c) {
+      list.innerHTML = comments.map(function(c, index) {
         var color = getAvatarColor(c.name);
-        var initial = getInitials(c.name);
+        var firstName = getFirstName(c.name);
+        var initial = firstName.charAt(0).toUpperCase();
         var time = timeAgo(c.date);
 
         return ''
-          + '<div class="comment-item" style="'
-          + 'background:var(--bg-card);border:1px solid var(--border-color);'
-          + 'border-radius:var(--radius-lg);padding:16px;'
-          + 'transition:border-color 0.2s ease;">'
+          + '<div style="'
+          + 'background:var(--bg-card);'
+          + 'border:1px solid var(--border-color);'
+          + 'border-radius:var(--radius-lg);'
+          + 'padding:16px 18px;'
+          + 'transition:all 0.2s ease;'
+          + 'animation:fadeInUp 0.4s ease forwards;'
+          + 'animation-delay:' + (index * 0.05) + 's;'
+          + 'opacity:0;'
+          + '">'
+
           + '<div style="display:flex;gap:12px;align-items:flex-start;">'
-          + '<div style="width:40px;height:40px;min-width:40px;border-radius:50%;'
-          + 'background:' + color + ';display:flex;align-items:center;'
-          + 'justify-content:center;font-weight:700;color:#fff;font-size:1rem;">'
-          + initial
-          + '</div>'
+
+          // Avatar
+          + '<div style="'
+          + 'width:42px;height:42px;min-width:42px;'
+          + 'border-radius:50%;'
+          + 'background:' + color + ';'
+          + 'display:flex;align-items:center;justify-content:center;'
+          + 'font-weight:800;color:#fff;font-size:1.05rem;'
+          + 'box-shadow:0 2px 8px ' + color + '40;'
+          + '">' + initial + '</div>'
+
+          // Content
           + '<div style="flex:1;min-width:0;">'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
-          + '<span style="font-weight:600;font-size:0.92rem;color:var(--text-primary);">' + c.name + '</span>'
-          + '<span style="font-size:0.75rem;color:var(--text-muted);">' + time + '</span>'
+
+          // Header
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+          + '<span style="font-weight:700;font-size:0.92rem;color:var(--text-primary);">'
+          + firstName
+          + '</span>'
+          + '<span style="font-size:0.72rem;color:var(--text-muted);background:var(--bg-primary);padding:3px 10px;border-radius:20px;">'
+          + time
+          + '</span>'
           + '</div>'
-          + '<p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.6;word-wrap:break-word;">'
-          + c.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+          // Text
+          + '<p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.65;word-wrap:break-word;">'
+          + c.text.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
           + '</p>'
+
           + '</div>'
           + '</div>'
           + '</div>';
@@ -269,28 +381,70 @@ const { postSlug = "" } = Astro.props;
     form.addEventListener('submit', function(e) {
       e.preventDefault();
 
-      var name = document.getElementById('commentName').value.trim();
-      var email = document.getElementById('commentEmail').value.trim();
-      var text = document.getElementById('commentText').value.trim();
+      var nameInput = document.getElementById('commentName');
+      var emailInput = document.getElementById('commentEmail');
+      var textInput = document.getElementById('commentText');
 
-      if (!name || !email || !text) return;
+      var name = nameInput.value.trim();
+      var email = emailInput.value.trim();
+      var text = textInput.value.trim();
 
+      // Validation
+      if (!name || name.length < 2) {
+        showError('Name must be at least 2 characters');
+        nameInput.focus();
+        return;
+      }
+
+      if (!email) {
+        showError('Email is required');
+        emailInput.focus();
+        return;
+      }
+
+      var emailPattern = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+      if (!emailPattern.test(email)) {
+        showError('Please enter a valid email address (e.g. name@gmail.com)');
+        emailInput.focus();
+        return;
+      }
+
+      if (!text || text.length < 5) {
+        showError('Comment must be at least 5 characters');
+        textInput.focus();
+        return;
+      }
+
+      // Spam check - no duplicate within 30 seconds
       var comments = getComments();
+      if (comments.length > 0) {
+        var lastComment = comments[0];
+        var timeSinceLastMs = new Date() - new Date(lastComment.date);
+        if (timeSinceLastMs < 30000) {
+          showError('Please wait 30 seconds before posting another comment');
+          return;
+        }
+      }
 
+      // Save comment
       comments.unshift({
         name: name,
         text: text,
         date: new Date().toISOString()
       });
 
-      if (comments.length > 100) {
-        comments = comments.slice(0, 100);
+      // Keep max 200 comments
+      if (comments.length > 200) {
+        comments = comments.slice(0, 200);
       }
 
       saveComments(comments);
       renderComments();
 
-      document.getElementById('commentText').value = '';
+      // Clear only text
+      textInput.value = '';
+
+      showSuccess('Comment posted successfully!');
     });
   });
 </script>
