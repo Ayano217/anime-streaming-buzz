@@ -76,7 +76,14 @@ jobs:
             echo "has_changes=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Commit and push
+            - name: Commit and push
+        if: steps.check.outputs.has_changes == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --staged --quiet || git commit -m "Auto: New articles + site update"
+          git push
         if: steps.check.outputs.has_changes == 'true'
         run: |
           git config user.name "AniTube Buzz Bot"
