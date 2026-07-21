@@ -1,7 +1,5 @@
 ---
-
 ---
-
 <section class="fb-section section">
   <div class="container">
     <h2 class="section-title">📱 Video Updates</h2>
@@ -13,7 +11,6 @@
     </div>
   </div>
 </section>
-
 <style>
   .fb-section {
     background: var(--bg-secondary);
@@ -21,14 +18,12 @@
     border-bottom: 1px solid var(--border-color);
     padding: 48px 0;
   }
-
   .fb-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 20px;
     margin-top: 8px;
   }
-
   .fb-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -37,7 +32,6 @@
     transition: all var(--transition-fast);
     position: relative;
   }
-
   .fb-card::before {
     content: '';
     position: absolute;
@@ -49,33 +43,27 @@
     opacity: 0;
     transition: opacity var(--transition-fast);
   }
-
   .fb-card:hover {
     border-color: rgba(24, 119, 242, 0.3);
     box-shadow: 0 0 20px rgba(24, 119, 242, 0.15);
     transform: translateY(-2px);
   }
-
   .fb-card:hover::before {
     opacity: 1;
   }
-
   .fb-embed {
     width: 100%;
     background: #000;
     position: relative;
   }
-
   .fb-embed iframe {
     width: 100%;
     height: 280px;
     border: none;
   }
-
   .fb-info {
     padding: 14px 16px;
   }
-
   .fb-title {
     font-size: 0.9rem;
     font-weight: 600;
@@ -86,41 +74,87 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-
   .fb-date {
     font-size: 0.75rem;
     color: var(--text-muted);
     margin-top: 6px;
   }
-
   .fb-placeholder {
     grid-column: 1 / -1;
     text-align: center;
     padding: 48px;
     color: var(--text-muted);
   }
-
   .fb-placeholder-icon {
     font-size: 2.5rem;
     margin-bottom: 12px;
     animation: float 3s ease-in-out infinite;
   }
-
   @media (max-width: 600px) {
     .fb-grid {
       grid-template-columns: 1fr;
     }
-
     .fb-embed iframe {
       height: 220px;
     }
   }
 </style>
-
 <script is:inline>
   document.addEventListener('DOMContentLoaded', function() {
     var grid = document.getElementById('fbGrid');
     if (!grid) return;
+
+    var loadMoreBtn = null;
+    var allVideos = [];
+    var showCount = 6;
+
+    function renderVideos() {
+      var visible = allVideos.slice(0, showCount);
+
+      grid.innerHTML = visible.map(function(video) {
+        var embedUrl = 'https://www.facebook.com/plugins/video.php?href='
+          + encodeURIComponent(video.permalink_url)
+          + '&show_text=false&width=560';
+        var title = video.title || video.description || 'Video Update';
+        var date = '';
+        if (video.created_time) {
+          date = new Date(video.created_time).toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+          });
+        }
+
+        return ''
+          + '<div class="fb-card">'
+          + '<div class="fb-embed">'
+          + '<iframe src="' + embedUrl + '"'
+          + ' scrolling="no"'
+          + ' allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"'
+          + ' allowfullscreen loading="lazy"></iframe>'
+          + '</div>'
+          + '<div class="fb-info">'
+          + '<p class="fb-title">' + title + '</p>'
+          + (date ? '<p class="fb-date">' + date + '</p>' : '')
+          + '</div>'
+          + '</div>';
+      }).join('');
+
+      if (showCount < allVideos.length) {
+        if (!loadMoreBtn) {
+          loadMoreBtn = document.createElement('button');
+          loadMoreBtn.className = 'btn-outline';
+          loadMoreBtn.style.cssText = 'display:block;margin:24px auto 0;';
+          loadMoreBtn.addEventListener('click', function() {
+            showCount += 6;
+            renderVideos();
+          });
+          grid.parentNode.appendChild(loadMoreBtn);
+        }
+        loadMoreBtn.textContent = 'Load More Videos (' + (allVideos.length - showCount) + ' remaining)';
+        loadMoreBtn.style.display = 'block';
+      } else if (loadMoreBtn) {
+        loadMoreBtn.style.display = 'none';
+      }
+    }
 
     fetch('/facebook-videos.json')
       .then(function(r) {
@@ -132,33 +166,8 @@
           grid.innerHTML = '<div class="fb-placeholder"><div class="fb-placeholder-icon">📺</div><p>Videos coming soon!</p></div>';
           return;
         }
-
-        grid.innerHTML = videos.map(function(video) {
-          var embedUrl = 'https://www.facebook.com/plugins/video.php?href='
-            + encodeURIComponent(video.permalink_url)
-            + '&show_text=false&width=560';
-          var title = video.title || video.description || 'Video Update';
-          var date = '';
-          if (video.created_time) {
-            date = new Date(video.created_time).toLocaleDateString('en-US', {
-              month: 'short', day: 'numeric', year: 'numeric'
-            });
-          }
-
-          return ''
-            + '<div class="fb-card">'
-            + '<div class="fb-embed">'
-            + '<iframe src="' + embedUrl + '"'
-            + ' scrolling="no"'
-            + ' allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"'
-            + ' allowfullscreen loading="lazy"></iframe>'
-            + '</div>'
-            + '<div class="fb-info">'
-            + '<p class="fb-title">' + title + '</p>'
-            + (date ? '<p class="fb-date">' + date + '</p>' : '')
-            + '</div>'
-            + '</div>';
-        }).join('');
+        allVideos = videos;
+        renderVideos();
       })
       .catch(function() {
         grid.innerHTML = '<div class="fb-placeholder"><div class="fb-placeholder-icon">📺</div><p>Videos coming soon!</p></div>';
