@@ -1,61 +1,296 @@
 ---
 export interface Props {
-  title?: string;
+  postSlug?: string;
 }
-const { title = "" } = Astro.props;
+const { postSlug = "" } = Astro.props;
 ---
 
 <section class="comments-section">
   <div class="comments-header">
-    <h3>💬 Comments & Discussion</h3>
-    <p>Share your thoughts about this anime!</p>
+    <h3>💬 Discussion</h3>
+    <p>Share your thoughts — no login required</p>
   </div>
 
-  <div class="giscus-wrapper">
-    <script
-      src="https://giscus.app/client.js"
-      data-repo="Ayano217/anime-streaming-buzz"
-      data-repo-id="R_kgDOTcRihQ"
-      data-category="General"
-      data-category-id="DIC_kwDOTcRihc4DBokk"
-      data-mapping="pathname"
-      data-strict="0"
-      data-reactions-enabled="1"
-      data-emit-metadata="0"
-      data-input-position="top"
-      data-theme="dark"
-      data-lang="en"
-      data-loading="lazy"
-      crossorigin="anonymous"
-      async>
-    </script>
+  <div class="comment-form-wrap">
+    <form class="comment-form" id="commentForm">
+      <div class="form-row">
+        <input
+          type="text"
+          id="commentName"
+          class="comment-input"
+          placeholder="Your name"
+          required
+          maxlength="50"
+        />
+        <input
+          type="email"
+          id="commentEmail"
+          class="comment-input"
+          placeholder="Email (hidden, never shared)"
+          required
+          maxlength="100"
+        />
+      </div>
+      <textarea
+        id="commentText"
+        class="comment-textarea"
+        placeholder="Write your comment..."
+        required
+        maxlength="1000"
+        rows="4"
+      ></textarea>
+      <div class="form-footer">
+        <span class="form-note">🔒 Your email is never shown or shared</span>
+        <button type="submit" class="btn-primary comment-submit-btn">
+          Post Comment
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="comments-list" id="commentsList">
+    <!-- Comments loaded from localStorage -->
+  </div>
+
+  <div class="no-comments" id="noComments">
+    <p>No comments yet. Be the first! 🎉</p>
   </div>
 </section>
 
 <style>
   .comments-section {
     max-width: 760px;
-    margin: 40px auto;
-    padding-top: 30px;
+    margin: 48px auto 0;
+    padding-top: 32px;
     border-top: 1px solid var(--border-color);
   }
 
   .comments-header {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
   }
 
   .comments-header h3 {
     font-size: 1.3rem;
     font-weight: 700;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .comments-header p {
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
   }
 
-  .giscus-wrapper {
-    min-height: 200px;
+  /* Form */
+  .comment-form-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 28px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .comment-input,
+  .comment-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.92rem;
+    font-family: var(--font-main);
+    outline: none;
+    transition: border-color var(--transition-fast);
+  }
+
+  .comment-input:focus,
+  .comment-textarea:focus {
+    border-color: var(--accent-primary);
+    box-shadow: var(--glow-pink);
+  }
+
+  .comment-input::placeholder,
+  .comment-textarea::placeholder {
+    color: var(--text-muted);
+  }
+
+  .comment-textarea {
+    resize: vertical;
+    min-height: 100px;
+    margin-bottom: 12px;
+  }
+
+  .form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .form-note {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  .comment-submit-btn {
+    flex-shrink: 0;
+  }
+
+  /* Comments list */
+  .comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .no-comments {
+    text-align: center;
+    padding: 32px;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+  }
+
+  .no-comments.hidden {
+    display: none;
+  }
+
+  @media (max-width: 600px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+
+    .form-footer {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .form-note {
+      text-align: center;
+    }
   }
 </style>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('commentForm');
+    var list = document.getElementById('commentsList');
+    var noComments = document.getElementById('noComments');
+    var pageKey = 'comments_' + window.location.pathname;
+
+    function getComments() {
+      try {
+        return JSON.parse(localStorage.getItem(pageKey) || '[]');
+      } catch(e) {
+        return [];
+      }
+    }
+
+    function saveComments(comments) {
+      localStorage.setItem(pageKey, JSON.stringify(comments));
+    }
+
+    function timeAgo(dateStr) {
+      var now = new Date();
+      var date = new Date(dateStr);
+      var diff = Math.floor((now - date) / 1000);
+      if (diff < 60) return 'just now';
+      if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+      if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
+      return date.toLocaleDateString();
+    }
+
+    function getInitials(name) {
+      return name.charAt(0).toUpperCase();
+    }
+
+    function getAvatarColor(name) {
+      var colors = [
+        '#ff3366', '#8833ff', '#00ccff', '#ffcc00',
+        '#00ff88', '#ff6633', '#3366ff', '#ff33cc'
+      ];
+      var hash = 0;
+      for (var i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return colors[Math.abs(hash) % colors.length];
+    }
+
+    function renderComments() {
+      var comments = getComments();
+
+      if (comments.length === 0) {
+        list.innerHTML = '';
+        noComments.className = 'no-comments';
+        return;
+      }
+
+      noComments.className = 'no-comments hidden';
+
+      list.innerHTML = comments.map(function(c) {
+        var color = getAvatarColor(c.name);
+        var initial = getInitials(c.name);
+        var time = timeAgo(c.date);
+
+        return ''
+          + '<div class="comment-item" style="'
+          + 'background:var(--bg-card);border:1px solid var(--border-color);'
+          + 'border-radius:var(--radius-lg);padding:16px;'
+          + 'transition:border-color 0.2s ease;">'
+          + '<div style="display:flex;gap:12px;align-items:flex-start;">'
+          + '<div style="width:40px;height:40px;min-width:40px;border-radius:50%;'
+          + 'background:' + color + ';display:flex;align-items:center;'
+          + 'justify-content:center;font-weight:700;color:#fff;font-size:1rem;">'
+          + initial
+          + '</div>'
+          + '<div style="flex:1;min-width:0;">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'
+          + '<span style="font-weight:600;font-size:0.92rem;color:var(--text-primary);">' + c.name + '</span>'
+          + '<span style="font-size:0.75rem;color:var(--text-muted);">' + time + '</span>'
+          + '</div>'
+          + '<p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.6;word-wrap:break-word;">'
+          + c.text.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          + '</p>'
+          + '</div>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+    }
+
+    renderComments();
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      var name = document.getElementById('commentName').value.trim();
+      var email = document.getElementById('commentEmail').value.trim();
+      var text = document.getElementById('commentText').value.trim();
+
+      if (!name || !email || !text) return;
+
+      var comments = getComments();
+
+      comments.unshift({
+        name: name,
+        text: text,
+        date: new Date().toISOString()
+      });
+
+      if (comments.length > 100) {
+        comments = comments.slice(0, 100);
+      }
+
+      saveComments(comments);
+      renderComments();
+
+      document.getElementById('commentText').value = '';
+    });
+  });
+</script>
