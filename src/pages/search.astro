@@ -10,7 +10,12 @@ import SearchBox from '../components/SearchBox.astro';
 
   <main class="search-page">
     <div class="container">
-      <h1 class="gradient-text search-heading">Search AniTube Buzz</h1>
+      <div class="search-page-header">
+        <h1>
+          <span class="gradient-text">Search</span> AniTube Buzz
+        </h1>
+        <p>Find any anime, manhwa, character, or news article instantly</p>
+      </div>
       <SearchBox />
     </div>
   </main>
@@ -20,15 +25,30 @@ import SearchBox from '../components/SearchBox.astro';
 
 <style>
   .search-page {
-    padding-top: calc(var(--header-height) + 40px);
+    padding-top: 40px;
     padding-bottom: 60px;
-    min-height: 70vh;
+    min-height: 75vh;
   }
 
-  .search-heading {
-    font-size: 2rem;
-    font-weight: 800;
+  .search-page-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 36px;
+  }
+
+  .search-page-header h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+
+  .search-page-header p {
+    color: var(--text-muted);
+    font-size: 1rem;
+  }
+
+  @media (max-width: 600px) {
+    .search-page-header h1 {
+      font-size: 1.6rem;
+    }
   }
 </style>
