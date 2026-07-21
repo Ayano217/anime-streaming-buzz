@@ -9,35 +9,54 @@ import Footer from '../components/Footer.astro';
 
   <main class="about-page">
     <div class="container">
-      <div class="about-content">
-        <h1 class="gradient-text">About AniTube Buzz</h1>
+      <div class="about-hero">
+        <span class="about-icon">⚡</span>
+        <h1><span class="gradient-text">About</span> AniTube Buzz</h1>
+        <p class="about-subtitle">Your Premium Anime News Destination</p>
+      </div>
 
-        <div class="about-text glass">
-          <p>
-            <strong>AniTube Buzz</strong> is your ultimate destination for anime recaps,
-            streaming news, manhwa updates, and everything otaku culture.
-          </p>
-
-          <p>
-            We use cutting-edge AI technology combined with passionate editorial oversight
-            to deliver the freshest anime and manga content — fast, accurate, and beautifully presented.
-          </p>
-
-          <h2>What We Cover</h2>
-          <ul>
-            <li>🎬 Anime Episode Recaps & Reviews</li>
-            <li>📖 Manhwa & Webtoon Chapter Breakdowns</li>
-            <li>📺 Streaming Platform News & Updates</li>
-            <li>🎮 Anime Gaming News</li>
-            <li>🔥 Trending Otaku Culture</li>
-          </ul>
-
-          <h2>Our Mission</h2>
-          <p>
-            To be the fastest and most reliable source of anime and manga news,
-            powered by AI but guided by human passion for the medium.
-          </p>
+      <div class="about-grid">
+        <div class="about-card glass">
+          <span class="card-icon">🎬</span>
+          <h3>Anime Recaps</h3>
+          <p>Detailed episode breakdowns, analysis, and reviews of the latest anime series.</p>
         </div>
+
+        <div class="about-card glass">
+          <span class="card-icon">📖</span>
+          <h3>Manhwa Updates</h3>
+          <p>Latest chapter news, reviews, and trending manhwa and webtoon coverage.</p>
+        </div>
+
+        <div class="about-card glass">
+          <span class="card-icon">📺</span>
+          <h3>Streaming News</h3>
+          <p>Platform updates, new releases, and streaming guides for anime fans.</p>
+        </div>
+
+        <div class="about-card glass">
+          <span class="card-icon">🤖</span>
+          <h3>AI-Powered</h3>
+          <p>We use open-source AI technology to deliver fast, accurate anime news coverage.</p>
+        </div>
+      </div>
+
+      <div class="about-text glass">
+        <h2>Our Mission</h2>
+        <p>AniTube Buzz is built to be the fastest, most reliable source of anime and manga news. We combine official sources with AI-powered analysis to deliver premium content to fans worldwide.</p>
+
+        <h2>How It Works</h2>
+        <ul>
+          <li>📡 Official RSS feeds monitored 24/7</li>
+          <li>🤖 Open-source AI generates unique articles</li>
+          <li>🎨 Real anime images from official databases</li>
+          <li>🎬 Official trailers embedded automatically</li>
+          <li>📱 Your Facebook videos showcased</li>
+          <li>🔍 Every article instantly searchable</li>
+        </ul>
+
+        <h2>Content Policy</h2>
+        <p>We only use official sources and legally available content. All anime images belong to their respective creators and studios. We support creators by linking only to official streaming platforms.</p>
       </div>
     </div>
   </main>
@@ -47,37 +66,91 @@ import Footer from '../components/Footer.astro';
 
 <style>
   .about-page {
-    padding-top: calc(var(--header-height) + 40px);
+    padding-top: 40px;
     padding-bottom: 40px;
   }
 
-  .about-content {
-    max-width: 800px;
-    margin: 0 auto;
+  .about-hero {
+    text-align: center;
+    margin-bottom: 48px;
   }
 
-  .about-content h1 {
+  .about-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 16px;
+    animation: pulse-glow 2s infinite;
+  }
+
+  .about-hero h1 {
     font-size: 2.5rem;
     font-weight: 800;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
+  }
+
+  .about-subtitle {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+  }
+
+  .about-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  .about-card {
+    padding: 28px;
     text-align: center;
+    transition: all var(--transition-fast);
+  }
+
+  .about-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--border-glow);
+    box-shadow: var(--glow-pink);
+  }
+
+  .card-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 12px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .about-card h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .about-card p {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
   }
 
   .about-text {
+    max-width: 800px;
+    margin: 0 auto;
     padding: 40px;
     line-height: 1.8;
   }
 
-  .about-text p {
-    margin-bottom: 20px;
-    color: var(--text-secondary);
-    font-size: 1rem;
-  }
-
   .about-text h2 {
     font-size: 1.4rem;
-    margin: 30px 0 16px;
+    font-weight: 700;
+    margin: 32px 0 14px;
     color: var(--text-primary);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 8px;
+  }
+
+  .about-text p {
+    margin-bottom: 18px;
+    color: var(--text-secondary);
+    font-size: 0.98rem;
   }
 
   .about-text ul {
@@ -85,17 +158,30 @@ import Footer from '../components/Footer.astro';
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
   }
 
   .about-text li {
-    font-size: 1rem;
+    font-size: 0.95rem;
     color: var(--text-secondary);
-    padding: 8px 0;
+    padding: 10px 16px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+  }
+
+  @media (max-width: 900px) {
+    .about-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   @media (max-width: 600px) {
-    .about-content h1 {
+    .about-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .about-hero h1 {
       font-size: 1.8rem;
     }
 
