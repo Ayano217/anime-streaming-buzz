@@ -24,72 +24,95 @@ const categorySlug = title
   .replace(/^-+|-+$/g, '');
 ---
 
-<section class="category-section section" id={categorySlug}>
-  <div class="container">
-    <div class="section-header">
-      <h2 class="section-title">{emoji} {title}</h2>
-      <a href={`/category/${categorySlug}`} class="view-all-btn">
+{posts.length > 0 && (
+  <section class="cat-section section" id={categorySlug}>
+    <div class="cat-header">
+      <div class="cat-header-left">
+        <span class="cat-emoji">{emoji}</span>
+        <h2 class="cat-title">{title}</h2>
+        <div class="cat-line"></div>
+      </div>
+      <a href={`/category/${categorySlug}`} class="btn-outline">
         View All →
       </a>
     </div>
-    <div class="cards-grid">
-      {posts.map((post) => (
-        <NewsCard {...post} />
+    <div class="cat-grid">
+      {posts.map((post, index) => (
+        <div class="cat-card-wrap" style={`animation-delay: ${index * 0.08}s`}>
+          <NewsCard {...post} />
+        </div>
       ))}
     </div>
-  </div>
-</section>
+  </section>
+)}
 
 <style>
-  .section-header {
+  .cat-section {
+    padding: 40px 0;
+  }
+
+  .cat-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
+    gap: 16px;
   }
 
-  .section-header .section-title {
-    margin-bottom: 0;
+  .cat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
-  .view-all-btn {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--accent-primary);
-    text-decoration: none;
-    padding: 8px 16px;
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(255, 45, 117, 0.3);
-    transition: all var(--transition-fast);
-    white-space: nowrap;
+  .cat-emoji {
+    font-size: 1.5rem;
+    animation: float 3s ease-in-out infinite;
   }
 
-  .view-all-btn:hover {
-    background: rgba(255, 45, 117, 0.1);
-    box-shadow: var(--shadow-glow-pink);
+  .cat-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.3px;
   }
 
-  .cards-grid {
+  .cat-line {
+    height: 3px;
+    width: 40px;
+    background: var(--accent-gradient);
+    border-radius: 2px;
+    margin-left: 4px;
+  }
+
+  .cat-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
   }
 
+  .cat-card-wrap {
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+  }
+
   @media (max-width: 900px) {
-    .cards-grid {
+    .cat-grid {
       grid-template-columns: repeat(2, 1fr);
     }
   }
 
   @media (max-width: 600px) {
-    .cards-grid {
+    .cat-grid {
       grid-template-columns: 1fr;
     }
 
-    .section-header {
+    .cat-header {
       flex-direction: column;
       align-items: flex-start;
-      gap: 12px;
+    }
+
+    .cat-title {
+      font-size: 1.25rem;
     }
   }
 </style>
