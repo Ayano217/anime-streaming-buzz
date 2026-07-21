@@ -32,14 +32,12 @@ jobs:
 
       - name: Cache llama binary
         uses: actions/cache@v4
-        id: cache-llama
         with:
           path: ~/.cache/llama-bin
           key: llama-cpp-bin-v3
 
       - name: Cache GGUF model
         uses: actions/cache@v4
-        id: cache-model
         with:
           path: ~/.cache/gguf-models
           key: gguf-qwen25-1.5b-v1
@@ -58,29 +56,24 @@ jobs:
         run: |
           pip install feedparser==6.0.11 requests==2.31.0 python-slugify==8.0.4 python-dateutil==2.9.0
 
-      - name: Verify setup
+      - name: Fetch Facebook videos
+        env:
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_ACCESS_TOKEN: ${{ secrets.FB_ACCESS_TOKEN }}
         run: |
-          echo "=== Files ==="
-          ls scripts/
-          echo "=== Model ==="
-          ls ~/.cache/gguf-models/ 2>/dev/null || echo "No model"
-          echo "=== Binary ==="
-          ls ~/.cache/llama-bin/ 2>/dev/null || echo "No binary"
-          which llama-cli 2>/dev/null || echo "llama-cli not in PATH"
+          python scripts/fetch_facebook_videos.py || echo "FB fetch skipped"
 
-      - name: Run publisher
+      - name: Run article publisher
         run: |
           python scripts/main.py
 
       - name: Check for changes
         id: check
         run: |
-          if [ -n "$(git status --porcelain src/content/posts data/published.json 2>/dev/null)" ]; then
+          if [ -n "$(git status --porcelain)" ]; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "Changes found"
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "No changes"
           fi
 
       - name: Commit and push
@@ -88,9 +81,9 @@ jobs:
         run: |
           git config user.name "AniTube Buzz Bot"
           git config user.email "bot@anitubebuzz.com"
-          git add src/content/posts data/published.json
-          git commit -m "Auto: New anime articles - $(date +'%Y-%m-%d %H:%M')" || echo "Nothing to commit"
+          git add -A
+          git commit -m "Auto: Update - $(date +'%Y-%m-%d %H:%M')" || echo "Nothing"
           git push origin HEAD:main
 
       - name: Done
-        run: echo "Completed at $(date)"
+        run: echo "Done at $(date)"
