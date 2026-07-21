@@ -2,7 +2,7 @@
 title: "Drawn Deep Manga Ends"
 excerpt: "Series debuted in May 2025"
 category: "News"
-tags: ["news", "ends", "deep", "anime", "manga", "drawn"]
+tags: ["ends", "news", "anime", "manga", "deep", "drawn"]
 author: "AniTube Buzz"
 date: "2026-07-20"
 image: "https://picsum.photos/seed/drawn-deep-mang/800/450"

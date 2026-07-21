@@ -2,7 +2,7 @@
 title: "We Are Aliens Anime Film Screens at Film Festivals in Canada"
 excerpt: "OIAF also screens Mononoke the Movie: Chapter 3; MIFF, NZIF screen live-action The Samurai and the Prisoner film"
 category: "News"
-tags: ["news", "aliens", "screens", "anime", "film"]
+tags: ["news", "anime", "film", "aliens", "screens"]
 author: "AniTube Buzz"
 date: "2026-07-20"
 image: "https://picsum.photos/seed/we-are-aliens-a/800/450"
