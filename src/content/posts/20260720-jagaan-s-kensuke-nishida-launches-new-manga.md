@@ -2,7 +2,7 @@
 title: "Jagaan's Kensuke Nishida Launches New Manga"
 excerpt: "Yūsha Yukio debuts on August 19"
 category: "News"
-tags: ["anime", "news", "manga", "jagaans", "nishida", "launches", "kensuke"]
+tags: ["news", "nishida", "kensuke", "manga", "anime", "jagaans", "launches"]
 author: "AniTube Buzz"
 date: "2026-07-20"
 image: "https://picsum.photos/seed/jagaan-s-kensuk/800/450"

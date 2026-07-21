@@ -2,7 +2,7 @@
 title: "I Became a Legend After My 10 Year-Long Last Stand Anime Cas"
 excerpt: "Chō plays divine chicken Gerberga who debuted in episode 3 on Monday"
 category: "News"
-tags: ["anime", "after", "last", "news", "year-long", "became", "legend"]
+tags: ["news", "after", "became", "anime", "legend", "last", "year-long"]
 author: "AniTube Buzz"
 date: "2026-07-21"
 image: "https://picsum.photos/seed/i-became-a-lege/800/450"

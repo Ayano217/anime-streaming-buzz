@@ -2,7 +2,7 @@
 title: "Pumpkin Night Manga Resumes Serialization on August 19"
 excerpt: "Manga went on hiatus in April 2025 to allow artist to recover health"
 category: "News"
-tags: ["pumpkin", "news", "anime", "serialization", "manga", "night", "resumes"]
+tags: ["news", "resumes", "manga", "anime", "pumpkin", "serialization", "night"]
 author: "AniTube Buzz"
 date: "2026-07-20"
 image: "https://picsum.photos/seed/pumpkin-night-m/800/450"
@@ -28,7 +28,7 @@ Fans should stay tuned to official channels for further announcements and update
 ## Official Trailer
 
 <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;margin:20px 0;">
-<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="https://www.youtube.com/embed/kNd06jA-E8c" title="Official Trailer" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>
+<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="https://www.youtube.com/embed/furwLkuXgzk" title="Official Trailer" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>
 </div>
 
 ## Watch Officially
