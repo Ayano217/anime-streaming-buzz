@@ -8,8 +8,8 @@ export interface Props {
 }
 
 const {
-  title = "AniTube Buzz - Anime Recaps & Streaming News",
-  description = "Your ultimate source for anime recaps, streaming news, manhwa updates, and otaku culture. Stay updated with the latest from the anime world.",
+  title = "AniTube Buzz - Premium Anime News & Recaps",
+  description = "Your premium source for anime recaps, streaming news, manhwa updates, official trailers, and otaku culture worldwide.",
   ogImage = "/og-default.png",
   ogType = "website",
   canonicalURL = Astro.url.href,
@@ -26,16 +26,15 @@ const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="generator" content={Astro.generator} />
 
-  <!-- Primary Meta -->
   <title>{fullTitle}</title>
   <meta name="description" content={description} />
   <meta name="author" content="AniTube Buzz" />
   <link rel="canonical" href={canonicalURL} />
 
-  <!-- Monetag Global Script -->
+  <!-- Monetag -->
   <script src="https://quge5.com/88/tag.min.js" data-zone="261500" async data-cfasync="false"></script>
 
-  <!-- Open Graph -->
+  <!-- OG -->
   <meta property="og:type" content={ogType} />
   <meta property="og:title" content={fullTitle} />
   <meta property="og:description" content={description} />
@@ -52,17 +51,16 @@ const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-  <!-- Fonts -->
+  <!-- Preload critical font -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
-  <!-- Global CSS -->
+  <!-- CSS -->
   <style is:global>
     @import '../styles/global.css';
   </style>
 
-  <!-- JSON-LD Schema -->
+  <!-- Schema -->
   <script type="application/ld+json" set:html={JSON.stringify({
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -77,18 +75,111 @@ const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
   })} />
 </head>
 <body>
+  <!-- Page transition overlay -->
+  <div class="page-loader" id="pageLoader">
+    <div class="loader-icon">⚡</div>
+  </div>
+
   <slot />
 
-  <!-- Theme Toggle Script -->
+  <!-- Back to top -->
+  <button class="back-to-top" id="backToTop" aria-label="Back to top">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <path d="m18 15-6-6-6 6"/>
+    </svg>
+  </button>
+
   <script is:inline>
+    // Theme
     (function() {
-      const saved = localStorage.getItem('theme');
+      var saved = localStorage.getItem('theme');
       if (saved) {
         document.documentElement.setAttribute('data-theme', saved);
       } else {
         document.documentElement.setAttribute('data-theme', 'dark');
       }
     })();
+
+    // Page loader
+    window.addEventListener('load', function() {
+      var loader = document.getElementById('pageLoader');
+      if (loader) {
+        loader.classList.add('loaded');
+        setTimeout(function() { loader.style.display = 'none'; }, 500);
+      }
+    });
+
+    // Back to top
+    var topBtn = document.getElementById('backToTop');
+    window.addEventListener('scroll', function() {
+      if (topBtn) {
+        if (window.scrollY > 400) {
+          topBtn.classList.add('visible');
+        } else {
+          topBtn.classList.remove('visible');
+        }
+      }
+    });
+
+    if (topBtn) {
+      topBtn.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
   </script>
+
+  <style>
+    .page-loader {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.4s ease;
+    }
+
+    .page-loader.loaded {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loader-icon {
+      font-size: 3rem;
+      animation: pulse-glow 1s ease-in-out infinite;
+    }
+
+    .back-to-top {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all var(--transition-normal);
+      z-index: 100;
+      box-shadow: var(--glow-pink);
+    }
+
+    .back-to-top.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .back-to-top:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 0 30px rgba(255, 51, 102, 0.4);
+    }
+  </style>
 </body>
 </html>
