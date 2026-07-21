@@ -6,136 +6,47 @@ import Footer from '../components/Footer.astro';
 
 <BaseLayout title="Privacy Policy">
   <Header />
-
   <main class="legal-page">
     <div class="container">
-      <div class="legal-content glass">
+      <div class="legal-wrap glass">
         <h1 class="gradient-text">Privacy Policy</h1>
-        <p class="legal-date">Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        <p class="legal-date">Effective: July 2026</p>
 
-        <h2>Introduction</h2>
-        <p>AniTube Buzz ("we", "us", or "our") operates the website anime-streaming-buzz.pages.dev. This Privacy Policy explains how we collect, use, and protect your information.</p>
+        <h2>What We Collect</h2>
+        <p>AniTube Buzz collects minimal data. We use cookies for theme preferences and third-party advertising. We do not collect personal information unless you submit a comment.</p>
 
-        <h2>Information We Collect</h2>
-        <h3>Automatically Collected</h3>
-        <ul>
-          <li>Browser type and version</li>
-          <li>Operating system</li>
-          <li>Pages visited and time spent</li>
-          <li>Referring website</li>
-          <li>IP address (anonymized)</li>
-        </ul>
+        <h2>Comments</h2>
+        <p>Comments are stored locally in your browser. We do not store your email on our servers. Your first name is displayed publicly; email is never shown.</p>
 
-        <h3>Cookies</h3>
-        <p>We use cookies for:</p>
-        <ul>
-          <li>Theme preference (dark/light mode)</li>
-          <li>Analytics (via Cloudflare)</li>
-          <li>Advertising partners (Monetag)</li>
-        </ul>
+        <h2>Advertising</h2>
+        <p>We use Monetag for advertising. They may use cookies to serve relevant ads. See their privacy policy for details.</p>
 
-        <h2>Third-Party Services</h2>
-        <h3>Advertising</h3>
-        <p>We use third-party advertising networks including Monetag to display ads. These services may use cookies and similar technologies to serve ads based on your browsing activity.</p>
-
-        <h3>Analytics</h3>
-        <p>We use Cloudflare Web Analytics to understand how visitors use our site. This service respects user privacy and does not use client-side tracking.</p>
-
-        <h2>Data Usage</h2>
-        <p>We use collected information to:</p>
-        <ul>
-          <li>Improve our content and user experience</li>
-          <li>Analyze site traffic and trends</li>
-          <li>Display relevant advertisements</li>
-          <li>Prevent abuse and maintain security</li>
-        </ul>
+        <h2>Analytics</h2>
+        <p>We use Cloudflare Web Analytics which respects user privacy and does not use client-side tracking.</p>
 
         <h2>Your Rights</h2>
-        <p>You have the right to:</p>
         <ul>
-          <li>Access your personal data</li>
-          <li>Request deletion of your data</li>
-          <li>Opt out of personalized advertising</li>
-          <li>Disable cookies in your browser settings</li>
+          <li>Access or delete your comment data (clear browser storage)</li>
+          <li>Opt out of personalized ads (browser settings)</li>
+          <li>Disable cookies in your browser</li>
         </ul>
 
-        <h2>Children's Privacy</h2>
-        <p>Our website is not intended for children under 13. We do not knowingly collect personal information from children.</p>
-
-        <h2>Changes to This Policy</h2>
-        <p>We may update this policy from time to time. Changes will be posted on this page with an updated date.</p>
-
-        <h2>Contact Us</h2>
-        <p>For privacy-related questions, contact us at: <strong>anitubebuzz@gmail.com</strong></p>
+        <h2>Contact</h2>
+        <p>Email: anitubebuzz@gmail.com</p>
       </div>
     </div>
   </main>
-
   <Footer />
 </BaseLayout>
 
 <style>
-  .legal-page {
-    padding-top: calc(var(--header-height) + 40px);
-    padding-bottom: 40px;
-  }
-
-  .legal-content {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 40px;
-    line-height: 1.8;
-  }
-
-  .legal-content h1 {
-    font-size: 2.2rem;
-    font-weight: 800;
-    margin-bottom: 8px;
-  }
-
-  .legal-date {
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    margin-bottom: 30px;
-  }
-
-  .legal-content h2 {
-    font-size: 1.4rem;
-    font-weight: 700;
-    margin: 30px 0 12px;
-    color: var(--text-primary);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 8px;
-  }
-
-  .legal-content h3 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin: 20px 0 8px;
-  }
-
-  .legal-content p {
-    margin-bottom: 16px;
-    color: var(--text-secondary);
-  }
-
-  .legal-content ul {
-    margin: 12px 0;
-    padding-left: 24px;
-  }
-
-  .legal-content li {
-    margin-bottom: 6px;
-    color: var(--text-secondary);
-  }
-
-  @media (max-width: 600px) {
-    .legal-content {
-      padding: 24px;
-    }
-
-    .legal-content h1 {
-      font-size: 1.8rem;
-    }
-  }
+  .legal-page { padding-top: 40px; padding-bottom: 40px; }
+  .legal-wrap { max-width: 800px; margin: 0 auto; padding: 40px; line-height: 1.8; }
+  .legal-wrap h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 8px; }
+  .legal-date { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 32px; }
+  .legal-wrap h2 { font-size: 1.3rem; font-weight: 700; margin: 28px 0 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+  .legal-wrap p { margin-bottom: 16px; color: var(--text-secondary); font-size: 0.95rem; }
+  .legal-wrap ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .legal-wrap li { font-size: 0.92rem; color: var(--text-secondary); padding: 8px 14px; background: var(--bg-primary); border-radius: var(--radius-md); border: 1px solid var(--border-color); }
+  @media (max-width: 600px) { .legal-wrap { padding: 24px; } .legal-wrap h1 { font-size: 1.7rem; } }
 </style>
