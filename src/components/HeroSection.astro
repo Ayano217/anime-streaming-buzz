@@ -21,34 +21,44 @@ const { mainPost, sidePosts = [] } = Astro.props;
   <section class="hero-section">
     <div class="container">
       <div class="hero-grid">
+
+        <!-- Main Featured -->
         <a href={mainPost.slug} class="hero-main">
           <div class="hero-media">
             <img src={mainPost.image} alt={mainPost.title} loading="eager" />
-            <div class="hero-overlay"></div>
+            <div class="hero-gradient"></div>
+            <div class="hero-particles"></div>
+          </div>
 
-            <div class="hero-content">
+          <div class="hero-content">
+            <div class="hero-badge-row">
               <span class="badge badge-pink">{mainPost.category}</span>
-              <h1 class="hero-title">{mainPost.title}</h1>
-              <p class="hero-excerpt">{mainPost.excerpt}</p>
-              <div class="hero-meta">
-                <span>{mainPost.date}</span>
-                <span>•</span>
-                <span>{mainPost.readTime}</span>
-              </div>
+              <span class="hero-live-tag">● FEATURED</span>
             </div>
+            <h1 class="hero-title">{mainPost.title}</h1>
+            <p class="hero-excerpt">{mainPost.excerpt}</p>
+            <div class="hero-meta">
+              <span>📅 {mainPost.date}</span>
+              <span>·</span>
+              <span>⏱️ {mainPost.readTime}</span>
+            </div>
+            <span class="hero-read-btn">Read Full Article →</span>
           </div>
         </a>
 
+        <!-- Side Cards -->
         <div class="hero-sidebar">
-          {sidePosts.map((post) => (
-            <a href={post.slug} class="hero-side-card">
-              <div class="side-card-image">
+          {sidePosts.map((post, index) => (
+            <a href={post.slug} class="hero-side-card" style={`animation-delay: ${index * 0.1}s`}>
+              <div class="side-image">
                 <img src={post.image} alt={post.title} loading="lazy" />
               </div>
-              <div class="side-card-content">
-                <span class="badge badge-blue">{post.category}</span>
-                <h3 class="side-card-title">{post.title}</h3>
-                <p class="side-card-meta">{post.date} • {post.readTime}</p>
+              <div class="side-content">
+                <span class="badge badge-blue" style="font-size:0.65rem; padding:3px 10px;">
+                  {post.category}
+                </span>
+                <h3 class="side-title">{post.title}</h3>
+                <span class="side-meta">{post.date} · {post.readTime}</span>
               </div>
             </a>
           ))}
@@ -60,79 +70,139 @@ const { mainPost, sidePosts = [] } = Astro.props;
 
 <style>
   .hero-section {
-    padding-top: calc(var(--header-height) + 24px);
-    padding-bottom: 28px;
-    position: relative;
-    z-index: 1;
+    padding-top: 24px;
+    padding-bottom: 24px;
   }
 
   .hero-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1.8fr 1fr;
     gap: 20px;
     align-items: stretch;
   }
 
+  /* Main Hero */
   .hero-main {
+    position: relative;
     display: block;
     text-decoration: none;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    min-height: 520px;
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-normal);
+  }
+
+  .hero-main:hover {
+    border-color: var(--border-glow);
+    box-shadow: var(--glow-pink);
   }
 
   .hero-media {
-    position: relative;
-    min-height: 520px;
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    border: 1px solid var(--border-color);
-    background: var(--bg-card);
+    position: absolute;
+    inset: 0;
   }
 
   .hero-media img {
-    position: absolute;
-    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 8s ease;
   }
 
-  .hero-overlay {
+  .hero-main:hover .hero-media img {
+    transform: scale(1.06);
+  }
+
+  .hero-gradient {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,.92) 0%, rgba(0,0,0,.55) 45%, rgba(0,0,0,.1) 100%);
+    background: linear-gradient(
+      to top,
+      rgba(11, 11, 20, 0.95) 0%,
+      rgba(11, 11, 20, 0.7) 35%,
+      rgba(11, 11, 20, 0.2) 65%,
+      transparent 100%
+    );
+  }
+
+  .hero-particles {
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, rgba(255, 51, 102, 0.4), transparent),
+      radial-gradient(1px 1px at 70% 60%, rgba(0, 204, 255, 0.3), transparent),
+      radial-gradient(1px 1px at 40% 80%, rgba(136, 51, 255, 0.3), transparent);
+    animation: float 6s ease-in-out infinite;
+    pointer-events: none;
   }
 
   .hero-content {
     position: absolute;
+    bottom: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    padding: 28px;
+    padding: 32px;
     z-index: 2;
   }
 
+  .hero-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .hero-live-tag {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    letter-spacing: 1px;
+    animation: pulse-glow 2s infinite;
+  }
+
   .hero-title {
-    font-size: 1.9rem;
+    font-size: 2rem;
     font-weight: 800;
     color: #fff;
-    margin: 12px 0;
-    line-height: 1.25;
+    line-height: 1.2;
+    margin-bottom: 12px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   }
 
   .hero-excerpt {
     font-size: 0.98rem;
-    color: rgba(255,255,255,.78);
-    max-width: 680px;
-    margin-bottom: 12px;
+    color: rgba(255, 255, 255, 0.78);
+    max-width: 650px;
+    line-height: 1.55;
+    margin-bottom: 14px;
   }
 
   .hero-meta {
     display: flex;
     gap: 8px;
-    flex-wrap: wrap;
     font-size: 0.85rem;
-    color: rgba(255,255,255,.6);
+    color: rgba(255, 255, 255, 0.55);
+    margin-bottom: 16px;
   }
 
+  .hero-read-btn {
+    display: inline-block;
+    padding: 10px 24px;
+    background: var(--accent-gradient);
+    color: #fff;
+    border-radius: var(--radius-round);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+  }
+
+  .hero-main:hover .hero-read-btn {
+    box-shadow: var(--glow-pink);
+    transform: translateY(-2px);
+  }
+
+  /* Sidebar */
   .hero-sidebar {
     display: flex;
     flex-direction: column;
@@ -141,70 +211,121 @@ const { mainPost, sidePosts = [] } = Astro.props;
 
   .hero-side-card {
     display: flex;
-    gap: 12px;
-    padding: 12px;
-    min-height: 120px;
-    border-radius: var(--radius-md);
+    gap: 14px;
+    padding: 14px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
     text-decoration: none;
     transition: all var(--transition-fast);
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-side-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent-gradient);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
   }
 
   .hero-side-card:hover {
     background: var(--bg-card-hover);
-    border-color: var(--accent-primary);
+    border-color: var(--border-glow);
+    box-shadow: var(--glow-pink);
+    transform: translateX(4px);
   }
 
-  .side-card-image {
-    width: 108px;
-    min-width: 108px;
-    height: 90px;
-    border-radius: var(--radius-sm);
+  .hero-side-card:hover::before {
+    opacity: 1;
+  }
+
+  .side-image {
+    width: 100px;
+    min-width: 100px;
+    height: 85px;
+    border-radius: var(--radius-md);
     overflow: hidden;
   }
 
-  .side-card-image img {
+  .side-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform var(--transition-normal);
   }
 
-  .side-card-content {
+  .hero-side-card:hover .side-image img {
+    transform: scale(1.1);
+  }
+
+  .side-content {
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 6px;
+    min-width: 0;
   }
 
-  .side-card-title {
-    font-size: 0.92rem;
-    line-height: 1.4;
+  .side-title {
+    font-size: 0.9rem;
+    font-weight: 600;
     color: var(--text-primary);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color var(--transition-fast);
   }
 
-  .side-card-meta {
-    font-size: 0.78rem;
+  .hero-side-card:hover .side-title {
+    color: var(--accent-primary);
+  }
+
+  .side-meta {
+    font-size: 0.75rem;
     color: var(--text-muted);
   }
 
-  @media (max-width: 900px) {
+  /* Responsive */
+  @media (max-width: 1024px) {
     .hero-grid {
       grid-template-columns: 1fr;
     }
 
-    .hero-media {
+    .hero-main {
       min-height: 400px;
+    }
+
+    .hero-title {
+      font-size: 1.6rem;
     }
 
     .hero-sidebar {
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .hero-side-card {
+      flex-direction: column;
+    }
+
+    .side-image {
+      width: 100%;
+      height: 120px;
     }
   }
 
   @media (max-width: 600px) {
-    .hero-media {
+    .hero-main {
       min-height: 340px;
     }
 
@@ -218,10 +339,23 @@ const { mainPost, sidePosts = [] } = Astro.props;
 
     .hero-excerpt {
       font-size: 0.88rem;
+      -webkit-line-clamp: 2;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .hero-sidebar {
+      grid-template-columns: 1fr;
     }
 
     .hero-side-card {
-      min-height: auto;
+      flex-direction: row;
+    }
+
+    .side-image {
+      width: 90px;
+      height: 75px;
     }
   }
 </style>
