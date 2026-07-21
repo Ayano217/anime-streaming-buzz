@@ -5,6 +5,7 @@ import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import AdPlaceholder from '../../components/AdPlaceholder.astro';
 import NewsCard from '../../components/NewsCard.astro';
+import Comments from '../../components/Comments.astro';
 
 export async function getStaticPaths() {
   const posts = await getCollection('posts', ({ data }) => !data.draft);
@@ -17,7 +18,6 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content } = await post.render();
 
-// Related posts
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
 const relatedPosts = allPosts
   .filter(p => p.slug !== post.slug)
@@ -25,18 +25,22 @@ const relatedPosts = allPosts
     p.data.category === post.data.category ||
     p.data.tags.some(tag => post.data.tags.includes(tag))
   )
+  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
   .slice(0, 3);
 
-// Reading time
 const wordCount = post.body.split(/\s+/).length;
 const readingTime = Math.ceil(wordCount / 200);
 
-// Date format
 const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
   year: 'numeric',
   month: 'long',
   day: 'numeric'
 });
+
+const categorySlug = post.data.category
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-+|-+$/g, '');
 ---
 
 <BaseLayout
@@ -49,13 +53,12 @@ const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
 
   <main class="post-page">
     <article class="container">
+
       <!-- Breadcrumb -->
       <nav class="breadcrumb">
         <a href="/">Home</a>
         <span>/</span>
-        <a href={`/category/${post.data.category.toLowerCase().replace(/\s+/g, '-')}`}>
-          {post.data.category}
-        </a>
+        <a href={`/category/${categorySlug}`}>{post.data.category}</a>
         <span>/</span>
         <span class="current">{post.data.title}</span>
       </nav>
@@ -68,29 +71,37 @@ const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
 
         <div class="post-meta">
           <div class="meta-left">
-            <span class="meta-author">✍️ {post.data.author}</span>
+            <span>✍️ {post.data.author}</span>
             <span class="meta-dot">•</span>
-            <span class="meta-date">📅 {formattedDate}</span>
+            <span>📅 {formattedDate}</span>
             <span class="meta-dot">•</span>
-            <span class="meta-read">⏱️ {readingTime} min read</span>
+            <span>⏱️ {readingTime} min read</span>
           </div>
         </div>
 
         <!-- Tags -->
         <div class="post-tags">
-          {post.data.tags.map(tag => (
-            <a
-              href={`/tags/${tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`}
-              class="tag-link">
-              #{tag}
-            </a>
-          ))}
+          {post.data.tags.map(tag => {
+            const tagSlug = tag
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, '');
+            return (
+              <a href={`/tags/${tagSlug}`} class="tag-link">
+                #{tag}
+              </a>
+            );
+          })}
         </div>
       </header>
 
       <!-- Featured Image -->
       <div class="post-hero-image">
-        <img src={post.data.image} alt={post.data.imageAlt || post.data.title} loading="eager" />
+        <img
+          src={post.data.image}
+          alt={post.data.imageAlt || post.data.title}
+          loading="eager"
+        />
       </div>
 
       <!-- Ad after image -->
@@ -108,20 +119,44 @@ const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
       <div class="share-section">
         <h3>Share this article</h3>
         <div class="share-buttons">
-          <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.data.title)}&url=${encodeURIComponent(Astro.url.href)}`}
-             target="_blank" rel="noopener" class="share-btn share-twitter">
+          <a
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.data.title)}&url=${encodeURIComponent(Astro.url.href)}`}
+            target="_blank"
+            rel="noopener"
+            class="share-btn share-twitter"
+          >
             𝕏 Twitter
           </a>
-          <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(Astro.url.href)}`}
-             target="_blank" rel="noopener" class="share-btn share-facebook">
+          <a
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(Astro.url.href)}`}
+            target="_blank"
+            rel="noopener"
+            class="share-btn share-facebook"
+          >
             Facebook
           </a>
-          <a href={`https://www.reddit.com/submit?url=${encodeURIComponent(Astro.url.href)}&title=${encodeURIComponent(post.data.title)}`}
-             target="_blank" rel="noopener" class="share-btn share-reddit">
+          <a
+            href={`https://www.reddit.com/submit?url=${encodeURIComponent(Astro.url.href)}&title=${encodeURIComponent(post.data.title)}`}
+            target="_blank"
+            rel="noopener"
+            class="share-btn share-reddit"
+          >
             Reddit
+          </a>
+          <a
+            href={`https://api.whatsapp.com/send?text=${encodeURIComponent(post.data.title + ' ' + Astro.url.href)}`}
+            target="_blank"
+            rel="noopener"
+            class="share-btn share-whatsapp"
+          >
+            WhatsApp
           </a>
         </div>
       </div>
+
+      <!-- Comments Section -->
+      <Comments title={post.data.title} />
+
     </article>
 
     <!-- Related Posts -->
@@ -169,6 +204,7 @@ const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
 
   .breadcrumb a {
     color: var(--text-secondary);
+    text-decoration: none;
   }
 
   .breadcrumb a:hover {
@@ -230,6 +266,7 @@ const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
     gap: 8px;
     justify-content: center;
     flex-wrap: wrap;
+    margin-top: 12px;
   }
 
   .tag-link {
@@ -240,6 +277,7 @@ const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
     color: var(--accent-neon-purple);
     border: 1px solid rgba(123, 45, 255, 0.2);
     transition: all var(--transition-fast);
+    text-decoration: none;
   }
 
   .tag-link:hover {
@@ -262,7 +300,7 @@ const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
     display: block;
   }
 
-  /* Post Content - Prose */
+  /* Post Content */
   .post-content {
     max-width: 760px;
     margin: 0 auto;
@@ -320,6 +358,8 @@ const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
     width: 100%;
     border-collapse: collapse;
     margin: 24px 0;
+    overflow-x: auto;
+    display: block;
   }
 
   .post-content :global(th),
@@ -327,12 +367,17 @@ const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
     padding: 12px 16px;
     text-align: left;
     border: 1px solid var(--border-color);
+    white-space: nowrap;
   }
 
   .post-content :global(th) {
     background: var(--bg-card);
     font-weight: 600;
     color: var(--text-primary);
+  }
+
+  .post-content :global(tr:hover td) {
+    background: var(--bg-card-hover);
   }
 
   .post-content :global(hr) {
@@ -349,6 +394,18 @@ const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
 
   .post-content :global(a:hover) {
     color: var(--accent-primary);
+  }
+
+  .post-content :global(img) {
+    max-width: 100%;
+    border-radius: var(--radius-md);
+    margin: 16px 0;
+  }
+
+  /* iframe responsive */
+  .post-content :global(iframe) {
+    max-width: 100%;
+    border-radius: var(--radius-md);
   }
 
   /* Share */
@@ -404,6 +461,12 @@ const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
     color: #ff4500;
   }
 
+  .share-whatsapp:hover {
+    background: rgba(37, 211, 102, 0.15);
+    border-color: #25d366;
+    color: #25d366;
+  }
+
   /* Related Grid */
   .related-grid {
     display: grid;
@@ -429,10 +492,17 @@ const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
     .related-grid {
       grid-template-columns: 1fr;
     }
+
+    .share-buttons {
+      flex-direction: column;
+    }
+
+    .share-btn {
+      text-align: center;
+    }
   }
 </style>
 
-<!-- JSON-LD Article Schema -->
 <script type="application/ld+json" set:html={JSON.stringify({
   "@context": "https://schema.org",
   "@type": "Article",
