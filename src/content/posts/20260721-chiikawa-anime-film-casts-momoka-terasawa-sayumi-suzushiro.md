@@ -2,7 +2,7 @@
 title: "Chiikawa Anime Film Casts Momoka Terasawa, Sayumi Suzushiro"
 excerpt: "Terasawa, Suzushiro play islanders in film opening on Friday"
 category: "News"
-tags: ["casts", "film", "chiikawa", "anime", "news", "momoka"]
+tags: ["momoka", "chiikawa", "film", "anime", "casts", "news"]
 author: "AniTube Buzz"
 date: "2026-07-21"
 image: "https://picsum.photos/seed/chiikawa-anime-/800/450"
@@ -28,7 +28,7 @@ Fans should stay tuned to official channels for further announcements and update
 ## Official Trailer
 
 <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;margin:20px 0;">
-<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="https://www.youtube.com/embed/nG8xyRiNftc" title="Official Trailer" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>
+<iframe style="position:absolute;top:0;left:0;width:100%;height:100%;" src="https://www.youtube.com/embed/xWbWMUeOkKE" title="Official Trailer" frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>
 </div>
 
 ## Watch Officially
