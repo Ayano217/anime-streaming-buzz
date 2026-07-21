@@ -1,0 +1,54 @@
+---
+export interface Props {
+  title?: string;
+}
+const { title = "" } = Astro.props;
+---
+
+<section class="comments-section">
+  <div class="comments-header">
+    <h3>💬 Comments & Discussion</h3>
+    <p>Share your thoughts about this anime!</p>
+  </div>
+
+  <script
+    src="https://giscus.app/client.js"
+    data-repo="Ayano217/anime-streaming-buzz"
+    data-repo-id="YOUR_REPO_ID"
+    data-category="General"
+    data-category-id="YOUR_CATEGORY_ID"
+    data-mapping="pathname"
+    data-strict="0"
+    data-reactions-enabled="1"
+    data-emit-metadata="0"
+    data-input-position="top"
+    data-theme="dark"
+    data-lang="en"
+    data-loading="lazy"
+    crossorigin="anonymous"
+    async>
+  </script>
+</section>
+
+<style>
+  .comments-section {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .comments-header {
+    margin-bottom: 20px;
+  }
+
+  .comments-header h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .comments-header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+</style>
