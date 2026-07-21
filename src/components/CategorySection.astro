@@ -17,13 +17,18 @@ export interface Props {
 }
 
 const { title, emoji, posts } = Astro.props;
+
+const categorySlug = title
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-')
+  .replace(/^-+|-+$/g, '');
 ---
 
-<section class="category-section section" id={title.toLowerCase().replace(/\s+/g, '-')}>
+<section class="category-section section" id={categorySlug}>
   <div class="container">
     <div class="section-header">
       <h2 class="section-title">{emoji} {title}</h2>
-      <a href={`#${title.toLowerCase()}`} class="view-all-btn">
+      <a href={`/category/${categorySlug}`} class="view-all-btn">
         View All →
       </a>
     </div>
@@ -56,6 +61,7 @@ const { title, emoji, posts } = Astro.props;
     border-radius: var(--radius-sm);
     border: 1px solid rgba(255, 45, 117, 0.3);
     transition: all var(--transition-fast);
+    white-space: nowrap;
   }
 
   .view-all-btn:hover {
