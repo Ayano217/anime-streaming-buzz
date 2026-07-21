@@ -3,38 +3,48 @@ const currentYear = new Date().getFullYear();
 
 const footerLinks = {
   categories: [
-    { name: "Anime Recaps", href: "/category/anime-recap" },
-    { name: "Manga News", href: "/category/news" },
-    { name: "Manhwa Updates", href: "/category/manhwa" },
+    { name: "Anime Recap", href: "/category/anime-recap" },
+    { name: "News", href: "/category/news" },
+    { name: "Manhwa", href: "/category/manhwa" },
     { name: "Streaming", href: "/category/streaming" },
     { name: "Gaming", href: "/category/gaming" },
   ],
   company: [
-    { name: "About Us", href: "/about" },
+    { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
-    { name: "Privacy Policy", href: "/privacy" },
-    { name: "Terms of Service", href: "/terms" },
+    { name: "Privacy", href: "/privacy" },
+    { name: "Terms", href: "/terms" },
     { name: "DMCA", href: "/dmca" },
   ],
 };
 ---
 
 <footer class="site-footer">
+  <div class="footer-glow"></div>
   <div class="container">
     <div class="footer-grid">
+
+      <!-- Brand -->
       <div class="footer-brand">
-        <div class="footer-logo">
-          <span class="logo-icon">⚡</span>
-          <span class="logo-text">
-            <span class="gradient-text">AniTube</span>
-            <span class="logo-buzz">Buzz</span>
+        <a href="/" class="footer-logo">
+          <span class="footer-logo-icon">⚡</span>
+          <span class="footer-logo-text">
+            <span class="gradient-text">Ani</span><span>Tube</span>
+            <span class="footer-buzz">Buzz</span>
           </span>
-        </div>
+        </a>
         <p class="footer-desc">
-          Your ultimate source for anime recaps, streaming news, manhwa updates, and otaku culture.
+          Your premium destination for anime recaps, streaming news,
+          manhwa updates, and otaku culture worldwide.
         </p>
+        <div class="footer-social">
+          <a href="https://twitter.com" target="_blank" rel="noopener" class="social-link" aria-label="Twitter">𝕏</a>
+          <a href="https://reddit.com/r/anime" target="_blank" rel="noopener" class="social-link" aria-label="Reddit">R</a>
+          <a href="https://discord.com" target="_blank" rel="noopener" class="social-link" aria-label="Discord">D</a>
+        </div>
       </div>
 
+      <!-- Categories -->
       <div class="footer-col">
         <h4 class="footer-col-title">Categories</h4>
         <ul class="footer-links">
@@ -44,8 +54,9 @@ const footerLinks = {
         </ul>
       </div>
 
+      <!-- Company -->
       <div class="footer-col">
-        <h4 class="footer-col-title">Company</h4>
+        <h4 class="footer-col-title">Legal</h4>
         <ul class="footer-links">
           {footerLinks.company.map(link => (
             <li><a href={link.href}>{link.name}</a></li>
@@ -53,16 +64,23 @@ const footerLinks = {
         </ul>
       </div>
 
+      <!-- Quick Links -->
       <div class="footer-col">
-        <h4 class="footer-col-title">Contact</h4>
-        <p class="newsletter-text">Email: anitubebuzz@gmail.com</p>
-        <p class="newsletter-text">Official anime news, updates, and streaming guides.</p>
+        <h4 class="footer-col-title">Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="/search">🔍 Search</a></li>
+          <li><a href="/rss.xml">📡 RSS Feed</a></li>
+          <li><a href="/sitemap.xml">🗺️ Sitemap</a></li>
+        </ul>
       </div>
     </div>
 
+    <!-- Bottom -->
     <div class="footer-bottom">
       <p>© {currentYear} AniTube Buzz. All rights reserved.</p>
-      <p class="footer-powered">Built with Astro</p>
+      <p class="footer-powered">
+        Powered by <span class="gradient-text">Open-Source AI</span> · Built with Astro
+      </p>
     </div>
   </div>
 </footer>
@@ -71,42 +89,103 @@ const footerLinks = {
   .site-footer {
     background: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
-    padding: 60px 0 30px;
+    padding: 60px 0 28px;
     margin-top: 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .footer-glow {
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 200px;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(255, 51, 102, 0.06) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
   }
 
   .footer-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1.2fr;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
     gap: 40px;
     margin-bottom: 40px;
+    position: relative;
   }
 
+  /* Brand */
   .footer-logo {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 12px;
-    font-family: var(--font-heading);
-    font-size: 1.3rem;
-    font-weight: 800;
+    text-decoration: none;
+    margin-bottom: 14px;
   }
 
-  .logo-buzz {
-    color: var(--accent-neon-blue);
+  .footer-logo-icon {
+    font-size: 1.4rem;
+  }
+
+  .footer-logo-text {
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+
+  .footer-buzz {
+    color: var(--accent-tertiary);
+    margin-left: 2px;
   }
 
   .footer-desc {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     color: var(--text-secondary);
-    line-height: 1.6;
+    line-height: 1.65;
+    margin-bottom: 16px;
   }
 
+  .footer-social {
+    display: flex;
+    gap: 8px;
+  }
+
+  .social-link {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: all var(--transition-fast);
+    text-decoration: none;
+  }
+
+  .social-link:hover {
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+    background: rgba(255, 51, 102, 0.06);
+    box-shadow: var(--glow-pink);
+    transform: translateY(-2px);
+  }
+
+  /* Columns */
   .footer-col-title {
-    font-size: 1rem;
+    font-size: 0.88rem;
     font-weight: 700;
     margin-bottom: 16px;
     color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
   }
 
   .footer-links {
@@ -117,29 +196,30 @@ const footerLinks = {
   }
 
   .footer-links a {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     color: var(--text-secondary);
-    transition: color var(--transition-fast);
+    transition: all var(--transition-fast);
+    display: inline-block;
   }
 
   .footer-links a:hover {
     color: var(--accent-primary);
+    transform: translateX(4px);
   }
 
-  .newsletter-text {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    margin-bottom: 10px;
-  }
-
+  /* Bottom */
   .footer-bottom {
     border-top: 1px solid var(--border-color);
     padding-top: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--text-muted);
+  }
+
+  .footer-powered {
+    font-size: 0.78rem;
   }
 
   @media (max-width: 900px) {
@@ -151,7 +231,7 @@ const footerLinks = {
   @media (max-width: 600px) {
     .footer-grid {
       grid-template-columns: 1fr;
-      gap: 30px;
+      gap: 28px;
     }
 
     .footer-bottom {
