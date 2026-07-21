@@ -3,7 +3,6 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
-import AdPlaceholder from '../../components/AdPlaceholder.astro';
 import NewsCard from '../../components/NewsCard.astro';
 import Comments from '../../components/Comments.astro';
 
@@ -32,9 +31,7 @@ const wordCount = post.body.split(/\s+/).length;
 const readingTime = Math.ceil(wordCount / 200);
 
 const formattedDate = new Date(post.data.date).toLocaleDateString('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric'
+  year: 'numeric', month: 'long', day: 'numeric'
 });
 
 const categorySlug = post.data.category
@@ -57,10 +54,10 @@ const categorySlug = post.data.category
       <!-- Breadcrumb -->
       <nav class="breadcrumb">
         <a href="/">Home</a>
-        <span>/</span>
+        <span class="bc-sep">›</span>
         <a href={`/category/${categorySlug}`}>{post.data.category}</a>
-        <span>/</span>
-        <span class="current">{post.data.title}</span>
+        <span class="bc-sep">›</span>
+        <span class="bc-current">{post.data.title}</span>
       </nav>
 
       <!-- Post Header -->
@@ -69,101 +66,58 @@ const categorySlug = post.data.category
         <h1 class="post-title">{post.data.title}</h1>
         <p class="post-excerpt">{post.data.excerpt}</p>
 
-        <div class="post-meta">
-          <div class="meta-left">
-            <span>✍️ {post.data.author}</span>
-            <span class="meta-dot">•</span>
-            <span>📅 {formattedDate}</span>
-            <span class="meta-dot">•</span>
-            <span>⏱️ {readingTime} min read</span>
-          </div>
+        <div class="post-meta-bar">
+          <span>✍️ {post.data.author}</span>
+          <span class="meta-sep">·</span>
+          <span>📅 {formattedDate}</span>
+          <span class="meta-sep">·</span>
+          <span>⏱️ {readingTime} min read</span>
         </div>
 
-        <!-- Tags -->
         <div class="post-tags">
           {post.data.tags.map(tag => {
-            const tagSlug = tag
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/^-+|-+$/g, '');
-            return (
-              <a href={`/tags/${tagSlug}`} class="tag-link">
-                #{tag}
-              </a>
-            );
+            const tagSlug = tag.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+            return <span class="post-tag">#{tag}</span>;
           })}
         </div>
       </header>
 
-      <!-- Featured Image -->
-      <div class="post-hero-image">
-        <img
-          src={post.data.image}
-          alt={post.data.imageAlt || post.data.title}
-          loading="eager"
-        />
+      <!-- Hero Image -->
+      <div class="post-hero-img">
+        <img src={post.data.image} alt={post.data.imageAlt || post.data.title} loading="eager" />
       </div>
 
-      <!-- Ad after image -->
-      <AdPlaceholder slot="post-top" size="728x90" />
-
-      <!-- Post Content -->
-      <div class="post-content prose">
+      <!-- Article Content -->
+      <div class="post-body">
         <Content />
       </div>
 
-      <!-- Ad after content -->
-      <AdPlaceholder slot="post-bottom" size="728x90" />
-
-      <!-- Share buttons -->
-      <div class="share-section">
-        <h3>Share this article</h3>
-        <div class="share-buttons">
-          <a
-            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.data.title)}&url=${encodeURIComponent(Astro.url.href)}`}
-            target="_blank"
-            rel="noopener"
-            class="share-btn share-twitter"
-          >
-            𝕏 Twitter
-          </a>
-          <a
-            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(Astro.url.href)}`}
-            target="_blank"
-            rel="noopener"
-            class="share-btn share-facebook"
-          >
-            Facebook
-          </a>
-          <a
-            href={`https://www.reddit.com/submit?url=${encodeURIComponent(Astro.url.href)}&title=${encodeURIComponent(post.data.title)}`}
-            target="_blank"
-            rel="noopener"
-            class="share-btn share-reddit"
-          >
-            Reddit
-          </a>
-          <a
-            href={`https://api.whatsapp.com/send?text=${encodeURIComponent(post.data.title + ' ' + Astro.url.href)}`}
-            target="_blank"
-            rel="noopener"
-            class="share-btn share-whatsapp"
-          >
-            WhatsApp
-          </a>
+      <!-- Share -->
+      <div class="share-bar">
+        <span class="share-label">Share:</span>
+        <div class="share-btns">
+          <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.data.title)}&url=${encodeURIComponent(Astro.url.href)}`}
+            target="_blank" rel="noopener" class="share-link s-twitter">𝕏</a>
+          <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(Astro.url.href)}`}
+            target="_blank" rel="noopener" class="share-link s-facebook">FB</a>
+          <a href={`https://www.reddit.com/submit?url=${encodeURIComponent(Astro.url.href)}&title=${encodeURIComponent(post.data.title)}`}
+            target="_blank" rel="noopener" class="share-link s-reddit">R</a>
+          <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(post.data.title + ' ' + Astro.url.href)}`}
+            target="_blank" rel="noopener" class="share-link s-whatsapp">WA</a>
+          <button class="share-link s-copy" id="copyLinkBtn" aria-label="Copy link">🔗</button>
         </div>
       </div>
 
-      <!-- Comments Section -->
-      <Comments title={post.data.title} />
+      <!-- Comments -->
+      <Comments postSlug={post.slug} />
 
     </article>
 
-    <!-- Related Posts -->
+    <!-- Related -->
     {relatedPosts.length > 0 && (
       <section class="related-section section">
         <div class="container">
-          <h2 class="section-title">📌 Related Articles</h2>
+          <h2 class="section-title">📌 You May Also Like</h2>
           <div class="related-grid">
             {relatedPosts.map(rPost => (
               <NewsCard
@@ -171,7 +125,7 @@ const categorySlug = post.data.category
                 excerpt={rPost.data.excerpt}
                 category={rPost.data.category}
                 date={rPost.data.date}
-                readTime={`${Math.ceil(rPost.body.split(/\s+/).length / 200)} min read`}
+                readTime={`${Math.ceil(rPost.body.split(/\s+/).length / 200)} min`}
                 image={rPost.data.image}
                 slug={`/posts/${rPost.slug}`}
                 badgeType="purple"
@@ -187,321 +141,154 @@ const categorySlug = post.data.category
 </BaseLayout>
 
 <style>
-  .post-page {
-    padding-top: calc(var(--header-height) + 20px);
-  }
+  .post-page { padding-top: 20px; }
 
-  /* Breadcrumb */
   .breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-bottom: 24px;
-    flex-wrap: wrap;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.82rem; color: var(--text-muted);
+    margin-bottom: 28px; flex-wrap: wrap;
+  }
+  .breadcrumb a { color: var(--text-secondary); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--accent-primary); }
+  .bc-sep { color: var(--accent-primary); font-weight: 600; }
+  .bc-current {
+    color: var(--text-muted); max-width: 280px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
 
-  .breadcrumb a {
-    color: var(--text-secondary);
-    text-decoration: none;
-  }
-
-  .breadcrumb a:hover {
-    color: var(--accent-primary);
-  }
-
-  .breadcrumb .current {
-    color: var(--text-muted);
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* Post Header */
-  .post-header {
-    max-width: 800px;
-    margin: 0 auto 30px;
-    text-align: center;
-  }
+  .post-header { max-width: 820px; margin: 0 auto 32px; text-align: center; }
 
   .post-title {
-    font-size: 2.2rem;
-    font-weight: 800;
-    margin: 16px 0;
-    line-height: 1.3;
+    font-size: 2.2rem; font-weight: 800;
+    margin: 16px 0; line-height: 1.2;
+    letter-spacing: -0.5px;
   }
 
   .post-excerpt {
-    font-size: 1.1rem;
-    color: var(--text-secondary);
-    margin-bottom: 20px;
-    line-height: 1.6;
+    font-size: 1.08rem; color: var(--text-secondary);
+    margin-bottom: 20px; line-height: 1.6;
   }
 
-  .post-meta {
-    display: flex;
-    justify-content: center;
+  .post-meta-bar {
+    display: flex; justify-content: center;
+    gap: 8px; font-size: 0.88rem;
+    color: var(--text-muted); flex-wrap: wrap;
     margin-bottom: 16px;
   }
+  .meta-sep { color: var(--accent-primary); }
 
-  .meta-left {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .meta-dot {
-    color: var(--border-color);
-  }
-
-  /* Tags */
   .post-tags {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: 12px;
+    display: flex; gap: 8px; justify-content: center;
+    flex-wrap: wrap; margin-top: 8px;
+  }
+  .post-tag {
+    padding: 4px 14px; border-radius: var(--radius-round);
+    font-size: 0.78rem; font-weight: 600;
+    background: rgba(136, 51, 255, 0.08);
+    color: var(--accent-secondary);
+    border: 1px solid rgba(136, 51, 255, 0.2);
   }
 
-  .tag-link {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    background: rgba(123, 45, 255, 0.1);
-    color: var(--accent-neon-purple);
-    border: 1px solid rgba(123, 45, 255, 0.2);
-    transition: all var(--transition-fast);
-    text-decoration: none;
-  }
-
-  .tag-link:hover {
-    background: rgba(123, 45, 255, 0.2);
-    border-color: var(--accent-neon-purple);
-  }
-
-  /* Hero Image */
-  .post-hero-image {
-    max-width: 900px;
-    margin: 0 auto 30px;
-    border-radius: var(--radius-xl);
-    overflow: hidden;
+  .post-hero-img {
+    max-width: 920px; margin: 0 auto 32px;
+    border-radius: var(--radius-xl); overflow: hidden;
     border: 1px solid var(--border-color);
   }
+  .post-hero-img img { width: 100%; height: auto; }
 
-  .post-hero-image img {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-
-  /* Post Content */
-  .post-content {
-    max-width: 760px;
-    margin: 0 auto;
-    font-size: 1.05rem;
-    line-height: 1.8;
+  /* Body */
+  .post-body {
+    max-width: 760px; margin: 0 auto;
+    font-size: 1.05rem; line-height: 1.8;
     color: var(--text-secondary);
   }
 
-  .post-content :global(h2) {
-    font-size: 1.6rem;
-    font-weight: 700;
-    margin: 40px 0 16px;
-    color: var(--text-primary);
-    padding-bottom: 8px;
-    border-bottom: 2px solid var(--border-color);
+  .post-body :global(h2) {
+    font-size: 1.55rem; font-weight: 700;
+    margin: 40px 0 16px; color: var(--text-primary);
+    padding-bottom: 8px; border-bottom: 2px solid var(--border-color);
   }
-
-  .post-content :global(h3) {
-    font-size: 1.3rem;
-    font-weight: 600;
-    margin: 30px 0 12px;
-    color: var(--text-primary);
+  .post-body :global(h3) {
+    font-size: 1.25rem; font-weight: 600;
+    margin: 30px 0 12px; color: var(--text-primary);
   }
+  .post-body :global(p) { margin-bottom: 18px; }
+  .post-body :global(strong) { color: var(--text-primary); font-weight: 600; }
+  .post-body :global(ul), .post-body :global(ol) { margin: 16px 0; padding-left: 24px; }
+  .post-body :global(li) { margin-bottom: 8px; }
 
-  .post-content :global(p) {
-    margin-bottom: 18px;
-  }
-
-  .post-content :global(strong) {
-    color: var(--text-primary);
-    font-weight: 600;
-  }
-
-  .post-content :global(ul),
-  .post-content :global(ol) {
-    margin: 16px 0;
-    padding-left: 24px;
-  }
-
-  .post-content :global(li) {
-    margin-bottom: 8px;
-  }
-
-  .post-content :global(blockquote) {
+  .post-body :global(blockquote) {
     border-left: 4px solid var(--accent-primary);
-    padding: 16px 24px;
-    margin: 24px 0;
+    padding: 16px 24px; margin: 24px 0;
     background: var(--bg-card);
     border-radius: 0 var(--radius-md) var(--radius-md) 0;
-    font-style: italic;
-    color: var(--text-primary);
+    font-style: italic; color: var(--text-primary);
   }
 
-  .post-content :global(table) {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 24px 0;
-    overflow-x: auto;
-    display: block;
-  }
-
-  .post-content :global(th),
-  .post-content :global(td) {
-    padding: 12px 16px;
-    text-align: left;
+  .post-body :global(table) { width: 100%; border-collapse: collapse; margin: 24px 0; }
+  .post-body :global(th), .post-body :global(td) {
+    padding: 12px 16px; text-align: left;
     border: 1px solid var(--border-color);
-    white-space: nowrap;
   }
-
-  .post-content :global(th) {
-    background: var(--bg-card);
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-
-  .post-content :global(tr:hover td) {
-    background: var(--bg-card-hover);
-  }
-
-  .post-content :global(hr) {
-    border: none;
-    border-top: 1px solid var(--border-color);
-    margin: 40px 0;
-  }
-
-  .post-content :global(a) {
-    color: var(--accent-tertiary);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-
-  .post-content :global(a:hover) {
-    color: var(--accent-primary);
-  }
-
-  .post-content :global(img) {
-    max-width: 100%;
-    border-radius: var(--radius-md);
-    margin: 16px 0;
-  }
-
-  /* iframe responsive */
-  .post-content :global(iframe) {
-    max-width: 100%;
-    border-radius: var(--radius-md);
-  }
+  .post-body :global(th) { background: var(--bg-card); font-weight: 600; color: var(--text-primary); }
+  .post-body :global(tr:hover td) { background: var(--bg-card-hover); }
+  .post-body :global(hr) { border: none; border-top: 1px solid var(--border-color); margin: 40px 0; }
+  .post-body :global(a) { color: var(--accent-tertiary); text-decoration: underline; text-underline-offset: 2px; }
+  .post-body :global(a:hover) { color: var(--accent-primary); }
+  .post-body :global(img) { max-width: 100%; border-radius: var(--radius-md); margin: 16px 0; }
+  .post-body :global(iframe) { max-width: 100%; border-radius: var(--radius-md); }
 
   /* Share */
-  .share-section {
-    max-width: 760px;
-    margin: 40px auto;
-    padding: 24px;
-    background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-color);
-    text-align: center;
+  .share-bar {
+    max-width: 760px; margin: 40px auto;
+    padding: 20px; background: var(--bg-card);
+    border-radius: var(--radius-lg); border: 1px solid var(--border-color);
+    display: flex; align-items: center; gap: 16px;
   }
+  .share-label { font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); }
+  .share-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 
-  .share-section h3 {
-    font-size: 1rem;
-    margin-bottom: 16px;
-    color: var(--text-secondary);
-  }
-
-  .share-buttons {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .share-btn {
-    padding: 10px 20px;
-    border-radius: var(--radius-sm);
-    font-size: 0.85rem;
-    font-weight: 600;
+  .share-link {
+    width: 40px; height: 40px; border-radius: var(--radius-md);
+    border: 1px solid var(--border-color); background: transparent;
+    color: var(--text-secondary); display: flex; align-items: center;
+    justify-content: center; font-size: 0.85rem; font-weight: 700;
+    cursor: pointer; transition: all var(--transition-fast);
     text-decoration: none;
-    transition: all var(--transition-fast);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
   }
 
-  .share-twitter:hover {
-    background: rgba(29, 161, 242, 0.15);
-    border-color: #1da1f2;
-    color: #1da1f2;
-  }
+  .s-twitter:hover { border-color: #1da1f2; color: #1da1f2; background: rgba(29,161,242,0.08); }
+  .s-facebook:hover { border-color: #1877f2; color: #1877f2; background: rgba(24,119,242,0.08); }
+  .s-reddit:hover { border-color: #ff4500; color: #ff4500; background: rgba(255,69,0,0.08); }
+  .s-whatsapp:hover { border-color: #25d366; color: #25d366; background: rgba(37,211,102,0.08); }
+  .s-copy:hover { border-color: var(--accent-primary); color: var(--accent-primary); background: rgba(255,51,102,0.08); }
 
-  .share-facebook:hover {
-    background: rgba(24, 119, 242, 0.15);
-    border-color: #1877f2;
-    color: #1877f2;
-  }
-
-  .share-reddit:hover {
-    background: rgba(255, 69, 0, 0.15);
-    border-color: #ff4500;
-    color: #ff4500;
-  }
-
-  .share-whatsapp:hover {
-    background: rgba(37, 211, 102, 0.15);
-    border-color: #25d366;
-    color: #25d366;
-  }
-
-  /* Related Grid */
+  /* Related */
   .related-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
   }
 
   @media (max-width: 900px) {
-    .related-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
+    .related-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 600px) {
-    .post-title {
-      font-size: 1.6rem;
-    }
-
-    .post-excerpt {
-      font-size: 1rem;
-    }
-
-    .related-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .share-buttons {
-      flex-direction: column;
-    }
-
-    .share-btn {
-      text-align: center;
-    }
+    .post-title { font-size: 1.6rem; }
+    .post-excerpt { font-size: 0.95rem; }
+    .related-grid { grid-template-columns: 1fr; }
+    .share-bar { flex-direction: column; text-align: center; }
   }
 </style>
+
+<script is:inline>
+  document.getElementById('copyLinkBtn')?.addEventListener('click', function() {
+    navigator.clipboard.writeText(window.location.href).then(function() {
+      var btn = document.getElementById('copyLinkBtn');
+      btn.textContent = '✓';
+      setTimeout(function() { btn.textContent = '🔗'; }, 2000);
+    });
+  });
+</script>
 
 <script type="application/ld+json" set:html={JSON.stringify({
   "@context": "https://schema.org",
@@ -511,16 +298,10 @@ const categorySlug = post.data.category
   "image": post.data.image,
   "datePublished": post.data.date,
   "dateModified": post.data.updated || post.data.date,
-  "author": {
-    "@type": "Person",
-    "name": post.data.author
-  },
+  "author": { "@type": "Person", "name": post.data.author },
   "publisher": {
     "@type": "Organization",
     "name": "AniTube Buzz",
-    "logo": {
-      "@type": "ImageObject",
-      "url": "/favicon.svg"
-    }
+    "logo": { "@type": "ImageObject", "url": "/favicon.svg" }
   }
 })} />
