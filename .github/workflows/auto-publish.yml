@@ -12,7 +12,7 @@ concurrency:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
 
     permissions:
       contents: write
@@ -29,23 +29,6 @@ jobs:
         run: |
           git fetch origin main
           git reset --hard origin/main
-
-      - name: Cache llama binary
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/llama-bin
-          key: llama-cpp-bin-v3
-
-      - name: Cache GGUF model
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/gguf-models
-          key: gguf-qwen25-1.5b-v1
-
-      - name: Setup model and llama.cpp
-        run: |
-          chmod +x scripts/setup_model.sh
-          bash scripts/setup_model.sh
 
       - name: Setup Python
         uses: actions/setup-python@v5
