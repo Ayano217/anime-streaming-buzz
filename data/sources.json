@@ -4,7 +4,7 @@
       "name": "Anime News Network",
       "url": "https://www.animenewsnetwork.com/all/rss.xml?ann-edition=us",
       "category": "News",
-      "tags": ["anime", "news", "ann"]
+      "tags": ["anime", "news"]
     },
     {
       "name": "Crunchyroll News",
@@ -16,13 +16,19 @@
       "name": "MyAnimeList News",
       "url": "https://myanimelist.net/rss/news.xml",
       "category": "News",
-      "tags": ["anime", "manga", "myanimelist"]
+      "tags": ["anime", "manga"]
     },
     {
       "name": "Anime Corner",
       "url": "https://animecorner.me/feed/",
       "category": "News",
-      "tags": ["anime", "rankings", "seasonal"]
+      "tags": ["anime", "rankings"]
+    },
+    {
+      "name": "ComicBook Anime",
+      "url": "https://comicbook.com/category/anime/feed/",
+      "category": "Anime Recap",
+      "tags": ["anime", "recap"]
     }
   ],
   "settings": {
