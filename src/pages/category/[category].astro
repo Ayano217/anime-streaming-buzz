@@ -8,48 +8,83 @@ import NewsCard from '../../components/NewsCard.astro';
 export async function getStaticPaths() {
   const posts = await getCollection('posts', ({ data }) => !data.draft);
 
-  const categories = [...new Set(posts.map(p => p.data.category))];
+  const categories = [...new Set(posts.map(p => p.data.category).filter(Boolean))];
 
   return categories.map(category => {
-    const slug = category.toLowerCase().replace(/\s+/g, '-');
-    const filteredPosts = posts
+    const slug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+    const filtered = posts
       .filter(p => p.data.category === category)
       .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
 
     return {
       params: { category: slug },
-      props: { category, posts: filteredPosts },
+      props: { category, posts: filtered },
     };
   });
 }
 
 const { category, posts } = Astro.props;
+
+const fmt = (d: string) =>
+  new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+const rt = (b: string) =>
+  `${Math.max(1, Math.ceil(b.split(/\s+/).length / 200))} min`;
+
+const bt = (c: string) => {
+  if (c === 'Streaming') return 'blue';
+  if (c === 'Manhwa') return 'purple';
+  if (c === 'Gaming') return 'gold';
+  return 'pink';
+};
 ---
 
-<BaseLayout title={`${category} - Latest Articles`} description={`Browse all ${category} articles on AniTube Buzz.`}>
+<BaseLayout
+  title={`${category} — AniTube Buzz`}
+  description={`Browse all ${category} articles on AniTube Buzz. Latest anime news, recaps, and updates.`}
+>
   <Header />
 
   <main class="category-page">
     <div class="container">
-      <div class="page-header">
-        <h1 class="gradient-text">{category}</h1>
-        <p class="page-subtitle">{posts.length} article{posts.length !== 1 ? 's' : ''} found</p>
+
+      <div class="cat-hero">
+        <div class="cat-hero-inner">
+          <span class="cat-hero-emoji">
+            {category === 'Anime Recap' ? '🎬' :
+             category === 'Manhwa' ? '📖' :
+             category === 'Streaming' ? '📺' :
+             category === 'Gaming' ? '🎮' :
+             category === 'News' ? '📰' : '⚡'}
+          </span>
+          <h1>{category}</h1>
+          <p>{posts.length} article{posts.length !== 1 ? 's' : ''}</p>
+        </div>
       </div>
 
-      <div class="posts-grid">
-        {posts.map(post => (
-          <NewsCard
-            title={post.data.title}
-            excerpt={post.data.excerpt}
-            category={post.data.category}
-            date={post.data.date}
-            readTime={`${Math.ceil(post.body.split(/\s+/).length / 200)} min read`}
-            image={post.data.image}
-            slug={`/posts/${post.slug}`}
-            badgeType="pink"
-          />
-        ))}
-      </div>
+      {posts.length === 0 ? (
+        <div class="cat-empty">
+          <p>No articles in this category yet.</p>
+          <a href="/" class="btn-primary">Go to Homepage</a>
+        </div>
+      ) : (
+        <div class="cat-grid">
+          {posts.map(post => (
+            <NewsCard
+              title={post.data.title}
+              excerpt={post.data.excerpt}
+              category={post.data.category}
+              date={fmt(post.data.date)}
+              readTime={rt(post.body)}
+              image={post.data.image}
+              slug={`/posts/${post.slug}`}
+              badgeType={bt(post.data.category)}
+            />
+          ))}
+        </div>
+      )}
+
     </div>
   </main>
 
@@ -58,45 +93,78 @@ const { category, posts } = Astro.props;
 
 <style>
   .category-page {
-    padding-top: calc(var(--header-height) + 40px);
-    padding-bottom: 40px;
+    padding-top: 24px;
+    padding-bottom: 60px;
+    min-height: 70vh;
   }
 
-  .page-header {
+  .cat-hero {
     text-align: center;
+    padding: 48px 24px;
     margin-bottom: 40px;
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
   }
 
-  .page-header h1 {
-    font-size: 2.5rem;
+  .cat-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--accent-gradient);
+    opacity: 0.04;
+  }
+
+  .cat-hero-emoji {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 12px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .cat-hero h1 {
+    font-size: 2.2rem;
     font-weight: 800;
     margin-bottom: 8px;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
-  .page-subtitle {
+  .cat-hero p {
     color: var(--text-muted);
     font-size: 1rem;
   }
 
-  .posts-grid {
+  .cat-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 24px;
   }
 
+  .cat-empty {
+    text-align: center;
+    padding: 60px 24px;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--border-color);
+  }
+
+  .cat-empty p {
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    font-size: 1rem;
+  }
+
   @media (max-width: 900px) {
-    .posts-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
+    .cat-grid { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 600px) {
-    .posts-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .page-header h1 {
-      font-size: 1.8rem;
-    }
+    .cat-grid { grid-template-columns: 1fr; }
+    .cat-hero h1 { font-size: 1.7rem; }
   }
 </style>
