@@ -5,17 +5,15 @@
 <section class="video-section section">
   <div class="container">
     <div class="video-header">
-      <h2 class="section-title">🎬 Our Videos</h2>
-      <p class="video-subtitle">Watch our latest anime content</p>
+      <h2 class="section-title">🎬 Latest Videos</h2>
     </div>
     <div class="video-grid" id="videoGrid">
-      <div class="vid-empty">
-        <span class="vid-empty-icon">🎬</span>
-        <p>Loading videos...</p>
-      </div>
+      <div class="vid-skeleton skeleton"></div>
+      <div class="vid-skeleton skeleton"></div>
+      <div class="vid-skeleton skeleton"></div>
     </div>
-    <div class="video-load-wrap" id="loadWrap" style="display:none;">
-      <button class="btn-primary" id="loadBtn">Load More Videos</button>
+    <div class="vid-load-wrap" id="vidLoadWrap" style="display:none;">
+      <button class="btn-primary" id="vidLoadBtn">Load More</button>
     </div>
   </div>
 </section>
@@ -23,34 +21,26 @@
 <style>
   .video-section {
     padding: 48px 0;
-    position: relative;
-  }
-
-  .video-header {
-    margin-bottom: 28px;
-  }
-
-  .video-subtitle {
-    color: var(--text-muted);
-    font-size: 0.92rem;
-    margin-top: -18px;
-    margin-left: 16px;
   }
 
   .video-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 20px;
   }
 
+  .vid-skeleton {
+    aspect-ratio: 3/4;
+    border-radius: var(--radius-lg);
+  }
+
+  /* Card */
   .vid-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     transition: all var(--transition-normal);
-    text-decoration: none;
-    display: block;
     position: relative;
   }
 
@@ -61,145 +51,173 @@
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #1877f2, #8833ff);
+    background: linear-gradient(90deg, #1877f2, #ff3366, #8833ff);
     opacity: 0;
     transition: opacity var(--transition-fast);
-    z-index: 2;
+    z-index: 3;
   }
 
   .vid-card:hover {
     transform: translateY(-6px);
-    border-color: rgba(24, 119, 242, 0.3);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(24, 119, 242, 0.1);
+    border-color: rgba(255, 51, 102, 0.25);
+    box-shadow:
+      0 16px 48px rgba(0, 0, 0, 0.35),
+      var(--glow-pink);
   }
 
   .vid-card:hover::before {
     opacity: 1;
   }
 
-  .vid-thumb {
+  /* Video embed wrapper — 3:4 ratio */
+  .vid-embed {
     position: relative;
     width: 100%;
-    height: 200px;
+    padding-bottom: 133.33%; /* 3:4 ratio */
+    background: #000;
     overflow: hidden;
-    background: var(--bg-secondary);
   }
 
-  .vid-thumb-img {
+  .vid-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    transition: transform var(--transition-slow);
+    border: none;
   }
 
-  .vid-card:hover .vid-thumb-img {
-    transform: scale(1.08);
+  /* Overlay before play */
+  .vid-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.85) 0%,
+      rgba(0, 0, 0, 0.2) 50%,
+      transparent 100%
+    );
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 16px;
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
+    z-index: 2;
   }
 
-  .vid-play-btn {
+  .vid-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .vid-play-circle {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     background: var(--accent-gradient);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 30px rgba(255, 51, 102, 0.4);
+    box-shadow: 0 0 40px rgba(255, 51, 102, 0.5);
     transition: all var(--transition-fast);
   }
 
-  .vid-card:hover .vid-play-btn {
-    transform: translate(-50%, -50%) scale(1.1);
-    box-shadow: 0 0 40px rgba(255, 51, 102, 0.6);
+  .vid-card:hover .vid-play-circle {
+    transform: translate(-50%, -50%) scale(1.15);
+    box-shadow: 0 0 60px rgba(255, 51, 102, 0.7);
   }
 
-  .vid-play-btn svg {
-    width: 24px;
-    height: 24px;
+  .vid-play-circle svg {
+    width: 28px;
+    height: 28px;
     fill: #fff;
-    margin-left: 3px;
+    margin-left: 4px;
   }
 
-  .vid-duration {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    padding: 3px 8px;
-    border-radius: 4px;
-    background: rgba(0, 0, 0, 0.8);
+  .vid-overlay-title {
+    font-size: 0.88rem;
+    font-weight: 600;
     color: #fff;
-    font-size: 0.72rem;
-    font-weight: 600;
-  }
-
-  .vid-info {
-    padding: 14px 16px;
-  }
-
-  .vid-title {
-    font-size: 0.92rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    line-height: 1.4;
+    line-height: 1.35;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    margin-bottom: 8px;
-    transition: color var(--transition-fast);
+    margin-bottom: 6px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
   }
 
-  .vid-card:hover .vid-title {
-    color: var(--accent-primary);
-  }
-
-  .vid-meta {
+  .vid-overlay-meta {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 0.78rem;
-    color: var(--text-muted);
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.6);
   }
 
-  .vid-source-badge {
-    padding: 2px 10px;
+  .vid-fb-badge {
+    padding: 2px 8px;
     border-radius: var(--radius-round);
-    background: rgba(24, 119, 242, 0.1);
-    color: #4b9bff;
-    font-weight: 600;
-    font-size: 0.7rem;
+    background: rgba(24, 119, 242, 0.3);
+    color: #7eb8ff;
+    font-weight: 700;
+    font-size: 0.65rem;
   }
 
+  /* Duration */
+  .vid-duration {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    z-index: 3;
+  }
+
+  /* Empty */
   .vid-empty {
     grid-column: 1 / -1;
     text-align: center;
-    padding: 48px;
+    padding: 56px;
     background: var(--bg-card);
     border-radius: var(--radius-lg);
     border: 1px dashed var(--border-color);
   }
 
   .vid-empty-icon {
-    font-size: 2.5rem;
+    font-size: 3rem;
     display: block;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     animation: float 3s ease-in-out infinite;
   }
 
   .vid-empty p {
     color: var(--text-muted);
+    font-size: 0.95rem;
   }
 
-  .video-load-wrap {
+  .vid-load-wrap {
     text-align: center;
     margin-top: 28px;
   }
 
-  @media (max-width: 600px) {
+  @media (max-width: 768px) {
+    .video-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
     .video-grid {
       grid-template-columns: 1fr;
     }
@@ -209,78 +227,101 @@
 <script is:inline>
   document.addEventListener('DOMContentLoaded', function() {
     var grid = document.getElementById('videoGrid');
-    var loadWrap = document.getElementById('loadWrap');
-    var loadBtn = document.getElementById('loadBtn');
+    var loadWrap = document.getElementById('vidLoadWrap');
+    var loadBtn = document.getElementById('vidLoadBtn');
     if (!grid) return;
 
     var allVideos = [];
     var showCount = 9;
 
-    function timeAgo(dateStr) {
-      if (!dateStr) return '';
-      var diff = Math.floor((new Date() - new Date(dateStr)) / 1000);
-      if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-      if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-      if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
-      return new Date(dateStr).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric'
-      });
+    function timeAgo(d) {
+      if (!d) return '';
+      var s = Math.floor((new Date() - new Date(d)) / 1000);
+      if (s < 3600) return Math.floor(s / 60) + 'm';
+      if (s < 86400) return Math.floor(s / 3600) + 'h';
+      if (s < 2592000) return Math.floor(s / 86400) + 'd';
+      return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     }
 
-    function formatDuration(seconds) {
-      if (!seconds) return '';
-      var m = Math.floor(seconds / 60);
-      var s = Math.floor(seconds % 60);
+    function fmtDur(sec) {
+      if (!sec) return '';
+      var m = Math.floor(sec / 60);
+      var s = Math.floor(sec % 60);
       return m + ':' + (s < 10 ? '0' : '') + s;
-    }
-
-    function getVideoThumb(video) {
-      var id = video.id || '';
-      return 'https://graph.facebook.com/' + id + '/thumbnails';
     }
 
     function renderVideos() {
       var visible = allVideos.slice(0, showCount);
 
-      grid.innerHTML = visible.map(function(video, i) {
-        var title = (video.title || video.description || 'Video Update').substring(0, 80);
-        var time = timeAgo(video.created_time);
-        var duration = formatDuration(video.length);
-        var fbUrl = 'https://www.facebook.com' + (video.permalink_url || '');
-        var thumbUrl = 'https://picsum.photos/seed/fb-' + (video.id || i) + '/600/340';
+      grid.innerHTML = visible.map(function(v, i) {
+        var title = (v.title || v.description || 'Video').substring(0, 80);
+        var time = timeAgo(v.created_time);
+        var dur = fmtDur(v.length);
+        var pUrl = v.permalink_url || '';
+        var embedSrc = 'https://www.facebook.com/plugins/video.php?href='
+          + encodeURIComponent('https://www.facebook.com' + pUrl)
+          + '&show_text=false&width=560&height=750';
         var delay = i * 0.06;
+        var cardId = 'vcard-' + i;
+        var overlayId = 'vover-' + i;
+        var iframeId = 'vframe-' + i;
 
         return ''
-          + '<a href="' + fbUrl + '" target="_blank" rel="noopener" class="vid-card"'
+          + '<div class="vid-card" id="' + cardId + '"'
           + ' style="animation:fadeInUp 0.5s ease forwards;animation-delay:' + delay + 's;opacity:0;">'
 
-          + '<div class="vid-thumb">'
-          + '<img class="vid-thumb-img" src="' + thumbUrl + '" alt="' + title + '" loading="lazy" />'
-          + '<div class="vid-play-btn">'
+          + '<div class="vid-embed">'
+
+          // iframe hidden initially
+          + '<iframe id="' + iframeId + '"'
+          + ' data-src="' + embedSrc + '"'
+          + ' allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"'
+          + ' allowfullscreen loading="lazy"'
+          + ' style="opacity:0;transition:opacity 0.3s;"></iframe>'
+
+          // Overlay with play button
+          + '<div class="vid-overlay" id="' + overlayId + '"'
+          + ' onclick="playVideo(\'' + iframeId + '\',\'' + overlayId + '\',\'' + embedSrc + '\')">'
+
+          + '<div class="vid-play-circle">'
           + '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'
           + '</div>'
-          + (duration ? '<span class="vid-duration">' + duration + '</span>' : '')
+
+          + '<p class="vid-overlay-title">' + title + '</p>'
+          + '<div class="vid-overlay-meta">'
+          + '<span class="vid-fb-badge">FB</span>'
+          + (time ? '<span>' + time + ' ago</span>' : '')
           + '</div>'
 
-          + '<div class="vid-info">'
-          + '<p class="vid-title">' + title + '</p>'
-          + '<div class="vid-meta">'
-          + '<span class="vid-source-badge">📘 Facebook</span>'
-          + (time ? '<span>' + time + '</span>' : '')
-          + '</div>'
           + '</div>'
 
-          + '</a>';
+          + (dur ? '<span class="vid-duration">' + dur + '</span>' : '')
+
+          + '</div>'
+          + '</div>';
       }).join('');
 
       if (showCount < allVideos.length) {
-        var remaining = allVideos.length - showCount;
-        loadBtn.textContent = 'Load More (' + remaining + ' remaining)';
+        var rem = allVideos.length - showCount;
+        loadBtn.textContent = 'Load More (' + rem + ' more)';
         loadWrap.style.display = 'block';
       } else {
         loadWrap.style.display = 'none';
       }
     }
+
+    // Play video function
+    window.playVideo = function(frameId, overId, src) {
+      var iframe = document.getElementById(frameId);
+      var overlay = document.getElementById(overId);
+      if (iframe) {
+        iframe.src = src + '&autoplay=1';
+        iframe.style.opacity = '1';
+      }
+      if (overlay) {
+        overlay.classList.add('hidden');
+      }
+    };
 
     if (loadBtn) {
       loadBtn.addEventListener('click', function() {
