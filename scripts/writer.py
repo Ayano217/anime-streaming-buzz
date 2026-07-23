@@ -346,7 +346,7 @@ def make_article(data, anime_info=None):
         f"- Include relevant context for anime fans"
     )
 
-    return call_llama(prompt, 1000)
+    return call_llama(prompt, 1500)
 
 
 def make_metadata(data, content):
