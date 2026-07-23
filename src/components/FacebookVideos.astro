@@ -1,91 +1,366 @@
-#!/usr/bin/env python3
+---
 
-import os
-import json
-import requests
+---
 
+<section class="video-section section">
+  <div class="container">
+    <h2 class="section-title">🎬 Latest Videos</h2>
+    <p class="video-subtitle">Watch our latest anime content — click to play</p>
 
-PAGE_ID = os.environ.get("FB_PAGE_ID", "")
-ACCESS_TOKEN = os.environ.get("FB_ACCESS_TOKEN", "")
+    <div class="video-grid" id="videoGrid">
+      <div class="skeleton" style="height:320px;border-radius:16px;"></div>
+      <div class="skeleton" style="height:320px;border-radius:16px;"></div>
+      <div class="skeleton" style="height:320px;border-radius:16px;"></div>
+    </div>
 
+    <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+      <button class="btn-primary" id="loadMoreBtn">Load More Videos</button>
+    </div>
+  </div>
+</section>
 
-def fetch_all_videos():
-    if not PAGE_ID or not ACCESS_TOKEN:
-        print("FB credentials not set, skipping")
-        return []
+<style>
+  .video-section {
+    padding: 48px 0;
+    border-top: 1px solid var(--border-color);
+  }
 
-    all_videos = []
-    url = (
-        f"https://graph.facebook.com/v19.0/{PAGE_ID}/videos"
-        f"?fields=id,title,description,permalink_url,created_time,length,embed_html"
-        f"&limit=25"
-        f"&access_token={ACCESS_TOKEN}"
-    )
+  .video-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: -20px;
+    margin-bottom: 28px;
+    margin-left: 16px;
+  }
 
-    page_count = 1
-    while url and page_count <= 10:
-        try:
-            print(f"Fetching page {page_count}...")
-            res = requests.get(url, timeout=15)
+  .video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
 
-            if res.status_code != 200:
-                print(f"FB API error {res.status_code}: {res.text[:200]}")
-                break
+  .vid-card {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-normal);
+    position: relative;
+    cursor: pointer;
+  }
 
-            data = res.json()
-            videos = data.get("data", [])
+  .vid-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #1877f2, #ff3366, #8833ff);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    z-index: 3;
+  }
 
-            # Build proper full URL for each video
-            cleaned = []
-            for v in videos:
-                purl = v.get("permalink_url", "")
+  .vid-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 51, 102, 0.2);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), var(--glow-pink);
+  }
 
-                # Build full URL
-                if purl.startswith("http"):
-                    full_url = purl
-                elif purl.startswith("/"):
-                    full_url = f"https://www.facebook.com{purl}"
-                else:
-                    full_url = f"https://www.facebook.com/{purl}"
+  .vid-card:hover::before {
+    opacity: 1;
+  }
 
-                cleaned.append({
-                    "id": v.get("id", ""),
-                    "title": v.get("title", ""),
-                    "description": v.get("description", ""),
-                    "permalink_url": full_url,
-                    "created_time": v.get("created_time", ""),
-                    "length": v.get("length", 0),
-                })
+  .vid-frame-wrap {
+    position: relative;
+    width: 100%;
+    padding-bottom: 133.33%;
+    background: #000;
+    overflow: hidden;
+  }
 
-            all_videos.extend(cleaned)
-            print(f"Got {len(videos)} videos (total: {len(all_videos)})")
+  .vid-frame-wrap iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: none;
+  }
 
-            next_url = data.get("paging", {}).get("next", "")
-            url = next_url if next_url else None
-            page_count += 1
+  .vid-frame-wrap iframe.active {
+    display: block;
+  }
 
-        except Exception as e:
-            print(f"Fetch error: {e}")
-            break
+  .vid-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.92) 0%,
+      rgba(0, 0, 0, 0.4) 50%,
+      rgba(0, 0, 0, 0.1) 100%
+    );
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity var(--transition-fast);
+    z-index: 2;
+    padding: 16px;
+  }
 
-    print(f"Total videos: {len(all_videos)}")
-    return all_videos
+  .vid-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
 
+  .play-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 40px rgba(255, 51, 102, 0.5);
+    margin-bottom: 16px;
+    transition: all var(--transition-fast);
+  }
 
-def save_videos(videos):
-    path = os.path.join(
-        os.path.dirname(__file__),
-        "..", "public", "facebook-videos.json"
-    )
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+  .vid-card:hover .play-btn {
+    transform: scale(1.12);
+    box-shadow: 0 0 60px rgba(255, 51, 102, 0.7);
+  }
 
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(videos, f, indent=2, ensure_ascii=False)
+  .play-btn svg {
+    width: 28px;
+    height: 28px;
+    fill: #fff;
+    margin-left: 4px;
+  }
 
-    print(f"Saved {len(videos)} videos to {path}")
+  .vid-overlay-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #fff;
+    text-align: center;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  }
 
+  .vid-duration {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    padding: 3px 8px;
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border-radius: 4px;
+    z-index: 3;
+  }
 
-if __name__ == "__main__":
-    print("Fetching Facebook videos...")
-    videos = fetch_all_videos()
-    save_videos(videos)
+  .vid-info {
+    padding: 14px 16px;
+  }
+
+  .vid-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 6px;
+    transition: color var(--transition-fast);
+  }
+
+  .vid-card:hover .vid-title {
+    color: var(--accent-primary);
+  }
+
+  .vid-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+
+  .fb-badge {
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(24, 119, 242, 0.12);
+    color: #4b9bff;
+    font-weight: 700;
+    font-size: 0.68rem;
+  }
+
+  .vid-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 56px 24px;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--border-color);
+  }
+
+  .vid-empty-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 12px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .vid-empty p {
+    color: var(--text-muted);
+  }
+
+  .load-more-wrap {
+    text-align: center;
+    margin-top: 28px;
+  }
+
+  @media (max-width: 768px) {
+    .video-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .video-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', function() {
+    var grid = document.getElementById('videoGrid');
+    var loadMoreWrap = document.getElementById('loadMoreWrap');
+    var loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (!grid) return;
+
+    var allVideos = [];
+    var showCount = 9;
+
+    function fmt(sec) {
+      if (!sec) return '';
+      var m = Math.floor(sec / 60);
+      var s = Math.floor(sec % 60);
+      return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function timeAgo(d) {
+      if (!d) return '';
+      var diff = Math.floor((Date.now() - new Date(d)) / 1000);
+      if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+      if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+      if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
+      return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    function makeEmbedUrl(permalink) {
+      return (
+        'https://www.facebook.com/plugins/video.php'
+        + '?href=' + encodeURIComponent(permalink)
+        + '&show_text=false'
+        + '&width=560'
+        + '&autoplay=1'
+        + '&allowfullscreen=true'
+      );
+    }
+
+    function renderVideos() {
+      var visible = allVideos.slice(0, showCount);
+
+      grid.innerHTML = visible.map(function(v, i) {
+        var id = 'v' + i;
+        var title = (v.title || v.description || 'Video Update').substring(0, 80);
+        var dur = fmt(v.length);
+        var time = timeAgo(v.created_time);
+        var purl = v.permalink_url || '';
+        var safePurl = purl.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        var delay = i * 0.06;
+
+        return (
+          '<div class="vid-card" style="animation:fadeInUp 0.5s ease forwards;animation-delay:' + delay + 's;opacity:0;">'
+
+          + '<div class="vid-frame-wrap">'
+          + '<iframe id="frame-' + id + '" allowfullscreen loading="lazy"'
+          + ' allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>'
+          + '<div class="vid-overlay" id="over-' + id + '"'
+          + ' onclick="playFB(\'' + id + '\',\'' + safePurl + '\')">'
+          + '<div class="play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>'
+          + '<p class="vid-overlay-title">' + title + '</p>'
+          + '</div>'
+          + (dur ? '<span class="vid-duration">' + dur + '</span>' : '')
+          + '</div>'
+
+          + '<div class="vid-info">'
+          + '<p class="vid-title">' + title + '</p>'
+          + '<div class="vid-meta">'
+          + '<span class="fb-badge">FB</span>'
+          + (time ? '<span>' + time + '</span>' : '')
+          + '</div>'
+          + '</div>'
+
+          + '</div>'
+        );
+      }).join('');
+
+      if (showCount < allVideos.length) {
+        var rem = allVideos.length - showCount;
+        loadMoreBtn.textContent = 'Load More (' + rem + ' more)';
+        loadMoreWrap.style.display = 'block';
+      } else {
+        loadMoreWrap.style.display = 'none';
+      }
+    }
+
+    window.playFB = function(id, permalink) {
+      var frame = document.getElementById('frame-' + id);
+      var overlay = document.getElementById('over-' + id);
+      if (!frame || !permalink) return;
+
+      frame.src = makeEmbedUrl(permalink);
+      frame.className = 'active';
+      if (overlay) overlay.className = 'vid-overlay hidden';
+    };
+
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', function() {
+        showCount += 9;
+        renderVideos();
+      });
+    }
+
+    fetch('/facebook-videos.json')
+      .then(function(r) {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then(function(videos) {
+        if (!videos || !videos.length) {
+          grid.innerHTML = '<div class="vid-empty"><span class="vid-empty-icon">🎬</span><p>Videos coming soon!</p></div>';
+          return;
+        }
+        allVideos = videos;
+        renderVideos();
+      })
+      .catch(function() {
+        grid.innerHTML = '<div class="vid-empty"><span class="vid-empty-icon">🎬</span><p>Videos coming soon!</p></div>';
+      });
+  });
+</script>
