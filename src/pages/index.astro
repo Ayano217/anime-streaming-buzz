@@ -13,27 +13,12 @@ const sortedPosts = allPosts.sort((a, b) =>
 const novelty = sortedPosts.slice(0, 4);
 const news    = sortedPosts.slice(4, 8);
 const latest  = sortedPosts.slice(8, 16);
-
-const tickerItems = sortedPosts.slice(0, 15);
 ---
 
 <BaseLayout>
   <Header slot="header" />
 
-  <!-- Breaking News Ticker -->
-  <div class="ticker-wrap">
-    <div class="ticker-label">Breaking</div>
-    <div class="ticker-track">
-      {[...tickerItems, ...tickerItems].map((post) => (
-        <a href={`/posts/${post.slug}`} class="ticker-item">
-          <span class="ticker-sep">◆</span>
-          {post.data.title}
-        </a>
-      ))}
-    </div>
-  </div>
-
-  <!-- Hero -->
+  <!-- Hero (no ticker) -->
   <HeroSection />
 
   <!-- Novelty Section -->
@@ -132,7 +117,7 @@ const tickerItems = sortedPosts.slice(0, 15);
 </BaseLayout>
 
 <style>
-  /* ═══ Novelty Section (4 tall cards) ═══ */
+  /* Novelty */
   .novelty-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -151,7 +136,7 @@ const tickerItems = sortedPosts.slice(0, 15);
 
   .novelty-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(255, 51, 102, 0.15);
+    box-shadow: 0 20px 40px rgba(192, 132, 252, 0.15);
   }
 
   .nc-image {
@@ -209,7 +194,7 @@ const tickerItems = sortedPosts.slice(0, 15);
     overflow: hidden;
   }
 
-  /* ═══ News Section (2x2 horizontal cards) ═══ */
+  /* News */
   .news-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -291,7 +276,7 @@ const tickerItems = sortedPosts.slice(0, 15);
     overflow: hidden;
   }
 
-  /* ═══ Latest Section (4-col grid) ═══ */
+  /* Latest */
   .latest-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -347,7 +332,7 @@ const tickerItems = sortedPosts.slice(0, 15);
     justify-content: center;
     color: #fff;
     padding-left: 3px;
-    box-shadow: 0 0 20px rgba(255, 51, 102, 0.5);
+    box-shadow: 0 0 20px rgba(192, 132, 252, 0.5);
     transform: scale(0.7);
     transition: transform 0.3s ease;
   }
@@ -374,7 +359,7 @@ const tickerItems = sortedPosts.slice(0, 15);
     color: var(--text-muted);
   }
 
-  /* ── Responsive ── */
+  /* Responsive */
   @media (max-width: 1024px) {
     .novelty-grid { grid-template-columns: repeat(2, 1fr); }
     .latest-grid  { grid-template-columns: repeat(3, 1fr); }
