@@ -8,100 +8,136 @@ export const prerender = false;
 
 const { slug } = Astro.params;
 
-// ── Rate limiting helper (server-side) ──
-const RATE_LIMIT_MS = 500;
+// ── Enhanced rate limiter with exponential backoff ──
 let lastCall = 0;
+const MIN_DELAY = 500;
 
-async function rateLimitedFetch(url) {
-  const now = Date.now();
-  const elapsed = now - lastCall;
-  if (elapsed < RATE_LIMIT_MS) {
-    await new Promise(r => setTimeout(r, RATE_LIMIT_MS - elapsed));
-  }
-  lastCall = Date.now();
-  
-  try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'AniTubeBuzz/1.0' },
-    });
-    if (res.status === 429) {
-      // Rate limited — wait and retry once
-      await new Promise(r => setTimeout(r, 2000));
-      const retry = await fetch(url, {
+async function jikanFetch(url, retries = 2) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const now = Date.now();
+    const elapsed = now - lastCall;
+    if (elapsed < MIN_DELAY) {
+      await new Promise(r => setTimeout(r, MIN_DELAY - elapsed));
+    }
+    lastCall = Date.now();
+    
+    try {
+      const res = await fetch(url, {
         headers: { 'User-Agent': 'AniTubeBuzz/1.0' },
       });
-      if (!retry.ok) return null;
-      return await retry.json();
+      
+      if (res.status === 429) {
+        // Rate limited — exponential backoff
+        const waitTime = 2000 * Math.pow(2, attempt);
+        console.warn(`[Jikan] Rate limited, waiting ${waitTime}ms (attempt ${attempt + 1})`);
+        await new Promise(r => setTimeout(r, waitTime));
+        continue;
+      }
+      
+      if (res.status === 404) {
+        return { data: null, notFound: true };
+      }
+      
+      if (!res.ok) {
+        console.warn(`[Jikan] HTTP ${res.status} for ${url}`);
+        if (attempt === retries) return { data: null, error: true };
+        continue;
+      }
+      
+      const json = await res.json();
+      return { data: json, notFound: false };
+    } catch (e) {
+      console.warn('[Jikan] Fetch error:', e.message);
+      if (attempt === retries) return { data: null, error: true };
+      await new Promise(r => setTimeout(r, 1000));
     }
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (e) {
-    console.warn('Fetch failed:', e);
-    return null;
   }
+  return { data: null, error: true };
 }
 
-// ── Try multiple search variations for better matching ──
+// ── Better slug matching ──
 async function findAnime(slug) {
   const variations = [
-    slug.replace(/-/g, ' '),           // "one-piece" → "one piece"
+    slug.replace(/-/g, ' '),
     slug.replace(/-/g, ' ').replace(/\s+the\s+/gi, ' '),
-    slug.split('-').slice(0, 3).join(' '), // First 3 words only
+    slug.split('-').slice(0, 4).join(' '),
+    slug.split('-').slice(0, 3).join(' '),
+    slug.split('-').slice(0, 2).join(' '),
   ];
   
+  const tried = new Set();
+  
   for (const query of variations) {
-    if (!query || query.length < 2) continue;
-    const data = await rateLimitedFetch(
-      `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=3&order_by=popularity`
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2 || tried.has(trimmed)) continue;
+    tried.add(trimmed);
+    
+    const result = await jikanFetch(
+      `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(trimmed)}&limit=5&order_by=popularity`
     );
     
-    if (data && data.data && data.data.length > 0) {
-      // Prefer exact match
-      const exact = data.data.find(a => {
+    if (result.data && result.data.data && result.data.data.length > 0) {
+      // Prefer exact slug match
+      const exact = result.data.data.find(a => {
         const t1 = (a.title_english || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         const t2 = (a.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-        return t1 === slug || t2 === slug || t1.startsWith(slug) || t2.startsWith(slug);
+        return t1 === slug || t2 === slug;
       });
-      return exact || data.data[0];
+      
+      // Fallback to partial match
+      const partial = result.data.data.find(a => {
+        const t1 = (a.title_english || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const t2 = (a.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        return t1.startsWith(slug) || t2.startsWith(slug) || slug.startsWith(t1) || slug.startsWith(t2);
+      });
+      
+      return exact || partial || result.data.data[0];
     }
   }
   return null;
 }
 
 async function fetchFullAnime(malId) {
-  const data = await rateLimitedFetch(`https://api.jikan.moe/v4/anime/${malId}/full`);
-  return data?.data || null;
+  const result = await jikanFetch(`https://api.jikan.moe/v4/anime/${malId}/full`);
+  return result.data?.data || null;
 }
 
 async function fetchEpisodes(malId) {
-  const data = await rateLimitedFetch(`https://api.jikan.moe/v4/anime/${malId}/episodes`);
-  return data?.data || [];
+  const result = await jikanFetch(`https://api.jikan.moe/v4/anime/${malId}/episodes`);
+  return result.data?.data || [];
 }
 
 async function fetchRelated() {
-  const data = await rateLimitedFetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=12');
-  return data?.data || [];
+  const result = await jikanFetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=12');
+  return result.data?.data || [];
 }
 
-// ── Load anime data ──
-let anime = await findAnime(slug);
+// ── Load data ──
+let anime = null;
 let notFound = false;
 let episodes = [];
 let related = [];
 
-if (anime && anime.mal_id) {
-  // Get full details
-  const full = await fetchFullAnime(anime.mal_id);
-  if (full) anime = full;
+try {
+  anime = await findAnime(slug);
   
-  // Get episodes
-  episodes = await fetchEpisodes(anime.mal_id);
+  if (anime && anime.mal_id) {
+    const full = await fetchFullAnime(anime.mal_id);
+    if (full) anime = full;
+    episodes = await fetchEpisodes(anime.mal_id);
+  } else {
+    notFound = true;
+  }
   
-  // Get related suggestions
   related = await fetchRelated();
-} else {
+} catch (e) {
+  console.error('[Anime page] Error:', e);
   notFound = true;
-  related = await fetchRelated();
+}
+
+// ── Set 404 status if not found ──
+if (notFound) {
+  Astro.response.status = 404;
 }
 
 // ── Prepare display data ──
@@ -129,56 +165,108 @@ function makeSlug(str) {
   return (str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
 }
 
-const pageTitle = notFound ? 'Anime Not Found | AniTube Buzz' : `${title} - Watch Online | AniTube Buzz`;
-const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substring(0, 160);
+const displaySlug = slug.replace(/-/g, ' ');
+const pageTitle = notFound 
+  ? `"${displaySlug}" Not Found | AniTube Buzz` 
+  : `${title} - Watch Online | AniTube Buzz`;
+const pageDesc = notFound 
+  ? `The anime "${displaySlug}" could not be found. Browse trending anime instead.` 
+  : synopsis.substring(0, 160);
 ---
 
 <BaseLayout title={pageTitle} description={pageDesc} image={image}>
   <Header slot="header" />
 
   {notFound ? (
-    <!-- NOT FOUND STATE -->
-    <div class="not-found container">
-      <div class="not-found-icon">
-        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 8v4M12 16h.01"/>
-        </svg>
+    <!-- ═══ NOT FOUND STATE (Real 404) ═══ -->
+    <div class="nf-page container">
+      
+      <!-- Big 404 visual -->
+      <div class="nf-hero">
+        <div class="nf-code grad-text">404</div>
+        <div class="nf-decoration">
+          <div class="nf-dec nf-dec-1"></div>
+          <div class="nf-dec nf-dec-2"></div>
+          <div class="nf-dec nf-dec-3"></div>
+        </div>
       </div>
-      <h1 class="not-found-title">
-        <span class="grad-text">Anime Not Found</span>
+      
+      <h1 class="nf-title">
+        Anime <span class="grad-text">Not Found</span>
       </h1>
-      <p class="not-found-desc">
-        We couldn't find "<strong>{slug.replace(/-/g, ' ')}</strong>" in our database.
-        <br/>The API might be rate-limited or this anime might not exist.
+      
+      <p class="nf-searched">
+        We searched for: <strong>"{displaySlug}"</strong>
       </p>
-      <div class="not-found-actions">
-        <a href="/" class="btn-primary-round">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-          <span>Back to Homepage</span>
+      
+      <p class="nf-desc">
+        This anime doesn't exist in our database, or the search API is temporarily rate-limited.
+        <br/>Try again in a moment or explore trending anime below.
+      </p>
+      
+      <div class="nf-actions">
+        <a href="/" class="nf-btn nf-btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          <span>Homepage</span>
         </a>
-        <button onclick="location.reload()" class="btn-secondary-round">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+        
+        <a href={`/search?q=${encodeURIComponent(displaySlug)}`} class="nf-btn nf-btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="m20 20-3.5-3.5"/>
+          </svg>
+          <span>Search Instead</span>
+        </a>
+        
+        <button onclick="location.reload()" class="nf-btn nf-btn-ghost">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M23 4v6h-6M1 20v-6h6"/>
+            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+          </svg>
           <span>Try Again</span>
         </button>
       </div>
       
       {related.length > 0 && (
-        <div class="not-found-suggestions">
-          <h2 class="suggestions-title">
-            Try these <span class="grad-text">Trending Anime</span> instead
-          </h2>
-          <div class="suggestions-grid">
-            {related.slice(0, 6).map(a => {
+        <div class="nf-suggestions">
+          <div class="nf-sug-header">
+            <div class="nf-sug-bar"></div>
+            <div>
+              <div class="nf-sug-tag">TRENDING NOW</div>
+              <h2 class="nf-sug-title">
+                Try these <span class="grad-text">Hot Anime</span>
+              </h2>
+            </div>
+          </div>
+          
+          <div class="nf-sug-grid">
+            {related.slice(0, 12).map(a => {
               const rTitle = a.title_english || a.title;
               const rImage = a.images?.jpg?.large_image_url || a.images?.jpg?.image_url;
               const rSlug = makeSlug(rTitle) || `anime-${a.mal_id}`;
+              const rScore = a.score;
+              const rIsNew = a.status === 'Currently Airing';
               return (
-                <a href={`/anime/${rSlug}`} class="suggestion-card">
-                  <div class="sug-thumb">
+                <a href={`/anime/${rSlug}`} class="nf-sug-card">
+                  <div class="nf-sug-thumb">
                     {rImage && <img src={rImage} alt={rTitle} loading="lazy" />}
-                    <div class="sug-overlay"></div>
-                    <div class="sug-title">{rTitle}</div>
+                    <div class="nf-sug-overlay"></div>
+                    <div class="nf-sug-play">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                    {rIsNew && <div class="nf-sug-new">NEW</div>}
+                    {rScore && (
+                      <div class="nf-sug-score">
+                        <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        {rScore}
+                      </div>
+                    )}
+                    <div class="nf-sug-name">{rTitle}</div>
                   </div>
                 </a>
               );
@@ -188,14 +276,12 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
       )}
     </div>
   ) : (
-    <!-- FOUND — Show anime -->
+    <!-- ═══ FOUND — Show anime ═══ -->
     <div>
       <div class="anime-page-backdrop" style={image ? `background-image: url(${image})` : ''}></div>
       <div class="anime-page-backdrop-tint"></div>
 
       <div class="anime-page container">
-
-        <!-- HERO: Video Player -->
         <div class="anime-hero-section">
           {trailer ? (
             <YouTubePlayer 
@@ -210,23 +296,20 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
               <div class="anime-no-video-overlay">
                 <div class="anime-no-video-icon">
                   <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
                     <path d="M2.5 17H21.5"/>
                     <path d="M2.5 7H21.5"/>
-                    <rect x="2" y="4" width="20" height="16" rx="2"/>
                   </svg>
                 </div>
-                <div class="anime-no-video-msg">Trailer coming soon</div>
-                <div class="anime-no-video-sub">Preview video not available on official channels yet</div>
+                <div class="anime-no-video-msg">Trailer Coming Soon</div>
+                <div class="anime-no-video-sub">Preview not available yet</div>
               </div>
             </div>
           )}
         </div>
 
-        <!-- Anime Info Section -->
         <div class="anime-info-section">
-          
           <div class="anime-info-main">
-            
             <div class="anime-badges-row">
               {studios[0] && (
                 <div class="anime-badge-studio">
@@ -271,7 +354,6 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
                 <p>{synopsis}</p>
               </div>
             )}
-            
           </div>
           
           <div class="anime-info-side">
@@ -285,42 +367,36 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
                 </div>
               </div>
             )}
-            
             {rank && (
               <div class="stat-card">
                 <div class="stat-label">Rank</div>
                 <div class="stat-value"><span class="stat-hash">#</span>{rank.toLocaleString()}</div>
               </div>
             )}
-            
             {popularity && (
               <div class="stat-card">
                 <div class="stat-label">Popularity</div>
                 <div class="stat-value"><span class="stat-hash">#</span>{popularity.toLocaleString()}</div>
               </div>
             )}
-            
             {members && (
               <div class="stat-card">
                 <div class="stat-label">Members</div>
                 <div class="stat-value">{(members / 1000).toFixed(0)}K</div>
               </div>
             )}
-            
             {studios.length > 0 && (
               <div class="stat-card">
                 <div class="stat-label">Studio</div>
                 <div class="stat-value stat-value-text">{studios.join(', ')}</div>
               </div>
             )}
-            
             {producers.length > 0 && (
               <div class="stat-card">
                 <div class="stat-label">Producers</div>
                 <div class="stat-value stat-value-text">{producers.join(', ')}</div>
               </div>
             )}
-            
             {status && (
               <div class="stat-card">
                 <div class="stat-label">Status</div>
@@ -330,7 +406,6 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
           </div>
         </div>
 
-        <!-- Episodes -->
         {episodes.length > 0 && (
           <div class="anime-episodes-section">
             <div class="episodes-header">
@@ -376,7 +451,6 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
           </div>
         )}
 
-        <!-- Streaming Platforms -->
         {streaming.length > 0 && (
           <div class="anime-streaming-section">
             <h2 class="section-title">
@@ -397,7 +471,6 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
           </div>
         )}
 
-        <!-- Related Anime -->
         {related.length > 0 && (
           <div class="anime-related-section">
             <div class="related-header">
@@ -443,7 +516,6 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
             </div>
           </div>
         )}
-
       </div>
     </div>
   )}
@@ -453,26 +525,80 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
 
 <style>
   /* ═══ NOT FOUND STATE ═══ */
-  .not-found {
-    padding: 4rem 1.5rem;
+  .nf-page {
+    padding: 4rem 1.5rem 5rem;
     text-align: center;
+    position: relative;
+    z-index: 1;
   }
   
-  .not-found-icon {
-    color: var(--purple);
-    opacity: 0.6;
-    margin-bottom: 1.5rem;
+  .nf-hero {
+    position: relative;
     display: flex;
+    align-items: center;
     justify-content: center;
-    animation: nf-bounce 2s ease infinite;
+    margin-bottom: 2rem;
+    height: 200px;
   }
   
-  @keyframes nf-bounce {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-8px); }
+  .nf-code {
+    font-family: var(--font-heading);
+    font-size: clamp(6rem, 15vw, 12rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 8px 30px rgba(192, 132, 252, 0.4);
   }
   
-  .not-found-title {
+  .nf-decoration {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  
+  .nf-dec {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+  }
+  
+  .nf-dec-1 {
+    width: 200px; height: 200px;
+    background: rgba(192, 132, 252, 0.4);
+    top: 0; left: 20%;
+    animation: nf-float-1 8s ease infinite;
+  }
+  
+  .nf-dec-2 {
+    width: 160px; height: 160px;
+    background: rgba(232, 121, 249, 0.35);
+    bottom: 0; right: 20%;
+    animation: nf-float-2 10s ease infinite;
+  }
+  
+  .nf-dec-3 {
+    width: 140px; height: 140px;
+    background: rgba(125, 211, 252, 0.3);
+    top: 30%; right: 30%;
+    animation: nf-float-3 12s ease infinite;
+  }
+  
+  @keyframes nf-float-1 {
+    0%, 100% { transform: translate(0, 0); }
+    50%       { transform: translate(30px, -20px); }
+  }
+  @keyframes nf-float-2 {
+    0%, 100% { transform: translate(0, 0); }
+    50%       { transform: translate(-25px, 20px); }
+  }
+  @keyframes nf-float-3 {
+    0%, 100% { transform: translate(0, 0); }
+    50%       { transform: translate(20px, 30px); }
+  }
+  
+  .nf-title {
     font-family: var(--font-heading);
     font-size: clamp(2rem, 5vw, 3rem);
     font-weight: 800;
@@ -480,143 +606,248 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
     letter-spacing: -0.03em;
   }
   
-  .not-found-desc {
+  .nf-searched {
     color: var(--text-secondary);
     font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .nf-searched strong {
+    color: var(--purple);
+    font-weight: 700;
+    font-family: var(--font-mono);
+  }
+  
+  .nf-desc {
+    color: var(--text-muted);
+    font-size: 0.92rem;
     line-height: 1.6;
-    max-width: 500px;
+    max-width: 520px;
     margin: 0 auto 2rem;
   }
   
-  .not-found-desc strong {
-    color: var(--purple);
-    font-weight: 700;
-  }
-  
-  .not-found-actions {
+  .nf-actions {
     display: flex;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
     margin-bottom: 3rem;
   }
   
-  .btn-primary-round {
+  .nf-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 24px;
-    background: var(--grad);
-    color: #fff;
+    padding: 12px 22px;
     border-radius: 999px;
     text-decoration: none;
     font-weight: 700;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     border: none;
-    cursor: pointer;
-    font-family: inherit;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.4);
-  }
-  
-  .btn-primary-round:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.55);
-  }
-  
-  .btn-secondary-round {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 24px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    border-radius: 999px;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.9rem;
     cursor: pointer;
     font-family: inherit;
     transition: all 0.2s ease;
   }
   
-  .btn-secondary-round:hover {
+  .nf-btn-primary {
+    background: var(--grad);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.4);
+  }
+  
+  .nf-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.55);
+  }
+  
+  .nf-btn-secondary {
+    background: rgba(125, 211, 252, 0.15);
+    border: 1px solid rgba(125, 211, 252, 0.4);
+    color: var(--cyan);
+  }
+  
+  .nf-btn-secondary:hover {
+    background: rgba(125, 211, 252, 0.25);
+    transform: translateY(-2px);
+  }
+  
+  .nf-btn-ghost {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+  }
+  
+  .nf-btn-ghost:hover {
     background: rgba(192, 132, 252, 0.15);
     border-color: rgba(192, 132, 252, 0.5);
     color: var(--purple);
   }
   
-  .not-found-suggestions {
-    max-width: 900px;
+  /* Suggestions on 404 */
+  .nf-suggestions {
+    max-width: 1200px;
     margin: 0 auto;
-    padding-top: 2rem;
+    padding-top: 3rem;
     border-top: 1px solid var(--border-color);
+    text-align: left;
   }
   
-  .suggestions-title {
-    font-family: var(--font-heading);
-    font-size: 1.4rem;
-    font-weight: 700;
+  .nf-sug-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     margin-bottom: 1.5rem;
   }
   
-  .suggestions-grid {
+  .nf-sug-bar {
+    width: 4px;
+    height: 42px;
+    background: var(--grad);
+    border-radius: 3px;
+    box-shadow: 0 0 12px rgba(192, 132, 252, 0.5);
+  }
+  
+  .nf-sug-tag {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--purple);
+    margin-bottom: 4px;
+  }
+  
+  .nf-sug-title {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  
+  .nf-sug-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 1rem;
   }
   
-  .suggestion-card {
+  .nf-sug-card {
     text-decoration: none;
     color: inherit;
     transition: transform 0.3s ease;
   }
   
-  .suggestion-card:hover { transform: translateY(-4px); }
+  .nf-sug-card:hover { transform: translateY(-6px); }
   
-  .sug-thumb {
+  .nf-sug-thumb {
     position: relative;
     aspect-ratio: 3/4;
     border-radius: 12px;
     overflow: hidden;
     background: rgba(28, 15, 61, 0.5);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    transition: box-shadow 0.3s ease;
   }
   
-  .sug-thumb img {
+  .nf-sug-card:hover .nf-sug-thumb {
+    box-shadow: 0 15px 35px rgba(192, 132, 252, 0.3);
+  }
+  
+  .nf-sug-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.4s ease;
   }
   
-  .sug-overlay {
+  .nf-sug-card:hover .nf-sug-thumb img { transform: scale(1.08); }
+  
+  .nf-sug-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.9) 100%);
+    background: linear-gradient(180deg, transparent 40%, rgba(10, 5, 23, 0.95) 100%);
   }
   
-  .sug-title {
+  .nf-sug-play {
     position: absolute;
-    bottom: 8px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--grad);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 2px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 3;
+    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.5);
+  }
+  
+  .nf-sug-card:hover .nf-sug-play {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  
+  .nf-sug-new {
+    position: absolute;
+    top: 8px;
     left: 8px;
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff;
+    padding: 3px 7px;
+    border-radius: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    z-index: 3;
+  }
+  
+  .nf-sug-score {
+    position: absolute;
+    top: 8px;
     right: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fbbf24;
+    padding: 3px 7px;
+    border-radius: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 800;
+    z-index: 3;
+    backdrop-filter: blur(6px);
+  }
+  
+  .nf-sug-name {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px 12px 12px;
     color: #fff;
     font-family: var(--font-heading);
-    font-size: 0.75rem;
-    font-weight: 600;
-    line-height: 1.3;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.25;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    z-index: 2;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
   }
   
-  /* ═══ ANIME PAGE ═══ */
+  /* ═══ ANIME PAGE (found state) ═══ */
   .anime-page-backdrop {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     height: 500px;
     background-size: cover;
     background-position: center top;
@@ -627,9 +858,7 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
 
   .anime-page-backdrop-tint {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     height: 500px;
     background: linear-gradient(180deg, transparent 0%, var(--bg-base) 100%);
     z-index: 0;
@@ -644,12 +873,6 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
 
   .anime-hero-section {
     margin-bottom: 3rem;
-    animation: fade-slide-up 0.7s ease;
-  }
-
-  @keyframes fade-slide-up {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
   }
 
   .anime-no-video {
@@ -661,41 +884,29 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
   }
 
   .anime-no-video-img {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     object-fit: cover;
     filter: blur(6px) brightness(0.4);
   }
 
   .anime-no-video-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    text-align: center;
-    padding: 2rem;
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 12px; text-align: center; padding: 2rem;
   }
 
-  .anime-no-video-icon {
-    color: rgba(192, 132, 252, 0.5);
-  }
-
+  .anime-no-video-icon { color: rgba(192, 132, 252, 0.5); }
   .anime-no-video-msg {
     color: #fff;
     font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 1.25rem;
+    font-weight: 700; font-size: 1.25rem;
   }
-
   .anime-no-video-sub {
     color: rgba(255, 255, 255, 0.5);
     font-size: 0.85rem;
   }
 
-  /* Info section */
   .anime-info-section {
     display: grid;
     grid-template-columns: 1fr 340px;
@@ -706,34 +917,27 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
   .anime-info-main { min-width: 0; }
 
   .anime-badges-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
     margin-bottom: 1.25rem;
   }
 
   .anime-badge-studio {
-    display: inline-flex;
-    align-items: center;
+    display: inline-flex; align-items: center;
     gap: 0.5rem;
     padding: 0.32rem 0.8rem 0.32rem 0.35rem;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.75rem; font-weight: 600;
     color: var(--text-primary);
     backdrop-filter: blur(10px);
   }
 
   .badge-mini-icon {
-    width: 20px;
-    height: 20px;
+    width: 20px; height: 20px;
     border-radius: 50%;
     background: var(--grad);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     color: #fff;
   }
 
@@ -756,8 +960,7 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
   }
 
   .anime-badge-airing {
-    display: inline-flex;
-    align-items: center;
+    display: inline-flex; align-items: center;
     gap: 0.4rem;
     padding: 0.32rem 0.8rem;
     background: rgba(239, 68, 68, 0.15);
@@ -771,8 +974,7 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
   }
 
   .airing-dot {
-    width: 6px;
-    height: 6px;
+    width: 6px; height: 6px;
     border-radius: 50%;
     background: #ef4444;
     box-shadow: 0 0 8px #ef4444;
@@ -802,9 +1004,7 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
   }
 
   .anime-page-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
     margin-bottom: 1.25rem;
   }
 
@@ -828,9 +1028,7 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
   }
 
   .anime-genres {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
+    display: flex; flex-wrap: wrap; gap: 0.4rem;
     margin-bottom: 1.5rem;
   }
 
@@ -861,7 +1059,6 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
     backdrop-filter: blur(10px);
   }
 
-  /* Sidebar */
   .anime-info-side {
     display: flex;
     flex-direction: column;
@@ -877,9 +1074,7 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
     transition: border-color 0.3s ease;
   }
 
-  .stat-card:hover {
-    border-color: rgba(192, 132, 252, 0.4);
-  }
+  .stat-card:hover { border-color: rgba(192, 132, 252, 0.4); }
 
   .stat-label {
     font-family: var(--font-mono);
@@ -916,14 +1111,9 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
     display: block;
   }
 
-  .stat-hash {
-    color: var(--purple);
-    font-weight: 800;
-  }
-
+  .stat-hash { color: var(--purple); font-weight: 800; }
   .stat-score .stat-value { color: #fbbf24; }
 
-  /* Episodes */
   .anime-episodes-section {
     margin-bottom: 3rem;
     padding: 2rem;
@@ -934,23 +1124,17 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
   }
 
   .episodes-header {
-    display: flex;
-    align-items: center;
+    display: flex; align-items: center;
     justify-content: space-between;
     margin-bottom: 1.5rem;
     gap: 1rem;
     flex-wrap: wrap;
   }
 
-  .episodes-title-wrap {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
+  .episodes-title-wrap { display: flex; align-items: center; gap: 1rem; }
 
   .episodes-bar {
-    width: 4px;
-    height: 42px;
+    width: 4px; height: 42px;
     background: var(--grad);
     border-radius: 3px;
     box-shadow: 0 0 12px rgba(192, 132, 252, 0.5);
@@ -974,10 +1158,8 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
   }
 
   .episodes-count {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
-    padding: 8px 16px;
+    display: inline-flex; align-items: baseline;
+    gap: 6px; padding: 8px 16px;
     background: rgba(192, 132, 252, 0.1);
     border: 1px solid rgba(192, 132, 252, 0.25);
     border-radius: 999px;
@@ -999,8 +1181,7 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
   }
 
   .episode-item {
-    display: flex;
-    align-items: center;
+    display: flex; align-items: center;
     gap: 14px;
     padding: 12px 14px;
     background: rgba(28, 15, 61, 0.5);
@@ -1019,14 +1200,11 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
 
   .ep-num-wrap {
     flex-shrink: 0;
-    width: 42px;
-    height: 42px;
+    width: 42px; height: 42px;
     border-radius: 8px;
     background: linear-gradient(135deg, rgba(192, 132, 252, 0.2), rgba(232, 121, 249, 0.15));
     border: 1px solid rgba(192, 132, 252, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
   }
 
   .ep-num {
@@ -1039,10 +1217,7 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
     background-clip: text;
   }
 
-  .ep-details {
-    flex: 1;
-    min-width: 0;
-  }
+  .ep-details { flex: 1; min-width: 0; }
 
   .ep-title {
     font-family: var(--font-heading);
@@ -1065,14 +1240,11 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
 
   .ep-play {
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
+    width: 32px; height: 32px;
     border-radius: 50%;
     background: var(--grad);
     color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     padding-left: 2px;
     opacity: 0;
     transform: scale(0.7);
@@ -1093,7 +1265,6 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
     letter-spacing: 0.05em;
   }
 
-  /* Streaming */
   .anime-streaming-section { margin-bottom: 3rem; }
   .anime-streaming-section .section-title { margin-bottom: 1.25rem; }
 
@@ -1104,8 +1275,7 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
   }
 
   .streaming-link {
-    display: flex;
-    align-items: center;
+    display: flex; align-items: center;
     justify-content: space-between;
     gap: 8px;
     padding: 14px 20px;
@@ -1126,7 +1296,6 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
     transform: translateY(-2px);
   }
 
-  /* Related */
   .anime-related-section {
     margin-top: 3rem;
     padding-top: 2rem;
@@ -1134,15 +1303,13 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
   }
 
   .related-header {
-    display: flex;
-    align-items: center;
+    display: flex; align-items: center;
     gap: 1rem;
     margin-bottom: 1.75rem;
   }
 
   .related-bar {
-    width: 4px;
-    height: 46px;
+    width: 4px; height: 46px;
     background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
     border-radius: 3px;
     box-shadow: 0 0 15px rgba(192, 132, 252, 0.6);
@@ -1195,8 +1362,7 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
   }
 
   .related-thumb img {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     object-fit: cover;
     transition: transform 0.4s ease;
   }
@@ -1204,30 +1370,24 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
   .related-card:hover .related-thumb img { transform: scale(1.08); }
 
   .related-fallback {
-    width: 100%;
-    height: 100%;
+    width: 100%; height: 100%;
     background: linear-gradient(135deg, rgba(192, 132, 252, 0.15), rgba(125, 211, 252, 0.1));
   }
 
   .related-overlay {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     background: linear-gradient(180deg, transparent 40%, rgba(10, 5, 23, 0.95) 100%);
   }
 
   .related-play {
     position: absolute;
-    top: 50%;
-    left: 50%;
+    top: 50%; left: 50%;
     transform: translate(-50%, -50%) scale(0.7);
-    width: 40px;
-    height: 40px;
+    width: 40px; height: 40px;
     border-radius: 50%;
     background: var(--grad);
     color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     padding-left: 2px;
     opacity: 0;
     transition: all 0.3s ease;
@@ -1242,8 +1402,7 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
 
   .related-new {
     position: absolute;
-    top: 8px;
-    left: 8px;
+    top: 8px; left: 8px;
     background: linear-gradient(135deg, #ef4444, #f97316);
     color: #fff;
     padding: 3px 7px;
@@ -1257,10 +1416,8 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
 
   .related-score {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    display: inline-flex;
-    align-items: center;
+    top: 8px; right: 8px;
+    display: inline-flex; align-items: center;
     gap: 3px;
     background: rgba(0, 0, 0, 0.75);
     color: #fbbf24;
@@ -1275,9 +1432,7 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
 
   .related-info {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: 0; left: 0; right: 0;
     padding: 10px 12px 12px;
     z-index: 2;
   }
@@ -1297,23 +1452,25 @@ const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substrin
 
   /* Responsive */
   @media (max-width: 1200px) {
-    .related-grid, .suggestions-grid { grid-template-columns: repeat(4, 1fr); }
+    .related-grid, .nf-sug-grid { grid-template-columns: repeat(4, 1fr); }
   }
 
   @media (max-width: 900px) {
     .anime-info-section { grid-template-columns: 1fr; }
-    .related-grid, .suggestions-grid { grid-template-columns: repeat(3, 1fr); }
+    .related-grid, .nf-sug-grid { grid-template-columns: repeat(3, 1fr); }
     .episodes-grid { grid-template-columns: 1fr; }
     .anime-episodes-section { padding: 1.25rem; }
+    .nf-code { font-size: 6rem; }
+    .nf-hero { height: 150px; }
   }
 
   @media (max-width: 640px) {
-    .related-grid, .suggestions-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .related-grid, .nf-sug-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
     .anime-page-title { font-size: 1.9rem; }
     .anime-info-section { gap: 1.5rem; }
     .episode-item { padding: 10px 12px; }
     .ep-num-wrap { width: 36px; height: 36px; }
-    .not-found-actions { flex-direction: column; align-items: stretch; }
-    .btn-primary-round, .btn-secondary-round { justify-content: center; }
+    .nf-actions { flex-direction: column; align-items: stretch; }
+    .nf-btn { justify-content: center; }
   }
 </style>
