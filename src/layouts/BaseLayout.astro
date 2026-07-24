@@ -394,18 +394,16 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     color: #fff; white-space: nowrap;
   }
 
-  /* ── SLOW SMOOTH TICKER (180s) ── */
+  /* ── SLOW TICKER on DESKTOP (readable) ── */
   .ticker-track {
     display: flex;
     animation: ticker-move 180s linear infinite;
     width: max-content;
     padding-left: 140px;
     will-change: transform;
-    /* GPU acceleration */
     transform: translateZ(0);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    perspective: 1000px;
   }
 
   .ticker-track:hover { animation-play-state: paused; }
@@ -434,6 +432,13 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   @keyframes ticker-move {
     from { transform: translate3d(0, 0, 0); }
     to   { transform: translate3d(-50%, 0, 0); }
+  }
+
+  /* ── FASTER TICKER on MOBILE (was too slow) ── */
+  @media (max-width: 768px) {
+    .ticker-track {
+      animation-duration: 45s;
+    }
   }
 
   /* Video */
