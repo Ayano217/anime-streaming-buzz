@@ -5,6 +5,12 @@ on:
     - cron: '0 */3 * * *'  # Every 3 hours
   workflow_dispatch:
 
+# ═══ ADD THIS PERMISSIONS BLOCK ═══
+permissions:
+  contents: write
+  actions: write
+# ═══════════════════════════════════
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -13,9 +19,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Sync with remote
-        run: git reset --hard origin/main
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -24,13 +34,13 @@ jobs:
 
       - name: Install dependencies
         run: |
+          pip install --upgrade pip
           pip install feedparser requests python-slugify python-dateutil
 
-      # ═══ NEW: Fetch anime backgrounds ═══
       - name: Fetch anime background images
         run: python scripts/fetch_bg_images.py
+        continue-on-error: true
 
-      # Existing: Facebook videos (optional, keep or remove)
       - name: Fetch Facebook videos
         env:
           FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
@@ -38,18 +48,18 @@ jobs:
         run: python scripts/fetch_facebook_videos.py
         continue-on-error: true
 
-      # Existing: Article publisher
       - name: Publish articles
         run: python scripts/main.py
+        continue-on-error: true
 
-      - name: Commit changes
+      - name: Commit and push changes
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          if ! git diff --cached --quiet; then
-            git commit -m "auto: update backgrounds + articles"
-            git push
-          else
+          if git diff --cached --quiet; then
             echo "No changes to commit"
+          else
+            git commit -m "auto: update backgrounds, videos, articles"
+            git push origin main
           fi
