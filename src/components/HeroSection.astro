@@ -51,6 +51,9 @@ const displayEpisodes = allPosts
 ---
 
 <section class="hero-sec" id="heroSec">
+  <!-- Force dark background for hero always (readable in both themes) -->
+  <div class="hero-bg-force"></div>
+
   <div class="hero-inner container">
 
     <div class="hero-slides" id="heroSlides">
@@ -59,7 +62,7 @@ const displayEpisodes = allPosts
 
           <div class="slide-content">
 
-            <!-- ═══ LEFT INFO ═══ -->
+            <!-- LEFT INFO -->
             <div class="slide-left">
 
               {idx === 0 && (
@@ -131,17 +134,13 @@ const displayEpisodes = allPosts
 
             </div>
 
-            <!-- ═══ RIGHT COVER — BIG, HD, ANIMATED ═══ -->
+            <!-- RIGHT COVER -->
             <div class="slide-right">
               {anime.image && (
                 <div class="cover-container" data-tilt>
-                  <!-- Animated gradient border -->
                   <div class="cover-border"></div>
-
-                  <!-- Backdrop glow -->
                   <div class="cover-backdrop"></div>
 
-                  <!-- Actual cover image -->
                   <div class="cover-inner">
                     <img
                       src={anime.image}
@@ -150,21 +149,18 @@ const displayEpisodes = allPosts
                       loading={idx === 0 ? 'eager' : 'lazy'}
                     />
 
-                    <!-- Sparkle overlay -->
                     <div class="cover-sparkles">
                       <div class="sparkle sparkle-1"></div>
                       <div class="sparkle sparkle-2"></div>
                       <div class="sparkle sparkle-3"></div>
                     </div>
 
-                    <!-- Corner accents -->
                     <div class="corner-acc corner-tl"></div>
                     <div class="corner-acc corner-tr"></div>
                     <div class="corner-acc corner-bl"></div>
                     <div class="corner-acc corner-br"></div>
                   </div>
 
-                  <!-- Floating score -->
                   {anime.score && (
                     <div class="score-float">
                       <div class="score-inner">
@@ -180,7 +176,6 @@ const displayEpisodes = allPosts
                     </div>
                   )}
 
-                  <!-- Rank badge -->
                   {anime.rank && anime.rank <= 100 && (
                     <div class="rank-float">
                       <div class="rank-hash">#</div>
@@ -198,7 +193,6 @@ const displayEpisodes = allPosts
       ))}
     </div>
 
-    <!-- Bottom controls -->
     <div class="hero-controls">
       <div class="slide-dots">
         {heroAnime.map((_, idx) => (
@@ -216,13 +210,12 @@ const displayEpisodes = allPosts
       </div>
     </div>
 
-    <!-- Latest news cards -->
     {displayEpisodes.length > 0 && (
       <div class="latest-updates">
         <div class="latest-header">
           <h2 class="latest-title">
             <span class="latest-bar"></span>
-            <span class="grad-text">Latest</span> <span class="tube-text">Updates</span>
+            <span class="grad-text">Latest</span> <span class="tube-txt-adaptive">Updates</span>
           </h2>
           <a href="/category/news" class="latest-more">View All →</a>
         </div>
@@ -286,7 +279,7 @@ const displayEpisodes = allPosts
 
   function startAuto(){
     clearInterval(interval);
-    interval = setInterval(next, 8000);
+    interval = setInterval(next, 10000);
   }
 
   dots.forEach(function(dot){
@@ -309,42 +302,77 @@ const displayEpisodes = allPosts
 
   if(slides.length > 1) startAuto();
 
-  // ═══ 3D TILT EFFECT ON COVER ═══
-  var tiltEls = document.querySelectorAll('[data-tilt]');
-  tiltEls.forEach(function(el){
-    var rect;
+  // ═══ 3D TILT — only on desktop ═══
+  if(window.innerWidth > 900) {
+    var tiltEls = document.querySelectorAll('[data-tilt]');
+    tiltEls.forEach(function(el){
+      var rect;
 
-    el.addEventListener('mouseenter', function(){
-      rect = el.getBoundingClientRect();
-    });
+      el.addEventListener('mouseenter', function(){
+        rect = el.getBoundingClientRect();
+      });
 
-    el.addEventListener('mousemove', function(e){
-      if(!rect) rect = el.getBoundingClientRect();
-      var x = e.clientX - rect.left;
-      var y = e.clientY - rect.top;
-      var cx = rect.width / 2;
-      var cy = rect.height / 2;
-      var rx = ((y - cy) / cy) * -8;
-      var ry = ((x - cx) / cx) * 8;
-      el.style.transform = 'perspective(1200px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) scale(1.02)';
-    });
+      el.addEventListener('mousemove', function(e){
+        if(!rect) rect = el.getBoundingClientRect();
+        var x = e.clientX - rect.left;
+        var y = e.clientY - rect.top;
+        var cx = rect.width / 2;
+        var cy = rect.height / 2;
+        var rx = ((y - cy) / cy) * -6;
+        var ry = ((x - cx) / cx) * 6;
+        el.style.transform = 'perspective(1200px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) scale(1.02)';
+      });
 
-    el.addEventListener('mouseleave', function(){
-      el.style.transform = 'perspective(1200px) rotateX(0) rotateY(0) scale(1)';
+      el.addEventListener('mouseleave', function(){
+        el.style.transform = 'perspective(1200px) rotateX(0) rotateY(0) scale(1)';
+      });
     });
-  });
+  }
 
 })();
 </script>
 
 <style>
-  /* ═══ HERO ═══ */
+  /* ═══ HERO WRAPPER ═══ */
   .hero-sec {
     padding: 2.5rem 0 3rem;
     position: relative;
   }
 
-  .hero-inner { position: relative; }
+  /* ═══ FORCE DARK BG FOR HERO (readable in both themes) ═══ */
+  .hero-bg-force {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(calc(100% - 2rem), 1420px);
+    height: 720px;
+    background: linear-gradient(180deg,
+      rgba(20, 8, 45, 0.85) 0%,
+      rgba(15, 6, 35, 0.9) 100%
+    );
+    border-radius: var(--radius-xl);
+    z-index: 0;
+    pointer-events: none;
+    border: 1px solid rgba(192, 132, 252, 0.12);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+
+  [data-theme="light"] .hero-bg-force {
+    background: linear-gradient(180deg,
+      rgba(20, 8, 45, 0.92) 0%,
+      rgba(15, 6, 35, 0.95) 100%
+    );
+    border-color: rgba(192, 132, 252, 0.2);
+    box-shadow: 0 20px 50px rgba(168, 85, 247, 0.15);
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 1;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
 
   /* ═══ SLIDES ═══ */
   .hero-slides {
@@ -357,7 +385,7 @@ const displayEpisodes = allPosts
     inset: 0;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.8s ease;
+    transition: opacity 1s ease;
   }
 
   .hero-slide.active {
@@ -375,7 +403,7 @@ const displayEpisodes = allPosts
 
   /* ═══ LEFT INFO ═══ */
   .slide-left {
-    animation: slideInLeft 0.8s ease;
+    animation: slideInLeft 0.9s ease;
   }
 
   @keyframes slideInLeft {
@@ -383,13 +411,12 @@ const displayEpisodes = allPosts
     to   { opacity: 1; transform: translateX(0); }
   }
 
-  /* Trending pill */
   .trending-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
     padding: 0.35rem 0.85rem;
-    background: linear-gradient(135deg, rgba(251, 146, 60, 0.15), rgba(232, 121, 249, 0.15));
+    background: linear-gradient(135deg, rgba(251, 146, 60, 0.18), rgba(232, 121, 249, 0.18));
     border: 1px solid rgba(251, 146, 60, 0.35);
     border-radius: 999px;
     font-family: var(--font-mono);
@@ -404,17 +431,16 @@ const displayEpisodes = allPosts
 
   .flame {
     display: inline-block;
-    animation: flame-shake 1.5s ease infinite;
+    animation: flame-shake 2.5s ease infinite;
     font-size: 0.85rem;
   }
 
   @keyframes flame-shake {
     0%, 100% { transform: rotate(0) scale(1); }
-    25%       { transform: rotate(-8deg) scale(1.1); }
-    75%       { transform: rotate(8deg)  scale(1.1); }
+    25%       { transform: rotate(-6deg) scale(1.08); }
+    75%       { transform: rotate(6deg)  scale(1.08); }
   }
 
-  /* Badges */
   .badges {
     display: flex;
     flex-wrap: wrap;
@@ -431,7 +457,7 @@ const displayEpisodes = allPosts
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.05em;
-    color: #fff;
+    color: #fff !important;
     backdrop-filter: blur(10px);
   }
 
@@ -457,7 +483,7 @@ const displayEpisodes = allPosts
   .badge-hd {
     background: rgba(125, 211, 252, 0.15);
     border: 1px solid rgba(125, 211, 252, 0.4);
-    color: var(--cyan);
+    color: var(--cyan) !important;
     font-family: var(--font-mono);
     font-size: 0.68rem;
     letter-spacing: 0.1em;
@@ -466,7 +492,7 @@ const displayEpisodes = allPosts
   .badge-live {
     background: rgba(239, 68, 68, 0.15);
     border: 1px solid rgba(239, 68, 68, 0.4);
-    color: #f87171;
+    color: #f87171 !important;
     font-family: var(--font-mono);
     font-size: 0.68rem;
     letter-spacing: 0.1em;
@@ -477,20 +503,20 @@ const displayEpisodes = allPosts
     border-radius: 50%;
     background: #ef4444;
     box-shadow: 0 0 8px #ef4444;
-    animation: pulse-live 1.5s ease infinite;
+    animation: pulse-live 2s ease infinite;
   }
 
   @keyframes pulse-live {
     0%, 100% { opacity: 1; transform: scale(1); }
-    50%       { opacity: 0.5; transform: scale(1.3); }
+    50%       { opacity: 0.5; transform: scale(1.2); }
   }
 
-  /* Title */
+  /* Title — ALWAYS WHITE regardless of theme */
   .slide-title {
     font-family: var(--font-heading);
     font-size: clamp(2.2rem, 5vw, 3.6rem);
     font-weight: 800;
-    color: #ffffff;
+    color: #ffffff !important;
     line-height: 1.02;
     margin-bottom: 0.4rem;
     letter-spacing: -0.03em;
@@ -500,12 +526,12 @@ const displayEpisodes = allPosts
   .slide-title-jp {
     font-family: var(--font-mono);
     font-size: 0.9rem;
-    color: rgba(125, 211, 252, 0.85);
+    color: rgba(125, 211, 252, 0.9) !important;
     margin-bottom: 1.25rem;
     letter-spacing: 0.02em;
   }
 
-  /* Meta */
+  /* Meta — ALWAYS WHITE */
   .slide-meta {
     display: flex;
     align-items: center;
@@ -513,7 +539,7 @@ const displayEpisodes = allPosts
     flex-wrap: wrap;
     margin-bottom: 1.5rem;
     font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(255, 255, 255, 0.8) !important;
   }
 
   .slide-meta > span {
@@ -521,11 +547,12 @@ const displayEpisodes = allPosts
     align-items: center;
     gap: 0.35rem;
     font-weight: 500;
+    color: rgba(255, 255, 255, 0.8) !important;
   }
 
   .genre-tag {
-    background: rgba(192, 132, 252, 0.15);
-    color: var(--purple);
+    background: rgba(192, 132, 252, 0.18);
+    color: var(--purple) !important;
     padding: 0.2rem 0.6rem !important;
     border-radius: 6px;
     font-size: 0.72rem;
@@ -534,18 +561,18 @@ const displayEpisodes = allPosts
   }
 
   .rating {
-    background: rgba(251, 191, 36, 0.1);
+    background: rgba(251, 191, 36, 0.12);
     padding: 0.2rem 0.6rem !important;
     border-radius: 6px;
     font-family: var(--font-mono);
     font-weight: 700;
-    color: #fbbf24;
+    color: #fbbf24 !important;
   }
 
-  /* Description */
+  /* Description — ALWAYS WHITE */
   .slide-desc {
     font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.82) !important;
     line-height: 1.7;
     margin-bottom: 2rem;
     max-width: 520px;
@@ -565,18 +592,18 @@ const displayEpisodes = allPosts
     padding: 0.4rem 1.6rem 0.4rem 0.4rem;
     background: var(--grad);
     border-radius: 999px;
-    color: #fff;
+    color: #fff !important;
     font-weight: 700;
     font-size: 0.92rem;
-    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.45);
-    transition: all 0.25s ease;
+    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.4);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     text-decoration: none;
     border: none;
   }
 
   .btn-watch:hover {
     transform: translateY(-3px);
-    box-shadow: 0 15px 40px rgba(192, 132, 252, 0.6);
+    box-shadow: 0 15px 40px rgba(192, 132, 252, 0.55);
   }
 
   .btn-watch-icon {
@@ -591,16 +618,18 @@ const displayEpisodes = allPosts
     padding-left: 3px;
   }
 
+  /* ═══ SLOW pulse ring ═══ */
   .pulse-ring {
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.6);
-    animation: pulse-ring 2s ease infinite;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    animation: pulse-ring-slow 3s ease-out infinite;
+    will-change: transform, opacity;
   }
 
-  @keyframes pulse-ring {
-    0%   { transform: scale(1);   opacity: 1; }
+  @keyframes pulse-ring-slow {
+    0%   { transform: scale(1);   opacity: 0.8; }
     100% { transform: scale(1.5); opacity: 0; }
   }
 
@@ -612,10 +641,10 @@ const displayEpisodes = allPosts
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 999px;
-    color: #fff;
+    color: #fff !important;
     font-weight: 600;
     font-size: 0.88rem;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
     text-decoration: none;
     backdrop-filter: blur(10px);
   }
@@ -623,7 +652,7 @@ const displayEpisodes = allPosts
   .btn-info:hover {
     background: rgba(125, 211, 252, 0.15);
     border-color: rgba(125, 211, 252, 0.5);
-    color: var(--cyan);
+    color: var(--cyan) !important;
     transform: translateY(-2px);
   }
 
@@ -633,7 +662,7 @@ const displayEpisodes = allPosts
     justify-content: center;
     align-items: center;
     padding: 1rem;
-    animation: slideInRight 0.8s ease;
+    animation: slideInRight 0.9s ease;
   }
 
   @keyframes slideInRight {
@@ -641,18 +670,18 @@ const displayEpisodes = allPosts
     to   { opacity: 1; transform: translateX(0); }
   }
 
-  /* ═══ BIG COVER CONTAINER ═══ */
   .cover-container {
     position: relative;
     width: 100%;
     max-width: 460px;
     aspect-ratio: 3/4;
     transform-style: preserve-3d;
-    transition: transform 0.3s ease;
+    transition: transform 0.5s ease;
     cursor: pointer;
+    will-change: transform;
   }
 
-  /* ═══ UNIQUE: Animated gradient border ═══ */
+  /* ═══ SLOW ROTATING BORDER (20 seconds) ═══ */
   .cover-border {
     position: absolute;
     inset: -3px;
@@ -665,10 +694,11 @@ const displayEpisodes = allPosts
       #a855f7 270deg,
       #c084fc 360deg
     );
-    animation: border-rotate 6s linear infinite;
-    opacity: 0.7;
+    animation: border-rotate 20s linear infinite;
+    opacity: 0.6;
     z-index: 0;
     filter: blur(1px);
+    will-change: transform;
   }
 
   @keyframes border-rotate {
@@ -676,7 +706,7 @@ const displayEpisodes = allPosts
     to   { transform: rotate(360deg); }
   }
 
-  /* Backdrop glow */
+  /* ═══ SLOW backdrop pulse ═══ */
   .cover-backdrop {
     position: absolute;
     inset: -10%;
@@ -688,16 +718,16 @@ const displayEpisodes = allPosts
       transparent 75%
     );
     filter: blur(60px);
-    animation: backdrop-pulse 4s ease infinite;
+    animation: backdrop-pulse 8s ease infinite;
     z-index: 0;
+    will-change: opacity, transform;
   }
 
   @keyframes backdrop-pulse {
-    0%, 100% { opacity: 0.7; transform: scale(1); }
-    50%       { opacity: 1;   transform: scale(1.08); }
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50%       { opacity: 0.85; transform: scale(1.05); }
   }
 
-  /* Cover inner (holds image + effects) */
   .cover-inner {
     position: relative;
     width: 100%;
@@ -715,7 +745,6 @@ const displayEpisodes = allPosts
     display: block;
   }
 
-  /* ═══ UNIQUE: Sparkles ═══ */
   .cover-sparkles {
     position: absolute;
     inset: 0;
@@ -729,30 +758,19 @@ const displayEpisodes = allPosts
     background: #fff;
     border-radius: 50%;
     box-shadow: 0 0 8px #fff, 0 0 12px var(--cyan);
-    animation: sparkle-twinkle 3s ease infinite;
+    animation: sparkle-twinkle 4s ease infinite;
+    will-change: opacity, transform;
   }
 
-  .sparkle-1 {
-    top: 15%; left: 20%;
-    animation-delay: 0s;
-  }
-
-  .sparkle-2 {
-    top: 65%; right: 15%;
-    animation-delay: 1s;
-  }
-
-  .sparkle-3 {
-    bottom: 20%; left: 30%;
-    animation-delay: 2s;
-  }
+  .sparkle-1 { top: 15%; left: 20%; animation-delay: 0s; }
+  .sparkle-2 { top: 65%; right: 15%; animation-delay: 1.5s; }
+  .sparkle-3 { bottom: 20%; left: 30%; animation-delay: 3s; }
 
   @keyframes sparkle-twinkle {
     0%, 100% { opacity: 0; transform: scale(0); }
     50%       { opacity: 1; transform: scale(1.5); }
   }
 
-  /* Corner brackets */
   .corner-acc {
     position: absolute;
     width: 20px;
@@ -768,13 +786,14 @@ const displayEpisodes = allPosts
   .corner-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
   .corner-br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
 
-  /* Floating score badge */
+  /* ═══ SLOW floating score ═══ */
   .score-float {
     position: absolute;
     top: -18px;
     right: -18px;
     z-index: 5;
-    animation: float-up 3s ease infinite;
+    animation: float-up 5s ease infinite;
+    will-change: transform;
   }
 
   @keyframes float-up {
@@ -791,7 +810,7 @@ const displayEpisodes = allPosts
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: #fff;
+    color: #fff !important;
     box-shadow: 0 8px 25px rgba(192, 132, 252, 0.5);
     border: 3px solid var(--bg-base);
   }
@@ -801,6 +820,7 @@ const displayEpisodes = allPosts
     font-size: 1.35rem;
     font-weight: 800;
     line-height: 1;
+    color: #fff !important;
   }
 
   .score-label {
@@ -809,7 +829,6 @@ const displayEpisodes = allPosts
     margin-top: 3px;
   }
 
-  /* Rank badge */
   .rank-float {
     position: absolute;
     top: 20px;
@@ -817,7 +836,7 @@ const displayEpisodes = allPosts
     z-index: 5;
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(10px);
-    color: #fff;
+    color: #fff !important;
     padding: 0.4rem 0.75rem;
     border-radius: 8px;
     display: flex;
@@ -829,7 +848,7 @@ const displayEpisodes = allPosts
   }
 
   .rank-hash {
-    color: var(--purple);
+    color: var(--purple) !important;
     font-size: 0.75rem;
     font-weight: 700;
   }
@@ -837,7 +856,7 @@ const displayEpisodes = allPosts
   .rank-num {
     font-size: 1rem;
     font-weight: 800;
-    color: #fff;
+    color: #fff !important;
   }
 
   /* ═══ HERO CONTROLS ═══ */
@@ -888,7 +907,7 @@ const displayEpisodes = allPosts
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
     backdrop-filter: blur(10px);
   }
 
@@ -901,6 +920,8 @@ const displayEpisodes = allPosts
   /* ═══ LATEST UPDATES ═══ */
   .latest-updates {
     margin-top: 3rem;
+    position: relative;
+    z-index: 2;
   }
 
   .latest-header {
@@ -920,6 +941,10 @@ const displayEpisodes = allPosts
     letter-spacing: -0.02em;
     color: var(--text-primary);
     margin: 0;
+  }
+
+  .tube-txt-adaptive {
+    color: var(--text-primary);
   }
 
   .latest-bar {
@@ -1073,49 +1098,155 @@ const displayEpisodes = allPosts
   }
 
   /* ═══ RESPONSIVE ═══ */
+  @media (max-width: 1100px) {
+    .hero-bg-force { height: 900px; }
+  }
+
   @media (max-width: 1024px) {
     .cover-container { max-width: 380px; }
   }
 
   @media (max-width: 900px) {
+    .hero-bg-force { height: auto; min-height: 100%; bottom: 3rem; }
+
     .hero-slides { min-height: auto; }
+
     .slide-content {
       grid-template-columns: 1fr;
       gap: 2rem;
       min-height: auto;
       text-align: center;
     }
-    .slide-right { order: -1; }
-    .cover-container { max-width: 280px; }
+
+    .slide-right {
+      order: -1;
+      padding: 2rem 0 1rem;
+    }
+
+    .cover-container {
+      max-width: 260px;
+    }
+
     .slide-left {
       padding: 0 1rem;
     }
-    .slide-meta { justify-content: center; }
-    .slide-desc { margin: 0 auto 2rem; }
-    .slide-actions { justify-content: center; }
-    .trending-pill,
-    .badges { justify-content: center; }
-    .badges { display: inline-flex; }
-    .updates-grid { grid-template-columns: repeat(2, 1fr); }
-    .score-float {
-      top: -12px; right: -12px;
+
+    .slide-meta {
+      justify-content: center;
     }
-    .score-inner { width: 60px; height: 60px; }
-    .score-value { font-size: 1.1rem; }
+
+    .slide-desc {
+      margin: 0 auto 2rem;
+    }
+
+    .slide-actions {
+      justify-content: center;
+    }
+
+    .trending-pill,
+    .badges {
+      justify-content: center;
+    }
+
+    .badges {
+      display: inline-flex;
+    }
+
+    /* Fix score badge on mobile */
+    .score-float {
+      top: -10px;
+      right: -10px;
+    }
+
+    .score-inner {
+      width: 58px;
+      height: 58px;
+    }
+
+    .score-value {
+      font-size: 1.1rem;
+    }
+
+    .rank-float {
+      top: 10px;
+      left: -6px;
+      padding: 0.3rem 0.55rem;
+    }
+
+    .rank-num {
+      font-size: 0.85rem;
+    }
+
+    .updates-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   @media (max-width: 640px) {
-    .slide-title { font-size: 1.9rem; }
-    .slide-desc { font-size: 0.85rem; }
-    .cover-container { max-width: 220px; }
-    .updates-grid { grid-template-columns: 1fr; }
+    .hero-sec { padding: 1.5rem 0 2rem; }
+
+    .slide-title {
+      font-size: 1.8rem;
+    }
+
+    .slide-desc {
+      font-size: 0.85rem;
+    }
+
+    .cover-container {
+      max-width: 200px;
+    }
+
+    .updates-grid {
+      grid-template-columns: 1fr;
+    }
+
     .slide-actions {
       flex-direction: column;
       width: 100%;
+      max-width: 300px;
+      margin: 0 auto;
     }
+
     .btn-watch, .btn-info {
       width: 100%;
       justify-content: center;
+    }
+
+    .score-inner {
+      width: 50px;
+      height: 50px;
+    }
+
+    .score-value {
+      font-size: 0.95rem;
+    }
+
+    .rank-float {
+      padding: 0.25rem 0.5rem;
+    }
+
+    .rank-num {
+      font-size: 0.75rem;
+    }
+
+    .hero-bg-force {
+      border-radius: var(--radius-lg);
+    }
+
+    .cover-border {
+      inset: -2px;
+      animation-duration: 25s;
+    }
+
+    /* Reduce sparkles on mobile for perf */
+    .sparkle-2, .sparkle-3 {
+      display: none;
+    }
+
+    /* Slower everything on mobile */
+    .cover-backdrop {
+      animation-duration: 10s;
     }
   }
 </style>
