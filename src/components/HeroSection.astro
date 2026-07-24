@@ -1,5 +1,7 @@
 ---
+// Fetch top airing anime + latest news posts
 let heroAnime = [];
+let episodes = [];
 
 try {
   const res = await fetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=5');
@@ -8,96 +10,158 @@ try {
     heroAnime = (data.data || []).slice(0, 5).map(a => ({
       title:    a.title_english || a.title,
       titleJp:  a.title_japanese || '',
-      synopsis: (a.synopsis || '').substring(0, 180) + '...',
+      synopsis: (a.synopsis || '').substring(0, 200) + '...',
       image:    a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || '',
       score:    a.score,
       year:     a.year || '',
-      genre:    (a.genres?.[0]?.name) || 'Anime',
+      episodes: a.episodes || '?',
+      type:     a.type || 'TV',
+      studio:   a.studios?.[0]?.name || 'Studio',
+      genres:   (a.genres || []).slice(0, 2).map(g => g.name),
       malUrl:   a.url,
-      season:   a.status === 'Currently Airing' ? 'Now Airing' : (a.status || 'New Season'),
+      status:   a.status || '',
     }));
   }
 } catch (e) {
-  console.warn('Jikan fetch failed:', e);
+  console.warn('Jikan hero failed:', e);
 }
 
 if (heroAnime.length === 0) {
   heroAnime = [{
     title: 'Discover Anime',
     titleJp: '',
-    synopsis: 'Explore latest anime series, official trailers, and streaming guides.',
+    synopsis: 'Explore the latest anime series and streaming guides.',
     image: '',
-    score: null, year: '', genre: 'Anime', malUrl: '#',
-    season: 'Coming Soon',
+    score: null, year: 2025, episodes: '?', type: 'TV',
+    studio: 'AniTube Buzz',
+    genres: ['Anime'],
+    malUrl: '#', status: 'Featured',
   }];
 }
 
-const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
+// Fetch latest news for episode cards
+import { getCollection } from 'astro:content';
+const allPosts = await getCollection('posts', ({ data }) => !data.draft);
+const latestNews = allPosts
+  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
+  .slice(0, 4);
 ---
 
-<section class="hero" id="heroSec">
-  <div class="hero-cnt container">
+<section class="hero-strm" id="heroStrm">
+  <div class="hero-strm-cnt container">
 
-    <div class="hero-slides" id="heroSlides">
+    <div class="hero-strm-slides" id="heroSlides">
       {heroAnime.map((anime, idx) => (
-        <div class={`hero-slide ${idx === 0 ? 'active' : ''}`} data-index={idx}>
+        <div class={`hero-strm-slide ${idx === 0 ? 'active' : ''}`} data-index={idx}>
 
-          <!-- Left content -->
-          <div class="hero-left">
-            <h1 class="hero-welcome">
-              <span class="grad-text">Welcome</span> <span class="tube-text">to</span><br/>
-              <span class="tube-text">AniTube Buzz</span>
-            </h1>
+          <div class="hero-strm-inner">
 
-            <p class="hero-desc">{anime.synopsis}</p>
+            <!-- Left Info Column -->
+            <div class="hero-info">
 
-            <div class="hero-play-row">
-              <a href={anime.malUrl} target="_blank" rel="noopener" class="hero-play-btn" aria-label="Watch">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              </a>
-              <div class="hero-play-info">
-                <div class="hero-date">{firstDate}</div>
-                <div class="hero-season">
-                  <span class="grad-text">{anime.season}</span>
+              <div class="hero-studio-badge">
+                <div class="studio-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M13 2L4 14H12L11 22L20 10H12L13 2Z" fill="currentColor"/>
+                  </svg>
                 </div>
-                <div class="hero-anime-name">{anime.title}</div>
+                <span>{anime.studio}</span>
+                <span class="studio-orig">original</span>
               </div>
-            </div>
-          </div>
 
-          <!-- Right image (BIG, HD, NO BLUR) -->
-          <div class="hero-right">
-            <div class="hero-image-glow"></div>
-            {anime.image && (
-              <div class="hero-image-wrap">
-                <img
-                  src={anime.image}
-                  alt={anime.title}
-                  class="hero-image"
-                  loading={idx === 0 ? 'eager' : 'lazy'}
-                />
+              <h1 class="hero-strm-title">{anime.title}</h1>
+
+              <div class="hero-strm-meta">
+                {anime.year && <span class="hero-strm-year">{anime.year}</span>}
+                <span class="hero-strm-eps">{anime.episodes} Episodes</span>
+                {anime.genres.length > 0 && (
+                  <span class="hero-strm-cat">{anime.genres[0]}</span>
+                )}
+                {anime.score && (
+                  <span class="hero-strm-rating">
+                    {[1,2,3,4,5].map(s => (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill={s <= Math.round(anime.score/2) ? '#fbbf24' : 'rgba(255,255,255,0.2)'}>
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                      </svg>
+                    ))}
+                    <span class="rating-num">{anime.score}</span>
+                  </span>
+                )}
               </div>
-            )}
-            {anime.score && (
-              <div class="hero-score-badge">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-                {anime.score}
+
+              <p class="hero-strm-desc">{anime.synopsis}</p>
+
+              <div class="hero-strm-actions">
+                <a href={anime.malUrl} target="_blank" rel="noopener" class="hero-play-cta">
+                  <div class="play-btn-circle">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                  <span class="play-cta-txt">Play <span class="play-price">$1</span></span>
+                </a>
               </div>
-            )}
+
+            </div>
+
+            <!-- Right Image Column -->
+            <div class="hero-visual">
+              {anime.image && (
+                <div class="hero-visual-wrap">
+                  <img
+                    src={anime.image}
+                    alt={anime.title}
+                    class="hero-visual-img"
+                    loading={idx === 0 ? 'eager' : 'lazy'}
+                  />
+                  <div class="hero-visual-vignette"></div>
+                </div>
+              )}
+            </div>
+
           </div>
 
         </div>
       ))}
     </div>
 
-    <!-- Dots -->
-    <div class="hero-dots">
+    <!-- Season tabs -->
+    <div class="season-tabs">
+      <button class="season-tab active">Season 1</button>
+      <button class="season-tab">Season 2</button>
+      <button class="season-tab">Season 3</button>
+      <button class="season-tab">Season 4</button>
+      <button class="season-tab">Season 5</button>
+    </div>
+
+    <!-- Episode cards row -->
+    {latestNews.length > 0 && (
+      <div class="episodes-row">
+        {latestNews.map((post, idx) => (
+          <a href={`/posts/${post.slug}`} class="episode-card">
+            <div class="ep-thumb">
+              {post.data.image && (
+                <img src={post.data.image} alt={post.data.title} loading="lazy" />
+              )}
+              <div class="ep-play-overlay">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="ep-info">
+              <div class="ep-num">Episode {idx + 1}</div>
+              <div class="ep-title">{post.data.title}</div>
+            </div>
+          </a>
+        ))}
+      </div>
+    )}
+
+    <!-- Slide dots -->
+    <div class="hero-strm-dots">
       {heroAnime.map((_, idx) => (
-        <button class={`hero-dot ${idx === 0 ? 'active' : ''}`} data-index={idx} aria-label={`Slide ${idx + 1}`}></button>
+        <button class={`strm-dot ${idx === 0 ? 'active' : ''}`} data-index={idx} aria-label={`Slide ${idx + 1}`}></button>
       ))}
     </div>
 
@@ -106,8 +170,8 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
 
 <script is:inline>
   (function() {
-    var slides = document.querySelectorAll('.hero-slide');
-    var dots   = document.querySelectorAll('.hero-dot');
+    var slides = document.querySelectorAll('.hero-strm-slide');
+    var dots   = document.querySelectorAll('.strm-dot');
     var current = 0;
     var interval;
 
@@ -125,274 +189,449 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
       dot.addEventListener('click', function(){
         clearInterval(interval);
         goto(parseInt(dot.dataset.index));
-        interval = setInterval(function(){ goto(current + 1); }, 6000);
+        interval = setInterval(function(){ goto(current + 1); }, 7000);
+      });
+    });
+
+    // Season tabs
+    var tabs = document.querySelectorAll('.season-tab');
+    tabs.forEach(function(tab){
+      tab.addEventListener('click', function(){
+        tabs.forEach(function(t){ t.classList.remove('active'); });
+        tab.classList.add('active');
       });
     });
 
     if(slides.length > 1) {
-      interval = setInterval(function(){ goto(current + 1); }, 6000);
+      interval = setInterval(function(){ goto(current + 1); }, 7000);
     }
   })();
 </script>
 
 <style>
-  .hero {
-    padding: 3rem 0 4rem;
+  .hero-strm {
+    padding: 2rem 0 3rem;
     position: relative;
   }
 
-  .hero-cnt {
+  .hero-strm-cnt {
     position: relative;
   }
 
-  .hero-slides {
+  /* ── Slides Container ── */
+  .hero-strm-slides {
     position: relative;
-    min-height: 560px;
+    min-height: 480px;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    background: linear-gradient(135deg,
+      rgba(42, 21, 71, 0.9) 0%,
+      rgba(30, 15, 54, 0.95) 100%);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
   }
 
-  .hero-slide {
+  .hero-strm-slide {
     position: absolute;
     inset: 0;
-    display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    align-items: center;
-    gap: 4rem;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.8s ease;
-    padding: 1rem 0;
   }
 
-  .hero-slide.active {
+  .hero-strm-slide.active {
     opacity: 1;
     visibility: visible;
   }
 
-  /* Left content */
-  .hero-left {
-    position: relative;
-    z-index: 2;
-    animation-delay: 0.2s;
+  .hero-strm-inner {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    height: 100%;
+    min-height: 480px;
+    gap: 2rem;
   }
 
-  .hero-welcome {
-    font-family: var(--font-heading);
-    font-size: clamp(2.2rem, 5.5vw, 4rem);
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.03em;
-    margin-bottom: 1.5rem;
-  }
-
-  .hero-desc {
-    font-size: 1rem;
-    color: var(--text-muted);
-    line-height: 1.7;
-    max-width: 420px;
-    margin-bottom: 2.5rem;
-  }
-
-  .hero-play-row {
+  /* ── Left Info ── */
+  .hero-info {
     display: flex;
-    align-items: center;
-    gap: 1.2rem;
+    flex-direction: column;
+    justify-content: center;
+    padding: 3rem 2.5rem;
+    z-index: 2;
   }
 
-  .hero-play-btn {
-    width: 64px;
-    height: 64px;
+  .hero-studio-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-color);
+    padding: 0.35rem 0.75rem 0.35rem 0.5rem;
+    border-radius: 999px;
+    width: fit-content;
+    margin-bottom: 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+  }
+
+  .studio-icon {
+    width: 22px; height: 22px;
     border-radius: 50%;
     background: var(--grad);
-    border: none;
-    color: #fff;
-    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding-left: 3px;
-    transition: transform 0.2s ease;
-    box-shadow: 0 8px 25px rgba(255, 51, 153, 0.4);
-    position: relative;
-    text-decoration: none;
+    color: #fff;
   }
 
-  .hero-play-btn::before {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    border: 1.5px solid rgba(255, 51, 153, 0.3);
-    animation: play-ring 2s ease infinite;
+  .studio-orig {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 500;
+    margin-left: 0.25rem;
   }
 
-  @keyframes play-ring {
-    0%   { transform: scale(1); opacity: 1; }
-    100% { transform: scale(1.5); opacity: 0; }
+  .hero-strm-title {
+    font-family: var(--font-heading);
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.05;
+    margin-bottom: 1rem;
+    letter-spacing: -0.03em;
   }
 
-  .hero-play-btn:hover { transform: scale(1.1); }
-
-  .hero-play-info {
+  .hero-strm-meta {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  .hero-strm-year { font-weight: 600; }
+
+  .hero-strm-eps {
+    color: var(--text-muted);
+  }
+
+  .hero-strm-cat {
+    background: rgba(192, 132, 252, 0.15);
+    color: var(--purple);
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
+  .hero-strm-rating {
+    display: inline-flex;
+    align-items: center;
     gap: 3px;
   }
 
-  .hero-date {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    font-weight: 500;
-  }
-
-  .hero-season {
-    font-family: var(--font-heading);
-    font-size: 0.75rem;
+  .rating-num {
+    color: #fbbf24;
     font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    line-height: 1;
+    margin-left: 4px;
+    font-size: 0.8rem;
   }
 
-  .hero-anime-name {
-    font-family: var(--font-heading);
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: -0.01em;
+  .hero-strm-desc {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.75rem;
+    max-width: 460px;
   }
 
-  /* Right image — BIG, HD */
-  .hero-right {
-    position: relative;
-    height: 100%;
-    min-height: 560px;
+  /* ── Play CTA ── */
+  .hero-strm-actions {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .hero-play-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+    padding: 0.35rem 1.2rem 0.35rem 0.35rem;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+  }
+
+  .hero-play-cta:hover {
+    background: rgba(192, 132, 252, 0.15);
+    border-color: rgba(192, 132, 252, 0.4);
+    transform: translateY(-2px);
+  }
+
+  .play-btn-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--grad);
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #fff;
+    padding-left: 3px;
+    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.4);
   }
 
-  .hero-image-glow {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 110%;
-    height: 110%;
-    border-radius: 50%;
-    background: radial-gradient(circle,
-      rgba(255, 51, 153, 0.5) 0%,
-      rgba(204, 51, 204, 0.3) 30%,
-      rgba(0, 212, 255, 0.25) 60%,
-      transparent 75%
-    );
-    filter: blur(80px);
-    animation: glow-pulse 4s ease infinite;
+  .play-cta-txt {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.88rem;
   }
 
-  @keyframes glow-pulse {
-    0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
-    50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.05); }
+  .play-price {
+    color: var(--purple);
+    margin-left: 0.3rem;
+    font-weight: 700;
   }
 
-  .hero-image-wrap {
+  /* ── Right Visual ── */
+  .hero-visual {
     position: relative;
-    z-index: 2;
-    width: 100%;
-    max-width: 520px;
-    aspect-ratio: 3/4;
-    border-radius: 28px;
+    height: 100%;
+    min-height: 480px;
     overflow: hidden;
-    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
   }
 
-  .hero-image {
+  .hero-visual-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero-visual-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    animation: hero-img-in 1s ease forwards;
+    object-position: center;
+    animation: img-in 1s ease forwards;
   }
 
-  @keyframes hero-img-in {
+  @keyframes img-in {
     from { transform: scale(1.05); opacity: 0.5; }
     to   { transform: scale(1);    opacity: 1; }
   }
 
-  .hero-score-badge {
+  .hero-visual-vignette {
     position: absolute;
-    top: 24px;
-    right: 24px;
-    z-index: 3;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
-    color: #ffd700;
-    padding: 0.5rem 0.85rem;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    border: 1px solid rgba(255, 215, 0, 0.3);
+    inset: 0;
+    background: linear-gradient(90deg,
+      rgba(30, 15, 54, 0.9) 0%,
+      rgba(30, 15, 54, 0.3) 30%,
+      transparent 60%);
   }
 
-  /* Dots */
-  .hero-dots {
-    position: absolute;
-    bottom: 0;
-    left: 0;
+  /* ── Season Tabs ── */
+  .season-tabs {
     display: flex;
-    gap: 8px;
+    gap: 0.5rem;
+    margin-top: 2rem;
+    padding: 0.5rem 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .season-tabs::-webkit-scrollbar { display: none; }
+
+  .season-tab {
+    padding: 0.6rem 1.4rem;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
   }
 
-  .hero-dot {
-    width: 32px;
-    height: 4px;
-    border-radius: 4px;
+  .season-tab:hover {
+    background: rgba(192, 132, 252, 0.08);
+    color: var(--text-primary);
+  }
+
+  .season-tab.active {
+    background: var(--grad);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.35);
+  }
+
+  /* ── Episodes Row ── */
+  .episodes-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .episode-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    backdrop-filter: blur(10px);
+  }
+
+  .episode-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(192, 132, 252, 0.4);
+    box-shadow: 0 10px 30px rgba(192, 132, 252, 0.15);
+  }
+
+  .ep-thumb {
+    position: relative;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    background: var(--bg-elevated);
+  }
+
+  .ep-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .episode-card:hover .ep-thumb img { transform: scale(1.08); }
+
+  .ep-play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0);
+    color: #fff;
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+
+  .episode-card:hover .ep-play-overlay {
+    opacity: 1;
+    background: rgba(30, 15, 54, 0.5);
+  }
+
+  .ep-play-overlay svg {
+    background: var(--grad);
+    padding: 12px;
+    border-radius: 50%;
+    box-shadow: 0 0 20px rgba(192, 132, 252, 0.5);
+    width: 44px;
+    height: 44px;
+  }
+
+  .ep-info {
+    padding: 0.75rem 0.9rem;
+  }
+
+  .ep-num {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+  }
+
+  .ep-title {
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ── Slide Dots ── */
+  .hero-strm-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 2rem;
+  }
+
+  .strm-dot {
+    width: 28px;
+    height: 3px;
+    border-radius: 3px;
     background: rgba(255, 255, 255, 0.15);
     border: none;
     cursor: pointer;
     transition: all 0.3s ease;
   }
 
-  .hero-dot:hover { background: rgba(255, 255, 255, 0.35); }
+  .strm-dot:hover { background: rgba(255, 255, 255, 0.35); }
 
-  .hero-dot.active {
+  .strm-dot.active {
     background: var(--grad);
-    width: 48px;
-    box-shadow: 0 0 10px rgba(255, 51, 153, 0.5);
+    width: 42px;
+    box-shadow: 0 0 8px rgba(192, 132, 252, 0.5);
   }
 
   /* ── Responsive ── */
   @media (max-width: 900px) {
-    .hero { padding: 2rem 0 3rem; }
-    .hero-slides { min-height: auto; }
-    .hero-slide {
+    .hero-strm-inner {
       grid-template-columns: 1fr;
-      text-align: center;
-      gap: 2rem;
-      position: relative;
     }
-    .hero-slide:not(.active) { display: none; }
-    .hero-left { order: 2; }
-    .hero-right {
-      order: 1;
-      min-height: 400px;
+    .hero-visual {
+      min-height: 300px;
+      order: -1;
     }
-    .hero-image-wrap { max-width: 320px; }
-    .hero-desc { margin: 0 auto 2rem; }
-    .hero-play-row { justify-content: center; }
-    .hero-dots {
-      position: relative;
-      bottom: auto;
-      left: auto;
-      justify-content: center;
-      margin-top: 2rem;
+    .hero-visual-vignette {
+      background: linear-gradient(180deg,
+        transparent 0%,
+        rgba(30, 15, 54, 0.5) 60%,
+        rgba(30, 15, 54, 0.95) 100%);
+    }
+    .hero-info {
+      padding: 2rem 1.5rem;
+    }
+    .episodes-row {
+      grid-template-columns: repeat(2, 1fr);
     }
   }
 
-  @media (max-width: 480px) {
-    .hero-welcome { font-size: 1.9rem; }
-    .hero-image-wrap { max-width: 260px; }
-    .hero-right { min-height: 340px; }
+  @media (max-width: 640px) {
+    .hero-strm-title { font-size: 1.9rem; }
+    .hero-strm-desc { font-size: 0.85rem; }
+    .hero-info { padding: 1.5rem 1.2rem; }
+    .season-tab { padding: 0.5rem 1rem; font-size: 0.78rem; }
+    .episodes-row {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+    .ep-info { padding: 0.6rem 0.7rem; }
+    .ep-title { font-size: 0.78rem; }
+  }
+
+  @media (max-width: 400px) {
+    .episodes-row { grid-template-columns: 1fr; }
   }
 </style>
