@@ -1,366 +1,864 @@
 ---
-
+// FacebookVideos.astro
+// Renders premium reel-style cards from facebook-videos.json
+// Videos are loaded client-side from /facebook-videos.json
 ---
 
-<section class="video-section section">
-  <div class="container">
-    <h2 class="section-title">🎬 Latest Videos</h2>
-    <p class="video-subtitle">Watch our latest anime content — click to play</p>
+<section class="fb-videos-section" id="latest-videos">
+  <div class="fb-videos-container">
 
-    <div class="video-grid" id="videoGrid">
-      <div class="skeleton" style="height:320px;border-radius:16px;"></div>
-      <div class="skeleton" style="height:320px;border-radius:16px;"></div>
-      <div class="skeleton" style="height:320px;border-radius:16px;"></div>
+    <!-- Section Header -->
+    <div class="fb-section-header">
+      <div class="fb-section-label">
+        <span class="fb-icon">📹</span>
+        <span>Latest Videos</span>
+      </div>
+      <h2 class="fb-section-title">Watch Our <span class="gradient-text">Anime Content</span></h2>
+      <p class="fb-section-sub">Fresh anime clips, recaps, and highlights from our Facebook Page</p>
     </div>
 
-    <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
-      <button class="btn-primary" id="loadMoreBtn">Load More Videos</button>
+    <!-- Loading state -->
+    <div class="fb-loading" id="fb-loading" aria-live="polite">
+      <div class="fb-loading-grid">
+        {[1,2,3,4,5,6].map(() => (
+          <div class="fb-skeleton">
+            <div class="fb-skeleton-thumb"></div>
+            <div class="fb-skeleton-body">
+              <div class="fb-skeleton-line long"></div>
+              <div class="fb-skeleton-line short"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Error state -->
+    <div class="fb-error" id="fb-error" style="display:none;">
+      <div class="fb-error-icon">📡</div>
+      <h3>Videos temporarily unavailable</h3>
+      <p>Our Facebook video feed is being updated. Check back soon.</p>
+      <a
+        href="https://www.facebook.com"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="fb-page-link"
+        id="fb-page-direct-link"
+      >
+        Visit our Facebook Page →
+      </a>
+    </div>
+
+    <!-- Videos grid -->
+    <div class="fb-videos-grid" id="fb-videos-grid" style="display:none;" role="list"></div>
+
+    <!-- Load More -->
+    <div class="fb-load-more-wrapper" id="fb-load-more-wrapper" style="display:none;">
+      <button class="fb-load-more-btn" id="fb-load-more-btn" aria-label="Load more videos">
+        <span class="btn-icon">▼</span>
+        <span class="btn-text">Load More Videos</span>
+      </button>
+      <p class="fb-count-text" id="fb-count-text"></p>
+    </div>
+
+  </div>
+
+  <!-- Video Modal / Player -->
+  <div class="fb-modal" id="fb-modal" role="dialog" aria-modal="true" aria-label="Video player" style="display:none;">
+    <div class="fb-modal-backdrop" id="fb-modal-backdrop"></div>
+    <div class="fb-modal-content">
+      <button class="fb-modal-close" id="fb-modal-close" aria-label="Close video">✕</button>
+      <div class="fb-modal-iframe-wrap" id="fb-modal-iframe-wrap">
+        <!-- iframe injected here dynamically -->
+      </div>
+      <div class="fb-modal-meta" id="fb-modal-meta"></div>
     </div>
   </div>
+
 </section>
 
+<script is:inline>
+(function() {
+  'use strict';
+
+  const VIDEOS_PER_PAGE = 6;
+  let allVideos   = [];
+  let currentPage = 1;
+  let fbPageUrl   = 'https://www.facebook.com';
+
+  const grid          = document.getElementById('fb-videos-grid');
+  const loading       = document.getElementById('fb-loading');
+  const errorEl       = document.getElementById('fb-error');
+  const loadMoreWrap  = document.getElementById('fb-load-more-wrapper');
+  const loadMoreBtn   = document.getElementById('fb-load-more-btn');
+  const countText     = document.getElementById('fb-count-text');
+  const modal         = document.getElementById('fb-modal');
+  const modalBackdrop = document.getElementById('fb-modal-backdrop');
+  const modalClose    = document.getElementById('fb-modal-close');
+  const modalIframeWrap = document.getElementById('fb-modal-iframe-wrap');
+  const modalMeta     = document.getElementById('fb-modal-meta');
+
+  // ── Format numbers ──────────────────────────────────────────────────────────
+  function formatCount(n) {
+    if (!n) return '';
+    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000)    return (n / 1000).toFixed(1) + 'K';
+    return String(n);
+  }
+
+  // ── Format date ─────────────────────────────────────────────────────────────
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric'
+      });
+    } catch { return ''; }
+  }
+
+  // ── Truncate text ───────────────────────────────────────────────────────────
+  function truncate(text, maxLen) {
+    if (!text) return '';
+    if (text.length <= maxLen) return text;
+    return text.substring(0, maxLen).trim() + '…';
+  }
+
+  // ── Build video card HTML ───────────────────────────────────────────────────
+  function buildCard(video, index) {
+    const title       = truncate(video.title || video.description || 'Watch Video', 80);
+    const description = truncate(video.description || '', 120);
+    const dateStr     = formatDate(video.created_time);
+    const views       = video.views ? formatCount(video.views) : '';
+    const likes       = video.likes ? formatCount(video.likes) : '';
+    const duration    = video.length ? formatDuration(video.length) : '';
+
+    // Thumbnail: prefer full_picture, then picture, then placeholder
+    const thumb = video.full_picture || video.picture || video.thumbnail_url || '';
+
+    // Video ID for Facebook embed
+    const videoId = video.id || '';
+
+    return `
+      <article
+        class="fb-card"
+        role="listitem"
+        tabindex="0"
+        data-video-id="${videoId}"
+        data-video-url="${video.permalink_url || ''}"
+        data-title="${title.replace(/"/g, '&quot;')}"
+        data-description="${description.replace(/"/g, '&quot;')}"
+        data-index="${index}"
+        aria-label="Play: ${title.replace(/"/g, '')}"
+      >
+        <!-- Thumbnail (3:4 reel aspect ratio) -->
+        <div class="fb-card-thumb-wrap">
+          ${thumb
+            ? `<img
+                src="${thumb}"
+                alt="${title.replace(/"/g, '&quot;')}"
+                class="fb-card-thumb"
+                loading="lazy"
+                onerror="this.parentElement.classList.add('thumb-error')"
+              />`
+            : `<div class="fb-card-thumb-placeholder">
+                <span class="fb-placeholder-icon">🎬</span>
+              </div>`
+          }
+
+          <!-- Play overlay -->
+          <div class="fb-card-overlay">
+            <div class="fb-play-btn" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Duration badge -->
+          ${duration ? `<span class="fb-duration-badge">${duration}</span>` : ''}
+
+          <!-- Gradient overlay at bottom -->
+          <div class="fb-card-gradient"></div>
+        </div>
+
+        <!-- Card Body -->
+        <div class="fb-card-body">
+          <h3 class="fb-card-title">${title}</h3>
+          <div class="fb-card-meta">
+            ${dateStr ? `<span class="fb-meta-date">${dateStr}</span>` : ''}
+            ${views  ? `<span class="fb-meta-stat">👁 ${views}</span>` : ''}
+            ${likes  ? `<span class="fb-meta-stat">❤️ ${likes}</span>` : ''}
+          </div>
+        </div>
+      </article>
+    `;
+  }
+
+  // ── Format duration (seconds → mm:ss) ──────────────────────────────────────
+  function formatDuration(seconds) {
+    const s = parseInt(seconds, 10);
+    if (isNaN(s) || s <= 0) return '';
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${m}:${r.toString().padStart(2, '0')}`;
+  }
+
+  // ── Render current page of videos ───────────────────────────────────────────
+  function renderPage() {
+    const start = 0;
+    const end   = currentPage * VIDEOS_PER_PAGE;
+    const slice = allVideos.slice(start, end);
+
+    grid.innerHTML = slice.map((v, i) => buildCard(v, i)).join('');
+
+    // Attach click handlers
+    grid.querySelectorAll('.fb-card').forEach((card) => {
+      card.addEventListener('click',   () => openVideo(card));
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openVideo(card);
+        }
+      });
+    });
+
+    // Update load more
+    const shown = Math.min(end, allVideos.length);
+    const total = allVideos.length;
+
+    if (shown < total) {
+      loadMoreWrap.style.display = 'flex';
+      countText.textContent = `Showing ${shown} of ${total} videos`;
+    } else {
+      loadMoreWrap.style.display = shown > VIDEOS_PER_PAGE ? 'flex' : 'none';
+      if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+      countText.textContent = `All ${total} videos loaded`;
+    }
+  }
+
+  // ── Open video in modal ──────────────────────────────────────────────────────
+  function openVideo(card) {
+    const videoId  = card.dataset.videoId;
+    const videoUrl = card.dataset.videoUrl;
+    const title    = card.dataset.title;
+    const desc     = card.dataset.description;
+
+    if (!videoId && !videoUrl) return;
+
+    // Build Facebook embed URL
+    let embedSrc = '';
+    if (videoUrl) {
+      // Facebook video embed via oEmbed iframe
+      embedSrc = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(videoUrl)}&show_text=false&width=700&autoplay=1`;
+    } else if (videoId) {
+      embedSrc = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent('https://www.facebook.com/video/' + videoId)}&show_text=false&width=700&autoplay=1`;
+    }
+
+    modalIframeWrap.innerHTML = embedSrc
+      ? `<iframe
+          src="${embedSrc}"
+          width="100%"
+          height="100%"
+          style="border:none;overflow:hidden"
+          scrolling="no"
+          frameborder="0"
+          allowfullscreen="true"
+          allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+          title="${title}"
+        ></iframe>`
+      : `<div class="fb-modal-fallback">
+          <p>Unable to embed this video directly.</p>
+          <a href="${videoUrl || '#'}" target="_blank" rel="noopener noreferrer" class="fb-watch-fb-btn">
+            Watch on Facebook →
+          </a>
+        </div>`;
+
+    modalMeta.innerHTML = title
+      ? `<h3 class="fb-modal-title">${title}</h3>
+         ${videoUrl ? `<a href="${videoUrl}" target="_blank" rel="noopener noreferrer" class="fb-modal-link">Open on Facebook ↗</a>` : ''}`
+      : '';
+
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    modalClose.focus();
+  }
+
+  // ── Close modal ──────────────────────────────────────────────────────────────
+  function closeModal() {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+    // Stop video by clearing iframe
+    modalIframeWrap.innerHTML = '';
+    modalMeta.innerHTML = '';
+  }
+
+  modalClose.addEventListener('click', closeModal);
+  modalBackdrop.addEventListener('click', closeModal);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.style.display !== 'none') closeModal();
+  });
+
+  // ── Load More ────────────────────────────────────────────────────────────────
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', () => {
+      currentPage++;
+      renderPage();
+      // Scroll to new cards
+      const cards = grid.querySelectorAll('.fb-card');
+      const firstNew = cards[(currentPage - 1) * VIDEOS_PER_PAGE];
+      if (firstNew) firstNew.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  // ── Fetch and initialize ─────────────────────────────────────────────────────
+  async function init() {
+    try {
+      const res = await fetch('/facebook-videos.json');
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const jsonData = await res.json();
+
+      // Handle both array format and object with .videos key
+      let videos = [];
+      if (Array.isArray(jsonData)) {
+        videos = jsonData;
+      } else if (jsonData && Array.isArray(jsonData.videos)) {
+        videos = jsonData.videos;
+        if (jsonData.page_url) {
+          fbPageUrl = jsonData.page_url;
+          const directLink = document.getElementById('fb-page-direct-link');
+          if (directLink) directLink.href = fbPageUrl;
+        }
+      } else if (jsonData && Array.isArray(jsonData.data)) {
+        videos = jsonData.data;
+      }
+
+      // Filter out videos with no usable data
+      allVideos = videos.filter(v => v && (v.id || v.permalink_url));
+
+      loading.style.display = 'none';
+
+      if (allVideos.length === 0) {
+        // No videos — show error state with Facebook page link
+        errorEl.style.display = 'flex';
+        return;
+      }
+
+      grid.style.display = 'grid';
+      renderPage();
+
+    } catch (err) {
+      console.error('[FacebookVideos] Failed to load videos:', err);
+      loading.style.display = 'none';
+      errorEl.style.display  = 'flex';
+    }
+  }
+
+  // Run on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+</script>
+
 <style>
-  .video-section {
-    padding: 48px 0;
-    border-top: 1px solid var(--border-color);
+  /* ── Section Wrapper ── */
+  .fb-videos-section {
+    padding: 4rem 0;
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(139, 0, 255, 0.04) 50%,
+      rgba(0, 0, 0, 0) 100%
+    );
   }
 
-  .video-subtitle {
-    color: var(--text-muted);
+  .fb-videos-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  /* ── Section Header ── */
+  .fb-section-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .fb-section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(139, 0, 255, 0.12);
+    border: 1px solid rgba(139, 0, 255, 0.3);
+    color: rgba(192, 132, 252, 0.9);
+    padding: 0.3rem 1rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .fb-section-title {
+    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+    font-weight: 800;
+    margin: 0 0 0.4rem;
+    color: #fff;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #c084fc, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .fb-section-sub {
+    color: rgba(255, 255, 255, 0.45);
     font-size: 0.9rem;
-    margin-top: -20px;
-    margin-bottom: 28px;
-    margin-left: 16px;
+    margin: 0;
   }
 
-  .video-grid {
+  /* ── Skeleton Loading ── */
+  .fb-loading-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
   }
 
-  .vid-card {
-    border-radius: var(--radius-lg);
+  .fb-skeleton {
+    border-radius: 16px;
     overflow: hidden;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    transition: all var(--transition-normal);
-    position: relative;
-    cursor: pointer;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
-  .vid-card::before {
-    content: '';
+  .fb-skeleton-thumb {
+    aspect-ratio: 3/4;
+    background: linear-gradient(
+      90deg,
+      rgba(255,255,255,0.04) 0%,
+      rgba(255,255,255,0.08) 50%,
+      rgba(255,255,255,0.04) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .fb-skeleton-body {
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .fb-skeleton-line {
+    height: 10px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.06);
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .fb-skeleton-line.long  { width: 85%; }
+  .fb-skeleton-line.short { width: 55%; }
+
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+  }
+
+  /* ── Error State ── */
+  .fb-error {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 3rem 1.5rem;
+    background: rgba(139, 0, 255, 0.04);
+    border: 1px solid rgba(139, 0, 255, 0.12);
+    border-radius: 16px;
+    gap: 0.75rem;
+  }
+
+  .fb-error-icon {
+    font-size: 2.5rem;
+  }
+
+  .fb-error h3 {
+    color: rgba(255,255,255,0.8);
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .fb-error p {
+    color: rgba(255,255,255,0.45);
+    margin: 0;
+    font-size: 0.85rem;
+  }
+
+  .fb-page-link {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    background: #1877F2;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+
+  .fb-page-link:hover {
+    background: #0f65d4;
+    transform: translateY(-1px);
+  }
+
+  /* ── Videos Grid ── */
+  .fb-videos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
+  }
+
+  /* ── Video Card — 3:4 Reel Style ── */
+  .fb-card {
+    background: rgba(10, 10, 20, 0.7);
+    border: 1px solid rgba(139, 0, 255, 0.15);
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .fb-card:hover,
+  .fb-card:focus {
+    transform: translateY(-6px);
+    border-color: rgba(139, 0, 255, 0.5);
+    box-shadow:
+      0 12px 40px rgba(139, 0, 255, 0.2),
+      0 0 0 1px rgba(139, 0, 255, 0.2);
+    outline: none;
+  }
+
+  /* Thumbnail — 3:4 aspect ratio */
+  .fb-card-thumb-wrap {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background: rgba(20, 0, 40, 0.6);
+    flex-shrink: 0;
+  }
+
+  .fb-card-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+
+  .fb-card:hover .fb-card-thumb {
+    transform: scale(1.08);
+  }
+
+  .fb-card-thumb-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(139,0,255,0.1), rgba(0,212,255,0.05));
+  }
+
+  .fb-placeholder-icon {
+    font-size: 3rem;
+    opacity: 0.4;
+  }
+
+  /* Play button overlay */
+  .fb-card-overlay {
     position: absolute;
-    top: 0;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0);
+    transition: background 0.3s ease;
+  }
+
+  .fb-card:hover .fb-card-overlay {
+    background: rgba(0, 0, 0, 0.35);
+  }
+
+  .fb-play-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(139, 0, 255, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    opacity: 0;
+    transform: scale(0.7);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    box-shadow: 0 0 20px rgba(139, 0, 255, 0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  .fb-card:hover .fb-play-btn,
+  .fb-card:focus .fb-play-btn {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Duration badge */
+  .fb-duration-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    backdrop-filter: blur(4px);
+  }
+
+  /* Bottom gradient */
+  .fb-card-gradient {
+    position: absolute;
+    bottom: 0;
     left: 0;
     right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #1877f2, #ff3366, #8833ff);
-    opacity: 0;
-    transition: opacity var(--transition-fast);
-    z-index: 3;
+    height: 40%;
+    background: linear-gradient(transparent, rgba(0,0,0,0.6));
+    pointer-events: none;
   }
 
-  .vid-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(255, 51, 102, 0.2);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), var(--glow-pink);
+  /* Card Body */
+  .fb-card-body {
+    padding: 0.75rem 0.9rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
   }
 
-  .vid-card:hover::before {
-    opacity: 1;
-  }
-
-  .vid-frame-wrap {
-    position: relative;
-    width: 100%;
-    padding-bottom: 133.33%;
-    background: #000;
+  .fb-card-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    margin: 0;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  .vid-frame-wrap iframe {
+  .fb-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .fb-meta-date {
+    color: rgba(255,255,255,0.35);
+    font-size: 0.7rem;
+  }
+
+  .fb-meta-stat {
+    color: rgba(255,255,255,0.4);
+    font-size: 0.7rem;
+  }
+
+  /* ── Load More ── */
+  .fb-load-more-wrapper {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+  }
+
+  .fb-load-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 2rem;
+    background: transparent;
+    border: 1.5px solid rgba(139, 0, 255, 0.4);
+    color: rgba(255,255,255,0.7);
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  .fb-load-more-btn:hover {
+    background: rgba(139, 0, 255, 0.15);
+    border-color: rgba(139, 0, 255, 0.7);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  .fb-count-text {
+    color: rgba(255,255,255,0.3);
+    font-size: 0.78rem;
+    margin: 0;
+  }
+
+  /* ── Modal ── */
+  .fb-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .fb-modal-backdrop {
     position: absolute;
-    top: 0;
-    left: 0;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(6px);
+  }
+
+  .fb-modal-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 760px;
+    background: rgba(10, 5, 25, 0.97);
+    border: 1px solid rgba(139, 0, 255, 0.3);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.7), 0 0 40px rgba(139, 0, 255, 0.15);
+  }
+
+  .fb-modal-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 10;
+    background: rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    line-height: 1;
+    font-family: inherit;
+  }
+
+  .fb-modal-close:hover {
+    background: rgba(139, 0, 255, 0.4);
+    border-color: rgba(139, 0, 255, 0.6);
+  }
+
+  .fb-modal-iframe-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+  }
+
+  .fb-modal-iframe-wrap iframe {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     border: none;
-    display: none;
   }
 
-  .vid-frame-wrap iframe.active {
-    display: block;
-  }
-
-  .vid-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      to top,
-      rgba(0, 0, 0, 0.92) 0%,
-      rgba(0, 0, 0, 0.4) 50%,
-      rgba(0, 0, 0, 0.1) 100%
-    );
+  .fb-modal-fallback {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: opacity var(--transition-fast);
-    z-index: 2;
-    padding: 16px;
+    height: 100%;
+    gap: 1rem;
+    color: rgba(255,255,255,0.6);
+    font-size: 0.9rem;
   }
 
-  .vid-overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
+  .fb-watch-fb-btn {
+    padding: 0.5rem 1.25rem;
+    background: #1877F2;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
   }
 
-  .play-btn {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: var(--accent-gradient);
+  .fb-modal-meta {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid rgba(255,255,255,0.07);
     display: flex;
     align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 40px rgba(255, 51, 102, 0.5);
-    margin-bottom: 16px;
-    transition: all var(--transition-fast);
+    justify-content: space-between;
+    gap: 1rem;
   }
 
-  .vid-card:hover .play-btn {
-    transform: scale(1.12);
-    box-shadow: 0 0 60px rgba(255, 51, 102, 0.7);
-  }
-
-  .play-btn svg {
-    width: 28px;
-    height: 28px;
-    fill: #fff;
-    margin-left: 4px;
-  }
-
-  .vid-overlay-title {
+  .fb-modal-title {
+    margin: 0;
     font-size: 0.88rem;
     font-weight: 600;
-    color: #fff;
-    text-align: center;
-    line-height: 1.35;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    color: rgba(255,255,255,0.85);
+    flex: 1;
+    white-space: nowrap;
     overflow: hidden;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    text-overflow: ellipsis;
   }
 
-  .vid-duration {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
-    padding: 3px 8px;
-    background: rgba(0, 0, 0, 0.85);
-    color: #fff;
-    font-size: 0.72rem;
+  .fb-modal-link {
+    color: rgba(139, 0, 255, 0.8);
+    text-decoration: none;
+    font-size: 0.78rem;
     font-weight: 600;
-    border-radius: 4px;
-    z-index: 3;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: color 0.2s;
   }
 
-  .vid-info {
-    padding: 14px 16px;
+  .fb-modal-link:hover {
+    color: #8b00ff;
   }
 
-  .vid-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    line-height: 1.35;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin-bottom: 6px;
-    transition: color var(--transition-fast);
-  }
-
-  .vid-card:hover .vid-title {
-    color: var(--accent-primary);
-  }
-
-  .vid-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-  }
-
-  .fb-badge {
-    padding: 2px 8px;
-    border-radius: 20px;
-    background: rgba(24, 119, 242, 0.12);
-    color: #4b9bff;
-    font-weight: 700;
-    font-size: 0.68rem;
-  }
-
-  .vid-empty {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 56px 24px;
-    background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    border: 1px dashed var(--border-color);
-  }
-
-  .vid-empty-icon {
-    font-size: 3rem;
-    display: block;
-    margin-bottom: 12px;
-    animation: float 3s ease-in-out infinite;
-  }
-
-  .vid-empty p {
-    color: var(--text-muted);
-  }
-
-  .load-more-wrap {
-    text-align: center;
-    margin-top: 28px;
-  }
-
+  /* ── Responsive ── */
   @media (max-width: 768px) {
-    .video-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+    .fb-videos-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .fb-modal-content {
+      max-width: 100%;
+      border-radius: 12px;
     }
   }
 
   @media (max-width: 480px) {
-    .video-grid {
-      grid-template-columns: 1fr;
+    .fb-videos-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 0.75rem;
     }
   }
 </style>
-
-<script is:inline>
-  document.addEventListener('DOMContentLoaded', function() {
-    var grid = document.getElementById('videoGrid');
-    var loadMoreWrap = document.getElementById('loadMoreWrap');
-    var loadMoreBtn = document.getElementById('loadMoreBtn');
-    if (!grid) return;
-
-    var allVideos = [];
-    var showCount = 9;
-
-    function fmt(sec) {
-      if (!sec) return '';
-      var m = Math.floor(sec / 60);
-      var s = Math.floor(sec % 60);
-      return m + ':' + (s < 10 ? '0' : '') + s;
-    }
-
-    function timeAgo(d) {
-      if (!d) return '';
-      var diff = Math.floor((Date.now() - new Date(d)) / 1000);
-      if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
-      if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-      if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
-      return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
-
-    function makeEmbedUrl(permalink) {
-      return (
-        'https://www.facebook.com/plugins/video.php'
-        + '?href=' + encodeURIComponent(permalink)
-        + '&show_text=false'
-        + '&width=560'
-        + '&autoplay=1'
-        + '&allowfullscreen=true'
-      );
-    }
-
-    function renderVideos() {
-      var visible = allVideos.slice(0, showCount);
-
-      grid.innerHTML = visible.map(function(v, i) {
-        var id = 'v' + i;
-        var title = (v.title || v.description || 'Video Update').substring(0, 80);
-        var dur = fmt(v.length);
-        var time = timeAgo(v.created_time);
-        var purl = v.permalink_url || '';
-        var safePurl = purl.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        var delay = i * 0.06;
-
-        return (
-          '<div class="vid-card" style="animation:fadeInUp 0.5s ease forwards;animation-delay:' + delay + 's;opacity:0;">'
-
-          + '<div class="vid-frame-wrap">'
-          + '<iframe id="frame-' + id + '" allowfullscreen loading="lazy"'
-          + ' allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>'
-          + '<div class="vid-overlay" id="over-' + id + '"'
-          + ' onclick="playFB(\'' + id + '\',\'' + safePurl + '\')">'
-          + '<div class="play-btn"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>'
-          + '<p class="vid-overlay-title">' + title + '</p>'
-          + '</div>'
-          + (dur ? '<span class="vid-duration">' + dur + '</span>' : '')
-          + '</div>'
-
-          + '<div class="vid-info">'
-          + '<p class="vid-title">' + title + '</p>'
-          + '<div class="vid-meta">'
-          + '<span class="fb-badge">FB</span>'
-          + (time ? '<span>' + time + '</span>' : '')
-          + '</div>'
-          + '</div>'
-
-          + '</div>'
-        );
-      }).join('');
-
-      if (showCount < allVideos.length) {
-        var rem = allVideos.length - showCount;
-        loadMoreBtn.textContent = 'Load More (' + rem + ' more)';
-        loadMoreWrap.style.display = 'block';
-      } else {
-        loadMoreWrap.style.display = 'none';
-      }
-    }
-
-    window.playFB = function(id, permalink) {
-      var frame = document.getElementById('frame-' + id);
-      var overlay = document.getElementById('over-' + id);
-      if (!frame || !permalink) return;
-
-      frame.src = makeEmbedUrl(permalink);
-      frame.className = 'active';
-      if (overlay) overlay.className = 'vid-overlay hidden';
-    };
-
-    if (loadMoreBtn) {
-      loadMoreBtn.addEventListener('click', function() {
-        showCount += 9;
-        renderVideos();
-      });
-    }
-
-    fetch('/facebook-videos.json')
-      .then(function(r) {
-        if (!r.ok) throw new Error();
-        return r.json();
-      })
-      .then(function(videos) {
-        if (!videos || !videos.length) {
-          grid.innerHTML = '<div class="vid-empty"><span class="vid-empty-icon">🎬</span><p>Videos coming soon!</p></div>';
-          return;
-        }
-        allVideos = videos;
-        renderVideos();
-      })
-      .catch(function() {
-        grid.innerHTML = '<div class="vid-empty"><span class="vid-empty-icon">🎬</span><p>Videos coming soon!</p></div>';
-      });
-  });
-</script>
