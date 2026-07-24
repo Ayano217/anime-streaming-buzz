@@ -4,32 +4,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import HeroSection from '../components/HeroSection.astro';
-import NewsCard from '../components/NewsCard.astro';
-import Sidebar from '../components/Sidebar.astro';
 
-// Fetch all posts
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
 const sortedPosts = allPosts.sort((a, b) =>
   new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
 );
 
-const trendingPosts = sortedPosts.filter(p => p.data.trending).slice(0, 12);
-const latestPosts   = sortedPosts.slice(0, 12);
-const featuredPosts = sortedPosts.filter(p => p.data.featured).slice(0, 6);
+const novelty = sortedPosts.slice(0, 4);
+const news    = sortedPosts.slice(4, 8);
+const latest  = sortedPosts.slice(8, 16);
 
-// Ticker items (recent posts)
 const tickerItems = sortedPosts.slice(0, 15);
 ---
 
-<BaseLayout
-  title="AniTube Buzz — Latest Anime News, Reviews & Streaming Guide"
-  description="Your premium source for anime news, episode recaps, manga updates, streaming guides and gaming content. Updated daily for US anime fans."
->
+<BaseLayout>
   <Header slot="header" />
 
-  <!-- Trending ticker -->
+  <!-- Breaking News Ticker -->
   <div class="ticker-wrap">
-    <div class="ticker-label">Breaking News</div>
+    <div class="ticker-label">Breaking</div>
     <div class="ticker-track">
       {[...tickerItems, ...tickerItems].map((post) => (
         <a href={`/posts/${post.slug}`} class="ticker-item">
@@ -43,122 +36,356 @@ const tickerItems = sortedPosts.slice(0, 15);
   <!-- Hero -->
   <HeroSection />
 
-  <!-- Main content -->
-  <div class="home-layout container">
-    <main class="home-main">
+  <!-- Novelty Section -->
+  {novelty.length > 0 && (
+    <section class="section-block novelty-block">
+      <div class="container">
+        <h2 class="section-title">
+          <span class="grad-text">Novelty</span>
+        </h2>
 
-      <!-- Trending Section -->
-      {trendingPosts.length > 0 && (
-        <section class="home-section">
-          <div class="section-header">
-            <div class="section-header-left">
-              <div class="section-accent-bar"></div>
-              <h2 class="section-title">
-                <span class="gradient-text">Trending Now</span>
-              </h2>
-            </div>
-            <a href="/category/anime-recap" class="section-view-all">
-              View All
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                <path d="M5 12h14M13 5l7 7-7 7"/>
-              </svg>
+        <div class="novelty-grid">
+          {novelty.map((post) => (
+            <a href={`/posts/${post.slug}`} class="novelty-card">
+              <div class="nc-image">
+                {post.data.image && (
+                  <img src={post.data.image} alt={post.data.imageAlt || post.data.title} loading="lazy" />
+                )}
+                <div class="nc-overlay"></div>
+              </div>
+              <div class="nc-content">
+                <h3 class="nc-title">{post.data.title}</h3>
+                <p class="nc-excerpt">{post.data.excerpt}</p>
+              </div>
             </a>
-          </div>
-
-          <div class="posts-grid">
-            {trendingPosts.slice(0, 6).map((post) => (
-              <NewsCard
-                title={post.data.title}
-                excerpt={post.data.excerpt}
-                category={post.data.category}
-                date={post.data.date}
-                image={post.data.image}
-                imageAlt={post.data.imageAlt || post.data.title}
-                slug={post.slug}
-                trending={true}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <!-- Latest Section -->
-      <section class="home-section">
-        <div class="section-header">
-          <div class="section-header-left">
-            <div class="section-accent-bar"></div>
-            <h2 class="section-title">
-              Latest <span class="gradient-text">Anime News</span>
-            </h2>
-          </div>
-          <a href="/category/news" class="section-view-all">
-            View All
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-              <path d="M5 12h14M13 5l7 7-7 7"/>
-            </svg>
-          </a>
-        </div>
-
-        <div class="posts-grid">
-          {latestPosts.slice(0, 9).map((post) => (
-            <NewsCard
-              title={post.data.title}
-              excerpt={post.data.excerpt}
-              category={post.data.category}
-              date={post.data.date}
-              image={post.data.image}
-              imageAlt={post.data.imageAlt || post.data.title}
-              slug={post.slug}
-              featured={post.data.featured}
-              trending={post.data.trending}
-            />
           ))}
         </div>
-      </section>
+      </div>
+    </section>
+  )}
 
-    </main>
+  <!-- News Section -->
+  {news.length > 0 && (
+    <section class="section-block news-block">
+      <div class="container">
+        <h2 class="section-title">
+          <span class="grad-text">News</span>
+        </h2>
 
-    <aside class="home-sidebar">
-      <Sidebar />
-    </aside>
-  </div>
+        <div class="news-grid">
+          {news.map((post) => (
+            <a href={`/posts/${post.slug}`} class="news-card">
+              <div class="nw-image">
+                {post.data.image && (
+                  <img src={post.data.image} alt={post.data.imageAlt || post.data.title} loading="lazy" />
+                )}
+              </div>
+              <div class="nw-content">
+                <div class="nw-category">{post.data.category}</div>
+                <h3 class="nw-title">{post.data.title}</h3>
+                <p class="nw-excerpt">{post.data.excerpt}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- Latest Season Section -->
+  {latest.length > 0 && (
+    <section class="section-block latest-block">
+      <div class="container">
+        <h2 class="section-title">
+          <span class="grad-text">Latest Season</span>
+        </h2>
+
+        <div class="latest-grid">
+          {latest.map((post) => (
+            <a href={`/posts/${post.slug}`} class="latest-card">
+              <div class="lt-image">
+                {post.data.image && (
+                  <img src={post.data.image} alt={post.data.imageAlt || post.data.title} loading="lazy" />
+                )}
+                <div class="lt-overlay">
+                  <div class="lt-play-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div class="lt-content">
+                <h3 class="lt-title">{post.data.title}</h3>
+                <div class="lt-meta">
+                  <span>{new Date(post.data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
 
   <Footer slot="footer" />
 </BaseLayout>
 
 <style>
-  .home-layout {
+  /* ═══ Novelty Section (4 tall cards) ═══ */
+  .novelty-grid {
     display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 2.5rem;
-    padding-top: 2rem;
-    padding-bottom: 3rem;
-  }
-
-  .home-main {
-    min-width: 0;
-  }
-
-  .home-section {
-    margin-bottom: 3rem;
-  }
-
-  .posts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 1.25rem;
   }
 
+  .novelty-card {
+    display: block;
+    background: var(--bg-card);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .novelty-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(255, 51, 102, 0.15);
+  }
+
+  .nc-image {
+    position: relative;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+  }
+
+  .nc-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+  }
+
+  .novelty-card:hover .nc-image img {
+    transform: scale(1.08);
+  }
+
+  .nc-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+      transparent 30%,
+      rgba(0, 0, 0, 0.5) 70%,
+      rgba(0, 0, 0, 0.85) 100%
+    );
+  }
+
+  .nc-content {
+    padding: 1rem 1.1rem 1.2rem;
+  }
+
+  .nc-title {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.4rem;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .nc-excerpt {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ═══ News Section (2x2 horizontal cards) ═══ */
+  .news-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .news-card {
+    display: flex;
+    gap: 1rem;
+    background: var(--bg-card);
+    border-radius: 16px;
+    overflow: hidden;
+    padding: 1rem;
+    transition: transform 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .news-card:hover {
+    transform: translateY(-3px);
+    background: var(--bg-card-hover);
+  }
+
+  .nw-image {
+    width: 120px;
+    min-width: 120px;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .nw-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .nw-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .nw-category {
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.4rem;
+  }
+
+  .nw-title {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.4rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .nw-excerpt {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ═══ Latest Section (4-col grid) ═══ */
+  .latest-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+  }
+
+  .latest-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s ease;
+  }
+
+  .latest-card:hover { transform: translateY(-5px); }
+
+  .lt-image {
+    position: relative;
+    aspect-ratio: 3/4;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 0.6rem;
+  }
+
+  .lt-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+
+  .latest-card:hover .lt-image img { transform: scale(1.08); }
+
+  .lt-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.5) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .latest-card:hover .lt-overlay { opacity: 1; }
+
+  .lt-play-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--grad);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding-left: 3px;
+    box-shadow: 0 0 20px rgba(255, 51, 102, 0.5);
+    transform: scale(0.7);
+    transition: transform 0.3s ease;
+  }
+
+  .latest-card:hover .lt-play-icon { transform: scale(1); }
+
+  .lt-content { padding: 0 0.2rem; }
+
+  .lt-title {
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.2rem;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .lt-meta {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+
+  /* ── Responsive ── */
   @media (max-width: 1024px) {
-    .home-layout {
-      grid-template-columns: 1fr;
-      gap: 2rem;
-    }
+    .novelty-grid { grid-template-columns: repeat(2, 1fr); }
+    .latest-grid  { grid-template-columns: repeat(3, 1fr); }
+    .news-grid    { grid-template-columns: 1fr; }
   }
 
   @media (max-width: 640px) {
-    .posts-grid {
-      grid-template-columns: 1fr;
-    }
+    .novelty-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .latest-grid  { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .news-card    { padding: 0.75rem; }
+    .nw-image     { width: 90px; min-width: 90px; }
+    .nw-title     { font-size: 0.85rem; }
   }
 </style>
