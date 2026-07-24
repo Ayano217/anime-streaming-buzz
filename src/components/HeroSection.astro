@@ -681,7 +681,7 @@ const displayEpisodes = allPosts
     will-change: transform;
   }
 
-  /* ═══ SLOW ROTATING BORDER (20 seconds) ═══ */
+  /* ═══ SLOW ROTATING BORDER (40 seconds) ═══ */
   .cover-border {
     position: absolute;
     inset: -3px;
@@ -694,7 +694,7 @@ const displayEpisodes = allPosts
       #a855f7 270deg,
       #c084fc 360deg
     );
-    animation: border-rotate 20s linear infinite;
+    animation: border-rotate 40s linear infinite;
     opacity: 0.6;
     z-index: 0;
     filter: blur(1px);
@@ -1107,75 +1107,98 @@ const displayEpisodes = allPosts
   }
 
   @media (max-width: 900px) {
-    .hero-bg-force { height: auto; min-height: 100%; bottom: 3rem; }
+    /* Force clean stack layout on mobile */
+    .hero-bg-force {
+      height: auto;
+      top: 0;
+      bottom: 3rem;
+      min-height: calc(100% - 3rem);
+    }
 
-    .hero-slides { min-height: auto; }
+    .hero-slides {
+      min-height: auto;
+      /* Give plenty of vertical space */
+    }
 
     .slide-content {
-      grid-template-columns: 1fr;
-      gap: 2rem;
+      grid-template-columns: 1fr !important;
+      gap: 3rem;
       min-height: auto;
       text-align: center;
     }
 
+    /* Cover on TOP with proper spacing */
     .slide-right {
       order: -1;
       padding: 2rem 0 1rem;
+      margin-bottom: 1rem;
     }
 
+    /* Cover smaller so no overflow */
     .cover-container {
-      max-width: 260px;
+      max-width: 240px;
     }
 
+    /* Text section with room */
     .slide-left {
       padding: 0 1rem;
+      margin-top: 1rem;
     }
 
-    .slide-meta {
-      justify-content: center;
-    }
-
-    .slide-desc {
-      margin: 0 auto 2rem;
-    }
-
-    .slide-actions {
-      justify-content: center;
-    }
+    .slide-meta { justify-content: center; }
+    .slide-desc { margin: 0 auto 1.5rem; }
+    .slide-actions { justify-content: center; }
 
     .trending-pill,
     .badges {
       justify-content: center;
     }
 
-    .badges {
-      display: inline-flex;
-    }
+    .badges { display: inline-flex; }
 
-    /* Fix score badge on mobile */
+    /* SCORE BADGE — moved inward on mobile so no overlap */
     .score-float {
-      top: -10px;
-      right: -10px;
+      top: -5px;
+      right: -5px;
     }
 
     .score-inner {
-      width: 58px;
-      height: 58px;
+      width: 56px;
+      height: 56px;
+      border-width: 2px;
     }
 
     .score-value {
-      font-size: 1.1rem;
+      font-size: 1rem;
     }
 
+    /* RANK BADGE — moved inward */
     .rank-float {
-      top: 10px;
-      left: -6px;
-      padding: 0.3rem 0.55rem;
+      top: 8px;
+      left: -3px;
+      padding: 0.25rem 0.5rem;
     }
 
     .rank-num {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
     }
+
+    .rank-hash {
+      font-size: 0.65rem;
+    }
+
+    /* Cover border spins slower on mobile */
+    .cover-border {
+      animation-duration: 50s;
+    }
+
+    /* Backdrop softer on mobile */
+    .cover-backdrop {
+      animation-duration: 10s;
+    }
+
+    /* Fewer sparkles for perf */
+    .sparkle-3 { display: none; }
 
     .updates-grid {
       grid-template-columns: repeat(2, 1fr);
@@ -1183,28 +1206,32 @@ const displayEpisodes = allPosts
   }
 
   @media (max-width: 640px) {
-    .hero-sec { padding: 1.5rem 0 2rem; }
-
-    .slide-title {
-      font-size: 1.8rem;
+    .hero-sec {
+      padding: 1.5rem 0 2rem;
     }
 
-    .slide-desc {
-      font-size: 0.85rem;
+    .slide-right {
+      padding: 1.5rem 0 0.5rem;
+      margin-bottom: 0.5rem;
     }
 
     .cover-container {
       max-width: 200px;
     }
 
-    .updates-grid {
-      grid-template-columns: 1fr;
+    .slide-title {
+      font-size: 1.7rem;
+    }
+
+    .slide-desc {
+      font-size: 0.85rem;
+      max-width: 100%;
     }
 
     .slide-actions {
       flex-direction: column;
       width: 100%;
-      max-width: 300px;
+      max-width: 280px;
       margin: 0 auto;
     }
 
@@ -1213,40 +1240,55 @@ const displayEpisodes = allPosts
       justify-content: center;
     }
 
+    /* Even smaller badges on tiny screens */
+    .score-float {
+      top: -3px;
+      right: -3px;
+    }
+
     .score-inner {
-      width: 50px;
-      height: 50px;
+      width: 48px;
+      height: 48px;
     }
 
     .score-value {
-      font-size: 0.95rem;
+      font-size: 0.88rem;
     }
 
     .rank-float {
-      padding: 0.25rem 0.5rem;
+      top: 5px;
+      left: 0;
+      padding: 0.2rem 0.45rem;
     }
 
     .rank-num {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
     }
 
     .hero-bg-force {
       border-radius: var(--radius-lg);
     }
 
-    .cover-border {
-      inset: -2px;
-      animation-duration: 25s;
+    .updates-grid {
+      grid-template-columns: 1fr;
     }
 
-    /* Reduce sparkles on mobile for perf */
-    .sparkle-2, .sparkle-3 {
-      display: none;
+    /* Sparkles reduced */
+    .sparkle-2 { display: none; }
+  }
+
+  @media (max-width: 400px) {
+    .cover-container {
+      max-width: 170px;
     }
 
-    /* Slower everything on mobile */
-    .cover-backdrop {
-      animation-duration: 10s;
+    .score-inner {
+      width: 42px;
+      height: 42px;
+    }
+
+    .score-value {
+      font-size: 0.8rem;
     }
   }
 </style>
