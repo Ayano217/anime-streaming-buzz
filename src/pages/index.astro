@@ -4,7 +4,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import HeroSection from '../components/HeroSection.astro';
-import AnimeCard from '../components/AnimeCard.astro';
 
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
 const sortedPosts = allPosts.sort((a, b) =>
@@ -14,28 +13,6 @@ const sortedPosts = allPosts.sort((a, b) =>
 const novelty = sortedPosts.slice(0, 4);
 const news    = sortedPosts.slice(4, 8);
 const latest  = sortedPosts.slice(8, 16);
-
-// Fetch new arrivals from Jikan (currently airing anime)
-let newArrivals = [];
-try {
-  const res = await fetch('https://api.jikan.moe/v4/seasons/now?filter=tv&limit=12');
-  if (res.ok) {
-    const data = await res.json();
-    newArrivals = (data.data || []).slice(0, 12).map(a => ({
-      title:    a.title_english || a.title,
-      image:    a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || '',
-      slug:     (a.title_english || a.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80),
-      score:    a.score,
-      year:     a.year,
-      episodes: a.episodes,
-      genre:    a.genres?.[0]?.name || '',
-      status:   a.status || '',
-      malId:    a.mal_id,
-    }));
-  }
-} catch (e) {
-  console.warn('New arrivals fetch failed:', e);
-}
 ---
 
 <BaseLayout>
@@ -44,49 +21,69 @@ try {
   <!-- Hero -->
   <HeroSection />
 
-  <!-- NEW ARRIVALS SECTION -->
-  {newArrivals.length > 0 && (
-    <section class="section-block arrivals-block">
-      <div class="container">
-        
-        <div class="arrivals-header">
-          <div class="arrivals-title-wrap">
-            <div class="arrivals-bar"></div>
-            <div>
-              <div class="arrivals-tag">
-                <span class="arrivals-dot"></span>
-                <span>FRESH · UPDATED DAILY</span>
-              </div>
-              <h2 class="arrivals-title">
-                <span class="grad-text">New Arrivals</span>
-              </h2>
+  <!-- NEW ARRIVALS SECTION (Infinite Scroll) -->
+  <section class="section-block arrivals-block">
+    <div class="container">
+      
+      <div class="arrivals-header">
+        <div class="arrivals-title-wrap">
+          <div class="arrivals-bar"></div>
+          <div>
+            <div class="arrivals-tag">
+              <span class="arrivals-dot"></span>
+              <span>FRESH · UPDATED DAILY</span>
             </div>
-          </div>
-          
-          <div class="arrivals-count">
-            <span class="arrivals-count-num">{newArrivals.length}</span>
-            <span class="arrivals-count-lbl">titles</span>
+            <h2 class="arrivals-title">
+              <span class="grad-text">New Arrivals</span>
+            </h2>
           </div>
         </div>
         
-        <div class="arrivals-grid">
-          {newArrivals.map((anime) => (
-            <AnimeCard
-              title={anime.title}
-              image={anime.image}
-              slug={anime.slug}
-              score={anime.score}
-              year={anime.year}
-              episodes={anime.episodes}
-              genre={anime.genre}
-              status={anime.status}
-              size="medium"
-            />
-          ))}
+        <div class="arrivals-count">
+          <span class="arrivals-count-num" id="arrivalsCount">0</span>
+          <span class="arrivals-count-lbl">titles loaded</span>
         </div>
       </div>
-    </section>
-  )}
+      
+      <!-- Grid -->
+      <div class="arrivals-grid" id="arrivalsGrid">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+      </div>
+      
+      <!-- Load More button -->
+      <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+        <button class="load-more-btn" id="loadMoreBtn">
+          <span class="load-more-text">Load More Anime</span>
+          <div class="load-more-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M12 5v14M5 12l7 7 7-7"/>
+            </svg>
+          </div>
+        </button>
+        <div class="load-more-stats">
+          <span class="grad-text" id="loadedCount">0</span>
+          <span>titles loaded</span>
+        </div>
+      </div>
+      
+      <!-- Loading indicator -->
+      <div class="loading-more" id="loadingMore" style="display:none;">
+        <div class="loading-spinner"></div>
+        <span>Loading more anime...</span>
+      </div>
+      
+      <!-- End message -->
+      <div class="end-message" id="endMessage" style="display:none;">
+        <span>You've reached the end. Check back tomorrow for more!</span>
+      </div>
+      
+    </div>
+  </section>
 
   <!-- Novelty Section -->
   {novelty.length > 0 && (
@@ -183,8 +180,228 @@ try {
   <Footer slot="footer" />
 </BaseLayout>
 
+<!-- INFINITE SCROLL SCRIPT -->
+<script is:inline>
+(function() {
+  var page = 1;
+  var loading = false;
+  var hasMore = true;
+  var totalLoaded = 0;
+  var allIds = {};
+  var apiDelay = 1200; // ms between API calls (respect rate limit)
+  var lastApiCall = 0;
+  
+  var grid       = document.getElementById('arrivalsGrid');
+  var loadBtn    = document.getElementById('loadMoreBtn');
+  var loadWrap   = document.getElementById('loadMoreWrap');
+  var loadingEl  = document.getElementById('loadingMore');
+  var endMsg     = document.getElementById('endMessage');
+  var countEl    = document.getElementById('arrivalsCount');
+  var loadedEl   = document.getElementById('loadedCount');
+  
+  function makeSlug(str) {
+    return (str || '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 80);
+  }
+  
+  function esc(str) {
+    return String(str || '').replace(/[&<>"']/g, function(c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  
+  function createCard(anime) {
+    var title    = anime.title_english || anime.title || 'Unknown';
+    var image    = (anime.images && anime.images.jpg && (anime.images.jpg.large_image_url || anime.images.jpg.image_url)) || '';
+    var slug     = makeSlug(title) || ('anime-' + anime.mal_id);
+    var score    = anime.score || null;
+    var year     = anime.year || '';
+    var episodes = anime.episodes || '?';
+    var genre    = (anime.genres && anime.genres[0] && anime.genres[0].name) || '';
+    var isNew    = anime.status === 'Currently Airing';
+    
+    var card = document.createElement('a');
+    card.href = '/anime/' + slug;
+    card.className = 'arrivals-card-item';
+    
+    var imgHtml = image 
+      ? '<img src="' + esc(image) + '" alt="' + esc(title) + '" loading="lazy" class="anime-img" />'
+      : '<div class="anime-img-fallback"><svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/></svg></div>';
+    
+    var newBadge = isNew 
+      ? '<div class="anime-badge anime-badge-new"><span class="anime-new-dot"></span>NEW</div>'
+      : '';
+    
+    var scoreBadge = score 
+      ? '<div class="anime-badge anime-badge-score"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + score + '</div>'
+      : '';
+    
+    var metaHtml = '';
+    if (year)     metaHtml += '<span>' + esc(year) + '</span>';
+    if (episodes) metaHtml += '<span>' + esc(episodes) + ' EP</span>';
+    if (genre)    metaHtml += '<span class="anime-genre">' + esc(genre) + '</span>';
+    
+    card.innerHTML = 
+      '<div class="anime-thumb">' +
+        imgHtml +
+        '<div class="anime-overlay"></div>' +
+        '<div class="anime-corner anime-corner-tl"></div>' +
+        '<div class="anime-corner anime-corner-tr"></div>' +
+        '<div class="anime-corner anime-corner-bl"></div>' +
+        '<div class="anime-corner anime-corner-br"></div>' +
+        '<div class="anime-play">' +
+          '<div class="anime-play-ring anime-play-ring-1"></div>' +
+          '<div class="anime-play-ring anime-play-ring-2"></div>' +
+          '<div class="anime-play-btn">' +
+            '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+          '</div>' +
+        '</div>' +
+        '<div class="anime-badges-top">' + newBadge + scoreBadge + '</div>' +
+        '<div class="anime-hd">HD</div>' +
+        '<div class="anime-info">' +
+          '<h3 class="anime-title">' + esc(title) + '</h3>' +
+          '<div class="anime-meta">' + metaHtml + '</div>' +
+        '</div>' +
+      '</div>';
+    
+    return card;
+  }
+  
+  function updateCount() {
+    if (countEl) countEl.textContent = totalLoaded;
+    if (loadedEl) loadedEl.textContent = totalLoaded;
+  }
+  
+  async function waitForRateLimit() {
+    var now = Date.now();
+    var elapsed = now - lastApiCall;
+    if (elapsed < apiDelay) {
+      await new Promise(function(r) { setTimeout(r, apiDelay - elapsed); });
+    }
+    lastApiCall = Date.now();
+  }
+  
+  async function loadAnime(pageNum) {
+    if (loading || !hasMore) return;
+    loading = true;
+    
+    if (pageNum > 1) {
+      if (loadingEl) loadingEl.style.display = 'flex';
+      if (loadWrap) loadWrap.style.display = 'none';
+    }
+    
+    // Rotate through different endpoints for variety
+    var endpoints = [
+      'https://api.jikan.moe/v4/seasons/now?filter=tv&limit=24&page=' + pageNum,
+      'https://api.jikan.moe/v4/top/anime?filter=airing&limit=24&page=' + pageNum,
+      'https://api.jikan.moe/v4/seasons/upcoming?filter=tv&limit=24&page=' + pageNum,
+      'https://api.jikan.moe/v4/top/anime?limit=24&page=' + pageNum,
+    ];
+    var endpoint = endpoints[(pageNum - 1) % endpoints.length];
+    
+    try {
+      await waitForRateLimit();
+      
+      var res = await fetch(endpoint);
+      if (!res.ok) throw new Error('API error: ' + res.status);
+      
+      var data = await res.json();
+      var items = (data && data.data) || [];
+      
+      // Filter duplicates by mal_id
+      var newItems = items.filter(function(a) {
+        if (!a.mal_id || allIds[a.mal_id]) return false;
+        allIds[a.mal_id] = true;
+        return true;
+      });
+      
+      // Clear skeletons on first load
+      if (pageNum === 1) {
+        grid.innerHTML = '';
+      }
+      
+      // Append cards
+      newItems.forEach(function(anime) {
+        var card = createCard(anime);
+        grid.appendChild(card);
+        totalLoaded++;
+      });
+      
+      updateCount();
+      
+      // Check if there's more
+      var pagination = data && data.pagination;
+      if (pagination && pagination.has_next_page === false) {
+        // Try next endpoint even if this one ended
+        if (pageNum < endpoints.length * 3) {
+          hasMore = true;
+        } else {
+          hasMore = false;
+        }
+      }
+      
+      // If no new items after multiple tries, stop
+      if (newItems.length === 0 && pageNum > 5) {
+        hasMore = false;
+      }
+      
+      if (loadingEl) loadingEl.style.display = 'none';
+      
+      if (hasMore) {
+        if (loadWrap) loadWrap.style.display = 'flex';
+      } else {
+        if (loadWrap) loadWrap.style.display = 'none';
+        if (endMsg) endMsg.style.display = 'block';
+      }
+      
+      loading = false;
+      
+    } catch (err) {
+      console.warn('Load anime failed:', err);
+      loading = false;
+      if (loadingEl) loadingEl.style.display = 'none';
+      
+      if (pageNum === 1) {
+        grid.innerHTML = '<div class="load-error">Failed to load anime. <button onclick="location.reload()">Retry</button></div>';
+      } else {
+        if (loadWrap) loadWrap.style.display = 'flex';
+      }
+    }
+  }
+  
+  // Load more on button click
+  if (loadBtn) {
+    loadBtn.addEventListener('click', function() {
+      page++;
+      loadAnime(page);
+    });
+  }
+  
+  // Auto-load on scroll (infinite scroll)
+  var scrollTimeout;
+  window.addEventListener('scroll', function() {
+    if (loading || !hasMore) return;
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(function() {
+      var scrollPos = window.scrollY + window.innerHeight;
+      var pageHeight = document.body.offsetHeight;
+      // Trigger load when 1000px from bottom
+      if (scrollPos > pageHeight - 1000) {
+        page++;
+        loadAnime(page);
+      }
+    }, 200);
+  }, { passive: true });
+  
+  // Initial load
+  loadAnime(1);
+})();
+</script>
+
 <style>
-  /* NEW ARRIVALS SECTION */
+  /* ═══ NEW ARRIVALS SECTION ═══ */
   .arrivals-block {
     position: relative;
   }
@@ -195,6 +412,7 @@ try {
     justify-content: space-between;
     margin-bottom: 1.75rem;
     gap: 1rem;
+    flex-wrap: wrap;
   }
   
   .arrivals-title-wrap {
@@ -282,13 +500,415 @@ try {
     gap: 1rem;
   }
   
-  /* Novelty */
+  /* ═══ ANIME CARD (JS-created) ═══ */
+  .arrivals-card-item {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    transition: transform 0.3s ease;
+    animation: card-fade-in 0.5s ease backwards;
+  }
+  
+  @keyframes card-fade-in {
+    from { opacity: 0; transform: translateY(15px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  
+  .arrivals-card-item:hover { transform: translateY(-6px); }
+  
+  .arrivals-card-item .anime-thumb {
+    position: relative;
+    aspect-ratio: 3/4;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(28, 15, 61, 0.5);
+    box-shadow: 
+      0 10px 30px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(192, 132, 252, 0.15);
+    transition: box-shadow 0.4s ease;
+  }
+  
+  .arrivals-card-item:hover .anime-thumb {
+    box-shadow: 
+      0 20px 45px rgba(0, 0, 0, 0.5),
+      0 0 0 2px rgba(192, 132, 252, 0.6),
+      0 0 30px rgba(192, 132, 252, 0.25);
+  }
+  
+  .arrivals-card-item .anime-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease, filter 0.4s ease;
+    display: block;
+  }
+  
+  .arrivals-card-item:hover .anime-img {
+    transform: scale(1.08);
+    filter: brightness(0.75);
+  }
+  
+  .arrivals-card-item .anime-img-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(192, 132, 252, 0.15), rgba(125, 211, 252, 0.1));
+    color: rgba(192, 132, 252, 0.5);
+  }
+  
+  .arrivals-card-item .anime-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+      transparent 40%,
+      rgba(10, 5, 23, 0.5) 75%,
+      rgba(10, 5, 23, 0.95) 100%
+    );
+    z-index: 1;
+  }
+  
+  .arrivals-card-item .anime-corner {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #7dd3fc;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    filter: drop-shadow(0 0 4px #7dd3fc);
+  }
+  
+  .arrivals-card-item:hover .anime-corner { opacity: 0.9; }
+  
+  .arrivals-card-item .anime-corner-tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+  .arrivals-card-item .anime-corner-tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+  .arrivals-card-item .anime-corner-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+  .arrivals-card-item .anime-corner-br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+  
+  .arrivals-card-item .anime-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 56px;
+    height: 56px;
+    z-index: 4;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .arrivals-card-item:hover .anime-play { opacity: 1; }
+  
+  .arrivals-card-item .anime-play-btn {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding-left: 3px;
+    box-shadow: 
+      0 8px 25px rgba(192, 132, 252, 0.6),
+      0 0 40px rgba(232, 121, 249, 0.3);
+    z-index: 2;
+  }
+  
+  .arrivals-card-item .anime-play-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(192, 132, 252, 0.7);
+    pointer-events: none;
+  }
+  
+  .arrivals-card-item .anime-play-ring-1 {
+    animation: anime-play-pulse 1.8s ease-out infinite;
+  }
+  
+  .arrivals-card-item .anime-play-ring-2 {
+    animation: anime-play-pulse 1.8s ease-out infinite;
+    animation-delay: 0.9s;
+  }
+  
+  @keyframes anime-play-pulse {
+    0%   { transform: scale(1);   opacity: 1; }
+    100% { transform: scale(1.7); opacity: 0; }
+  }
+  
+  .arrivals-card-item .anime-badges-top {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    z-index: 3;
+  }
+  
+  .arrivals-card-item .anime-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    backdrop-filter: blur(8px);
+  }
+  
+  .arrivals-card-item .anime-badge-new {
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
+  }
+  
+  .arrivals-card-item .anime-new-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 5px #fff;
+    animation: anime-new-blink 1.2s ease infinite;
+  }
+  
+  @keyframes anime-new-blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+  
+  .arrivals-card-item .anime-badge-score {
+    background: rgba(0, 0, 0, 0.75);
+    color: #fbbf24;
+    margin-left: auto;
+  }
+  
+  .arrivals-card-item .anime-hd {
+    position: absolute;
+    bottom: 90px;
+    right: 10px;
+    background: rgba(125, 211, 252, 0.9);
+    color: #0a0517;
+    padding: 3px 7px;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    z-index: 3;
+  }
+  
+  .arrivals-card-item .anime-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 14px 14px 16px;
+    z-index: 2;
+  }
+  
+  .arrivals-card-item .anime-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 5px;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  }
+  
+  .arrivals-card-item .anime-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.65);
+    font-weight: 500;
+    flex-wrap: wrap;
+  }
+  
+  .arrivals-card-item .anime-meta > span {
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .arrivals-card-item .anime-meta > span + span::before {
+    content: '•';
+    margin-right: 8px;
+    color: rgba(255, 255, 255, 0.3);
+  }
+  
+  .arrivals-card-item .anime-genre {
+    color: #c084fc !important;
+    font-weight: 700;
+  }
+  
+  /* ═══ LOAD MORE BUTTON ═══ */
+  .load-more-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 2.5rem;
+  }
+  
+  .load-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 32px;
+    background: rgba(192, 132, 252, 0.1);
+    border: 1px solid rgba(192, 132, 252, 0.3);
+    border-radius: 999px;
+    color: var(--text-primary);
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+  
+  .load-more-btn:hover {
+    background: rgba(192, 132, 252, 0.2);
+    border-color: rgba(192, 132, 252, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.3);
+  }
+  
+  .load-more-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--grad);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    animation: load-bounce 2s ease infinite;
+  }
+  
+  @keyframes load-bounce {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-4px); }
+  }
+  
+  .load-more-stats {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+  
+  .load-more-stats .grad-text {
+    font-size: 0.9rem;
+    font-weight: 800;
+  }
+  
+  /* ═══ LOADING SPINNER ═══ */
+  .loading-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 2rem 0;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+  }
+  
+  .loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(192, 132, 252, 0.2);
+    border-top-color: var(--purple);
+    border-radius: 50%;
+    animation: spinner-rotate 0.8s linear infinite;
+  }
+  
+  @keyframes spinner-rotate {
+    to { transform: rotate(360deg); }
+  }
+  
+  /* ═══ END MESSAGE ═══ */
+  .end-message {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: 500;
+    background: rgba(192, 132, 252, 0.04);
+    border-radius: 16px;
+    margin-top: 2rem;
+    border: 1px dashed rgba(192, 132, 252, 0.2);
+  }
+  
+  /* ═══ SKELETON CARDS ═══ */
+  .skeleton-card {
+    aspect-ratio: 3/4;
+    border-radius: 16px;
+    background: linear-gradient(90deg,
+      rgba(192, 132, 252, 0.05) 25%,
+      rgba(192, 132, 252, 0.12) 50%,
+      rgba(192, 132, 252, 0.05) 75%
+    );
+    background-size: 200% 100%;
+    animation: skel-shine 1.5s infinite;
+  }
+  
+  @keyframes skel-shine {
+    from { background-position: -200% 0; }
+    to   { background-position:  200% 0; }
+  }
+  
+  /* ═══ LOAD ERROR ═══ */
+  .load-error {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+  
+  .load-error button {
+    margin-left: 8px;
+    padding: 6px 14px;
+    background: var(--grad);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  
+  /* ═══ NOVELTY SECTION ═══ */
   .novelty-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1.25rem;
   }
-
+  
   .novelty-card {
     display: block;
     background: var(--bg-card);
@@ -298,29 +918,29 @@ try {
     text-decoration: none;
     color: inherit;
   }
-
+  
   .novelty-card:hover {
     transform: translateY(-8px);
     box-shadow: 0 20px 40px rgba(192, 132, 252, 0.15);
   }
-
+  
   .nc-image {
     position: relative;
     aspect-ratio: 3/4;
     overflow: hidden;
   }
-
+  
   .nc-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 0.6s ease;
   }
-
+  
   .novelty-card:hover .nc-image img {
     transform: scale(1.08);
   }
-
+  
   .nc-overlay {
     position: absolute;
     inset: 0;
@@ -330,9 +950,9 @@ try {
       rgba(0, 0, 0, 0.85) 100%
     );
   }
-
+  
   .nc-content { padding: 1rem 1.1rem 1.2rem; }
-
+  
   .nc-title {
     font-family: var(--font-heading);
     font-size: 1rem;
@@ -346,7 +966,7 @@ try {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-
+  
   .nc-excerpt {
     font-size: 0.78rem;
     color: var(--text-muted);
@@ -356,14 +976,14 @@ try {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-
-  /* News */
+  
+  /* ═══ NEWS SECTION ═══ */
   .news-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 1.25rem;
   }
-
+  
   .news-card {
     display: flex;
     gap: 1rem;
@@ -375,12 +995,12 @@ try {
     text-decoration: none;
     color: inherit;
   }
-
+  
   .news-card:hover {
     transform: translateY(-3px);
     background: var(--bg-card-hover);
   }
-
+  
   .nw-image {
     width: 120px;
     min-width: 120px;
@@ -388,9 +1008,13 @@ try {
     border-radius: 12px;
     overflow: hidden;
   }
-
-  .nw-image img { width: 100%; height: 100%; object-fit: cover; }
-
+  
+  .nw-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
   .nw-content {
     flex: 1;
     display: flex;
@@ -398,7 +1022,7 @@ try {
     justify-content: center;
     min-width: 0;
   }
-
+  
   .nw-category {
     font-family: var(--font-heading);
     font-size: 0.65rem;
@@ -411,7 +1035,7 @@ try {
     background-clip: text;
     margin-bottom: 0.4rem;
   }
-
+  
   .nw-title {
     font-family: var(--font-heading);
     font-size: 0.95rem;
@@ -424,7 +1048,7 @@ try {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-
+  
   .nw-excerpt {
     font-size: 0.78rem;
     color: var(--text-muted);
@@ -434,23 +1058,23 @@ try {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-
-  /* Latest */
+  
+  /* ═══ LATEST SEASON SECTION ═══ */
   .latest-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1.25rem;
   }
-
+  
   .latest-card {
     display: block;
     text-decoration: none;
     color: inherit;
     transition: transform 0.3s ease;
   }
-
+  
   .latest-card:hover { transform: translateY(-5px); }
-
+  
   .lt-image {
     position: relative;
     aspect-ratio: 3/4;
@@ -458,16 +1082,16 @@ try {
     overflow: hidden;
     margin-bottom: 0.6rem;
   }
-
+  
   .lt-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 0.5s ease;
   }
-
+  
   .latest-card:hover .lt-image img { transform: scale(1.08); }
-
+  
   .lt-overlay {
     position: absolute;
     inset: 0;
@@ -478,9 +1102,9 @@ try {
     opacity: 0;
     transition: opacity 0.3s ease;
   }
-
+  
   .latest-card:hover .lt-overlay { opacity: 1; }
-
+  
   .lt-play-icon {
     width: 48px;
     height: 48px;
@@ -495,11 +1119,11 @@ try {
     transform: scale(0.7);
     transition: transform 0.3s ease;
   }
-
+  
   .latest-card:hover .lt-play-icon { transform: scale(1); }
-
+  
   .lt-content { padding: 0 0.2rem; }
-
+  
   .lt-title {
     font-family: var(--font-heading);
     font-size: 0.88rem;
@@ -512,13 +1136,13 @@ try {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-
+  
   .lt-meta {
     font-size: 0.72rem;
     color: var(--text-muted);
   }
-
-  /* Responsive */
+  
+  /* ═══ RESPONSIVE ═══ */
   @media (max-width: 1200px) {
     .arrivals-grid { grid-template-columns: repeat(4, 1fr); }
   }
@@ -529,7 +1153,7 @@ try {
     .latest-grid  { grid-template-columns: repeat(3, 1fr); }
     .news-grid    { grid-template-columns: 1fr; }
   }
-
+  
   @media (max-width: 768px) {
     .arrivals-grid { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
     .arrivals-count-num { font-size: 0.95rem; }
@@ -545,5 +1169,14 @@ try {
     .news-card    { padding: 0.75rem; }
     .nw-image     { width: 90px; min-width: 90px; }
     .nw-title     { font-size: 0.85rem; }
+    
+    .arrivals-card-item .anime-title { font-size: 0.85rem; }
+    .arrivals-card-item .anime-meta { font-size: 0.65rem; gap: 6px; }
+    .arrivals-card-item .anime-play { width: 46px; height: 46px; }
+    .arrivals-card-item .anime-play-btn svg { width: 18px; height: 18px; }
+    .arrivals-card-item .anime-info { padding: 10px 10px 12px; }
+    .arrivals-card-item .anime-hd { bottom: 70px; }
+    
+    .load-more-btn { padding: 12px 24px; font-size: 0.88rem; }
   }
 </style>
