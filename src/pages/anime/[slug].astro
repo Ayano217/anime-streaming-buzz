@@ -8,370 +8,610 @@ export const prerender = false;
 
 const { slug } = Astro.params;
 
-// Fetch anime data from Jikan API by title search
-async function fetchAnimeBySlug(slug) {
-  const searchQuery = slug.replace(/-/g, ' ');
+// ── Rate limiting helper (server-side) ──
+const RATE_LIMIT_MS = 500;
+let lastCall = 0;
+
+async function rateLimitedFetch(url) {
+  const now = Date.now();
+  const elapsed = now - lastCall;
+  if (elapsed < RATE_LIMIT_MS) {
+    await new Promise(r => setTimeout(r, RATE_LIMIT_MS - elapsed));
+  }
+  lastCall = Date.now();
+  
   try {
-    const res = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(searchQuery)}&limit=1`);
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'AniTubeBuzz/1.0' },
+    });
+    if (res.status === 429) {
+      // Rate limited — wait and retry once
+      await new Promise(r => setTimeout(r, 2000));
+      const retry = await fetch(url, {
+        headers: { 'User-Agent': 'AniTubeBuzz/1.0' },
+      });
+      if (!retry.ok) return null;
+      return await retry.json();
+    }
     if (!res.ok) return null;
-    const data = await res.json();
-    return data?.data?.[0] || null;
+    return await res.json();
   } catch (e) {
+    console.warn('Fetch failed:', e);
     return null;
   }
+}
+
+// ── Try multiple search variations for better matching ──
+async function findAnime(slug) {
+  const variations = [
+    slug.replace(/-/g, ' '),           // "one-piece" → "one piece"
+    slug.replace(/-/g, ' ').replace(/\s+the\s+/gi, ' '),
+    slug.split('-').slice(0, 3).join(' '), // First 3 words only
+  ];
+  
+  for (const query of variations) {
+    if (!query || query.length < 2) continue;
+    const data = await rateLimitedFetch(
+      `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=3&order_by=popularity`
+    );
+    
+    if (data && data.data && data.data.length > 0) {
+      // Prefer exact match
+      const exact = data.data.find(a => {
+        const t1 = (a.title_english || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const t2 = (a.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        return t1 === slug || t2 === slug || t1.startsWith(slug) || t2.startsWith(slug);
+      });
+      return exact || data.data[0];
+    }
+  }
+  return null;
 }
 
 async function fetchFullAnime(malId) {
-  try {
-    const res = await fetch(`https://api.jikan.moe/v4/anime/${malId}/full`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data?.data || null;
-  } catch (e) {
-    return null;
-  }
+  const data = await rateLimitedFetch(`https://api.jikan.moe/v4/anime/${malId}/full`);
+  return data?.data || null;
 }
 
 async function fetchEpisodes(malId) {
-  try {
-    const res = await fetch(`https://api.jikan.moe/v4/anime/${malId}/episodes`);
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data?.data || [];
-  } catch (e) {
-    return [];
-  }
+  const data = await rateLimitedFetch(`https://api.jikan.moe/v4/anime/${malId}/episodes`);
+  return data?.data || [];
 }
 
 async function fetchRelated() {
-  try {
-    const res = await fetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=12');
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data?.data || [];
-  } catch (e) {
-    return [];
-  }
+  const data = await rateLimitedFetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=12');
+  return data?.data || [];
 }
 
-let anime = await fetchAnimeBySlug(slug);
+// ── Load anime data ──
+let anime = await findAnime(slug);
+let notFound = false;
+let episodes = [];
+let related = [];
+
 if (anime && anime.mal_id) {
+  // Get full details
   const full = await fetchFullAnime(anime.mal_id);
   if (full) anime = full;
+  
+  // Get episodes
+  episodes = await fetchEpisodes(anime.mal_id);
+  
+  // Get related suggestions
+  related = await fetchRelated();
+} else {
+  notFound = true;
+  related = await fetchRelated();
 }
 
-// Fallback if not found
-if (!anime) {
-  return Astro.redirect('/');
-}
-
-const episodes = await fetchEpisodes(anime.mal_id);
-const related = await fetchRelated();
-
-const title    = anime.title_english || anime.title || 'Unknown';
-const titleJp  = anime.title_japanese || '';
-const synopsis = (anime.synopsis || '').replace(/\[Written by MAL Rewrite\]/g, '').trim();
-const image    = anime.images?.jpg?.large_image_url || '';
-const banner   = anime.trailer?.images?.maximum_image_url || image;
-const trailer  = anime.trailer?.youtube_id || '';
-const score    = anime.score;
-const rank     = anime.rank;
-const popularity = anime.popularity;
-const members  = anime.members;
-const status   = anime.status || '';
-const episodesCount = anime.episodes || '?';
-const duration = anime.duration || '';
-const rating   = anime.rating || '';
-const year     = anime.year || '';
-const season   = anime.season || '';
-const genres   = (anime.genres || []).map(g => g.name);
-const studios  = (anime.studios || []).map(s => s.name);
-const producers = (anime.producers || []).slice(0, 3).map(p => p.name);
-const streaming = anime.streaming || [];
+// ── Prepare display data ──
+const title    = anime?.title_english || anime?.title || '';
+const titleJp  = anime?.title_japanese || '';
+const synopsis = (anime?.synopsis || '').replace(/\[Written by MAL Rewrite\]/g, '').trim();
+const image    = anime?.images?.jpg?.large_image_url || '';
+const trailer  = anime?.trailer?.youtube_id || '';
+const score    = anime?.score;
+const rank     = anime?.rank;
+const popularity = anime?.popularity;
+const members  = anime?.members;
+const status   = anime?.status || '';
+const episodesCount = anime?.episodes || '?';
+const duration = anime?.duration || '';
+const rating   = anime?.rating || '';
+const year     = anime?.year || '';
+const season   = anime?.season || '';
+const genres   = (anime?.genres || []).map(g => g.name);
+const studios  = (anime?.studios || []).map(s => s.name);
+const producers = (anime?.producers || []).slice(0, 3).map(p => p.name);
+const streaming = anime?.streaming || [];
 
 function makeSlug(str) {
   return (str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
 }
 
-const pageTitle = `${title} - Watch Online | AniTube Buzz`;
-const pageDesc = synopsis.substring(0, 160);
+const pageTitle = notFound ? 'Anime Not Found | AniTube Buzz' : `${title} - Watch Online | AniTube Buzz`;
+const pageDesc = notFound ? 'This anime could not be found.' : synopsis.substring(0, 160);
 ---
 
 <BaseLayout title={pageTitle} description={pageDesc} image={image}>
   <Header slot="header" />
 
-  <!-- Cinematic banner backdrop -->
-  <div class="anime-page-backdrop" style={banner ? `background-image: url(${banner})` : ''}></div>
-  <div class="anime-page-backdrop-tint"></div>
-
-  <div class="anime-page container">
-
-    <!-- HERO: Video Player -->
-    <div class="anime-hero-section">
+  {notFound ? (
+    <!-- NOT FOUND STATE -->
+    <div class="not-found container">
+      <div class="not-found-icon">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 8v4M12 16h.01"/>
+        </svg>
+      </div>
+      <h1 class="not-found-title">
+        <span class="grad-text">Anime Not Found</span>
+      </h1>
+      <p class="not-found-desc">
+        We couldn't find "<strong>{slug.replace(/-/g, ' ')}</strong>" in our database.
+        <br/>The API might be rate-limited or this anime might not exist.
+      </p>
+      <div class="not-found-actions">
+        <a href="/" class="btn-primary-round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          <span>Back to Homepage</span>
+        </a>
+        <button onclick="location.reload()" class="btn-secondary-round">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+          <span>Try Again</span>
+        </button>
+      </div>
       
-      {trailer ? (
-        <YouTubePlayer 
-          videoId={trailer}
-          title={`${title} - Official Trailer`}
-          autoplay={true}
-          poster={image}
-        />
-      ) : (
-        <div class="anime-no-video">
-          <img src={image} alt={title} class="anime-no-video-img" />
-          <div class="anime-no-video-overlay">
-            <div class="anime-no-video-msg">Preview video not available</div>
+      {related.length > 0 && (
+        <div class="not-found-suggestions">
+          <h2 class="suggestions-title">
+            Try these <span class="grad-text">Trending Anime</span> instead
+          </h2>
+          <div class="suggestions-grid">
+            {related.slice(0, 6).map(a => {
+              const rTitle = a.title_english || a.title;
+              const rImage = a.images?.jpg?.large_image_url || a.images?.jpg?.image_url;
+              const rSlug = makeSlug(rTitle) || `anime-${a.mal_id}`;
+              return (
+                <a href={`/anime/${rSlug}`} class="suggestion-card">
+                  <div class="sug-thumb">
+                    {rImage && <img src={rImage} alt={rTitle} loading="lazy" />}
+                    <div class="sug-overlay"></div>
+                    <div class="sug-title">{rTitle}</div>
+                  </div>
+                </a>
+              );
+            })}
           </div>
         </div>
       )}
-      
     </div>
+  ) : (
+    <!-- FOUND — Show anime -->
+    <div>
+      <div class="anime-page-backdrop" style={image ? `background-image: url(${image})` : ''}></div>
+      <div class="anime-page-backdrop-tint"></div>
 
-    <!-- Anime Info Section -->
-    <div class="anime-info-section">
-      
-      <div class="anime-info-main">
-        
-        <!-- Studio + badges -->
-        <div class="anime-badges-row">
-          {studios[0] && (
-            <div class="anime-badge-studio">
-              <div class="badge-mini-icon">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14H12L11 22L20 10H12L13 2Z"/></svg>
-              </div>
-              <span>{studios[0]}</span>
-              <span class="studio-original">Original</span>
-            </div>
-          )}
-          <div class="anime-badge-hd">HD 4K</div>
-          {status === 'Currently Airing' && (
-            <div class="anime-badge-airing">
-              <span class="airing-dot"></span>
-              NOW AIRING
-            </div>
-          )}
-        </div>
-        
-        <!-- Title -->
-        <h1 class="anime-page-title">{title}</h1>
-        {titleJp && <p class="anime-page-title-jp">{titleJp}</p>}
-        
-        <!-- Meta info -->
-        <div class="anime-page-meta">
-          {year && <div class="meta-pill"><strong>{year}</strong></div>}
-          {season && <div class="meta-pill">{season.charAt(0).toUpperCase() + season.slice(1)}</div>}
-          <div class="meta-pill">{anime.type || 'TV'}</div>
-          <div class="meta-pill">{episodesCount} EP</div>
-          {duration && <div class="meta-pill">{duration}</div>}
-          {rating && <div class="meta-pill meta-rating-pill">{rating}</div>}
-        </div>
-        
-        <!-- Genres -->
-        {genres.length > 0 && (
-          <div class="anime-genres">
-            {genres.slice(0, 6).map(g => (
-              <span class="genre-chip">{g}</span>
-            ))}
-          </div>
-        )}
-        
-        <!-- Synopsis -->
-        {synopsis && (
-          <div class="anime-synopsis">
-            <p>{synopsis}</p>
-          </div>
-        )}
-        
-      </div>
-      
-      <!-- Sidebar Stats -->
-      <div class="anime-info-side">
-        
-        {score && (
-          <div class="stat-card stat-score">
-            <div class="stat-label">Score</div>
-            <div class="stat-value stat-value-large">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="#fbbf24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              <span>{score}</span>
-              <span class="stat-value-max">/10</span>
-            </div>
-          </div>
-        )}
-        
-        {rank && (
-          <div class="stat-card">
-            <div class="stat-label">Rank</div>
-            <div class="stat-value">
-              <span class="stat-hash">#</span>{rank.toLocaleString()}
-            </div>
-          </div>
-        )}
-        
-        {popularity && (
-          <div class="stat-card">
-            <div class="stat-label">Popularity</div>
-            <div class="stat-value">
-              <span class="stat-hash">#</span>{popularity.toLocaleString()}
-            </div>
-          </div>
-        )}
-        
-        {members && (
-          <div class="stat-card">
-            <div class="stat-label">Members</div>
-            <div class="stat-value">{(members / 1000).toFixed(0)}K</div>
-          </div>
-        )}
-        
-        {studios.length > 0 && (
-          <div class="stat-card">
-            <div class="stat-label">Studio</div>
-            <div class="stat-value stat-value-text">{studios.join(', ')}</div>
-          </div>
-        )}
-        
-        {producers.length > 0 && (
-          <div class="stat-card">
-            <div class="stat-label">Producers</div>
-            <div class="stat-value stat-value-text">{producers.join(', ')}</div>
-          </div>
-        )}
-        
-        {status && (
-          <div class="stat-card">
-            <div class="stat-label">Status</div>
-            <div class="stat-value stat-value-text">{status}</div>
-          </div>
-        )}
-        
-      </div>
-      
-    </div>
+      <div class="anime-page container">
 
-    <!-- Episodes Section -->
-    {episodes.length > 0 && (
-      <div class="anime-episodes-section">
-        
-        <div class="episodes-header">
-          <div class="episodes-title-wrap">
-            <div class="episodes-bar"></div>
-            <div>
-              <div class="episodes-tag">EPISODE LIST</div>
-              <h2 class="episodes-title">All <span class="grad-text">Episodes</span></h2>
-            </div>
-          </div>
-          <div class="episodes-count">
-            <span class="grad-text">{episodes.length}</span>
-            <span>episodes</span>
-          </div>
-        </div>
-        
-        <div class="episodes-grid">
-          {episodes.slice(0, 30).map((ep, idx) => (
-            <a href={`/anime/${slug}/${ep.mal_id || (idx + 1)}`} class="episode-item">
-              <div class="ep-num-wrap">
-                <span class="ep-num">{String(ep.mal_id || (idx + 1)).padStart(2, '0')}</span>
-              </div>
-              <div class="ep-details">
-                <div class="ep-title">{ep.title || `Episode ${idx + 1}`}</div>
-                {ep.aired && (
-                  <div class="ep-aired">{new Date(ep.aired).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
-                )}
-              </div>
-              <div class="ep-play">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              </div>
-            </a>
-          ))}
-        </div>
-        
-        {episodes.length > 30 && (
-          <div class="episodes-more-note">
-            Showing 30 of {episodes.length} episodes
-          </div>
-        )}
-        
-      </div>
-    )}
-
-    <!-- Streaming Platforms -->
-    {streaming.length > 0 && (
-      <div class="anime-streaming-section">
-        <h2 class="section-title">
-          Also Watch On <span class="grad-text">Official Platforms</span>
-        </h2>
-        <div class="streaming-grid">
-          {streaming.slice(0, 6).map(s => (
-            <a href={s.url} target="_blank" rel="noopener" class="streaming-link">
-              <span>{s.name}</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                <polyline points="15 3 21 3 21 9"/>
-                <line x1="10" y1="14" x2="21" y2="3"/>
-              </svg>
-            </a>
-          ))}
-        </div>
-      </div>
-    )}
-
-    <!-- Related / Suggestions Section -->
-    {related.length > 0 && (
-      <div class="anime-related-section">
-        
-        <div class="related-header">
-          <div class="related-bar"></div>
-          <div>
-            <div class="related-tag">YOU MIGHT ALSO LIKE</div>
-            <h2 class="related-title">More <span class="grad-text">Trending Anime</span></h2>
-          </div>
-        </div>
-        
-        <div class="related-grid">
-          {related.filter(a => a.mal_id !== anime.mal_id).slice(0, 12).map(a => {
-            const rTitle = a.title_english || a.title || 'Unknown';
-            const rImage = a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || '';
-            const rSlug = makeSlug(rTitle) || `anime-${a.mal_id}`;
-            const rIsNew = a.status === 'Currently Airing';
-            return (
-              <a href={`/anime/${rSlug}`} class="related-card">
-                <div class="related-thumb">
-                  {rImage ? (
-                    <img src={rImage} alt={rTitle} loading="lazy" />
-                  ) : (
-                    <div class="related-fallback"></div>
-                  )}
-                  <div class="related-overlay"></div>
-                  <div class="related-play">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                  </div>
-                  {rIsNew && <div class="related-new">NEW</div>}
-                  {a.score && (
-                    <div class="related-score">
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                      {a.score}
-                    </div>
-                  )}
-                  <div class="related-info">
-                    <div class="related-title-text">{rTitle}</div>
-                  </div>
+        <!-- HERO: Video Player -->
+        <div class="anime-hero-section">
+          {trailer ? (
+            <YouTubePlayer 
+              videoId={trailer}
+              title={`${title} - Official Trailer`}
+              autoplay={true}
+              poster={image}
+            />
+          ) : (
+            <div class="anime-no-video">
+              {image && <img src={image} alt={title} class="anime-no-video-img" />}
+              <div class="anime-no-video-overlay">
+                <div class="anime-no-video-icon">
+                  <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M2.5 17H21.5"/>
+                    <path d="M2.5 7H21.5"/>
+                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  </svg>
                 </div>
-              </a>
-            );
-          })}
+                <div class="anime-no-video-msg">Trailer coming soon</div>
+                <div class="anime-no-video-sub">Preview video not available on official channels yet</div>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-    )}
 
-  </div>
+        <!-- Anime Info Section -->
+        <div class="anime-info-section">
+          
+          <div class="anime-info-main">
+            
+            <div class="anime-badges-row">
+              {studios[0] && (
+                <div class="anime-badge-studio">
+                  <div class="badge-mini-icon">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14H12L11 22L20 10H12L13 2Z"/></svg>
+                  </div>
+                  <span>{studios[0]}</span>
+                  <span class="studio-original">Original</span>
+                </div>
+              )}
+              <div class="anime-badge-hd">HD 4K</div>
+              {status === 'Currently Airing' && (
+                <div class="anime-badge-airing">
+                  <span class="airing-dot"></span>
+                  NOW AIRING
+                </div>
+              )}
+            </div>
+            
+            <h1 class="anime-page-title">{title}</h1>
+            {titleJp && <p class="anime-page-title-jp">{titleJp}</p>}
+            
+            <div class="anime-page-meta">
+              {year && <div class="meta-pill"><strong>{year}</strong></div>}
+              {season && <div class="meta-pill">{season.charAt(0).toUpperCase() + season.slice(1)}</div>}
+              <div class="meta-pill">{anime.type || 'TV'}</div>
+              <div class="meta-pill">{episodesCount} EP</div>
+              {duration && <div class="meta-pill">{duration}</div>}
+              {rating && <div class="meta-pill meta-rating-pill">{rating}</div>}
+            </div>
+            
+            {genres.length > 0 && (
+              <div class="anime-genres">
+                {genres.slice(0, 6).map(g => (
+                  <span class="genre-chip">{g}</span>
+                ))}
+              </div>
+            )}
+            
+            {synopsis && (
+              <div class="anime-synopsis">
+                <p>{synopsis}</p>
+              </div>
+            )}
+            
+          </div>
+          
+          <div class="anime-info-side">
+            {score && (
+              <div class="stat-card stat-score">
+                <div class="stat-label">Score</div>
+                <div class="stat-value stat-value-large">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#fbbf24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                  <span>{score}</span>
+                  <span class="stat-value-max">/10</span>
+                </div>
+              </div>
+            )}
+            
+            {rank && (
+              <div class="stat-card">
+                <div class="stat-label">Rank</div>
+                <div class="stat-value"><span class="stat-hash">#</span>{rank.toLocaleString()}</div>
+              </div>
+            )}
+            
+            {popularity && (
+              <div class="stat-card">
+                <div class="stat-label">Popularity</div>
+                <div class="stat-value"><span class="stat-hash">#</span>{popularity.toLocaleString()}</div>
+              </div>
+            )}
+            
+            {members && (
+              <div class="stat-card">
+                <div class="stat-label">Members</div>
+                <div class="stat-value">{(members / 1000).toFixed(0)}K</div>
+              </div>
+            )}
+            
+            {studios.length > 0 && (
+              <div class="stat-card">
+                <div class="stat-label">Studio</div>
+                <div class="stat-value stat-value-text">{studios.join(', ')}</div>
+              </div>
+            )}
+            
+            {producers.length > 0 && (
+              <div class="stat-card">
+                <div class="stat-label">Producers</div>
+                <div class="stat-value stat-value-text">{producers.join(', ')}</div>
+              </div>
+            )}
+            
+            {status && (
+              <div class="stat-card">
+                <div class="stat-label">Status</div>
+                <div class="stat-value stat-value-text">{status}</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <!-- Episodes -->
+        {episodes.length > 0 && (
+          <div class="anime-episodes-section">
+            <div class="episodes-header">
+              <div class="episodes-title-wrap">
+                <div class="episodes-bar"></div>
+                <div>
+                  <div class="episodes-tag">EPISODE LIST</div>
+                  <h2 class="episodes-title">All <span class="grad-text">Episodes</span></h2>
+                </div>
+              </div>
+              <div class="episodes-count">
+                <span class="grad-text">{episodes.length}</span>
+                <span>episodes</span>
+              </div>
+            </div>
+            
+            <div class="episodes-grid">
+              {episodes.slice(0, 30).map((ep, idx) => (
+                <a href={`/anime/${slug}/${ep.mal_id || (idx + 1)}`} class="episode-item">
+                  <div class="ep-num-wrap">
+                    <span class="ep-num">{String(ep.mal_id || (idx + 1)).padStart(2, '0')}</span>
+                  </div>
+                  <div class="ep-details">
+                    <div class="ep-title">{ep.title || `Episode ${idx + 1}`}</div>
+                    {ep.aired && (
+                      <div class="ep-aired">{new Date(ep.aired).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                    )}
+                  </div>
+                  <div class="ep-play">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                </a>
+              ))}
+            </div>
+            
+            {episodes.length > 30 && (
+              <div class="episodes-more-note">
+                Showing 30 of {episodes.length} episodes
+              </div>
+            )}
+          </div>
+        )}
+
+        <!-- Streaming Platforms -->
+        {streaming.length > 0 && (
+          <div class="anime-streaming-section">
+            <h2 class="section-title">
+              Also Watch On <span class="grad-text">Official Platforms</span>
+            </h2>
+            <div class="streaming-grid">
+              {streaming.slice(0, 6).map(s => (
+                <a href={s.url} target="_blank" rel="noopener" class="streaming-link">
+                  <span>{s.name}</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                  </svg>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <!-- Related Anime -->
+        {related.length > 0 && (
+          <div class="anime-related-section">
+            <div class="related-header">
+              <div class="related-bar"></div>
+              <div>
+                <div class="related-tag">YOU MIGHT ALSO LIKE</div>
+                <h2 class="related-title">More <span class="grad-text">Trending Anime</span></h2>
+              </div>
+            </div>
+            
+            <div class="related-grid">
+              {related.filter(a => a.mal_id !== anime?.mal_id).slice(0, 12).map(a => {
+                const rTitle = a.title_english || a.title || 'Unknown';
+                const rImage = a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || '';
+                const rSlug = makeSlug(rTitle) || `anime-${a.mal_id}`;
+                const rIsNew = a.status === 'Currently Airing';
+                return (
+                  <a href={`/anime/${rSlug}`} class="related-card">
+                    <div class="related-thumb">
+                      {rImage ? (
+                        <img src={rImage} alt={rTitle} loading="lazy" />
+                      ) : (
+                        <div class="related-fallback"></div>
+                      )}
+                      <div class="related-overlay"></div>
+                      <div class="related-play">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                      </div>
+                      {rIsNew && <div class="related-new">NEW</div>}
+                      {a.score && (
+                        <div class="related-score">
+                          <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                          {a.score}
+                        </div>
+                      )}
+                      <div class="related-info">
+                        <div class="related-title-text">{rTitle}</div>
+                      </div>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  )}
 
   <Footer slot="footer" />
 </BaseLayout>
 
 <style>
-  /* Backdrop */
+  /* ═══ NOT FOUND STATE ═══ */
+  .not-found {
+    padding: 4rem 1.5rem;
+    text-align: center;
+  }
+  
+  .not-found-icon {
+    color: var(--purple);
+    opacity: 0.6;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+    animation: nf-bounce 2s ease infinite;
+  }
+  
+  @keyframes nf-bounce {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-8px); }
+  }
+  
+  .not-found-title {
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    margin: 0 0 1rem;
+    letter-spacing: -0.03em;
+  }
+  
+  .not-found-desc {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+  }
+  
+  .not-found-desc strong {
+    color: var(--purple);
+    font-weight: 700;
+  }
+  
+  .not-found-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 3rem;
+  }
+  
+  .btn-primary-round {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: var(--grad);
+    color: #fff;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.4);
+  }
+  
+  .btn-primary-round:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.55);
+  }
+  
+  .btn-secondary-round {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-secondary-round:hover {
+    background: rgba(192, 132, 252, 0.15);
+    border-color: rgba(192, 132, 252, 0.5);
+    color: var(--purple);
+  }
+  
+  .not-found-suggestions {
+    max-width: 900px;
+    margin: 0 auto;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .suggestions-title {
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+  }
+  
+  .suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+  }
+  
+  .suggestion-card {
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s ease;
+  }
+  
+  .suggestion-card:hover { transform: translateY(-4px); }
+  
+  .sug-thumb {
+    position: relative;
+    aspect-ratio: 3/4;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(28, 15, 61, 0.5);
+  }
+  
+  .sug-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .sug-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(0, 0, 0, 0.9) 100%);
+  }
+  
+  .sug-title {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    color: #fff;
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* ═══ ANIME PAGE ═══ */
   .anime-page-backdrop {
     position: fixed;
     top: 0;
@@ -402,7 +642,6 @@ const pageDesc = synopsis.substring(0, 160);
     padding-bottom: 4rem;
   }
 
-  /* Hero video section */
   .anime-hero-section {
     margin-bottom: 3rem;
     animation: fade-slide-up 0.7s ease;
@@ -425,21 +664,35 @@ const pageDesc = synopsis.substring(0, 160);
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: blur(4px) brightness(0.4);
+    filter: blur(6px) brightness(0.4);
   }
 
   .anime-no-video-overlay {
     position: absolute;
     inset: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 12px;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .anime-no-video-icon {
+    color: rgba(192, 132, 252, 0.5);
   }
 
   .anime-no-video-msg {
-    color: rgba(255, 255, 255, 0.5);
+    color: #fff;
     font-family: var(--font-heading);
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 1.25rem;
+  }
+
+  .anime-no-video-sub {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
   }
 
   /* Info section */
@@ -450,9 +703,7 @@ const pageDesc = synopsis.substring(0, 160);
     margin-bottom: 3rem;
   }
 
-  .anime-info-main {
-    min-width: 0;
-  }
+  .anime-info-main { min-width: 0; }
 
   .anime-badges-row {
     display: flex;
@@ -567,9 +818,7 @@ const pageDesc = synopsis.substring(0, 160);
     font-weight: 500;
   }
 
-  .meta-pill strong {
-    color: var(--text-primary);
-  }
+  .meta-pill strong { color: var(--text-primary); }
 
   .meta-rating-pill {
     background: rgba(192, 132, 252, 0.12);
@@ -612,7 +861,7 @@ const pageDesc = synopsis.substring(0, 160);
     backdrop-filter: blur(10px);
   }
 
-  /* Sidebar stats */
+  /* Sidebar */
   .anime-info-side {
     display: flex;
     flex-direction: column;
@@ -652,9 +901,7 @@ const pageDesc = synopsis.substring(0, 160);
     gap: 6px;
   }
 
-  .stat-value-large {
-    font-size: 1.5rem;
-  }
+  .stat-value-large { font-size: 1.5rem; }
 
   .stat-value-max {
     color: var(--text-muted);
@@ -674,9 +921,7 @@ const pageDesc = synopsis.substring(0, 160);
     font-weight: 800;
   }
 
-  .stat-score .stat-value {
-    color: #fbbf24;
-  }
+  .stat-score .stat-value { color: #fbbf24; }
 
   /* Episodes */
   .anime-episodes-section {
@@ -849,13 +1094,8 @@ const pageDesc = synopsis.substring(0, 160);
   }
 
   /* Streaming */
-  .anime-streaming-section {
-    margin-bottom: 3rem;
-  }
-
-  .anime-streaming-section .section-title {
-    margin-bottom: 1.25rem;
-  }
+  .anime-streaming-section { margin-bottom: 3rem; }
+  .anime-streaming-section .section-title { margin-bottom: 1.25rem; }
 
   .streaming-grid {
     display: grid;
@@ -938,9 +1178,7 @@ const pageDesc = synopsis.substring(0, 160);
     transition: transform 0.3s ease;
   }
 
-  .related-card:hover {
-    transform: translateY(-6px);
-  }
+  .related-card:hover { transform: translateY(-6px); }
 
   .related-thumb {
     position: relative;
@@ -963,9 +1201,7 @@ const pageDesc = synopsis.substring(0, 160);
     transition: transform 0.4s ease;
   }
 
-  .related-card:hover .related-thumb img {
-    transform: scale(1.08);
-  }
+  .related-card:hover .related-thumb img { transform: scale(1.08); }
 
   .related-fallback {
     width: 100%;
@@ -1061,23 +1297,23 @@ const pageDesc = synopsis.substring(0, 160);
 
   /* Responsive */
   @media (max-width: 1200px) {
-    .related-grid { grid-template-columns: repeat(4, 1fr); }
+    .related-grid, .suggestions-grid { grid-template-columns: repeat(4, 1fr); }
   }
 
   @media (max-width: 900px) {
-    .anime-info-section {
-      grid-template-columns: 1fr;
-    }
-    .related-grid { grid-template-columns: repeat(3, 1fr); }
+    .anime-info-section { grid-template-columns: 1fr; }
+    .related-grid, .suggestions-grid { grid-template-columns: repeat(3, 1fr); }
     .episodes-grid { grid-template-columns: 1fr; }
     .anime-episodes-section { padding: 1.25rem; }
   }
 
   @media (max-width: 640px) {
-    .related-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .related-grid, .suggestions-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
     .anime-page-title { font-size: 1.9rem; }
     .anime-info-section { gap: 1.5rem; }
     .episode-item { padding: 10px 12px; }
     .ep-num-wrap { width: 36px; height: 36px; }
+    .not-found-actions { flex-direction: column; align-items: stretch; }
+    .btn-primary-round, .btn-secondary-round { justify-content: center; }
   }
 </style>
