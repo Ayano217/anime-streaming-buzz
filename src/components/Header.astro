@@ -1,39 +1,62 @@
 ---
 const navLinks = [
   { name: "Home",      href: "/" },
-  { name: "Anime",     href: "/category/anime-recap" },
-  { name: "Manhwa",    href: "/category/manhwa" },
+  { name: "Browse",    href: "/category/anime-recap" },
+  { name: "Manga",     href: "/category/manhwa" },
   { name: "News",      href: "/category/news" },
   { name: "Streaming", href: "/category/streaming" },
-  { name: "Gaming",    href: "/category/gaming" },
 ];
 ---
 
-<header class="header" id="siteHeader">
-  <div class="header-inner container">
+<header class="hdr" id="siteHeader">
+  <div class="hdr-inner container">
 
     <!-- Logo -->
-    <a href="/" class="logo">
-      <span class="grad-text">Ani</span><span class="tube-text">Tube</span><span class="grad-text">Buzz</span>
+    <a href="/" class="logo-wrap">
+      <div class="logo-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+          <path d="M13 2L4 14H12L11 22L20 10H12L13 2Z" fill="url(#logoGrad)" />
+          <defs>
+            <linearGradient id="logoGrad" x1="4" y1="2" x2="20" y2="22">
+              <stop stop-color="#c084fc"/>
+              <stop offset="0.5" stop-color="#e879f9"/>
+              <stop offset="1" stop-color="#7dd3fc"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <span class="logo-txt">
+        <span class="grad-text">Ani</span><span class="tube-text">Tube</span><span class="grad-text">Buzz</span>
+      </span>
     </a>
 
-    <!-- Nav -->
-    <nav class="nav">
+    <!-- Nav Links -->
+    <nav class="hdr-nav">
       {navLinks.map(link => (
-        <a href={link.href} class="nav-link">{link.name}</a>
+        <a href={link.href} class="hdr-link">{link.name}</a>
       ))}
     </nav>
 
-    <!-- Actions -->
-    <div class="actions">
-      <a href="/search" class="icon-btn" aria-label="Search">
+    <!-- Right actions -->
+    <div class="hdr-actions">
+      <!-- Search -->
+      <a href="/search" class="hdr-icon" aria-label="Search">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
           <circle cx="11" cy="11" r="7"/>
           <path d="m20 20-3.5-3.5"/>
         </svg>
       </a>
 
-      <button class="icon-btn" id="themeToggle" aria-label="Toggle theme" type="button">
+      <!-- Notifications -->
+      <a href="/category/news" class="hdr-icon" aria-label="News">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </a>
+
+      <!-- Theme toggle -->
+      <button class="hdr-icon" id="themeToggle" aria-label="Toggle theme" type="button">
         <svg class="ico-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
         </svg>
@@ -43,7 +66,18 @@ const navLinks = [
         </svg>
       </button>
 
-      <button class="mob-btn" id="mobBtn" aria-label="Menu">
+      <!-- User avatar -->
+      <div class="hdr-user">
+        <div class="hdr-avatar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Mobile menu -->
+      <button class="hdr-mob-btn" id="mobBtn" aria-label="Menu" type="button">
         <span></span><span></span><span></span>
       </button>
     </div>
@@ -55,13 +89,14 @@ const navLinks = [
       <a href={link.href} class="mob-link">{link.name}</a>
     ))}
     <a href="/search" class="mob-link">Search</a>
+    <a href="/category/gaming" class="mob-link">Gaming</a>
   </div>
 </header>
 
 <div style="height: var(--header-h);"></div>
 
 <style>
-  .header {
+  .hdr {
     position: fixed;
     top: 0; left: 0;
     width: 100%;
@@ -74,7 +109,7 @@ const navLinks = [
     transition: all 0.25s ease;
   }
 
-  .header-inner {
+  .hdr-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -82,55 +117,66 @@ const navLinks = [
     gap: 20px;
   }
 
-  .logo {
-    font-family: var(--font-heading);
-    font-size: 1.5rem;
-    font-weight: 800;
-    letter-spacing: -0.025em;
-    line-height: 1;
+  /* ── Logo ── */
+  .logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     flex-shrink: 0;
     transition: transform 0.2s ease;
   }
 
-  .logo:hover { transform: scale(1.03); }
+  .logo-wrap:hover { transform: scale(1.03); }
 
-  .nav {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    gap: 4px;
+  .logo-icon {
+    filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.5));
   }
 
-  .nav-link {
+  .logo-txt {
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1;
+  }
+
+  /* ── Nav ── */
+  .hdr-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 2rem;
+  }
+
+  .hdr-link {
     display: block;
     padding: 8px 16px;
-    border-radius: 999px;
+    border-radius: 10px;
     font-size: 0.88rem;
     font-weight: 500;
     color: var(--text-secondary);
     transition: all var(--transition-fast);
-    position: relative;
   }
 
-  .nav-link:hover {
-    background: var(--grad);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .hdr-link:hover {
+    color: var(--text-primary);
+    background: rgba(192, 132, 252, 0.1);
   }
 
-  .actions {
+  /* ── Actions ── */
+  .hdr-actions {
     display: flex;
     align-items: center;
     gap: 8px;
+    margin-left: auto;
     flex-shrink: 0;
   }
 
-  .icon-btn {
-    width: 40px; height: 40px;
-    border-radius: 12px;
+  .hdr-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
     border: 1px solid var(--border-color);
-    background: transparent;
+    background: rgba(255, 255, 255, 0.03);
     color: var(--text-primary);
     cursor: pointer;
     display: flex;
@@ -140,48 +186,62 @@ const navLinks = [
     font-family: inherit;
   }
 
-  .icon-btn:hover {
-    border-color: rgba(255, 51, 102, 0.5);
-    background: rgba(255, 51, 102, 0.06);
-    color: transparent;
-    background-image: var(--grad);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+  .hdr-icon:hover {
+    background: rgba(192, 132, 252, 0.1);
+    border-color: rgba(192, 132, 252, 0.4);
+    color: var(--purple);
   }
-
-  .icon-btn:hover svg { stroke: url(#gradStroke); }
 
   .ico-sun { display: none; }
   [data-theme="light"] .ico-moon { display: none; }
   [data-theme="light"] .ico-sun  { display: block; }
 
-  /* Mobile button */
-  .mob-btn {
+  /* ── User Avatar ── */
+  .hdr-user {
+    margin-left: 4px;
+  }
+
+  .hdr-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--grad);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.35);
+  }
+
+  .hdr-avatar:hover { transform: scale(1.08); }
+
+  /* ── Mobile Button ── */
+  .hdr-mob-btn {
     display: none;
     flex-direction: column;
     gap: 5px;
-    width: 40px; height: 40px;
+    width: 38px; height: 38px;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    background: transparent;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
     cursor: pointer;
   }
 
-  .mob-btn span {
+  .hdr-mob-btn span {
     width: 18px; height: 2px;
     background: var(--text-primary);
     border-radius: 2px;
     transition: all var(--transition-fast);
   }
 
-  .mob-btn.active span:nth-child(1) { transform: rotate(45deg) translate(4px, 5px); }
-  .mob-btn.active span:nth-child(2) { opacity: 0; }
-  .mob-btn.active span:nth-child(3) { transform: rotate(-45deg) translate(4px, -5px); }
+  .hdr-mob-btn.active span:nth-child(1) { transform: rotate(45deg) translate(4px, 5px); }
+  .hdr-mob-btn.active span:nth-child(2) { opacity: 0; }
+  .hdr-mob-btn.active span:nth-child(3) { transform: rotate(-45deg) translate(4px, -5px); }
 
-  /* Mobile drawer */
+  /* ── Mobile Drawer ── */
   .mob-drawer {
     display: none;
     position: fixed;
@@ -193,13 +253,14 @@ const navLinks = [
     z-index: 999;
     flex-direction: column;
     gap: 3px;
+    backdrop-filter: blur(20px);
   }
 
   .mob-drawer.active { display: flex; }
 
   .mob-link {
     padding: 13px 16px;
-    border-radius: 12px;
+    border-radius: 10px;
     font-size: 0.95rem;
     font-weight: 500;
     color: var(--text-secondary);
@@ -207,20 +268,21 @@ const navLinks = [
   }
 
   .mob-link:hover {
-    background: rgba(255, 51, 102, 0.06);
-    background: var(--grad);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    background: rgba(192, 132, 252, 0.1);
+    color: var(--text-primary);
   }
 
   @media (max-width: 900px) {
-    .nav { display: none; }
-    .mob-btn { display: flex; }
+    .hdr-nav { display: none; }
+    .hdr-mob-btn { display: flex; }
+    .hdr-user { display: none; }
   }
 
   @media (max-width: 480px) {
-    .logo { font-size: 1.25rem; }
+    .logo-txt { font-size: 1.15rem; }
+    .hdr-inner { gap: 10px; }
+    .hdr-actions { gap: 5px; }
+    .hdr-icon { width: 36px; height: 36px; }
   }
 </style>
 
