@@ -39,7 +39,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800;12..96,900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800;12..96,900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
 
   <script is:inline>
     (function(){
@@ -64,12 +64,10 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     <div class="ld-bar-wrap"><div class="ld-bar"></div></div>
   </div>
 
-  <!-- Ambient background glow -->
+  <!-- Minimal ambient (2 orbs only for performance) -->
   <div class="ambient-bg" aria-hidden="true">
     <div class="ambient-glow ambient-glow-1"></div>
     <div class="ambient-glow ambient-glow-2"></div>
-    <div class="ambient-glow ambient-glow-3"></div>
-    <div class="ambient-grid"></div>
   </div>
 
   <!-- App -->
@@ -90,7 +88,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       setTimeout(function(){
         var l = document.getElementById('loader');
         if(l){ l.style.opacity='0'; setTimeout(function(){ l.style.display='none'; },500); }
-      }, 600);
+      }, 500);
     });
 
     var btt = document.getElementById('btt');
@@ -99,7 +97,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
         var show = window.scrollY > 400;
         btt.style.opacity = show ? '1' : '0';
         btt.style.pointerEvents = show ? 'auto' : 'none';
-      });
+      }, { passive: true });
       btt.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); });
     }
   })();
@@ -113,33 +111,27 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
 
-  /* ═══ DARK THEME ═══ */
+  /* ═══ THEMES ═══ */
   [data-theme="dark"] {
-    --bg-base:      #0f0620;
-    --bg-primary:   #1a0b2e;
-    --bg-secondary: #241141;
-    --bg-elevated:  #2d1750;
-    --bg-glass:     rgba(15, 6, 32, 0.8);
-    --bg-card:      rgba(36, 17, 65, 0.5);
-    --bg-card-hover: rgba(45, 23, 80, 0.7);
+    --bg-base:      #0a0517;
+    --bg-primary:   #130827;
+    --bg-secondary: #1c0f3d;
+    --bg-elevated:  #241548;
+    --bg-glass:     rgba(10, 5, 23, 0.85);
+    --bg-card:      rgba(28, 15, 61, 0.55);
+    --bg-card-hover: rgba(36, 21, 72, 0.75);
 
     --text-primary:   #ffffff;
-    --text-secondary: rgba(255, 255, 255, 0.78);
-    --text-muted:     rgba(255, 255, 255, 0.55);
-    --text-faint:     rgba(255, 255, 255, 0.3);
+    --text-secondary: rgba(255, 255, 255, 0.75);
+    --text-muted:     rgba(255, 255, 255, 0.5);
+    --text-faint:     rgba(255, 255, 255, 0.25);
 
     --border-color:  rgba(192, 132, 252, 0.15);
-    --border-hover:  rgba(192, 132, 252, 0.4);
+    --border-hover:  rgba(192, 132, 252, 0.45);
 
-    --hero-title-color: #ffffff;
-    --hero-desc-color:  rgba(255, 255, 255, 0.75);
-    --hero-meta-color:  rgba(255, 255, 255, 0.7);
-    --hero-bg-inner:    rgba(15, 6, 32, 0.4);
-
-    --body-bg: radial-gradient(ellipse at top left, #2d1b4e 0%, #1a0b2e 50%, #0f0620 100%);
+    --body-bg: linear-gradient(180deg, #1a0b35 0%, #0a0517 100%);
   }
 
-  /* ═══ LIGHT THEME (fixed contrast) ═══ */
   [data-theme="light"] {
     --bg-base:      #faf5ff;
     --bg-primary:   #ffffff;
@@ -157,33 +149,27 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     --border-color:  rgba(192, 132, 252, 0.25);
     --border-hover:  rgba(168, 85, 247, 0.5);
 
-    /* Hero specifically for light mode — WHITE text on darker overlay */
-    --hero-title-color: #ffffff;
-    --hero-desc-color:  rgba(255, 255, 255, 0.9);
-    --hero-meta-color:  rgba(255, 255, 255, 0.85);
-    --hero-bg-inner:    rgba(30, 15, 54, 0.85);
-
-    --body-bg: radial-gradient(ellipse at top left, #f3e8ff 0%, #faf5ff 50%, #ffffff 100%);
+    --body-bg: linear-gradient(180deg, #f3e8ff 0%, #faf5ff 100%);
   }
 
-  /* ═══ SOFTER GRADIENT ═══ */
   :root {
     --purple: #c084fc;
-    --pink:   #f0abfc;
-    --cyan:   #7dd3fc;
     --purple-deep: #a855f7;
+    --pink:   #f0abfc;
+    --pink-hot: #e879f9;
+    --cyan:   #7dd3fc;
+    --cyan-bright: #22d3ee;
+    --flame:  #fb923c;
 
     --grad: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
-    --grad-simple: linear-gradient(135deg, #c084fc, #7dd3fc);
-    --grad-glow: 0 0 30px rgba(192, 132, 252, 0.4);
-
-    --neon-purple: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(168, 85, 247, 0.3);
-    --neon-cyan:   0 0 10px rgba(125, 211, 252, 0.6), 0 0 20px rgba(125, 211, 252, 0.3);
+    --grad-hot: linear-gradient(135deg, #a855f7, #e879f9);
+    --grad-cool: linear-gradient(135deg, #a855f7, #7dd3fc);
+    --grad-fire: linear-gradient(135deg, #fb923c, #e879f9);
 
     --header-h: 68px;
     --font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-heading: 'Bricolage Grotesque', 'DM Sans', sans-serif;
-    --font-mono:    'JetBrains Mono', monospace;
+    --font-mono:    'JetBrains Mono', 'Courier New', monospace;
     --radius-sm: 10px;
     --radius-md: 14px;
     --radius-lg: 22px;
@@ -204,13 +190,12 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     min-height: 100vh;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
-    transition: color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
     font-weight: 700;
-    line-height: 1.15;
+    line-height: 1.1;
     color: var(--text-primary);
     letter-spacing: -0.025em;
   }
@@ -222,9 +207,9 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.3); border-radius: 9px; }
+  ::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.35); border-radius: 9px; }
 
-  /* ═══ AMBIENT BG ═══ */
+  /* ═══ AMBIENT (minimal — 2 orbs) ═══ */
   .ambient-bg {
     position: fixed; inset: 0;
     z-index: 0; overflow: hidden;
@@ -234,64 +219,25 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   .ambient-glow {
     position: absolute;
     border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.35;
+    filter: blur(100px);
   }
 
   .ambient-glow-1 {
-    width: 600px; height: 600px;
-    background: #c084fc;
-    top: -20%; left: -10%;
-    animation: glow-drift-1 20s ease-in-out infinite;
+    width: 500px; height: 500px;
+    background: rgba(168, 85, 247, 0.25);
+    top: -10%; right: -10%;
   }
 
   .ambient-glow-2 {
     width: 500px; height: 500px;
-    background: #e879f9;
-    top: 30%; right: -10%;
-    animation: glow-drift-2 25s ease-in-out infinite;
+    background: rgba(125, 211, 252, 0.15);
+    bottom: -10%; left: -10%;
   }
 
-  .ambient-glow-3 {
-    width: 400px; height: 400px;
-    background: #7dd3fc;
-    bottom: -15%; left: 40%;
-    opacity: 0.25;
-    animation: glow-drift-3 22s ease-in-out infinite;
-  }
+  [data-theme="light"] .ambient-glow-1 { background: rgba(168, 85, 247, 0.1); }
+  [data-theme="light"] .ambient-glow-2 { background: rgba(125, 211, 252, 0.08); }
 
-  /* Subtle grid overlay (gaming feel) */
-  .ambient-grid {
-    position: absolute; inset: 0;
-    background-image:
-      linear-gradient(rgba(192, 132, 252, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(192, 132, 252, 0.03) 1px, transparent 1px);
-    background-size: 50px 50px;
-    mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
-  }
-
-  [data-theme="light"] .ambient-glow { opacity: 0.18; }
-  [data-theme="light"] .ambient-grid {
-    background-image:
-      linear-gradient(rgba(30, 15, 54, 0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(30, 15, 54, 0.04) 1px, transparent 1px);
-  }
-
-  @keyframes glow-drift-1 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50%       { transform: translate(50px, 30px) scale(1.1); }
-  }
-  @keyframes glow-drift-2 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50%       { transform: translate(-40px, 50px) scale(0.9); }
-  }
-  @keyframes glow-drift-3 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50%       { transform: translate(30px, -40px) scale(1.05); }
-  }
-
-  /* ═══ GRADIENT TEXT ═══ */
+  /* ═══ TEXT ═══ */
   .grad-text {
     background: var(--grad);
     -webkit-background-clip: text;
@@ -309,7 +255,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     z-index: 99999;
     display: flex; align-items: center; justify-content: center;
     flex-direction: column; gap: 1.2rem;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.4s ease;
   }
 
   .ld-brand {
@@ -330,7 +276,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     height: 100%;
     background: var(--grad);
     border-radius: 9px;
-    animation: ld-fill 0.9s ease forwards;
+    animation: ld-fill 0.7s ease forwards;
   }
 
   @keyframes ld-fill { from { width: 0; } to { width: 100%; } }
@@ -365,7 +311,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     opacity: 0; pointer-events: none;
     transition: opacity 0.3s, transform 0.2s;
     cursor: pointer;
-    box-shadow: var(--grad-glow);
   }
   #btt:hover { transform: translateY(-3px); }
 
@@ -410,14 +355,13 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
 
   .btn-outline {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    backdrop-filter: blur(10px);
   }
   .btn-outline:hover {
-    border-color: rgba(192, 132, 252, 0.6);
-    background: rgba(192, 132, 252, 0.1);
+    border-color: rgba(192, 132, 252, 0.5);
+    background: rgba(192, 132, 252, 0.08);
   }
 
   /* ═══ CARDS ═══ */
@@ -427,7 +371,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     border-radius: var(--radius-lg);
     overflow: hidden;
     transition: all var(--transition-normal);
-    backdrop-filter: blur(12px);
   }
 
   .card:hover {
@@ -438,8 +381,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   /* ═══ TICKER ═══ */
   .ticker-wrap {
-    background: rgba(30, 15, 54, 0.6);
-    backdrop-filter: blur(10px);
+    background: rgba(28, 15, 61, 0.5);
     border-top: 1px solid var(--border-color);
     border-bottom: 1px solid var(--border-color);
     overflow: hidden;
@@ -447,9 +389,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     position: relative;
   }
 
-  [data-theme="light"] .ticker-wrap {
-    background: rgba(255, 255, 255, 0.6);
-  }
+  [data-theme="light"] .ticker-wrap { background: rgba(255, 255, 255, 0.6); }
 
   .ticker-wrap::before, .ticker-wrap::after {
     content: ''; position: absolute; top: 0; bottom: 0;
@@ -457,9 +397,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
   .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg-base), transparent); }
   .ticker-wrap::after  { right: 0; background: linear-gradient(-90deg, var(--bg-base), transparent); }
-
-  [data-theme="light"] .ticker-wrap::before { background: linear-gradient(90deg, var(--bg-base), transparent); }
-  [data-theme="light"] .ticker-wrap::after  { background: linear-gradient(-90deg, var(--bg-base), transparent); }
 
   .ticker-label {
     position: absolute; left: 0; top: 0; bottom: 0; z-index: 3;
@@ -503,7 +440,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     to   { transform: translateX(-50%); }
   }
 
-  /* ═══ VIDEO EMBED ═══ */
+  /* ═══ VIDEO ═══ */
   .video-embed-wrapper {
     position: relative; width: 100%;
     aspect-ratio: 16/9;
@@ -588,4 +525,12 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     transition: opacity 0.6s ease, transform 0.6s ease;
   }
   .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* Reduce motion for accessibility & performance */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 </style>
