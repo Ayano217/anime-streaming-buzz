@@ -20,7 +20,6 @@ const latest  = sortedPosts.slice(8, 16);
 
   <HeroSection />
 
-  <!-- NEW ARRIVALS with Category Tabs -->
   <section class="section-block arrivals-block">
     <div class="container">
       
@@ -44,24 +43,15 @@ const latest  = sortedPosts.slice(8, 16);
         </div>
       </div>
       
-      <!-- Category tabs -->
       <div class="cat-tabs" id="catTabs">
         <button class="cat-tab active" data-source="airing">
           <span class="cat-tab-dot"></span>
           <span>Now Airing</span>
         </button>
-        <button class="cat-tab" data-source="top">
-          <span>Top Rated</span>
-        </button>
-        <button class="cat-tab" data-source="upcoming">
-          <span>Upcoming</span>
-        </button>
-        <button class="cat-tab" data-source="popular">
-          <span>Popular</span>
-        </button>
-        <button class="cat-tab" data-source="movie">
-          <span>Movies</span>
-        </button>
+        <button class="cat-tab" data-source="top">Top Rated</button>
+        <button class="cat-tab" data-source="upcoming">Upcoming</button>
+        <button class="cat-tab" data-source="popular">Popular</button>
+        <button class="cat-tab" data-source="movie">Movies</button>
       </div>
       
       <div class="arrivals-grid" id="arrivalsGrid">
@@ -100,21 +90,18 @@ const latest  = sortedPosts.slice(8, 16);
             <path d="M12 8v4M12 16h.01"/>
           </svg>
         </div>
-        <h3>Couldn't load anime</h3>
-        <p>Our servers are having a moment. Give it another shot.</p>
-        <button onclick="location.reload()" class="error-retry">Retry</button>
+        <h3>Loading anime feed...</h3>
+        <p id="errorSubtext">Trying multiple sources. This may take a moment.</p>
+        <button onclick="location.reload()" class="error-retry">Refresh Page</button>
       </div>
       
     </div>
   </section>
 
-  <!-- Novelty Section -->
   {novelty.length > 0 && (
     <section class="section-block novelty-block">
       <div class="container">
-        <h2 class="section-title">
-          <span class="grad-text">Novelty</span>
-        </h2>
+        <h2 class="section-title"><span class="grad-text">Novelty</span></h2>
         <div class="novelty-grid">
           {novelty.map((post) => (
             <a href={`/posts/${post.slug}`} class="novelty-card">
@@ -135,13 +122,10 @@ const latest  = sortedPosts.slice(8, 16);
     </section>
   )}
 
-  <!-- News Section -->
   {news.length > 0 && (
     <section class="section-block news-block">
       <div class="container">
-        <h2 class="section-title">
-          <span class="grad-text">News</span>
-        </h2>
+        <h2 class="section-title"><span class="grad-text">News</span></h2>
         <div class="news-grid">
           {news.map((post) => (
             <a href={`/posts/${post.slug}`} class="news-card">
@@ -162,13 +146,10 @@ const latest  = sortedPosts.slice(8, 16);
     </section>
   )}
 
-  <!-- Latest Season -->
   {latest.length > 0 && (
     <section class="section-block latest-block">
       <div class="container">
-        <h2 class="section-title">
-          <span class="grad-text">Latest Season</span>
-        </h2>
+        <h2 class="section-title"><span class="grad-text">Latest Season</span></h2>
         <div class="latest-grid">
           {latest.map((post) => (
             <a href={`/posts/${post.slug}`} class="latest-card">
@@ -215,8 +196,34 @@ const latest  = sortedPosts.slice(8, 16);
   var loadingEl  = document.getElementById('loadingMore');
   var endMsg     = document.getElementById('endMessage');
   var errorMsg   = document.getElementById('errorMessage');
+  var errorSub   = document.getElementById('errorSubtext');
   var countEl    = document.getElementById('arrivalsCount');
   var catTabs    = document.querySelectorAll('.cat-tab');
+  
+  // Cache in localStorage (1 hour)
+  var CACHE_MS = 60 * 60 * 1000;
+  
+  function getCached(key) {
+    try {
+      var raw = localStorage.getItem('anitube_' + key);
+      if (!raw) return null;
+      var obj = JSON.parse(raw);
+      if (Date.now() > obj.expires) {
+        localStorage.removeItem('anitube_' + key);
+        return null;
+      }
+      return obj.data;
+    } catch (e) { return null; }
+  }
+  
+  function setCached(key, data) {
+    try {
+      localStorage.setItem('anitube_' + key, JSON.stringify({
+        data: data,
+        expires: Date.now() + CACHE_MS
+      }));
+    } catch (e) { /* quota exceeded, ignore */ }
+  }
   
   function makeSlug(str) {
     return (str || '').toLowerCase()
@@ -232,13 +239,13 @@ const latest  = sortedPosts.slice(8, 16);
   }
   
   function createCard(anime, index) {
-    var title    = anime.title || 'Unknown';
-    var image    = anime.image || '';
-    var slug     = makeSlug(title) || ('anime-' + anime.id);
+    var title    = anime.title_english || anime.title || 'Unknown';
+    var image    = (anime.images && anime.images.jpg && (anime.images.jpg.large_image_url || anime.images.jpg.image_url)) || '';
+    var slug     = makeSlug(title) || ('anime-' + anime.mal_id);
     var score    = anime.score;
     var year     = anime.year || '';
     var episodes = anime.episodes || '?';
-    var genre    = anime.genre || '';
+    var genre    = (anime.genres && anime.genres[0] && anime.genres[0].name) || '';
     var isNew    = anime.status === 'Currently Airing';
     
     var card = document.createElement('a');
@@ -247,7 +254,8 @@ const latest  = sortedPosts.slice(8, 16);
     card.style.animationDelay = (index % 12 * 50) + 'ms';
     
     var imgHtml = image 
-      ? '<img src="' + esc(image) + '" alt="' + esc(title) + '" loading="lazy" class="anime-img" />'
+      ? '<img src="' + esc(image) + '" alt="' + esc(title) + '" loading="lazy" class="anime-img" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" />' +
+        '<div class="anime-img-fallback" style="display:none"><svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/></svg></div>'
       : '<div class="anime-img-fallback"><svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/></svg></div>';
     
     var newBadge = isNew 
@@ -292,16 +300,71 @@ const latest  = sortedPosts.slice(8, 16);
   }
   
   function updateCount() {
-    if (countEl) {
-      var current = parseInt(countEl.textContent) || 0;
-      var step = Math.max(1, Math.floor((totalLoaded - current) / 8));
-      var counter = function() {
-        current = Math.min(current + step, totalLoaded);
-        countEl.textContent = current;
-        if (current < totalLoaded) requestAnimationFrame(counter);
-      };
-      requestAnimationFrame(counter);
+    if (!countEl) return;
+    var current = parseInt(countEl.textContent) || 0;
+    var target = totalLoaded;
+    var step = Math.max(1, Math.floor((target - current) / 8));
+    var counter = function() {
+      current = Math.min(current + step, target);
+      countEl.textContent = current;
+      if (current < target) requestAnimationFrame(counter);
+    };
+    requestAnimationFrame(counter);
+  }
+  
+  // Get Jikan endpoint URL for given source and page
+  function getJikanUrl(source, pageNum) {
+    var endpoints = {
+      airing:   'https://api.jikan.moe/v4/seasons/now?filter=tv&limit=24&page=' + pageNum,
+      top:      'https://api.jikan.moe/v4/top/anime?filter=airing&limit=24&page=' + pageNum,
+      upcoming: 'https://api.jikan.moe/v4/seasons/upcoming?filter=tv&limit=24&page=' + pageNum,
+      popular:  'https://api.jikan.moe/v4/top/anime?limit=24&page=' + pageNum,
+      movie:    'https://api.jikan.moe/v4/top/anime?type=movie&limit=24&page=' + pageNum,
+    };
+    return endpoints[source] || endpoints.airing;
+  }
+  
+  // Try direct fetch first, then fallback to proxies
+  async function fetchAnime(url) {
+    // Try direct fetch first (works from browser to Jikan usually)
+    try {
+      var res = await fetch(url);
+      if (res.ok) {
+        var data = await res.json();
+        if (data && data.data) return data;
+      }
+    } catch (e) {
+      console.warn('Direct fetch failed:', e.message);
     }
+    
+    // Fallback: allorigins proxy
+    try {
+      var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+      var res2 = await fetch(proxyUrl);
+      if (res2.ok) {
+        var wrapper = await res2.json();
+        if (wrapper && wrapper.contents) {
+          var data2 = JSON.parse(wrapper.contents);
+          if (data2 && data2.data) return data2;
+        }
+      }
+    } catch (e) {
+      console.warn('AllOrigins proxy failed:', e.message);
+    }
+    
+    // Fallback: corsproxy.io
+    try {
+      var proxyUrl2 = 'https://corsproxy.io/?' + encodeURIComponent(url);
+      var res3 = await fetch(proxyUrl2);
+      if (res3.ok) {
+        var data3 = await res3.json();
+        if (data3 && data3.data) return data3;
+      }
+    } catch (e) {
+      console.warn('CorsProxy fallback failed:', e.message);
+    }
+    
+    return null;
   }
   
   async function loadAnime(pageNum, source) {
@@ -315,22 +378,35 @@ const latest  = sortedPosts.slice(8, 16);
       if (loadWrap) loadWrap.style.display = 'none';
     }
     
+    var cacheKey = source + '_' + pageNum;
+    var cachedData = getCached(cacheKey);
+    var data = cachedData;
+    
+    if (!data) {
+      var jikanUrl = getJikanUrl(source, pageNum);
+      data = await fetchAnime(jikanUrl);
+      if (data) setCached(cacheKey, data);
+    }
+    
     try {
-      var res = await fetch('/api/anime?source=' + source + '&page=' + pageNum);
-      var json = await res.json();
+      if (!data || !data.data) {
+        throw new Error('No data returned');
+      }
       
-      if (!json.success) throw new Error(json.error || 'API failed');
-      
-      var items = json.data || [];
+      var items = data.data || [];
       
       var newItems = items.filter(function(a) {
-        if (!a.id || allIds[a.id]) return false;
-        allIds[a.id] = true;
+        if (!a.mal_id || allIds[a.mal_id]) return false;
+        allIds[a.mal_id] = true;
         return true;
       });
       
       if (pageNum === 1) {
         grid.innerHTML = '';
+      }
+      
+      if (newItems.length === 0 && pageNum === 1) {
+        throw new Error('No anime found');
       }
       
       newItems.forEach(function(anime, idx) {
@@ -341,7 +417,7 @@ const latest  = sortedPosts.slice(8, 16);
       
       updateCount();
       
-      var pag = json.pagination || {};
+      var pag = data.pagination || {};
       if (pag.has_next_page === false || newItems.length === 0) {
         hasMore = false;
       }
@@ -364,14 +440,18 @@ const latest  = sortedPosts.slice(8, 16);
       
       if (pageNum === 1 && totalLoaded === 0) {
         grid.innerHTML = '';
-        if (errorMsg) errorMsg.style.display = 'block';
+        if (errorMsg) {
+          errorMsg.style.display = 'block';
+          if (errorSub) {
+            errorSub.textContent = 'Unable to reach anime database. Please refresh or try again later.';
+          }
+        }
       } else {
         if (loadWrap) loadWrap.style.display = 'flex';
       }
     }
   }
   
-  // Category tab switching
   catTabs.forEach(function(tab) {
     tab.addEventListener('click', function() {
       var source = tab.dataset.source;
@@ -390,7 +470,12 @@ const latest  = sortedPosts.slice(8, 16);
       if (errorMsg) errorMsg.style.display = 'none';
       
       grid.innerHTML = 
-        '<div class="skeleton-card"></div>'.repeat(6);
+        '<div class="skeleton-card"></div>' +
+        '<div class="skeleton-card"></div>' +
+        '<div class="skeleton-card"></div>' +
+        '<div class="skeleton-card"></div>' +
+        '<div class="skeleton-card"></div>' +
+        '<div class="skeleton-card"></div>';
       
       loadAnime(1, source);
     });
@@ -403,7 +488,6 @@ const latest  = sortedPosts.slice(8, 16);
     });
   }
   
-  // Infinite scroll
   var scrollTimeout;
   window.addEventListener('scroll', function() {
     if (loading || !hasMore) return;
@@ -418,13 +502,12 @@ const latest  = sortedPosts.slice(8, 16);
     }, 200);
   }, { passive: true });
   
-  // Initial load
   loadAnime(1, currentSource);
 })();
 </script>
 
 <style>
-  /* ═══ ARRIVALS SECTION ═══ */
+  /* All previous styles preserved - keeping same as before */
   .arrivals-block { position: relative; }
   
   .arrivals-header {
@@ -436,15 +519,10 @@ const latest  = sortedPosts.slice(8, 16);
     flex-wrap: wrap;
   }
   
-  .arrivals-title-wrap {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
+  .arrivals-title-wrap { display: flex; align-items: center; gap: 1rem; }
   
   .arrivals-bar {
-    width: 4px;
-    height: 46px;
+    width: 4px; height: 46px;
     background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
     border-radius: 3px;
     box-shadow: 0 0 15px rgba(192, 132, 252, 0.6);
@@ -457,23 +535,16 @@ const latest  = sortedPosts.slice(8, 16);
   }
   
   .arrivals-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
+    display: inline-flex; align-items: center; gap: 0.4rem;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    color: var(--purple);
+    font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.15em; color: var(--purple);
     margin-bottom: 4px;
   }
   
   .arrivals-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #ef4444;
-    box-shadow: 0 0 8px #ef4444;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #ef4444; box-shadow: 0 0 8px #ef4444;
     animation: arrivals-live 1.5s ease infinite;
   }
   
@@ -485,16 +556,12 @@ const latest  = sortedPosts.slice(8, 16);
   .arrivals-title {
     font-family: var(--font-heading);
     font-size: clamp(1.6rem, 3vw, 2.4rem);
-    font-weight: 800;
-    margin: 0;
-    letter-spacing: -0.03em;
-    line-height: 1;
+    font-weight: 800; margin: 0;
+    letter-spacing: -0.03em; line-height: 1;
   }
   
   .arrivals-count {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
+    display: flex; align-items: baseline; gap: 6px;
     padding: 8px 16px;
     background: rgba(192, 132, 252, 0.1);
     border: 1px solid rgba(192, 132, 252, 0.25);
@@ -504,51 +571,38 @@ const latest  = sortedPosts.slice(8, 16);
   
   .arrivals-count-num {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 1.2rem;
-    font-weight: 800;
+    font-size: 1.2rem; font-weight: 800;
     background: var(--grad);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    min-width: 24px;
-    display: inline-block;
-    text-align: center;
+    min-width: 24px; display: inline-block; text-align: center;
   }
   
   .arrivals-count-lbl {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
     color: var(--text-muted);
   }
   
-  /* ═══ CATEGORY TABS ═══ */
   .cat-tabs {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 1.5rem;
-    padding-bottom: 4px;
-    overflow-x: auto;
-    scrollbar-width: none;
+    display: flex; gap: 8px;
+    margin-bottom: 1.5rem; padding-bottom: 4px;
+    overflow-x: auto; scrollbar-width: none;
   }
   
   .cat-tabs::-webkit-scrollbar { display: none; }
   
   .cat-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    display: inline-flex; align-items: center; gap: 8px;
     padding: 9px 18px;
     background: rgba(28, 15, 61, 0.5);
     border: 1px solid var(--border-color);
     border-radius: 999px;
     color: var(--text-secondary);
-    font-family: inherit;
-    font-size: 0.82rem;
-    font-weight: 600;
-    cursor: pointer;
+    font-family: inherit; font-size: 0.82rem;
+    font-weight: 600; cursor: pointer;
     transition: all 0.25s ease;
     white-space: nowrap;
     backdrop-filter: blur(10px);
@@ -569,123 +623,78 @@ const latest  = sortedPosts.slice(8, 16);
   }
   
   .cat-tab-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #ef4444;
-    box-shadow: 0 0 6px #ef4444;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #ef4444; box-shadow: 0 0 6px #ef4444;
     animation: arrivals-live 1.5s ease infinite;
   }
   
   .cat-tab.active .cat-tab-dot {
-    background: #fff;
-    box-shadow: 0 0 6px #fff;
+    background: #fff; box-shadow: 0 0 6px #fff;
   }
   
-  /* ═══ GRID ═══ */
   .arrivals-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
     gap: 1rem;
   }
   
-  /* ═══ ANIME CARD — PREMIUM ═══ */
   .arrivals-card-item {
     display: block;
-    text-decoration: none;
-    color: inherit;
+    text-decoration: none; color: inherit;
     position: relative;
     transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     animation: card-slide-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
   }
   
   @keyframes card-slide-in {
-    from { 
-      opacity: 0; 
-      transform: translateY(30px) scale(0.9); 
-    }
-    to { 
-      opacity: 1; 
-      transform: translateY(0) scale(1); 
-    }
+    from { opacity: 0; transform: translateY(30px) scale(0.9); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
   }
   
-  .arrivals-card-item:hover { 
-    transform: translateY(-8px) scale(1.02); 
-  }
+  .arrivals-card-item:hover { transform: translateY(-8px) scale(1.02); }
   
   .arrivals-card-item .anime-thumb {
-    position: relative;
-    aspect-ratio: 3/4;
-    border-radius: 16px;
-    overflow: hidden;
+    position: relative; aspect-ratio: 3/4;
+    border-radius: 16px; overflow: hidden;
     background: rgba(28, 15, 61, 0.5);
-    box-shadow: 
-      0 10px 30px rgba(0, 0, 0, 0.4),
-      0 0 0 1px rgba(192, 132, 252, 0.15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(192, 132, 252, 0.15);
     transition: box-shadow 0.4s ease;
   }
   
   .arrivals-card-item:hover .anime-thumb {
-    box-shadow: 
-      0 25px 50px rgba(0, 0, 0, 0.5),
-      0 0 0 2px rgba(192, 132, 252, 0.8),
-      0 0 40px rgba(192, 132, 252, 0.35);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5), 0 0 0 2px rgba(192, 132, 252, 0.8), 0 0 40px rgba(192, 132, 252, 0.35);
   }
   
-  /* Rotating border glow (hover only) */
   .thumb-border-glow {
-    position: absolute;
-    inset: -2px;
+    position: absolute; inset: -2px;
     border-radius: 18px;
-    background: conic-gradient(
-      from 0deg,
-      #c084fc,
-      #e879f9,
-      #7dd3fc,
-      #c084fc
-    );
-    opacity: 0;
-    z-index: -1;
+    background: conic-gradient(from 0deg, #c084fc, #e879f9, #7dd3fc, #c084fc);
+    opacity: 0; z-index: -1;
     animation: thumb-spin 4s linear infinite;
     filter: blur(4px);
     transition: opacity 0.3s ease;
   }
   
-  .arrivals-card-item:hover .thumb-border-glow {
-    opacity: 0.8;
-  }
+  .arrivals-card-item:hover .thumb-border-glow { opacity: 0.8; }
   
   @keyframes thumb-spin {
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
   }
   
-  /* Shine effect on hover */
   .anime-shine {
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 60%;
-    height: 100%;
-    background: linear-gradient(90deg,
-      transparent,
-      rgba(255, 255, 255, 0.15),
-      transparent
-    );
+    position: absolute; top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
     z-index: 3;
     transition: left 0.8s ease;
     pointer-events: none;
   }
   
-  .arrivals-card-item:hover .anime-shine {
-    left: 120%;
-  }
+  .arrivals-card-item:hover .anime-shine { left: 120%; }
   
   .arrivals-card-item .anime-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 100%; height: 100%; object-fit: cover;
     transition: transform 0.6s ease, filter 0.4s ease;
     display: block;
   }
@@ -696,33 +705,23 @@ const latest  = sortedPosts.slice(8, 16);
   }
   
   .arrivals-card-item .anime-img-fallback {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
     background: linear-gradient(135deg, rgba(192, 132, 252, 0.15), rgba(125, 211, 252, 0.1));
     color: rgba(192, 132, 252, 0.5);
   }
   
   .arrivals-card-item .anime-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg,
-      transparent 40%,
-      rgba(10, 5, 23, 0.5) 75%,
-      rgba(10, 5, 23, 0.95) 100%
-    );
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(10, 5, 23, 0.5) 75%, rgba(10, 5, 23, 0.95) 100%);
     z-index: 1;
   }
   
   .arrivals-card-item .anime-corner {
     position: absolute;
-    width: 16px;
-    height: 16px;
+    width: 16px; height: 16px;
     border: 2px solid #7dd3fc;
-    z-index: 3;
-    pointer-events: none;
+    z-index: 3; pointer-events: none;
     opacity: 0;
     transition: opacity 0.3s ease, transform 0.3s ease;
     filter: drop-shadow(0 0 6px #7dd3fc);
@@ -741,54 +740,37 @@ const latest  = sortedPosts.slice(8, 16);
   .arrivals-card-item:hover .anime-corner-br { transform: translate(0, 0); }
   
   .arrivals-card-item .anime-play {
-    position: absolute;
-    top: 50%;
-    left: 50%;
+    position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%) scale(0.5);
-    width: 60px;
-    height: 60px;
-    z-index: 4;
-    opacity: 0;
+    width: 60px; height: 60px;
+    z-index: 4; opacity: 0;
     transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   
-  .arrivals-card-item:hover .anime-play { 
-    opacity: 1; 
+  .arrivals-card-item:hover .anime-play {
+    opacity: 1;
     transform: translate(-50%, -50%) scale(1);
   }
   
   .arrivals-card-item .anime-play-btn {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     border-radius: 50%;
     background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    padding-left: 3px;
-    box-shadow: 
-      0 8px 25px rgba(192, 132, 252, 0.6),
-      0 0 40px rgba(232, 121, 249, 0.4);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; padding-left: 3px;
+    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.6), 0 0 40px rgba(232, 121, 249, 0.4);
     z-index: 2;
   }
   
   .arrivals-card-item .anime-play-ring {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     border-radius: 50%;
     border: 2px solid rgba(192, 132, 252, 0.7);
     pointer-events: none;
   }
   
-  .arrivals-card-item .anime-play-ring-1 {
-    animation: anime-play-pulse 1.8s ease-out infinite;
-  }
-  
-  .arrivals-card-item .anime-play-ring-2 {
-    animation: anime-play-pulse 1.8s ease-out infinite;
-    animation-delay: 0.9s;
-  }
+  .arrivals-card-item .anime-play-ring-1 { animation: anime-play-pulse 1.8s ease-out infinite; }
+  .arrivals-card-item .anime-play-ring-2 { animation: anime-play-pulse 1.8s ease-out infinite; animation-delay: 0.9s; }
   
   @keyframes anime-play-pulse {
     0%   { transform: scale(1);   opacity: 1; }
@@ -796,25 +778,16 @@ const latest  = sortedPosts.slice(8, 16);
   }
   
   .arrivals-card-item .anime-badges-top {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    right: 10px;
-    display: flex;
-    justify-content: space-between;
-    gap: 6px;
+    position: absolute; top: 10px; left: 10px; right: 10px;
+    display: flex; justify-content: space-between; gap: 6px;
     z-index: 3;
   }
   
   .arrivals-card-item .anime-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border-radius: 6px;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 8px; border-radius: 6px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
-    font-weight: 800;
+    font-size: 0.6rem; font-weight: 800;
     letter-spacing: 0.05em;
     backdrop-filter: blur(8px);
   }
@@ -832,11 +805,8 @@ const latest  = sortedPosts.slice(8, 16);
   }
   
   .arrivals-card-item .anime-new-dot {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 0 5px #fff;
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 5px #fff;
     animation: anime-new-blink 1.2s ease infinite;
   }
   
@@ -852,50 +822,33 @@ const latest  = sortedPosts.slice(8, 16);
   }
   
   .arrivals-card-item .anime-hd {
-    position: absolute;
-    bottom: 90px;
-    right: 10px;
-    background: rgba(125, 211, 252, 0.9);
-    color: #0a0517;
-    padding: 3px 7px;
-    border-radius: 5px;
+    position: absolute; bottom: 90px; right: 10px;
+    background: rgba(125, 211, 252, 0.9); color: #0a0517;
+    padding: 3px 7px; border-radius: 5px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.58rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    z-index: 3;
-    opacity: 0;
-    transform: translateY(4px);
+    font-size: 0.58rem; font-weight: 800;
+    letter-spacing: 0.05em; z-index: 3;
+    opacity: 0; transform: translateY(4px);
     transition: opacity 0.3s ease, transform 0.3s ease;
   }
   
   .arrivals-card-item:hover .anime-hd {
-    opacity: 1;
-    transform: translateY(0);
+    opacity: 1; transform: translateY(0);
   }
   
   .arrivals-card-item .anime-info {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 14px 14px 16px;
-    z-index: 2;
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 14px 14px 16px; z-index: 2;
     transform: translateY(0);
     transition: transform 0.3s ease;
   }
   
-  .arrivals-card-item:hover .anime-info {
-    transform: translateY(-4px);
-  }
+  .arrivals-card-item:hover .anime-info { transform: translateY(-4px); }
   
   .arrivals-card-item .anime-title {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #fff;
-    margin: 0 0 5px;
-    line-height: 1.25;
+    font-size: 0.95rem; font-weight: 700; color: #fff;
+    margin: 0 0 5px; line-height: 1.25;
     letter-spacing: -0.01em;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -905,64 +858,45 @@ const latest  = sortedPosts.slice(8, 16);
   }
   
   .arrivals-card-item .anime-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.65);
-    font-weight: 500;
-    flex-wrap: wrap;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.7rem; color: rgba(255, 255, 255, 0.65);
+    font-weight: 500; flex-wrap: wrap;
   }
   
   .arrivals-card-item .anime-meta > span { display: inline-flex; align-items: center; }
   
   .arrivals-card-item .anime-meta > span + span::before {
-    content: '•';
-    margin-right: 8px;
+    content: '•'; margin-right: 8px;
     color: rgba(255, 255, 255, 0.3);
   }
   
   .arrivals-card-item .anime-genre {
-    color: #c084fc !important;
-    font-weight: 700;
+    color: #c084fc !important; font-weight: 700;
   }
   
-  /* ═══ LOAD MORE ═══ */
   .load-more-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    margin-top: 2.5rem;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 12px; margin-top: 2.5rem;
   }
   
   .load-more-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
+    display: inline-flex; align-items: center; gap: 12px;
     padding: 14px 32px;
     background: rgba(192, 132, 252, 0.1);
     border: 1px solid rgba(192, 132, 252, 0.3);
     border-radius: 999px;
     color: var(--text-primary);
     font-family: var(--font-heading);
-    font-size: 0.95rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    font-size: 0.95rem; font-weight: 700;
+    cursor: pointer; transition: all 0.3s ease;
     backdrop-filter: blur(10px);
-    position: relative;
-    overflow: hidden;
+    position: relative; overflow: hidden;
   }
   
   .load-more-btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: var(--grad);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: -1;
+    content: ''; position: absolute; inset: 0;
+    background: var(--grad); opacity: 0;
+    transition: opacity 0.3s ease; z-index: -1;
   }
   
   .load-more-btn:hover {
@@ -972,18 +906,12 @@ const latest  = sortedPosts.slice(8, 16);
     color: #fff;
   }
   
-  .load-more-btn:hover::before {
-    opacity: 1;
-  }
+  .load-more-btn:hover::before { opacity: 1; }
   
   .load-more-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+    width: 32px; height: 32px; border-radius: 50%;
     background: var(--grad);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     color: #fff;
     animation: load-bounce 2s ease infinite;
     transition: background 0.3s ease;
@@ -998,62 +926,45 @@ const latest  = sortedPosts.slice(8, 16);
     50%       { transform: translateY(-4px); }
   }
   
-  /* ═══ LOADING ═══ */
   .loading-more {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 2rem 0;
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; padding: 2rem 0;
     color: var(--text-muted);
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    letter-spacing: 0.05em;
+    font-size: 0.85rem; letter-spacing: 0.05em;
   }
   
   .loading-spinner {
-    width: 24px;
-    height: 24px;
+    width: 24px; height: 24px;
     border: 2px solid rgba(192, 132, 252, 0.2);
     border-top-color: var(--purple);
     border-radius: 50%;
     animation: spinner-rotate 0.8s linear infinite;
   }
   
-  @keyframes spinner-rotate {
-    to { transform: rotate(360deg); }
-  }
+  @keyframes spinner-rotate { to { transform: rotate(360deg); } }
   
-  /* ═══ END MESSAGE ═══ */
   .end-message {
-    text-align: center;
-    padding: 3rem 1rem;
+    text-align: center; padding: 3rem 1rem;
     color: var(--text-muted);
     font-family: var(--font-heading);
-    font-size: 0.9rem;
-    font-weight: 500;
+    font-size: 0.9rem; font-weight: 500;
     background: rgba(192, 132, 252, 0.04);
-    border-radius: 16px;
-    margin-top: 2rem;
+    border-radius: 16px; margin-top: 2rem;
     border: 1px dashed rgba(192, 132, 252, 0.2);
   }
   
-  /* ═══ ERROR MESSAGE ═══ */
   .error-message {
-    text-align: center;
-    padding: 3rem 1rem;
+    text-align: center; padding: 3rem 1rem;
     color: var(--text-secondary);
     background: rgba(239, 68, 68, 0.06);
     border: 1px dashed rgba(239, 68, 68, 0.3);
-    border-radius: 16px;
-    margin-top: 2rem;
+    border-radius: 16px; margin-top: 2rem;
   }
   
   .error-icon {
-    color: #ef4444;
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: center;
+    color: #ef4444; margin-bottom: 1rem;
+    display: flex; justify-content: center;
     animation: err-shake 0.5s ease;
   }
   
@@ -1064,26 +975,20 @@ const latest  = sortedPosts.slice(8, 16);
   }
   
   .error-message h3 {
-    font-size: 1.2rem;
-    margin: 0 0 0.5rem;
+    font-size: 1.2rem; margin: 0 0 0.5rem;
     color: var(--text-primary);
   }
   
   .error-message p {
-    font-size: 0.88rem;
-    margin: 0 0 1.5rem;
+    font-size: 0.88rem; margin: 0 0 1.5rem;
   }
   
   .error-retry {
     padding: 10px 24px;
-    background: var(--grad);
-    color: #fff;
-    border: none;
-    border-radius: 999px;
-    font-family: inherit;
-    font-size: 0.85rem;
-    font-weight: 700;
-    cursor: pointer;
+    background: var(--grad); color: #fff;
+    border: none; border-radius: 999px;
+    font-family: inherit; font-size: 0.85rem;
+    font-weight: 700; cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     box-shadow: 0 4px 15px rgba(192, 132, 252, 0.4);
   }
@@ -1093,7 +998,6 @@ const latest  = sortedPosts.slice(8, 16);
     box-shadow: 0 8px 25px rgba(192, 132, 252, 0.55);
   }
   
-  /* ═══ SKELETON ═══ */
   .skeleton-card {
     aspect-ratio: 3/4;
     border-radius: 16px;
@@ -1111,21 +1015,14 @@ const latest  = sortedPosts.slice(8, 16);
     to   { background-position:  200% 0; }
   }
   
-  /* ═══ NOVELTY/NEWS/LATEST (existing) ═══ */
-  .novelty-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.25rem;
-  }
+  /* NOVELTY/NEWS/LATEST — Same as before */
+  .novelty-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
   
   .novelty-card {
-    display: block;
-    background: var(--bg-card);
-    border-radius: 20px;
-    overflow: hidden;
+    display: block; background: var(--bg-card);
+    border-radius: 20px; overflow: hidden;
     transition: transform 0.4s ease, box-shadow 0.4s ease;
-    text-decoration: none;
-    color: inherit;
+    text-decoration: none; color: inherit;
   }
   
   .novelty-card:hover {
@@ -1133,24 +1030,12 @@ const latest  = sortedPosts.slice(8, 16);
     box-shadow: 0 20px 40px rgba(192, 132, 252, 0.15);
   }
   
-  .nc-image {
-    position: relative;
-    aspect-ratio: 3/4;
-    overflow: hidden;
-  }
-  
-  .nc-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s ease;
-  }
-  
+  .nc-image { position: relative; aspect-ratio: 3/4; overflow: hidden; }
+  .nc-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
   .novelty-card:hover .nc-image img { transform: scale(1.08); }
   
   .nc-overlay {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     background: linear-gradient(180deg, transparent 30%, rgba(0, 0, 0, 0.5) 70%, rgba(0, 0, 0, 0.85) 100%);
   }
   
@@ -1158,74 +1043,47 @@ const latest  = sortedPosts.slice(8, 16);
   
   .nc-title {
     font-family: var(--font-heading);
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 0.4rem;
+    font-size: 1rem; font-weight: 700;
+    color: var(--text-primary); margin: 0 0 0.4rem;
     line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
   }
   
   .nc-excerpt {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical; overflow: hidden;
   }
   
-  .news-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem;
-  }
+  .news-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
   
   .news-card {
-    display: flex;
-    gap: 1rem;
-    background: var(--bg-card);
-    border-radius: 16px;
-    overflow: hidden;
-    padding: 1rem;
+    display: flex; gap: 1rem;
+    background: var(--bg-card); border-radius: 16px;
+    overflow: hidden; padding: 1rem;
     transition: transform 0.3s ease;
-    text-decoration: none;
-    color: inherit;
+    text-decoration: none; color: inherit;
   }
   
-  .news-card:hover {
-    transform: translateY(-3px);
-    background: var(--bg-card-hover);
-  }
+  .news-card:hover { transform: translateY(-3px); background: var(--bg-card-hover); }
   
   .nw-image {
-    width: 120px;
-    min-width: 120px;
-    aspect-ratio: 1;
-    border-radius: 12px;
-    overflow: hidden;
+    width: 120px; min-width: 120px;
+    aspect-ratio: 1; border-radius: 12px; overflow: hidden;
   }
   
   .nw-image img { width: 100%; height: 100%; object-fit: cover; }
   
   .nw-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: 0;
+    flex: 1; display: flex; flex-direction: column;
+    justify-content: center; min-width: 0;
   }
   
   .nw-category {
     font-family: var(--font-heading);
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-size: 0.65rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
     background: var(--grad);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -1235,82 +1093,55 @@ const latest  = sortedPosts.slice(8, 16);
   
   .nw-title {
     font-family: var(--font-heading);
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 0.4rem;
+    font-size: 0.95rem; font-weight: 700;
+    color: var(--text-primary); margin: 0 0 0.4rem;
     line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
   }
   
   .nw-excerpt {
-    font-size: 0.78rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    font-size: 0.78rem; color: var(--text-muted); line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
   }
   
-  .latest-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.25rem;
-  }
+  .latest-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
   
   .latest-card {
-    display: block;
-    text-decoration: none;
-    color: inherit;
+    display: block; text-decoration: none; color: inherit;
     transition: transform 0.3s ease;
   }
   
   .latest-card:hover { transform: translateY(-5px); }
   
   .lt-image {
-    position: relative;
-    aspect-ratio: 3/4;
-    border-radius: 16px;
-    overflow: hidden;
+    position: relative; aspect-ratio: 3/4;
+    border-radius: 16px; overflow: hidden;
     margin-bottom: 0.6rem;
   }
   
   .lt-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 100%; height: 100%; object-fit: cover;
     transition: transform 0.5s ease;
   }
   
   .latest-card:hover .lt-image img { transform: scale(1.08); }
   
   .lt-overlay {
-    position: absolute;
-    inset: 0;
+    position: absolute; inset: 0;
     background: linear-gradient(180deg, transparent 60%, rgba(0, 0, 0, 0.5) 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.3s ease;
   }
   
   .latest-card:hover .lt-overlay { opacity: 1; }
   
   .lt-play-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
+    width: 48px; height: 48px; border-radius: 50%;
     background: var(--grad);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    padding-left: 3px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; padding-left: 3px;
     box-shadow: 0 0 20px rgba(192, 132, 252, 0.5);
     transform: scale(0.7);
     transition: transform 0.3s ease;
@@ -1322,23 +1153,15 @@ const latest  = sortedPosts.slice(8, 16);
   
   .lt-title {
     font-family: var(--font-heading);
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 0.2rem;
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--text-primary); margin: 0 0 0.2rem;
     line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
   }
   
-  .lt-meta {
-    font-size: 0.72rem;
-    color: var(--text-muted);
-  }
+  .lt-meta { font-size: 0.72rem; color: var(--text-muted); }
   
-  /* ═══ RESPONSIVE ═══ */
   @media (max-width: 1200px) {
     .arrivals-grid { grid-template-columns: repeat(4, 1fr); }
   }
