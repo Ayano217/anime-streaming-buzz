@@ -2,134 +2,162 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
-import HeroSection from '../components/HeroSection.astro';
-import TrendingSection from '../components/TrendingSection.astro';
-import CategorySection from '../components/CategorySection.astro';
-import Sidebar from '../components/Sidebar.astro';
-import FacebookVideos from '../components/FacebookVideos.astro';
 import Footer from '../components/Footer.astro';
+import HeroSection from '../components/HeroSection.astro';
+import NewsCard from '../components/NewsCard.astro';
+import Sidebar from '../components/Sidebar.astro';
 
-// Get all published posts sorted by date
+// Fetch all posts
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
-const sorted = allPosts.sort(
-  (a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
+const sortedPosts = allPosts.sort((a, b) =>
+  new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
 );
 
-// Helpers
-const fmt = (d: string) =>
-  new Date(d).toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric'
-  });
-const rt = (b: string) =>
-  `${Math.max(1, Math.ceil(b.split(/\s+/).length / 200))} min`;
-const bt = (c: string) => {
-  if (c === 'Streaming') return 'blue';
-  if (c === 'Manhwa') return 'purple';
-  if (c === 'Gaming') return 'gold';
-  return 'pink';
-};
-const toCard = (p: any) => ({
-  title: p.data.title,
-  excerpt: p.data.excerpt,
-  category: p.data.category,
-  date: fmt(p.data.date),
-  readTime: rt(p.body),
-  image: p.data.image,
-  slug: `/posts/${p.slug}`,
-  badgeType: bt(p.data.category),
-});
+const trendingPosts = sortedPosts.filter(p => p.data.trending).slice(0, 12);
+const latestPosts   = sortedPosts.slice(0, 12);
+const featuredPosts = sortedPosts.filter(p => p.data.featured).slice(0, 6);
 
-// Hero
-const heroMain = sorted[0] ? toCard(sorted[0]) : null;
-const heroSide = sorted.slice(1, 4).map(toCard);
-
-// Trending
-const trendingRaw = sorted.filter(p => p.data.trending).slice(0, 6);
-const trendingFinal = (trendingRaw.length >= 3 ? trendingRaw : sorted.slice(0, 6))
-  .map(p => ({
-    title: p.data.title,
-    category: p.data.category,
-    slug: `/posts/${p.slug}`,
-    date: fmt(p.data.date),
-  }));
-
-// Category posts
-const latest = sorted.slice(0, 6).map(toCard);
-const byCategory = (cat: string) =>
-  sorted.filter(p => p.data.category === cat).slice(0, 3).map(toCard);
-const animeRecaps = byCategory('Anime Recap');
-const manhwa = byCategory('Manhwa');
-const streaming = byCategory('Streaming');
-const news = byCategory('News');
-const gaming = byCategory('Gaming');
-
-// Sidebar
-const sidebarFormat = (posts: typeof sorted) =>
-  posts.map(p => ({
-    title: p.data.title,
-    slug: `/posts/${p.slug}`,
-    image: p.data.image,
-    category: p.data.category,
-    date: fmt(p.data.date),
-  }));
-const sidebarTrending = sidebarFormat(
-  sorted.filter(p => p.data.trending).slice(0, 5)
-);
-const sidebarRecent = sidebarFormat(sorted.slice(0, 5));
+// Ticker items (recent posts)
+const tickerItems = sortedPosts.slice(0, 15);
 ---
-<BaseLayout>
-  <Header />
-  <main>
-    <!-- Hero -->
-    <div class="container">
-      <HeroSection mainPost={heroMain} sidePosts={heroSide} />
+
+<BaseLayout
+  title="AniTube Buzz — Latest Anime News, Reviews & Streaming Guide"
+  description="Your premium source for anime news, episode recaps, manga updates, streaming guides and gaming content. Updated daily for US anime fans."
+>
+  <Header slot="header" />
+
+  <!-- Trending ticker -->
+  <div class="ticker-wrap">
+    <div class="ticker-label">Breaking News</div>
+    <div class="ticker-track">
+      {[...tickerItems, ...tickerItems].map((post) => (
+        <a href={`/posts/${post.slug}`} class="ticker-item">
+          <span class="ticker-sep">◆</span>
+          {post.data.title}
+        </a>
+      ))}
     </div>
+  </div>
 
-    <!-- Trending Ticker + List -->
-    <TrendingSection posts={trendingFinal} />
+  <!-- Hero -->
+  <HeroSection />
 
-    <!-- Videos -->
-    <FacebookVideos />
+  <!-- Main content -->
+  <div class="home-layout container">
+    <main class="home-main">
 
-    <!-- Main Content + Sidebar -->
-    <div class="main-layout container">
-      <div class="content-area">
-        {latest.length > 0 && (
-          <CategorySection title="Latest" emoji="🆕" posts={latest} />
-        )}
-        {animeRecaps.length > 0 && (
-          <CategorySection title="Anime Recap" emoji="🎬" posts={animeRecaps} />
-        )}
-        {manhwa.length > 0 && (
-          <CategorySection title="Manhwa" emoji="📖" posts={manhwa} />
-        )}
-        {streaming.length > 0 && (
-          <CategorySection title="Streaming" emoji="📺" posts={streaming} />
-        )}
-        {news.length > 0 && (
-          <CategorySection title="News" emoji="📰" posts={news} />
-        )}
-        {gaming.length > 0 && (
-          <CategorySection title="Gaming" emoji="🎮" posts={gaming} />
-        )}
-      </div>
-      <Sidebar trendingPosts={sidebarTrending} recentPosts={sidebarRecent} />
-    </div>
-  </main>
-  <Footer />
+      <!-- Trending Section -->
+      {trendingPosts.length > 0 && (
+        <section class="home-section">
+          <div class="section-header">
+            <div class="section-header-left">
+              <div class="section-accent-bar"></div>
+              <h2 class="section-title">
+                <span class="gradient-text">Trending Now</span>
+              </h2>
+            </div>
+            <a href="/category/anime-recap" class="section-view-all">
+              View All
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <path d="M5 12h14M13 5l7 7-7 7"/>
+              </svg>
+            </a>
+          </div>
+
+          <div class="posts-grid">
+            {trendingPosts.slice(0, 6).map((post) => (
+              <NewsCard
+                title={post.data.title}
+                excerpt={post.data.excerpt}
+                category={post.data.category}
+                date={post.data.date}
+                image={post.data.image}
+                imageAlt={post.data.imageAlt || post.data.title}
+                slug={post.slug}
+                trending={true}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Latest Section -->
+      <section class="home-section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <div class="section-accent-bar"></div>
+            <h2 class="section-title">
+              Latest <span class="gradient-text">Anime News</span>
+            </h2>
+          </div>
+          <a href="/category/news" class="section-view-all">
+            View All
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M5 12h14M13 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+
+        <div class="posts-grid">
+          {latestPosts.slice(0, 9).map((post) => (
+            <NewsCard
+              title={post.data.title}
+              excerpt={post.data.excerpt}
+              category={post.data.category}
+              date={post.data.date}
+              image={post.data.image}
+              imageAlt={post.data.imageAlt || post.data.title}
+              slug={post.slug}
+              featured={post.data.featured}
+              trending={post.data.trending}
+            />
+          ))}
+        </div>
+      </section>
+
+    </main>
+
+    <aside class="home-sidebar">
+      <Sidebar />
+    </aside>
+  </div>
+
+  <Footer slot="footer" />
 </BaseLayout>
+
 <style>
-  .main-layout {
+  .home-layout {
     display: grid;
-    grid-template-columns: 1fr 340px;
-    gap: 32px;
-    padding-top: 8px;
+    grid-template-columns: 1fr 320px;
+    gap: 2.5rem;
+    padding-top: 2rem;
+    padding-bottom: 3rem;
   }
-  .content-area {
+
+  .home-main {
     min-width: 0;
   }
+
+  .home-section {
+    margin-bottom: 3rem;
+  }
+
+  .posts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+
   @media (max-width: 1024px) {
-    .main-layout {
+    .home-layout {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .posts-grid {
       grid-template-columns: 1fr;
     }
   }
