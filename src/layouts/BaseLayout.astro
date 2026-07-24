@@ -1,185 +1,384 @@
 ---
-export interface Props {
+interface Props {
   title?: string;
   description?: string;
-  ogImage?: string;
-  ogType?: string;
-  canonicalURL?: string;
+  image?: string;
+  type?: string;
+  noindex?: boolean;
 }
 
 const {
-  title = "AniTube Buzz - Premium Anime News & Recaps",
-  description = "Your premium source for anime recaps, streaming news, manhwa updates, official trailers, and otaku culture worldwide.",
-  ogImage = "/og-default.png",
-  ogType = "website",
-  canonicalURL = Astro.url.href,
+  title = 'AniTube Buzz — Anime News, Reviews & Streaming Guide',
+  description = 'Your premium source for anime news, episode recaps, manga updates, streaming guides and gaming content. Updated daily for US anime fans.',
+  image = '/og-default.jpg',
+  type = 'website',
+  noindex = false,
 } = Astro.props;
 
-const siteName = "AniTube Buzz";
-const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
+const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://anime-streaming-buzz.pages.dev');
+const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 ---
 
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="generator" content={Astro.generator} />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
+  <!-- Primary SEO -->
   <title>{fullTitle}</title>
   <meta name="description" content={description} />
-  <meta name="author" content="AniTube Buzz" />
   <link rel="canonical" href={canonicalURL} />
+  {noindex && <meta name="robots" content="noindex,nofollow" />}
 
-  <!-- Monetag -->
-  <script src="https://quge5.com/88/tag.min.js" data-zone="261500" async data-cfasync="false"></script>
-
-  <!-- OG -->
-  <meta property="og:type" content={ogType} />
-  <meta property="og:title" content={fullTitle} />
+  <!-- Open Graph -->
+  <meta property="og:type"        content={type} />
+  <meta property="og:url"         content={canonicalURL} />
+  <meta property="og:title"       content={fullTitle} />
   <meta property="og:description" content={description} />
-  <meta property="og:image" content={ogImage} />
-  <meta property="og:url" content={canonicalURL} />
-  <meta property="og:site_name" content={siteName} />
+  <meta property="og:image"       content={image} />
+  <meta property="og:site_name"   content="AniTube Buzz" />
+  <meta property="og:locale"      content="en_US" />
 
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content={fullTitle} />
+  <!-- Twitter Card -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content={fullTitle} />
   <meta name="twitter:description" content={description} />
-  <meta name="twitter:image" content={ogImage} />
+  <meta name="twitter:image"       content={image} />
 
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-  <!-- Preload critical font -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap"
+    media="print"
+    onload="this.media='all'"
+  />
 
-  <!-- CSS -->
-  <style is:global>
-    @import '../styles/global.css';
-  </style>
+  <!-- Monetag Ads -->
+  <script async src="https://alwingulla.com/88/tag.min.js"
+    data-zone="YOUR_ZONE_ID" is:inline></script>
 
-  <!-- Schema -->
-  <script type="application/ld+json" set:html={JSON.stringify({
+  <!-- Schema.org -->
+  <script type="application/ld+json" is:inline>
+  {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": siteName,
-    "url": canonicalURL,
-    "description": description,
+    "name": "AniTube Buzz",
+    "url": "https://anime-streaming-buzz.pages.dev",
+    "description": "Premium anime news, reviews, streaming guides and gaming content for US anime fans.",
     "potentialAction": {
       "@type": "SearchAction",
-      "target": `${Astro.site || '/'}search?q={search_term_string}`,
+      "target": "https://anime-streaming-buzz.pages.dev/search?q={search_term_string}",
       "query-input": "required name=search_term_string"
     }
-  })} />
+  }
+  </script>
 </head>
+
 <body>
-  <!-- Page transition overlay -->
-  <div class="page-loader" id="pageLoader">
-    <div class="loader-icon">⚡</div>
+  <!-- Page Loader -->
+  <div id="page-loader" aria-hidden="true">
+    <div class="loader-logo">AniTube Buzz</div>
+    <div class="loader-bar-wrap">
+      <div class="loader-bar"></div>
+    </div>
+    <div class="loader-text">Loading...</div>
   </div>
 
-  <slot />
+  <!-- Custom Cursor (desktop only) -->
+  <div id="cursor-dot"  aria-hidden="true"></div>
+  <div id="cursor-ring" aria-hidden="true"></div>
+  <div id="cursor-trail" aria-hidden="true"></div>
+
+  <!-- Click ripple container -->
+  <div class="ripple-container" id="ripple-container" aria-hidden="true"></div>
+
+  <!-- Animated Background -->
+  <div id="anime-bg" aria-hidden="true">
+    <div class="bg-grid"></div>
+    <div class="bg-scanlines"></div>
+    <canvas id="particle-canvas"></canvas>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+    <div class="bg-orb bg-orb-4"></div>
+  </div>
+
+  <!-- App wrapper -->
+  <div id="app-wrapper">
+    <slot name="header" />
+    <main id="main-content">
+      <slot />
+    </main>
+    <slot name="footer" />
+  </div>
 
   <!-- Back to top -->
-  <button class="back-to-top" id="backToTop" aria-label="Back to top">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-      <path d="m18 15-6-6-6 6"/>
-    </svg>
-  </button>
+  <button id="back-to-top" aria-label="Back to top" title="Back to top">↑</button>
+
+  <!-- Toast container -->
+  <div id="toast-container" aria-live="polite"></div>
 
   <script is:inline>
-    // Theme
-    (function() {
-      var saved = localStorage.getItem('theme');
-      if (saved) {
-        document.documentElement.setAttribute('data-theme', saved);
-      } else {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
-    })();
+  (function () {
+    'use strict';
 
-    // Page loader
-    window.addEventListener('load', function() {
-      var loader = document.getElementById('pageLoader');
-      if (loader) {
-        loader.classList.add('loaded');
-        setTimeout(function() { loader.style.display = 'none'; }, 500);
-      }
+    // ── Page Loader ──────────────────────────────────────────────────────────
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        var loader = document.getElementById('page-loader');
+        if (loader) loader.classList.add('hidden');
+      }, 800);
     });
 
-    // Back to top
-    var topBtn = document.getElementById('backToTop');
-    window.addEventListener('scroll', function() {
-      if (topBtn) {
-        if (window.scrollY > 400) {
-          topBtn.classList.add('visible');
-        } else {
-          topBtn.classList.remove('visible');
+    // ── Custom Cursor ────────────────────────────────────────────────────────
+    var isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+    if (!isMobile) {
+      var dot       = document.getElementById('cursor-dot');
+      var ring      = document.getElementById('cursor-ring');
+      var trailEl   = document.getElementById('cursor-trail');
+      var dotX = 0, dotY = 0;
+      var ringX = 0, ringY = 0;
+      var mouseX = 0, mouseY = 0;
+      var particles = [];
+      var lastParticleTime = 0;
+
+      document.addEventListener('mousemove', function (e) {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+        // Dot follows instantly
+        dotX = mouseX;
+        dotY = mouseY;
+        dot.style.transform = 'translate(' + (dotX - 4) + 'px, ' + (dotY - 4) + 'px)';
+
+        // Trail particles
+        var now = Date.now();
+        if (now - lastParticleTime > 40) {
+          createCursorParticle(mouseX, mouseY);
+          lastParticleTime = now;
+        }
+      });
+
+      // Ring follows with lag
+      function animateRing() {
+        ringX += (mouseX - ringX) * 0.12;
+        ringY += (mouseY - ringY) * 0.12;
+        ring.style.transform = 'translate(' + (ringX - 16) + 'px, ' + (ringY - 16) + 'px)';
+        requestAnimationFrame(animateRing);
+      }
+      animateRing();
+
+      // Cursor hover effect on interactive elements
+      var hoverEls = document.querySelectorAll('a, button, [role="button"], input, textarea, select, .fb-card, .card');
+      hoverEls.forEach(function (el) {
+        el.addEventListener('mouseenter', function () {
+          document.body.classList.add('cursor-hover');
+        });
+        el.addEventListener('mouseleave', function () {
+          document.body.classList.remove('cursor-hover');
+        });
+      });
+
+      // Create cursor trail particle
+      function createCursorParticle(x, y) {
+        var colors = ['#8b00ff', '#00d4ff', '#ff0080', '#ffd700', '#c084fc'];
+        var color  = colors[Math.floor(Math.random() * colors.length)];
+        var size   = Math.random() * 4 + 2;
+        var p = document.createElement('div');
+        p.className = 'cursor-particle';
+        p.style.cssText = [
+          'width:' + size + 'px',
+          'height:' + size + 'px',
+          'background:' + color,
+          'left:' + x + 'px',
+          'top:' + y + 'px',
+          '--tx:' + (Math.random() * 30 - 15) + 'px',
+          '--ty:' + (Math.random() * 30 - 15) + 'px',
+        ].join(';');
+        trailEl.appendChild(p);
+        setTimeout(function () { p.remove(); }, 800);
+      }
+    }
+
+    // ── Particle Background ──────────────────────────────────────────────────
+    var canvas  = document.getElementById('particle-canvas');
+    var ctx     = canvas ? canvas.getContext('2d') : null;
+    var pts     = [];
+    var animId;
+
+    function resizeCanvas() {
+      if (!canvas) return;
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function initParticles(count) {
+      pts = [];
+      for (var i = 0; i < count; i++) {
+        pts.push({
+          x:   Math.random() * canvas.width,
+          y:   Math.random() * canvas.height,
+          vx:  (Math.random() - 0.5) * 0.3,
+          vy:  (Math.random() - 0.5) * 0.3,
+          r:   Math.random() * 1.5 + 0.5,
+          a:   Math.random() * 0.4 + 0.1,
+          color: ['#8b00ff','#00d4ff','#ff0080','#c084fc'][Math.floor(Math.random() * 4)],
+        });
+      }
+    }
+
+    function drawParticles() {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      pts.forEach(function (p) {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = p.a;
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+
+      // Draw connections
+      for (var i = 0; i < pts.length; i++) {
+        for (var j = i + 1; j < pts.length; j++) {
+          var dx   = pts[i].x - pts[j].x;
+          var dy   = pts[i].y - pts[j].y;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 100) {
+            ctx.beginPath();
+            ctx.moveTo(pts[i].x, pts[i].y);
+            ctx.lineTo(pts[j].x, pts[j].y);
+            ctx.strokeStyle = 'rgba(139,0,255,' + (0.06 * (1 - dist / 100)) + ')';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
         }
       }
+
+      animId = requestAnimationFrame(drawParticles);
+    }
+
+    if (canvas) {
+      resizeCanvas();
+      initParticles(isMobile ? 30 : 60);
+      drawParticles();
+      window.addEventListener('resize', function () {
+        resizeCanvas();
+        initParticles(isMobile ? 30 : 60);
+      });
+    }
+
+    // ── Click Ripple ─────────────────────────────────────────────────────────
+    var rippleContainer = document.getElementById('ripple-container');
+
+    document.addEventListener('click', function (e) {
+      if (!rippleContainer) return;
+      var r = document.createElement('div');
+      r.className = 'click-ripple';
+      r.style.left = e.clientX + 'px';
+      r.style.top  = e.clientY + 'px';
+      rippleContainer.appendChild(r);
+      setTimeout(function () { r.remove(); }, 700);
     });
 
-    if (topBtn) {
-      topBtn.addEventListener('click', function() {
+    // ── Back to Top ──────────────────────────────────────────────────────────
+    var btt = document.getElementById('back-to-top');
+    if (btt) {
+      window.addEventListener('scroll', function () {
+        btt.classList.toggle('visible', window.scrollY > 500);
+      });
+      btt.addEventListener('click', function () {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     }
+
+    // ── Intersection Observer (reveal animations) ────────────────────────────
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(function (el) {
+      observer.observe(el);
+    });
+
+    // ── Button Ripple ────────────────────────────────────────────────────────
+    document.querySelectorAll('.btn').forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        var rect = btn.getBoundingClientRect();
+        var r    = document.createElement('span');
+        r.className = 'btn-ripple';
+        var size = Math.max(rect.width, rect.height);
+        r.style.width  = size + 'px';
+        r.style.height = size + 'px';
+        r.style.left   = (e.clientX - rect.left - size / 2) + 'px';
+        r.style.top    = (e.clientY - rect.top  - size / 2) + 'px';
+        btn.appendChild(r);
+        setTimeout(function () { r.remove(); }, 700);
+      });
+    });
+
+    // ── Toast System (global) ────────────────────────────────────────────────
+    window.showToast = function (msg, duration) {
+      duration = duration || 3000;
+      var container = document.getElementById('toast-container');
+      if (!container) return;
+      var t = document.createElement('div');
+      t.className = 'toast';
+      t.textContent = msg;
+      container.appendChild(t);
+      setTimeout(function () {
+        t.style.animation = 'toast-in 0.3s ease reverse forwards';
+        setTimeout(function () { t.remove(); }, 300);
+      }, duration);
+    };
+
+    // ── Page Transition ──────────────────────────────────────────────────────
+    document.querySelectorAll('a[href]').forEach(function (link) {
+      var href = link.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('http') ||
+          href.startsWith('mailto') || link.target === '_blank') return;
+
+      link.addEventListener('click', function (e) {
+        e.preventDefault();
+        var loader = document.getElementById('page-loader');
+        if (loader) {
+          loader.style.opacity = '1';
+          loader.style.visibility = 'visible';
+          loader.classList.remove('hidden');
+        }
+        setTimeout(function () {
+          window.location.href = href;
+        }, 300);
+      });
+    });
+
+  })();
   </script>
-
-  <style>
-    .page-loader {
-      position: fixed;
-      inset: 0;
-      background: var(--bg-primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      transition: opacity 0.4s ease;
-    }
-
-    .page-loader.loaded {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .loader-icon {
-      font-size: 3rem;
-      animation: pulse-glow 1s ease-in-out infinite;
-    }
-
-    .back-to-top {
-      position: fixed;
-      bottom: 28px;
-      right: 28px;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: var(--accent-gradient);
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: all var(--transition-normal);
-      z-index: 100;
-      box-shadow: var(--glow-pink);
-    }
-
-    .back-to-top.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .back-to-top:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 0 30px rgba(255, 51, 102, 0.4);
-    }
-  </style>
 </body>
 </html>
+
+<style is:global>
+  @import '../styles/global.css';
+</style>
