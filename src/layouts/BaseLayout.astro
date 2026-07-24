@@ -394,10 +394,10 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     color: #fff; white-space: nowrap;
   }
 
-  /* ── SLOW TICKER on DESKTOP (readable) ── */
+  /* ── TICKER — 60s DESKTOP, 30s MOBILE ── */
   .ticker-track {
     display: flex;
-    animation: ticker-move 180s linear infinite;
+    animation: ticker-move 60s linear infinite;
     width: max-content;
     padding-left: 140px;
     will-change: transform;
@@ -434,10 +434,10 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     to   { transform: translate3d(-50%, 0, 0); }
   }
 
-  /* ── FASTER TICKER on MOBILE (was too slow) ── */
+  /* Faster on mobile (30s) */
   @media (max-width: 768px) {
     .ticker-track {
-      animation-duration: 45s;
+      animation-duration: 30s;
     }
   }
 
@@ -529,6 +529,12 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
+    }
+    /* Keep the ticker readable instead of snapping/freezing when a device
+       has "reduce motion" enabled (common default on many phones) */
+    .ticker-track {
+      animation-duration: 180s !important;
+      transition-duration: initial !important;
     }
   }
 </style>
