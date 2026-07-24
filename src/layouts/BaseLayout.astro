@@ -56,17 +56,9 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   <!-- Loader -->
   <div id="loader">
     <div class="ld-brand">
-      <span class="logo-ani">Ani</span><span class="logo-tube">Tube</span><span class="logo-buzz">Buzz</span>
+      <span class="grad-text">Ani</span><span class="tube-text">Tube</span><span class="grad-text">Buzz</span>
     </div>
-    <div class="ld-track"><div class="ld-bar"></div></div>
-  </div>
-
-  <!-- Anime Background (rotating) -->
-  <div id="anime-bg" aria-hidden="true">
-    <div class="abg-slide abg-active" id="abg-1"></div>
-    <div class="abg-slide" id="abg-2"></div>
-    <div class="abg-dark"></div>
-    <div class="abg-gradient"></div>
+    <div class="ld-bar-wrap"><div class="ld-bar"></div></div>
   </div>
 
   <!-- App -->
@@ -76,14 +68,13 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     <slot name="footer" />
   </div>
 
-  <!-- Back to Top -->
+  <!-- Back to top -->
   <button id="btt" aria-label="Scroll to top">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>
   </button>
 
   <script is:inline>
   (function(){
-    // Loader
     window.addEventListener('load', function(){
       setTimeout(function(){
         var l = document.getElementById('loader');
@@ -91,7 +82,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       }, 600);
     });
 
-    // Back to top
     var btt = document.getElementById('btt');
     if(btt){
       window.addEventListener('scroll',function(){
@@ -100,72 +90,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
         btt.style.pointerEvents = show ? 'auto' : 'none';
       });
       btt.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); });
-    }
-
-    // Anime Background Slideshow
-    var slide1 = document.getElementById('abg-1');
-    var slide2 = document.getElementById('abg-2');
-    var activeSlide = slide1;
-    var current = 0;
-    var images = [];
-
-    function preload(url, cb){
-      var img = new Image();
-      img.onload = function(){ cb(true); };
-      img.onerror = function(){ cb(false); };
-      img.src = url;
-    }
-
-    function rotate(){
-      if(images.length <= 1) return;
-      current = (current + 1) % images.length;
-      var inactive = (activeSlide === slide1) ? slide2 : slide1;
-      preload(images[current].url, function(ok){
-        if(!ok){ setTimeout(rotate, 100); return; }
-        inactive.style.backgroundImage = 'url(' + images[current].url + ')';
-        setTimeout(function(){
-          inactive.classList.add('abg-active');
-          activeSlide.classList.remove('abg-active');
-          activeSlide = inactive;
-        }, 100);
-      });
-    }
-
-    function startBg(){
-      if(!slide1 || images.length === 0) return;
-      images.sort(function(){ return Math.random() - 0.5; });
-      preload(images[0].url, function(ok){
-        if(ok) slide1.style.backgroundImage = 'url(' + images[0].url + ')';
-      });
-      if(images.length > 1) setInterval(rotate, 15000);
-    }
-
-    // Load meta.json first
-    fetch('/bg/meta.json')
-      .then(function(r){ return r.ok ? r.json() : null; })
-      .then(function(meta){
-        if(meta && meta.images && meta.images.length > 0){
-          images = meta.images.map(function(img){
-            return { url: '/bg/' + img.filename };
-          });
-          startBg();
-        } else {
-          fallback();
-        }
-      })
-      .catch(fallback);
-
-    function fallback(){
-      var cands = [];
-      for(var i = 1; i <= 15; i++) cands.push('/bg/bg' + i + '.jpg');
-      var checked = 0;
-      cands.forEach(function(url){
-        preload(url, function(ok){
-          checked++;
-          if(ok) images.push({ url: url });
-          if(checked === cands.length && images.length > 0) startBg();
-        });
-      });
     }
   })();
   </script>
@@ -178,75 +102,59 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
 
-  /* ═══ DARK THEME ═══ */
+  /* ═══ THEME VARS ═══ */
   [data-theme="dark"] {
-    --bg-primary:    #0a0510;
-    --bg-secondary:  #12081e;
-    --bg-glass:      rgba(10, 5, 16, 0.7);
-    --bg-card:       rgba(18, 8, 30, 0.6);
-    --bg-card-hover: rgba(28, 14, 44, 0.75);
+    --bg-primary:    #0d0d10;
+    --bg-secondary:  #16161b;
+    --bg-elevated:   #1c1c24;
+    --bg-glass:      rgba(13, 13, 16, 0.85);
+    --bg-card:       #16161b;
+    --bg-card-hover: #1e1e26;
 
     --text-primary:   #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.72);
-    --text-muted:     rgba(255, 255, 255, 0.45);
-    --text-faint:     rgba(255, 255, 255, 0.2);
+    --text-muted:     rgba(255, 255, 255, 0.5);
+    --text-faint:     rgba(255, 255, 255, 0.25);
 
-    --border-color:  rgba(255, 51, 102, 0.15);
+    --border-color:  rgba(255, 255, 255, 0.08);
     --border-hover:  rgba(255, 51, 102, 0.4);
-
-    --accent-pink:      #ff3366;
-    --accent-pink-hot:  #ff0080;
-    --accent-cyan:      #00d4ff;
-    --accent-purple:    #a855f7;
-    --accent-gradient:  linear-gradient(135deg, #ff3366, #ff0080);
-    --accent-cyan-glow: 0 0 20px rgba(0, 212, 255, 0.5);
-    --accent-pink-glow: 0 0 20px rgba(255, 51, 102, 0.4);
-
-    --bg-dim-overlay:  rgba(6, 2, 14, 0.75);
-    --scrollbar-thumb: rgba(255, 51, 102, 0.3);
   }
 
-  /* ═══ LIGHT THEME ═══ */
   [data-theme="light"] {
-    --bg-primary:    #fef5f7;
+    --bg-primary:    #f7f7fa;
     --bg-secondary:  #ffffff;
-    --bg-glass:      rgba(254, 245, 247, 0.8);
-    --bg-card:       rgba(255, 255, 255, 0.85);
-    --bg-card-hover: rgba(255, 255, 255, 1);
+    --bg-elevated:   #ffffff;
+    --bg-glass:      rgba(247, 247, 250, 0.9);
+    --bg-card:       #ffffff;
+    --bg-card-hover: #ffffff;
 
-    --text-primary:   #1a0510;
-    --text-secondary: rgba(26, 5, 16, 0.75);
-    --text-muted:     rgba(26, 5, 16, 0.5);
-    --text-faint:     rgba(26, 5, 16, 0.22);
+    --text-primary:   #0d0d10;
+    --text-secondary: rgba(13, 13, 16, 0.75);
+    --text-muted:     rgba(13, 13, 16, 0.5);
+    --text-faint:     rgba(13, 13, 16, 0.22);
 
-    --border-color:  rgba(255, 51, 102, 0.15);
+    --border-color:  rgba(13, 13, 16, 0.08);
     --border-hover:  rgba(255, 51, 102, 0.4);
-
-    --accent-pink:      #e6295a;
-    --accent-pink-hot:  #cc0066;
-    --accent-cyan:      #0099cc;
-    --accent-purple:    #8b3fbf;
-    --accent-gradient:  linear-gradient(135deg, #e6295a, #cc0066);
-    --accent-cyan-glow: 0 0 20px rgba(0, 153, 204, 0.3);
-    --accent-pink-glow: 0 0 20px rgba(230, 41, 90, 0.3);
-
-    --bg-dim-overlay:  rgba(254, 245, 247, 0.82);
-    --scrollbar-thumb: rgba(255, 51, 102, 0.25);
   }
 
-  /* ═══ LAYOUT VARS ═══ */
+  /* ═══ SHARED GRADIENT (Pink → Cyan) ═══ */
   :root {
-    --header-height: 68px;
+    --grad: linear-gradient(135deg, #ff3366 0%, #ff0080 50%, #00d4ff 100%);
+    --grad-pink: linear-gradient(135deg, #ff3366, #ff0080);
+    --grad-cyan: linear-gradient(135deg, #00d4ff, #0099cc);
+    --grad-glow: 0 0 20px rgba(255, 51, 102, 0.3);
+
+    --header-h: 68px;
     --font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-heading: 'Bricolage Grotesque', 'DM Sans', sans-serif;
     --radius-sm: 8px;
     --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
-    --radius-round: 999px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
+    --max-w: 1360px;
+
     --transition-fast:   0.2s ease;
     --transition-normal: 0.3s ease;
-    --max-w: 1360px;
   }
 
   /* ═══ BODY ═══ */
@@ -258,7 +166,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     min-height: 100vh;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
-    transition: background 0.4s ease, color 0.4s ease;
+    transition: background 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -266,10 +174,9 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     font-weight: 700;
     line-height: 1.15;
     color: var(--text-primary);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
   }
 
-  p, li, span, div, td, th, label { color: inherit; }
   p, li { color: var(--text-secondary); }
   a { color: inherit; text-decoration: none; }
   img { max-width: 100%; height: auto; display: block; }
@@ -277,7 +184,25 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 9px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255, 51, 102, 0.3); border-radius: 9px; }
+
+  /* ═══ GRADIENT TEXT (universal) ═══ */
+  .grad-text {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
+  }
+
+  .grad-text-pink {
+    background: var(--grad-pink);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .tube-text { color: var(--text-primary); }
 
   /* ═══ LOADER ═══ */
   #loader {
@@ -285,7 +210,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     background: var(--bg-primary);
     z-index: 99999;
     display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 1rem;
+    flex-direction: column; gap: 1.2rem;
     transition: opacity 0.5s ease;
   }
 
@@ -294,68 +219,32 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     font-size: 2rem;
     font-weight: 800;
     line-height: 1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
   }
 
-  .ld-track {
-    width: 160px; height: 2px;
+  .ld-bar-wrap {
+    width: 180px; height: 2px;
     background: var(--border-color);
     border-radius: 9px; overflow: hidden;
   }
 
   .ld-bar {
     height: 100%;
-    background: var(--accent-gradient);
+    background: var(--grad);
     border-radius: 9px;
-    animation: ld-fill 0.8s ease forwards;
+    animation: ld-fill 0.9s ease forwards;
   }
 
   @keyframes ld-fill { from { width: 0; } to { width: 100%; } }
 
-  /* ═══ ANIME BACKGROUND ═══ */
-  #anime-bg {
-    position: fixed; inset: 0;
-    z-index: 0; overflow: hidden;
-    pointer-events: none;
-  }
-
-  .abg-slide {
-    position: absolute; inset: -30px;
-    background-size: cover;
-    background-position: center center;
-    opacity: 0;
-    transition: opacity 2.5s ease-in-out;
-    filter: blur(6px) brightness(0.55) saturate(1.4);
-    transform: scale(1.08);
-  }
-
-  .abg-slide.abg-active { opacity: 1; }
-
-  .abg-dark {
-    position: absolute; inset: 0;
-    background: var(--bg-dim-overlay);
-    transition: background 0.4s ease;
-  }
-
-  .abg-gradient {
-    position: absolute; inset: 0;
-    background:
-      radial-gradient(ellipse at 15% 5%, rgba(255, 51, 102, 0.18) 0%, transparent 55%),
-      radial-gradient(ellipse at 85% 90%, rgba(0, 212, 255, 0.14) 0%, transparent 55%);
-  }
-
-  [data-theme="light"] .abg-slide {
-    filter: blur(8px) brightness(1.1) saturate(0.7) contrast(0.85);
-    opacity: 0.15 !important;
-  }
-  [data-theme="light"] .abg-slide.abg-active { opacity: 0.15 !important; }
-
   /* ═══ APP ═══ */
   #app {
-    position: relative; z-index: 1;
+    position: relative;
     min-height: 100vh;
-    display: flex; flex-direction: column;
+    display: flex;
+    flex-direction: column;
   }
+
   main { flex: 1; }
 
   .container {
@@ -370,118 +259,37 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     position: fixed; bottom: 1.5rem; right: 1.5rem;
     width: 44px; height: 44px;
     border-radius: 50%;
-    background: var(--accent-gradient);
+    background: var(--grad);
     border: none; color: #fff;
     display: flex; align-items: center; justify-content: center;
     z-index: 1000;
     opacity: 0; pointer-events: none;
     transition: opacity 0.3s, transform 0.2s;
     cursor: pointer;
-    box-shadow: var(--accent-pink-glow);
+    box-shadow: var(--grad-glow);
   }
   #btt:hover { transform: translateY(-3px); }
 
-  /* ═══ LOGO STYLES (shared) ═══ */
-  .logo-ani {
-    background: var(--accent-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .logo-tube { color: var(--text-primary); }
-  .logo-buzz {
-    color: var(--accent-cyan);
-    margin-left: 3px;
-    text-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
-  }
-
   /* ═══ SECTION HEADERS ═══ */
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-    gap: 1rem;
-  }
-
-  .section-header-left { display: flex; align-items: center; gap: 0.75rem; }
-
-  .section-accent-bar {
-    width: 4px;
-    height: 28px;
-    background: var(--accent-gradient);
-    border-radius: 3px;
-    box-shadow: var(--accent-pink-glow);
+  .section-block {
+    padding: 3rem 0;
   }
 
   .section-title {
     font-family: var(--font-heading);
-    font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0;
-    letter-spacing: -0.02em;
+    margin: 0 0 1.5rem;
+    letter-spacing: -0.03em;
   }
 
-  .section-view-all {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--accent-cyan);
-    transition: gap 0.2s;
-  }
-
-  .section-view-all:hover { gap: 0.5rem; color: var(--accent-pink); }
-
-  .gradient-text {
-    background: var(--accent-gradient);
+  .section-title-grad {
+    background: var(--grad);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-
-  /* ═══ CARDS ═══ */
-  .card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    transition: all var(--transition-normal);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
-
-  .card:hover {
-    border-color: var(--border-hover);
-    transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(255, 51, 102, 0.15);
-  }
-
-  /* ═══ BADGES ═══ */
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.2rem 0.5rem;
-    border-radius: 999px;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  .badge-pink   { background: rgba(255, 51, 102, 0.15); color: var(--accent-pink); }
-  .badge-cyan   { background: rgba(0, 212, 255, 0.12);  color: var(--accent-cyan); }
-  .badge-purple { background: rgba(168, 85, 247, 0.12); color: var(--accent-purple); }
-  .badge-gold   { background: rgba(255, 215, 0, 0.1);   color: #ffd700; }
-
-  .cat-news        { background: rgba(255, 107, 0, 0.12); color: #ff9f4a; }
-  .cat-anime-recap { background: rgba(255, 51, 102, 0.12); color: var(--accent-pink); }
-  .cat-manhwa      { background: rgba(0, 212, 255, 0.12); color: var(--accent-cyan); }
-  .cat-streaming   { background: rgba(255, 0, 128, 0.12); color: #ff6eb4; }
-  .cat-gaming      { background: rgba(0, 255, 128, 0.08); color: #00ff80; }
-  .cat-manga       { background: rgba(255, 215, 0, 0.1);  color: #ffd700; }
 
   /* ═══ BUTTONS ═══ */
   .btn {
@@ -489,8 +297,8 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.7rem 1.5rem;
-    border-radius: var(--radius-md);
+    padding: 0.75rem 1.6rem;
+    border-radius: 999px;
     font-size: 0.88rem;
     font-weight: 600;
     font-family: inherit;
@@ -501,58 +309,110 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     white-space: nowrap;
   }
 
-  .btn-primary {
-    background: var(--accent-gradient);
+  .btn-grad {
+    background: var(--grad);
     color: #fff;
-    box-shadow: 0 4px 15px rgba(255, 51, 102, 0.35);
+    box-shadow: 0 4px 20px rgba(255, 51, 102, 0.35);
   }
-  .btn-primary:hover {
+  .btn-grad:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(255, 51, 102, 0.5);
+    box-shadow: 0 8px 30px rgba(255, 51, 102, 0.5);
   }
 
-  .btn-secondary {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--border-color);
     color: var(--text-primary);
-    backdrop-filter: blur(10px);
   }
-  .btn-secondary:hover {
+  .btn-outline:hover {
+    border-color: rgba(255, 51, 102, 0.5);
+    background: rgba(255, 51, 102, 0.06);
+  }
+
+  .btn-play-round {
+    background: rgba(255, 255, 255, 0.9);
+    color: #0d0d10;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15);
+  }
+
+  .btn-play-round:hover {
+    transform: scale(1.1);
+    background: #fff;
+    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.2);
+  }
+
+  /* ═══ CARDS ═══ */
+  .card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+  }
+
+  .card:hover {
     background: var(--bg-card-hover);
-    border-color: var(--border-hover);
+    transform: translateY(-6px);
   }
 
-  .btn-cyan {
-    background: rgba(0, 212, 255, 0.15);
-    border: 1px solid rgba(0, 212, 255, 0.3);
-    color: var(--accent-cyan);
-    backdrop-filter: blur(10px);
+  /* ═══ TICKER ═══ */
+  .ticker-wrap {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    overflow: hidden;
+    padding: 0.55rem 0;
+    position: relative;
   }
-  .btn-cyan:hover {
-    background: rgba(0, 212, 255, 0.25);
-    border-color: rgba(0, 212, 255, 0.5);
-    box-shadow: var(--accent-cyan-glow);
+  .ticker-wrap::before, .ticker-wrap::after {
+    content: ''; position: absolute; top: 0; bottom: 0;
+    width: 60px; z-index: 2; pointer-events: none;
+  }
+  .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg-secondary), transparent); }
+  .ticker-wrap::after  { right: 0; background: linear-gradient(-90deg, var(--bg-secondary), transparent); }
+
+  .ticker-label {
+    position: absolute; left: 0; top: 0; bottom: 0; z-index: 3;
+    background: var(--grad);
+    display: flex; align-items: center;
+    padding: 0 0.9rem;
+    font-family: var(--font-heading);
+    font-size: 0.65rem; font-weight: 800;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: #fff; white-space: nowrap;
   }
 
-  /* ═══ SCORE ═══ */
-  .score-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.2rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    background: rgba(255, 215, 0, 0.15);
-    border: 1px solid rgba(255, 215, 0, 0.3);
-    color: #ffd700;
+  .ticker-track {
+    display: flex;
+    animation: ticker-move 90s linear infinite;
+    width: max-content;
+    padding-left: 130px;
+    will-change: transform;
   }
+  .ticker-track:hover { animation-play-state: paused; }
 
-  /* ═══ DIVIDER ═══ */
-  .divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--border-color), transparent);
-    margin: 2rem 0;
+  .ticker-item {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0 1.2rem;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    transition: color 0.2s;
+  }
+  .ticker-item:hover {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .ticker-sep { color: var(--text-faint); padding: 0 0.3rem; font-size: 0.4rem; }
+
+  @keyframes ticker-move {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
   }
 
   /* ═══ VIDEO EMBED ═══ */
@@ -561,7 +421,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     aspect-ratio: 16/9;
     border-radius: var(--radius-lg); overflow: hidden;
     background: #000;
-    border: 1px solid var(--border-color);
     margin: 1.5rem 0;
   }
   .video-embed-wrapper iframe {
@@ -569,37 +428,44 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     width: 100%; height: 100%; border: none;
   }
 
-  /* ═══ PROSE (article body) ═══ */
+  /* ═══ PROSE ═══ */
   .prose { color: var(--text-secondary); line-height: 1.8; font-size: 1rem; }
   .prose h2 {
-    font-size: 1.4rem; color: var(--text-primary);
+    font-size: 1.5rem; color: var(--text-primary);
     margin: 2rem 0 0.75rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid var(--border-color);
   }
-  .prose h3 { font-size: 1.1rem; color: var(--text-primary); margin: 1.5rem 0 0.5rem; }
+  .prose h3 { font-size: 1.15rem; color: var(--text-primary); margin: 1.5rem 0 0.5rem; }
   .prose p { margin-bottom: 1rem; color: var(--text-secondary); }
-  .prose a { color: var(--accent-pink); text-decoration: underline; text-underline-offset: 3px; }
-  .prose a:hover { color: var(--accent-cyan); }
+  .prose a {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .prose a:hover { text-decoration: underline; text-underline-offset: 3px; }
   .prose ul, .prose ol { padding-left: 1.5rem; margin-bottom: 1rem; color: var(--text-secondary); }
   .prose li { margin-bottom: 0.3rem; }
   .prose blockquote {
-    border-left: 3px solid var(--accent-pink);
+    border-left: 3px solid transparent;
+    border-image: var(--grad) 1;
     padding: 0.75rem 1rem;
-    background: rgba(255, 51, 102, 0.06);
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: rgba(255, 51, 102, 0.04);
     margin: 1rem 0; font-style: italic;
   }
   .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
   .prose th {
-    background: rgba(255, 51, 102, 0.08); color: var(--accent-pink);
-    padding: 0.6rem 0.9rem; text-align: left;
+    background: rgba(255, 51, 102, 0.06);
+    color: var(--text-primary);
+    padding: 0.7rem 0.9rem; text-align: left;
     border-bottom: 1px solid var(--border-color);
     font-size: 0.72rem; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.05em;
   }
-  .prose td { padding: 0.6rem 0.9rem; border-bottom: 1px solid rgba(255, 51, 102, 0.05); color: var(--text-secondary); }
-  .prose tr:hover td { background: rgba(255, 51, 102, 0.03); }
+  .prose td { padding: 0.7rem 0.9rem; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
   .prose hr {
     border: none; height: 1px;
     background: linear-gradient(90deg, transparent, var(--border-color), transparent);
@@ -609,9 +475,9 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   /* ═══ SKELETON ═══ */
   .skeleton {
     background: linear-gradient(90deg,
-      rgba(255, 51, 102, 0.04) 25%,
-      rgba(255, 51, 102, 0.08) 50%,
-      rgba(255, 51, 102, 0.04) 75%
+      rgba(255, 255, 255, 0.04) 25%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.04) 75%
     );
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
@@ -619,54 +485,11 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
   @keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
 
-  mark.hl { background: rgba(255, 51, 102, 0.3); color: var(--text-primary); border-radius: 2px; padding: 0 2px; }
-
-  /* ═══ TICKER ═══ */
-  .ticker-wrap {
-    background: rgba(255, 51, 102, 0.04);
-    border-top: 1px solid rgba(255, 51, 102, 0.1);
-    border-bottom: 1px solid rgba(255, 51, 102, 0.1);
-    overflow: hidden;
-    padding: 0.55rem 0;
-    position: relative;
-  }
-  .ticker-wrap::before, .ticker-wrap::after {
-    content: ''; position: absolute; top: 0; bottom: 0;
-    width: 60px; z-index: 2; pointer-events: none;
-  }
-  .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg-primary), transparent); }
-  .ticker-wrap::after  { right: 0; background: linear-gradient(-90deg, var(--bg-primary), transparent); }
-  .ticker-label {
-    position: absolute; left: 0; top: 0; bottom: 0; z-index: 3;
-    background: var(--accent-gradient);
-    display: flex; align-items: center;
-    padding: 0 0.9rem;
-    font-family: var(--font-heading);
-    font-size: 0.65rem; font-weight: 800;
-    letter-spacing: 0.12em; text-transform: uppercase;
-    color: #fff; white-space: nowrap;
-  }
-  .ticker-track {
-    display: flex;
-    animation: ticker-move 90s linear infinite;
-    width: max-content;
-    padding-left: 130px;
-    will-change: transform;
-  }
-  .ticker-track:hover { animation-play-state: paused; }
-  .ticker-item {
-    display: inline-flex; align-items: center; gap: 0.35rem;
-    padding: 0 1.2rem;
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    transition: color 0.2s;
-  }
-  .ticker-item:hover { color: var(--accent-pink); }
-  .ticker-sep { color: var(--text-faint); padding: 0 0.4rem; font-size: 0.4rem; }
-  @keyframes ticker-move {
-    from { transform: translateX(0); }
-    to   { transform: translateX(-50%); }
+  mark.hl {
+    background: rgba(255, 51, 102, 0.25);
+    color: var(--text-primary);
+    border-radius: 2px;
+    padding: 0 3px;
   }
 
   /* ═══ REVEAL ═══ */
@@ -675,9 +498,4 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     transition: opacity 0.6s ease, transform 0.6s ease;
   }
   .reveal.visible { opacity: 1; transform: translateY(0); }
-
-  @keyframes pulse-glow {
-    0%, 100% { filter: drop-shadow(0 0 5px rgba(255, 51, 102, 0.5)); }
-    50%       { filter: drop-shadow(0 0 15px rgba(255, 51, 102, 0.9)); }
-  }
 </style>
