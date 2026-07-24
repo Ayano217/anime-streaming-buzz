@@ -1,361 +1,598 @@
 ---
-export interface HeroPost {
-  title: string;
-  excerpt: string;
-  category: string;
-  date: string;
-  readTime: string;
-  image: string;
-  slug: string;
+// This fetches trending anime from Jikan API at build time
+// Falls back to static featured list if API fails
+
+let heroAnime = [];
+
+try {
+  const res = await fetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=5');
+  if (res.ok) {
+    const data = await res.json();
+    heroAnime = (data.data || []).slice(0, 5).map(a => ({
+      title:    a.title_english || a.title,
+      titleJp:  a.title_japanese || '',
+      synopsis: (a.synopsis || '').substring(0, 200) + '...',
+      image:    a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || '',
+      score:    a.score,
+      year:     a.year,
+      episodes: a.episodes,
+      genres:   (a.genres || []).slice(0, 3).map(g => g.name),
+      studio:   a.studios?.[0]?.name || '',
+      malUrl:   a.url,
+      type:     a.type || 'TV',
+      status:   a.status || '',
+    }));
+  }
+} catch (e) {
+  console.warn('[HeroSection] Jikan fetch failed:', e);
 }
 
-export interface Props {
-  mainPost: HeroPost | null;
-  sidePosts?: HeroPost[];
+// Fallback if no data
+if (heroAnime.length === 0) {
+  heroAnime = [{
+    title: 'Loading Featured Anime',
+    titleJp: '',
+    synopsis: 'Fresh anime content updated daily. Discover the latest trending series, official trailers, and streaming guides.',
+    image: '',
+    score: null,
+    year: 2025,
+    episodes: null,
+    genres: ['Action', 'Adventure'],
+    studio: 'AniTube Buzz',
+    malUrl: '#',
+    type: 'TV',
+    status: 'Featured',
+  }];
 }
-
-const { mainPost, sidePosts = [] } = Astro.props;
 ---
 
-{mainPost && (
-  <section class="hero-section">
-    <div class="container">
-      <div class="hero-grid">
+<section class="hero-section" id="heroSection">
+  <div class="hero-container container">
 
-        <!-- Main Featured -->
-        <a href={mainPost.slug} class="hero-main">
-          <div class="hero-media">
-            <img src={mainPost.image} alt={mainPost.title} loading="eager" />
-            <div class="hero-gradient"></div>
-            <div class="hero-particles"></div>
-          </div>
+    <!-- Slides -->
+    <div class="hero-slides" id="heroSlides">
+      {heroAnime.map((anime, idx) => (
+        <div class={`hero-slide ${idx === 0 ? 'active' : ''}`} data-index={idx}>
 
+          <!-- Backdrop image -->
+          {anime.image && (
+            <div class="hero-backdrop" style={`background-image: url(${anime.image})`}></div>
+          )}
+          <div class="hero-backdrop-overlay"></div>
+
+          <!-- Content -->
           <div class="hero-content">
-            <div class="hero-badge-row">
-              <span class="badge badge-pink">{mainPost.category}</span>
-              <span class="hero-live-tag">● FEATURED</span>
-            </div>
-            <h1 class="hero-title">{mainPost.title}</h1>
-            <p class="hero-excerpt">{mainPost.excerpt}</p>
-            <div class="hero-meta">
-              <span>📅 {mainPost.date}</span>
-              <span>·</span>
-              <span>⏱️ {mainPost.readTime}</span>
-            </div>
-            <span class="hero-read-btn">Read Full Article →</span>
-          </div>
-        </a>
-
-        <!-- Side Cards -->
-        <div class="hero-sidebar">
-          {sidePosts.map((post, index) => (
-            <a href={post.slug} class="hero-side-card" style={`animation-delay: ${index * 0.1}s`}>
-              <div class="side-image">
-                <img src={post.image} alt={post.title} loading="lazy" />
-              </div>
-              <div class="side-content">
-                <span class="badge badge-blue" style="font-size:0.65rem; padding:3px 10px;">
-                  {post.category}
+            <div class="hero-meta stagger-in">
+              <span class="hero-badge">
+                <span class="hero-dot"></span>
+                Featured Anime
+              </span>
+              {anime.score && (
+                <span class="hero-score">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  {anime.score}
                 </span>
-                <h3 class="side-title">{post.title}</h3>
-                <span class="side-meta">{post.date} · {post.readTime}</span>
+              )}
+              {anime.type && <span class="hero-info-pill">{anime.type}</span>}
+              {anime.year && <span class="hero-info-pill">{anime.year}</span>}
+              {anime.episodes && <span class="hero-info-pill">{anime.episodes} EP</span>}
+            </div>
+
+            <h1 class="hero-title stagger-in">{anime.title}</h1>
+
+            {anime.titleJp && <p class="hero-title-jp stagger-in">{anime.titleJp}</p>}
+
+            {anime.genres.length > 0 && (
+              <div class="hero-genres stagger-in">
+                {anime.genres.map(g => <span class="hero-genre">{g}</span>)}
               </div>
-            </a>
-          ))}
+            )}
+
+            <p class="hero-synopsis stagger-in">{anime.synopsis}</p>
+
+            <div class="hero-actions stagger-in">
+              <a href={`/search?q=${encodeURIComponent(anime.title)}`} class="hero-btn hero-btn-play">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                Watch Now
+              </a>
+              <a href={anime.malUrl} target="_blank" rel="noopener" class="hero-btn hero-btn-info">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 16v-4M12 8h.01"/>
+                </svg>
+                More Info
+              </a>
+            </div>
+
+            {anime.studio && (
+              <p class="hero-studio stagger-in">
+                Studio: <span>{anime.studio}</span>
+              </p>
+            )}
+          </div>
+
         </div>
-      </div>
+      ))}
     </div>
-  </section>
-)}
+
+    <!-- Navigation dots -->
+    <div class="hero-dots" id="heroDots">
+      {heroAnime.map((_, idx) => (
+        <button class={`hero-dot-btn ${idx === 0 ? 'active' : ''}`} data-index={idx} aria-label={`Slide ${idx + 1}`}></button>
+      ))}
+    </div>
+
+    <!-- Arrow controls -->
+    <button class="hero-arrow hero-arrow-left" id="heroPrev" aria-label="Previous">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="hero-arrow hero-arrow-right" id="heroNext" aria-label="Next">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+
+    <!-- Progress bar -->
+    <div class="hero-progress" id="heroProgress">
+      <div class="hero-progress-bar" id="heroProgressBar"></div>
+    </div>
+
+  </div>
+</section>
+
+<script is:inline>
+  (function() {
+    'use strict';
+
+    var slides = document.querySelectorAll('.hero-slide');
+    var dots   = document.querySelectorAll('.hero-dot-btn');
+    var progressBar = document.getElementById('heroProgressBar');
+    var current = 0;
+    var interval;
+    var duration = 7000; // 7 seconds per slide
+
+    if(slides.length === 0) return;
+
+    function goto(idx){
+      slides[current].classList.remove('active');
+      dots[current] && dots[current].classList.remove('active');
+      current = (idx + slides.length) % slides.length;
+      slides[current].classList.add('active');
+      dots[current] && dots[current].classList.add('active');
+      restartProgress();
+    }
+
+    function next(){ goto(current + 1); }
+    function prev(){ goto(current - 1); }
+
+    function restartProgress(){
+      if(!progressBar) return;
+      progressBar.style.transition = 'none';
+      progressBar.style.width = '0%';
+      void progressBar.offsetWidth;
+      progressBar.style.transition = 'width ' + duration + 'ms linear';
+      progressBar.style.width = '100%';
+    }
+
+    function startAuto(){
+      restartProgress();
+      interval = setInterval(next, duration);
+    }
+
+    function stopAuto(){ clearInterval(interval); }
+
+    // Arrow controls
+    document.getElementById('heroPrev').addEventListener('click', function(){
+      stopAuto(); prev(); startAuto();
+    });
+    document.getElementById('heroNext').addEventListener('click', function(){
+      stopAuto(); next(); startAuto();
+    });
+
+    // Dot controls
+    dots.forEach(function(dot){
+      dot.addEventListener('click', function(){
+        stopAuto();
+        goto(parseInt(dot.dataset.index));
+        startAuto();
+      });
+    });
+
+    // Pause on hover
+    var hero = document.getElementById('heroSection');
+    if(hero) {
+      hero.addEventListener('mouseenter', stopAuto);
+      hero.addEventListener('mouseleave', startAuto);
+    }
+
+    // Start
+    if(slides.length > 1) startAuto();
+
+  })();
+</script>
 
 <style>
   .hero-section {
-    padding-top: 24px;
-    padding-bottom: 24px;
-  }
-
-  .hero-grid {
-    display: grid;
-    grid-template-columns: 1.8fr 1fr;
-    gap: 20px;
-    align-items: stretch;
-  }
-
-  /* Main Hero */
-  .hero-main {
+    padding: 1.5rem 0;
     position: relative;
-    display: block;
-    text-decoration: none;
+  }
+
+  .hero-container {
+    position: relative;
+  }
+
+  .hero-slides {
+    position: relative;
+    height: 520px;
     border-radius: var(--radius-xl);
     overflow: hidden;
-    min-height: 520px;
+    background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    transition: all var(--transition-normal);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   }
 
-  .hero-main:hover {
-    border-color: var(--border-glow);
-    box-shadow: var(--glow-pink);
-  }
-
-  .hero-media {
+  .hero-slide {
     position: absolute;
     inset: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 1s ease, visibility 1s ease;
+    display: flex;
+    align-items: center;
+    padding: 3rem 3.5rem;
   }
 
-  .hero-media img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+  .hero-slide.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Backdrop image (right side, faded) */
+  .hero-backdrop {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center right;
+    z-index: 0;
+    transform: scale(1);
     transition: transform 8s ease;
   }
 
-  .hero-main:hover .hero-media img {
-    transform: scale(1.06);
+  .hero-slide.active .hero-backdrop {
+    transform: scale(1.08);
   }
 
-  .hero-gradient {
+  .hero-backdrop-overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      to top,
-      rgba(11, 11, 20, 0.95) 0%,
-      rgba(11, 11, 20, 0.7) 35%,
-      rgba(11, 11, 20, 0.2) 65%,
-      transparent 100%
-    );
+    background:
+      linear-gradient(90deg,
+        rgba(6, 2, 14, 0.95) 0%,
+        rgba(6, 2, 14, 0.7) 40%,
+        rgba(6, 2, 14, 0.3) 70%,
+        transparent 100%
+      ),
+      linear-gradient(180deg,
+        transparent 0%,
+        transparent 60%,
+        rgba(6, 2, 14, 0.8) 100%
+      );
+    z-index: 1;
   }
 
-  .hero-particles {
-    position: absolute;
-    inset: 0;
-    background-image:
-      radial-gradient(1px 1px at 20% 30%, rgba(255, 51, 102, 0.4), transparent),
-      radial-gradient(1px 1px at 70% 60%, rgba(0, 204, 255, 0.3), transparent),
-      radial-gradient(1px 1px at 40% 80%, rgba(136, 51, 255, 0.3), transparent);
-    animation: float 6s ease-in-out infinite;
-    pointer-events: none;
+  [data-theme="light"] .hero-backdrop-overlay {
+    background:
+      linear-gradient(90deg,
+        rgba(254, 245, 247, 0.95) 0%,
+        rgba(254, 245, 247, 0.7) 40%,
+        rgba(254, 245, 247, 0.3) 70%,
+        transparent 100%
+      );
   }
 
+  /* Content */
   .hero-content {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 32px;
+    position: relative;
     z-index: 2;
-  }
-
-  .hero-badge-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-
-  .hero-live-tag {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--accent-green);
-    letter-spacing: 1px;
-    animation: pulse-glow 2s infinite;
-  }
-
-  .hero-title {
-    font-size: 2rem;
-    font-weight: 800;
-    color: #fff;
-    line-height: 1.2;
-    margin-bottom: 12px;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  }
-
-  .hero-excerpt {
-    font-size: 0.98rem;
-    color: rgba(255, 255, 255, 0.78);
-    max-width: 650px;
-    line-height: 1.55;
-    margin-bottom: 14px;
+    max-width: 55%;
   }
 
   .hero-meta {
     display: flex;
-    gap: 8px;
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.55);
-    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
   }
 
-  .hero-read-btn {
-    display: inline-block;
-    padding: 10px 24px;
-    background: var(--accent-gradient);
-    color: #fff;
-    border-radius: var(--radius-round);
-    font-size: 0.85rem;
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255, 51, 102, 0.12);
+    border: 1px solid rgba(255, 51, 102, 0.3);
+    color: var(--accent-pink);
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .hero-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-pink);
+    box-shadow: 0 0 8px var(--accent-pink);
+    animation: pulse-dot 1.5s ease infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+
+  .hero-score {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: #ffd700;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .hero-info-pill {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-secondary);
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
     font-weight: 600;
-    transition: all var(--transition-fast);
+    letter-spacing: 0.02em;
   }
 
-  .hero-main:hover .hero-read-btn {
-    box-shadow: var(--glow-pink);
-    transform: translateY(-2px);
+  [data-theme="light"] .hero-info-pill {
+    background: rgba(26, 5, 16, 0.06);
+    border-color: rgba(26, 5, 16, 0.1);
   }
 
-  /* Sidebar */
-  .hero-sidebar {
+  .hero-title {
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 5vw, 3.8rem);
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.05;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.03em;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .hero-title-jp {
+    font-size: 0.95rem;
+    color: var(--accent-cyan);
+    margin-bottom: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .hero-genres {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
   }
 
-  .hero-side-card {
+  .hero-genre {
+    background: rgba(0, 212, 255, 0.1);
+    border: 1px solid rgba(0, 212, 255, 0.25);
+    color: var(--accent-cyan);
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+
+  .hero-synopsis {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    max-width: 500px;
+  }
+
+  .hero-actions {
     display: flex;
-    gap: 14px;
-    padding: 14px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.8rem;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 700;
     text-decoration: none;
     transition: all var(--transition-fast);
-    animation: fadeInUp 0.5s ease forwards;
-    opacity: 0;
-    position: relative;
-    overflow: hidden;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
   }
 
-  .hero-side-card::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
+  .hero-btn-play {
     background: var(--accent-gradient);
-    opacity: 0;
-    transition: opacity var(--transition-fast);
+    color: #fff;
+    box-shadow: 0 8px 25px rgba(255, 51, 102, 0.4);
   }
 
-  .hero-side-card:hover {
-    background: var(--bg-card-hover);
-    border-color: var(--border-glow);
-    box-shadow: var(--glow-pink);
-    transform: translateX(4px);
+  .hero-btn-play:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(255, 51, 102, 0.55);
   }
 
-  .hero-side-card:hover::before {
-    opacity: 1;
-  }
-
-  .side-image {
-    width: 100px;
-    min-width: 100px;
-    height: 85px;
-    border-radius: var(--radius-md);
-    overflow: hidden;
-  }
-
-  .side-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform var(--transition-normal);
-  }
-
-  .hero-side-card:hover .side-image img {
-    transform: scale(1.1);
-  }
-
-  .side-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 6px;
-    min-width: 0;
-  }
-
-  .side-title {
-    font-size: 0.9rem;
-    font-weight: 600;
+  .hero-btn-info {
+    background: rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
-    line-height: 1.35;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    transition: color var(--transition-fast);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
   }
 
-  .hero-side-card:hover .side-title {
-    color: var(--accent-primary);
+  .hero-btn-info:hover {
+    background: rgba(0, 212, 255, 0.15);
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+    box-shadow: var(--accent-cyan-glow);
+    transform: translateY(-3px);
   }
 
-  .side-meta {
-    font-size: 0.75rem;
+  .hero-studio {
+    font-size: 0.78rem;
     color: var(--text-muted);
   }
 
-  /* Responsive */
-  @media (max-width: 1024px) {
-    .hero-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .hero-main {
-      min-height: 400px;
-    }
-
-    .hero-title {
-      font-size: 1.6rem;
-    }
-
-    .hero-sidebar {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .hero-side-card {
-      flex-direction: column;
-    }
-
-    .side-image {
-      width: 100%;
-      height: 120px;
-    }
+  .hero-studio span {
+    color: var(--text-primary);
+    font-weight: 600;
   }
 
-  @media (max-width: 600px) {
-    .hero-main {
-      min-height: 340px;
-    }
+  /* ── Stagger animations ── */
+  .stagger-in {
+    opacity: 0;
+    transform: translateY(20px);
+  }
 
-    .hero-content {
-      padding: 20px;
-    }
+  .hero-slide.active .stagger-in {
+    animation: fadeInUp 0.8s ease forwards;
+  }
 
-    .hero-title {
-      font-size: 1.35rem;
-    }
+  .hero-slide.active .hero-meta      { animation-delay: 0.2s; }
+  .hero-slide.active .hero-title     { animation-delay: 0.3s; }
+  .hero-slide.active .hero-title-jp  { animation-delay: 0.4s; }
+  .hero-slide.active .hero-genres    { animation-delay: 0.5s; }
+  .hero-slide.active .hero-synopsis  { animation-delay: 0.6s; }
+  .hero-slide.active .hero-actions   { animation-delay: 0.7s; }
+  .hero-slide.active .hero-studio    { animation-delay: 0.8s; }
 
-    .hero-excerpt {
-      font-size: 0.88rem;
-      -webkit-line-clamp: 2;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
 
-    .hero-sidebar {
-      grid-template-columns: 1fr;
-    }
+  /* ── Dots ── */
+  .hero-dots {
+    position: absolute;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+  }
 
-    .hero-side-card {
-      flex-direction: row;
-    }
+  .hero-dot-btn {
+    width: 26px;
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
 
-    .side-image {
-      width: 90px;
-      height: 75px;
+  .hero-dot-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  .hero-dot-btn.active {
+    background: var(--accent-gradient);
+    width: 40px;
+    box-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
+  }
+
+  /* ── Arrows ── */
+  .hero-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    opacity: 0;
+    transition: all 0.25s ease;
+  }
+
+  .hero-container:hover .hero-arrow { opacity: 1; }
+
+  .hero-arrow:hover {
+    background: var(--accent-pink);
+    border-color: var(--accent-pink);
+    box-shadow: var(--accent-pink-glow);
+    transform: translateY(-50%) scale(1.1);
+  }
+
+  .hero-arrow-left  { left: 15px; }
+  .hero-arrow-right { right: 15px; }
+
+  /* ── Progress ── */
+  .hero-progress {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+
+  .hero-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--accent-gradient);
+    box-shadow: 0 0 10px rgba(255, 51, 102, 0.6);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .hero-slides { height: 450px; }
+    .hero-slide { padding: 2rem 2rem; }
+    .hero-content { max-width: 70%; }
+  }
+
+  @media (max-width: 640px) {
+    .hero-slides { height: 500px; }
+    .hero-slide { padding: 1.5rem; align-items: flex-end; }
+    .hero-content { max-width: 100%; }
+    .hero-backdrop-overlay {
+      background:
+        linear-gradient(180deg,
+          rgba(6, 2, 14, 0.4) 0%,
+          rgba(6, 2, 14, 0.85) 50%,
+          rgba(6, 2, 14, 0.98) 100%
+        );
     }
+    .hero-title { font-size: 2rem; }
+    .hero-synopsis { font-size: 0.85rem; }
+    .hero-btn { padding: 0.7rem 1.3rem; font-size: 0.82rem; }
+    .hero-arrow { display: none; }
   }
 </style>
