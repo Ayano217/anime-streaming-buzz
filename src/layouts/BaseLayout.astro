@@ -4,15 +4,13 @@ interface Props {
   description?: string;
   image?: string;
   type?: string;
-  noindex?: boolean;
 }
 
 const {
   title = 'AniTube Buzz — Anime News, Reviews & Streaming Guide',
-  description = 'Your premium source for anime news, episode recaps, manga updates, streaming guides and gaming content. Updated daily for US anime fans.',
+  description = 'Your premium source for anime news, episode recaps, manga updates, streaming guides and gaming content.',
   image = '/og-default.jpg',
   type = 'website',
-  noindex = false,
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site || 'https://anime-streaming-buzz.pages.dev');
@@ -28,29 +26,26 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   <title>{fullTitle}</title>
   <meta name="description" content={description} />
   <link rel="canonical" href={canonicalURL} />
-  {noindex && <meta name="robots" content="noindex,nofollow" />}
 
-  <meta property="og:type"        content={type} />
-  <meta property="og:url"         content={canonicalURL} />
-  <meta property="og:title"       content={fullTitle} />
+  <meta property="og:type" content={type} />
+  <meta property="og:url" content={canonicalURL} />
+  <meta property="og:title" content={fullTitle} />
   <meta property="og:description" content={description} />
-  <meta property="og:image"       content={image} />
-  <meta property="og:site_name"   content="AniTube Buzz" />
-  <meta property="og:locale"      content="en_US" />
+  <meta property="og:image" content={image} />
+  <meta property="og:site_name" content="AniTube Buzz" />
+  <meta property="og:locale" content="en_US" />
 
-  <meta name="twitter:card"        content="summary_large_image" />
-  <meta name="twitter:title"       content={fullTitle} />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={fullTitle} />
   <meta name="twitter:description" content={description} />
-  <meta name="twitter:image"       content={image} />
+  <meta name="twitter:image" content={image} />
 
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-  <!-- Premium Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
-  <!-- Schema.org -->
   <script type="application/ld+json" is:inline>
   {
     "@context": "https://schema.org",
@@ -67,257 +62,79 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 </head>
 
 <body>
-  <!-- Page Loader -->
-  <div id="page-loader" aria-hidden="true">
-    <div class="loader-brand">ANITUBE BUZZ</div>
-    <div class="loader-bar-track">
-      <div class="loader-bar-fill"></div>
+
+  <!-- Simple Page Loader -->
+  <div id="loader">
+    <div class="loader-inner">
+      <div class="loader-text">ANITUBE BUZZ</div>
+      <div class="loader-bar"><div class="loader-fill"></div></div>
     </div>
-    <div class="loader-sub">Loading your anime experience</div>
   </div>
 
-  <!-- Anime Background System -->
-  <div id="anime-bg" aria-hidden="true">
-    <div class="anime-bg-image" id="bg-img-1"></div>
-    <div class="anime-bg-image" id="bg-img-2"></div>
-    <div class="anime-bg-overlay"></div>
-    <div class="anime-bg-gradient"></div>
-    <canvas id="particle-canvas"></canvas>
+  <!-- Animated Background (pure CSS, no JS, no lag) -->
+  <div class="bg-animated" aria-hidden="true">
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-glow bg-glow-3"></div>
+    <div class="bg-noise"></div>
   </div>
-
-  <!-- Custom Cursor (desktop only) -->
-  <div id="cursor-dot" aria-hidden="true"></div>
-  <div id="cursor-ring" aria-hidden="true"></div>
-
-  <!-- Click ripple -->
-  <div id="ripple-container" class="ripple-container" aria-hidden="true"></div>
 
   <!-- App -->
-  <div id="app-wrapper">
+  <div id="app">
     <slot name="header" />
-    <main id="main-content">
+    <main>
       <slot />
     </main>
     <slot name="footer" />
   </div>
 
-  <!-- Back to top -->
-  <button id="back-to-top" aria-label="Back to top">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>
+  <!-- Back to Top -->
+  <button id="btt" aria-label="Back to top">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>
   </button>
 
-  <!-- Toast -->
-  <div id="toast-container" aria-live="polite"></div>
-
   <script is:inline>
-  (function () {
-    'use strict';
-
-    var isMobile = window.innerWidth <= 768;
-
-    // ── Page Loader ──────────────────────────────────────
-    window.addEventListener('load', function () {
-      setTimeout(function () {
-        var l = document.getElementById('page-loader');
-        if (l) l.classList.add('hidden');
-      }, 900);
+  (function(){
+    // Loader
+    window.addEventListener('load', function(){
+      setTimeout(function(){
+        var l = document.getElementById('loader');
+        if(l) { l.style.opacity='0'; setTimeout(function(){ l.style.display='none'; }, 500); }
+      }, 600);
     });
 
-    // ── Anime Background Image Rotation ──────────────────
-    // High quality anime scene URLs from MAL CDN (official key visuals)
-    var bgImages = [
-      'https://cdn.myanimelist.net/images/anime/1015/138006l.jpg',
-      'https://cdn.myanimelist.net/images/anime/1286/99889l.jpg',
-      'https://cdn.myanimelist.net/images/anime/1337/99013l.jpg',
-      'https://cdn.myanimelist.net/images/anime/1170/124312l.jpg',
-      'https://cdn.myanimelist.net/images/anime/1208/94745l.jpg',
-      'https://cdn.myanimelist.net/images/anime/1764/126627l.jpg',
-      'https://cdn.myanimelist.net/images/anime/1935/127974l.jpg',
-      'https://cdn.myanimelist.net/images/anime/1015/138006l.jpg',
-      'https://cdn.myanimelist.net/images/anime/1792/134026l.jpg',
-      'https://cdn.myanimelist.net/images/anime/1004/131809l.jpg',
-    ];
-
-    var bgEl1 = document.getElementById('bg-img-1');
-    var bgEl2 = document.getElementById('bg-img-2');
-    var currentBg = 0;
-    var activeEl = bgEl1;
-
-    function preloadImage(url, cb) {
-      var img = new Image();
-      img.onload = function () { cb(url); };
-      img.onerror = function () { cb(null); };
-      img.src = url;
-    }
-
-    function setInitialBg() {
-      if (!bgEl1) return;
-      var idx = Math.floor(Math.random() * bgImages.length);
-      currentBg = idx;
-      bgEl1.style.backgroundImage = 'url(' + bgImages[idx] + ')';
-      bgEl1.style.opacity = '1';
-    }
-
-    function rotateBg() {
-      currentBg = (currentBg + 1) % bgImages.length;
-      var nextUrl = bgImages[currentBg];
-      var inactiveEl = activeEl === bgEl1 ? bgEl2 : bgEl1;
-
-      preloadImage(nextUrl, function (url) {
-        if (!url) return;
-        inactiveEl.style.backgroundImage = 'url(' + url + ')';
-        inactiveEl.style.opacity = '1';
-        activeEl.style.opacity = '0';
-        activeEl = inactiveEl;
+    // Back to top
+    var b = document.getElementById('btt');
+    if(b){
+      window.addEventListener('scroll', function(){
+        b.style.opacity = window.scrollY > 400 ? '1' : '0';
+        b.style.pointerEvents = window.scrollY > 400 ? 'auto' : 'none';
+      });
+      b.addEventListener('click', function(){
+        window.scrollTo({top:0, behavior:'smooth'});
       });
     }
-
-    setInitialBg();
-    setInterval(rotateBg, 12000); // Change every 12 seconds
-
-    // ── Particle System ──────────────────────────────────
-    var canvas = document.getElementById('particle-canvas');
-    var ctx = canvas ? canvas.getContext('2d') : null;
-    var pts = [];
-
-    function resizeCanvas() {
-      if (!canvas) return;
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-
-    function initPts(n) {
-      pts = [];
-      for (var i = 0; i < n; i++) {
-        pts.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.2,
-          vy: (Math.random() - 0.5) * 0.2,
-          r: Math.random() * 1.2 + 0.3,
-          a: Math.random() * 0.3 + 0.05,
-        });
-      }
-    }
-
-    function drawPts() {
-      if (!ctx) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (var i = 0; i < pts.length; i++) {
-        var p = pts[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(192, 132, 252, ' + p.a + ')';
-        ctx.fill();
-      }
-      requestAnimationFrame(drawPts);
-    }
-
-    if (canvas) {
-      resizeCanvas();
-      initPts(isMobile ? 20 : 40);
-      drawPts();
-      window.addEventListener('resize', function () {
-        resizeCanvas();
-        initPts(isMobile ? 20 : 40);
-      });
-    }
-
-    // ── Custom Cursor (desktop) ──────────────────────────
-    if (!isMobile) {
-      var dot = document.getElementById('cursor-dot');
-      var ring = document.getElementById('cursor-ring');
-      var mx = 0, my = 0, rx = 0, ry = 0;
-
-      document.addEventListener('mousemove', function (e) {
-        mx = e.clientX;
-        my = e.clientY;
-        if (dot) dot.style.transform = 'translate(' + (mx - 4) + 'px,' + (my - 4) + 'px)';
-      });
-
-      function animRing() {
-        rx += (mx - rx) * 0.12;
-        ry += (my - ry) * 0.12;
-        if (ring) ring.style.transform = 'translate(' + (rx - 16) + 'px,' + (ry - 16) + 'px)';
-        requestAnimationFrame(animRing);
-      }
-      animRing();
-
-      document.addEventListener('mousedown', function () {
-        document.body.classList.add('cursor-click');
-      });
-      document.addEventListener('mouseup', function () {
-        document.body.classList.remove('cursor-click');
-      });
-
-      // Hover effect
-      var hoverSel = 'a, button, [role="button"], input, textarea, .card, .fb-card, .news-card';
-      document.addEventListener('mouseover', function (e) {
-        if (e.target.closest(hoverSel)) document.body.classList.add('cursor-hover');
-      });
-      document.addEventListener('mouseout', function (e) {
-        if (e.target.closest(hoverSel)) document.body.classList.remove('cursor-hover');
-      });
-    }
-
-    // ── Click Ripple ─────────────────────────────────────
-    document.addEventListener('click', function (e) {
-      var c = document.getElementById('ripple-container');
-      if (!c) return;
-      var r = document.createElement('div');
-      r.className = 'click-ripple';
-      r.style.left = e.clientX + 'px';
-      r.style.top = e.clientY + 'px';
-      c.appendChild(r);
-      setTimeout(function () { r.remove(); }, 700);
-    });
-
-    // ── Back to Top ──────────────────────────────────────
-    var btt = document.getElementById('back-to-top');
-    if (btt) {
-      window.addEventListener('scroll', function () {
-        btt.classList.toggle('visible', window.scrollY > 500);
-      });
-      btt.addEventListener('click', function () {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-    }
-
-    // ── Scroll Reveal ────────────────────────────────────
-    if ('IntersectionObserver' in window) {
-      var obs = new IntersectionObserver(function (entries) {
-        entries.forEach(function (en) {
-          if (en.isIntersecting) {
-            en.target.classList.add('visible');
-            obs.unobserve(en.target);
-          }
-        });
-      }, { threshold: 0.08 });
-
-      document.querySelectorAll('.reveal').forEach(function (el) { obs.observe(el); });
-    }
-
   })();
   </script>
+
 </body>
 </html>
 
 <style is:global>
-  /* ── Fonts ── */
+  /* ── RESET ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  /* ── FONTS ── */
   body {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #04020f;
+    background: #06020e;
     color: #fff;
     line-height: 1.6;
     min-height: 100vh;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -326,14 +143,61 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     line-height: 1.2;
   }
 
-  *, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; height: auto; display: block; }
+
+  ::selection { background: rgba(139,0,255,0.35); color: #fff; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(139,0,255,0.3); border-radius: 9px; }
+
+  /* ── PAGE LOADER ── */
+  #loader {
+    position: fixed;
+    inset: 0;
+    background: #06020e;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease;
   }
 
-  /* ── Anime Background ── */
-  #anime-bg {
+  .loader-inner { text-align: center; }
+
+  .loader-text {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: #c084fc;
+    margin-bottom: 1rem;
+  }
+
+  .loader-bar {
+    width: 160px;
+    height: 3px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 9px;
+    overflow: hidden;
+  }
+
+  .loader-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8b00ff, #00d4ff);
+    border-radius: 9px;
+    animation: load-fill 0.8s ease forwards;
+  }
+
+  @keyframes load-fill {
+    from { width: 0; }
+    to { width: 100%; }
+  }
+
+  /* ── ANIMATED BACKGROUND (Pure CSS — ZERO lag) ── */
+  .bg-animated {
     position: fixed;
     inset: 0;
     z-index: 0;
@@ -341,42 +205,75 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     pointer-events: none;
   }
 
-  .anime-bg-image {
+  .bg-glow {
     position: absolute;
-    inset: -20px;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0;
-    transition: opacity 3s ease-in-out;
-    filter: blur(12px) brightness(0.25) saturate(1.4);
-    transform: scale(1.1);
+    border-radius: 50%;
+    filter: blur(100px);
   }
 
-  .anime-bg-overlay {
+  .bg-glow-1 {
+    width: 50vw;
+    height: 50vw;
+    max-width: 700px;
+    max-height: 700px;
+    background: rgba(139, 0, 255, 0.12);
+    top: -15%;
+    left: -10%;
+    animation: glow-drift-1 20s ease-in-out infinite;
+  }
+
+  .bg-glow-2 {
+    width: 40vw;
+    height: 40vw;
+    max-width: 500px;
+    max-height: 500px;
+    background: rgba(0, 212, 255, 0.08);
+    top: 40%;
+    right: -10%;
+    animation: glow-drift-2 25s ease-in-out infinite;
+  }
+
+  .bg-glow-3 {
+    width: 35vw;
+    height: 35vw;
+    max-width: 450px;
+    max-height: 450px;
+    background: rgba(255, 0, 128, 0.06);
+    bottom: -10%;
+    left: 30%;
+    animation: glow-drift-3 22s ease-in-out infinite;
+  }
+
+  /* Subtle noise texture */
+  .bg-noise {
     position: absolute;
     inset: 0;
-    background: rgba(4, 2, 15, 0.65);
+    opacity: 0.015;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 200px 200px;
   }
 
-  .anime-bg-gradient {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse at 20% 0%, rgba(139,0,255,0.1) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 100%, rgba(0,212,255,0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 50%, rgba(255,0,128,0.04) 0%, transparent 60%);
+  @keyframes glow-drift-1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%      { transform: translate(5vw, 3vw) scale(1.1); }
+    66%      { transform: translate(-3vw, 5vw) scale(0.95); }
   }
 
-  #particle-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+  @keyframes glow-drift-2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%      { transform: translate(-4vw, -3vw) scale(1.05); }
+    66%      { transform: translate(3vw, -4vw) scale(0.9); }
   }
 
-  /* ── App Wrapper ── */
-  #app-wrapper {
+  @keyframes glow-drift-3 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%      { transform: translate(3vw, -4vw) scale(1.08); }
+    66%      { transform: translate(-5vw, 2vw) scale(0.92); }
+  }
+
+  /* ── APP WRAPPER ── */
+  #app {
     position: relative;
     z-index: 1;
     min-height: 100vh;
@@ -386,234 +283,416 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   main { flex: 1; }
 
-  /* ── Page Loader ── */
-  #page-loader {
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  @media (max-width: 640px) {
+    .container { padding: 0 1rem; }
+  }
+
+  /* ── BACK TO TOP ── */
+  #btt {
     position: fixed;
-    inset: 0;
-    background: #04020f;
-    z-index: 99999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 1.2rem;
-    transition: opacity 0.6s ease, visibility 0.6s ease;
-  }
-
-  #page-loader.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
-
-  .loader-brand {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 800;
-    letter-spacing: 0.15em;
-    background: linear-gradient(135deg, #8b00ff, #00d4ff, #ff0080);
-    background-size: 200% 200%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradient-shift 2s ease infinite;
-  }
-
-  .loader-bar-track {
-    width: 180px;
-    height: 3px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-
-  .loader-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #8b00ff, #00d4ff);
-    border-radius: 999px;
-    animation: loader-fill 1s ease forwards;
-  }
-
-  @keyframes loader-fill {
-    0%   { width: 0; }
-    60%  { width: 75%; }
-    100% { width: 100%; }
-  }
-
-  .loader-sub {
-    font-size: 0.7rem;
-    color: rgba(255,255,255,0.3);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-  }
-
-  @keyframes gradient-shift {
-    0%   { background-position: 0% 50%; }
-    50%  { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
-  /* ── Cursor ── */
-  @media (min-width: 769px) {
-    body { cursor: none; }
-    a, button, input, textarea, select { cursor: none; }
-  }
-
-  #cursor-dot {
-    width: 8px;
-    height: 8px;
-    background: #8b00ff;
-    border-radius: 50%;
-    position: fixed;
-    top: 0; left: 0;
-    pointer-events: none;
-    z-index: 99998;
-    box-shadow: 0 0 8px #8b00ff, 0 0 16px rgba(139,0,255,0.5);
-    transition: transform 0.05s linear;
-  }
-
-  #cursor-ring {
-    width: 32px;
-    height: 32px;
-    border: 1.5px solid rgba(139,0,255,0.5);
-    border-radius: 50%;
-    position: fixed;
-    top: 0; left: 0;
-    pointer-events: none;
-    z-index: 99997;
-    transition: width 0.2s ease, height 0.2s ease, border-color 0.2s ease;
-  }
-
-  body.cursor-hover #cursor-dot {
-    transform: scale(2.5) !important;
-    background: #00d4ff;
-    box-shadow: 0 0 12px #00d4ff;
-  }
-
-  body.cursor-hover #cursor-ring {
-    width: 48px;
-    height: 48px;
-    border-color: rgba(0,212,255,0.5);
-  }
-
-  body.cursor-click #cursor-dot {
-    transform: scale(0.5) !important;
-  }
-
-  @media (max-width: 768px) {
-    #cursor-dot, #cursor-ring { display: none !important; }
-  }
-
-  /* ── Click Ripple ── */
-  .ripple-container {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 99995;
-    overflow: hidden;
-  }
-
-  .click-ripple {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    margin: -10px 0 0 -10px;
-    border: 2px solid rgba(139,0,255,0.6);
-    border-radius: 50%;
-    animation: ripple-out 0.6s ease-out forwards;
-    pointer-events: none;
-  }
-
-  @keyframes ripple-out {
-    0%   { transform: scale(0); opacity: 1; }
-    100% { transform: scale(6); opacity: 0; }
-  }
-
-  /* ── Back to Top ── */
-  #back-to-top {
-    position: fixed;
-    bottom: 2rem;
+    bottom: 1.5rem;
     right: 1.5rem;
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #8b00ff, #5500cc);
-    border: 1px solid rgba(139,0,255,0.5);
+    background: rgba(139,0,255,0.8);
+    border: 1px solid rgba(139,0,255,0.6);
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
     opacity: 0;
-    transform: translateY(10px);
-    transition: all 0.3s ease;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+    cursor: pointer;
     box-shadow: 0 4px 15px rgba(139,0,255,0.4);
   }
 
-  #back-to-top.visible {
-    opacity: 1;
-    transform: translateY(0);
+  #btt:hover { transform: translateY(-3px); }
+
+  /* ══════════════════════════════════════════════════════
+     SECTION STYLES (shared across components)
+     ══════════════════════════════════════════════════════ */
+
+  /* Section labels */
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(139,0,255,0.1);
+    border: 1px solid rgba(139,0,255,0.25);
+    color: #c084fc;
+    padding: 0.22rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
   }
 
-  #back-to-top:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(139,0,255,0.5);
+  .section-title {
+    font-size: clamp(1.3rem, 2.8vw, 1.9rem);
+    font-weight: 800;
+    margin-bottom: 0.2rem;
   }
 
-  /* ── Toast ── */
-  #toast-container {
-    position: fixed;
-    bottom: 2rem;
-    right: 5rem;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  .section-sub {
+    color: rgba(255,255,255,0.4);
+    font-size: 0.82rem;
+    margin-bottom: 1.3rem;
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #fff, #c084fc, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* ── TRENDING TICKER (VERY SLOW — NO SHAKE) ── */
+  .ticker-wrap {
+    background: rgba(139,0,255,0.05);
+    border-top: 1px solid rgba(139,0,255,0.12);
+    border-bottom: 1px solid rgba(139,0,255,0.12);
+    overflow: hidden;
+    padding: 0.5rem 0;
+    position: relative;
+  }
+
+  .ticker-wrap::before,
+  .ticker-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 50px;
+    z-index: 2;
     pointer-events: none;
   }
 
-  .toast {
-    background: rgba(13, 6, 32, 0.95);
-    border: 1px solid rgba(139,0,255,0.3);
+  .ticker-wrap::before {
+    left: 0;
+    background: linear-gradient(90deg, #06020e, transparent);
+  }
+
+  .ticker-wrap::after {
+    right: 0;
+    background: linear-gradient(-90deg, #06020e, transparent);
+  }
+
+  .ticker-label {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    z-index: 3;
+    background: rgba(139,0,255,0.9);
+    display: flex;
+    align-items: center;
+    padding: 0 0.7rem;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #fff;
+    white-space: nowrap;
+    border-radius: 0 4px 4px 0;
+  }
+
+  .ticker-track {
+    display: flex;
+    /* 80 SECONDS — very slow and smooth */
+    animation: ticker-move 80s linear infinite;
+    width: max-content;
+    padding-left: 110px;
+    /* Force GPU acceleration for smoothness */
+    will-change: transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  .ticker-track:hover {
+    animation-play-state: paused;
+  }
+
+  .ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0 1.2rem;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.65);
+    white-space: nowrap;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .ticker-item:hover { color: #fff; }
+
+  .ticker-sep {
+    color: rgba(139,0,255,0.4);
+    font-size: 0.5rem;
+    padding: 0 0.5rem;
+  }
+
+  @keyframes ticker-move {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ── CARDS ── */
+  .card {
+    background: rgba(10, 6, 24, 0.7);
+    border: 1px solid rgba(139,0,255,0.15);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+    backdrop-filter: blur(4px);
+  }
+
+  .card:hover {
+    border-color: rgba(139,0,255,0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(139,0,255,0.12);
+  }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .badge-purple { background: rgba(139,0,255,0.15); color: #c084fc; }
+  .badge-cyan   { background: rgba(0,212,255,0.1);  color: #00d4ff; }
+  .badge-pink   { background: rgba(255,0,128,0.1);  color: #ff6eb4; }
+  .badge-gold   { background: rgba(255,215,0,0.1);  color: #ffd700; }
+
+  /* Category badges */
+  .cat-news        { background: rgba(255,107,0,0.12); color: #ff9f4a; }
+  .cat-anime-recap { background: rgba(139,0,255,0.12); color: #c084fc; }
+  .cat-manhwa      { background: rgba(0,212,255,0.1);  color: #00d4ff; }
+  .cat-streaming   { background: rgba(255,0,128,0.1);  color: #ff6eb4; }
+  .cat-gaming      { background: rgba(0,255,128,0.08); color: #00ff80; }
+  .cat-manga       { background: rgba(255,215,0,0.1);  color: #ffd700; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1.3rem;
     border-radius: 10px;
-    padding: 0.65rem 1rem;
-    color: rgba(255,255,255,0.8);
-    font-size: 0.8rem;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-    animation: toast-slide 0.3s ease forwards;
-    pointer-events: auto;
-    max-width: 280px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    text-decoration: none;
   }
 
-  @keyframes toast-slide {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ── Links ── */
-  a { color: inherit; text-decoration: none; }
-
-  img { max-width: 100%; height: auto; display: block; }
-
-  /* ── Selection ── */
-  ::selection {
-    background: rgba(139,0,255,0.35);
+  .btn-primary {
+    background: linear-gradient(135deg, #8b00ff, #5500cc);
     color: #fff;
   }
 
-  /* ── Scrollbar ── */
-  ::-webkit-scrollbar { width: 5px; }
-  ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
-  ::-webkit-scrollbar-thumb { background: rgba(139,0,255,0.3); border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(139,0,255,0.5); }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(139,0,255,0.35);
+  }
 
-  /* ── Accessibility ── */
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      transition-duration: 0.01ms !important;
-    }
-    .anime-bg-image { transition-duration: 0.01ms !important; }
+  .btn-secondary {
+    background: rgba(139,0,255,0.1);
+    border: 1px solid rgba(139,0,255,0.2);
+    color: rgba(255,255,255,0.7);
+  }
+
+  .btn-secondary:hover {
+    background: rgba(139,0,255,0.2);
+    color: #fff;
+  }
+
+  /* ── SCORE ── */
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: rgba(255,215,0,0.12);
+    color: #ffd700;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(139,0,255,0.2), transparent);
+    margin: 1.5rem 0;
+  }
+
+  /* ── VIDEO EMBED ── */
+  .video-embed-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid rgba(139,0,255,0.15);
+    margin: 1.5rem 0;
+  }
+
+  .video-embed-wrapper iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+
+  /* ── PROSE (article content) ── */
+  .prose {
+    color: rgba(255,255,255,0.7);
+    line-height: 1.8;
+    font-size: 0.95rem;
+  }
+
+  .prose h2 {
+    font-size: 1.3rem;
+    color: #fff;
+    margin: 1.8rem 0 0.6rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(139,0,255,0.15);
+  }
+
+  .prose h3 {
+    font-size: 1.05rem;
+    color: #fff;
+    margin: 1.3rem 0 0.4rem;
+  }
+
+  .prose p { margin-bottom: 0.9rem; }
+
+  .prose a { color: #c084fc; text-decoration: underline; text-underline-offset: 3px; }
+  .prose a:hover { color: #fff; }
+
+  .prose ul, .prose ol { padding-left: 1.5rem; margin-bottom: 0.9rem; }
+  .prose li { margin-bottom: 0.2rem; }
+
+  .prose blockquote {
+    border-left: 3px solid #8b00ff;
+    padding: 0.6rem 0.9rem;
+    background: rgba(139,0,255,0.05);
+    border-radius: 0 8px 8px 0;
+    margin: 0.8rem 0;
+    font-style: italic;
+  }
+
+  .prose table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.82rem; }
+
+  .prose th {
+    background: rgba(139,0,255,0.08);
+    color: #c084fc;
+    padding: 0.5rem 0.7rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(139,0,255,0.15);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .prose td {
+    padding: 0.5rem 0.7rem;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+
+  .prose tr:hover td { background: rgba(139,0,255,0.03); }
+
+  .prose hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(139,0,255,0.2), transparent);
+    margin: 1.5rem 0;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    gap: 0.2rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    margin-bottom: 1rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.4);
+    border: none;
+    background: transparent;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    transition: color 0.2s;
+    margin-bottom: -1px;
+  }
+
+  .tab:hover { color: rgba(255,255,255,0.7); }
+  .tab.active { color: #c084fc; border-bottom-color: #8b00ff; }
+
+  /* ── SKELETON ── */
+  .skeleton {
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0.03) 25%,
+      rgba(255,255,255,0.06) 50%,
+      rgba(255,255,255,0.03) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+  }
+
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to   { background-position:  200% 0; }
+  }
+
+  /* ── SEARCH HIGHLIGHT ── */
+  mark.hl {
+    background: rgba(139,0,255,0.3);
+    color: #fff;
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+
+  /* ── ANIMATIONS ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(15px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
   }
 </style>
