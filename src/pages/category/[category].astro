@@ -1,170 +1,376 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
 import NewsCard from '../../components/NewsCard.astro';
+import Sidebar from '../../components/Sidebar.astro';
 
+// Generate one route per unique category value found in content
 export async function getStaticPaths() {
-  const posts = await getCollection('posts', ({ data }) => !data.draft);
-
-  const categories = [...new Set(posts.map(p => p.data.category).filter(Boolean))];
-
-  return categories.map(category => {
-    const slug = category.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-
-    const filtered = posts
-      .filter(p => p.data.category === category)
-      .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
-
-    return {
-      params: { category: slug },
-      props: { category, posts: filtered },
-    };
+  const allPosts = await getCollection('posts', ({ data }) => {
+    return data.draft !== true;
   });
+
+  // Collect every unique category slug
+  const categorySet = new Set<string>();
+  for (const post of allPosts) {
+    if (post.data.category) {
+      // Normalize: lowercase, replace spaces with hyphens
+      categorySet.add(post.data.category.toLowerCase().replace(/\s+/g, '-'));
+    }
+  }
+
+  // Build one path entry per category
+  return Array.from(categorySet).map((categorySlug) => ({
+    params: { category: categorySlug },
+    props: { categorySlug },
+  }));
 }
 
-const { category, posts } = Astro.props;
+const { categorySlug } = Astro.props;
 
-const fmt = (d: string) =>
-  new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+// Fetch all non-draft posts
+const allPosts = await getCollection('posts', ({ data }) => {
+  return data.draft !== true;
+});
 
-const rt = (b: string) =>
-  `${Math.max(1, Math.ceil(b.split(/\s+/).length / 200))} min`;
+// Filter posts that match this category (case-insensitive, slug-aware)
+const categoryPosts = allPosts
+  .filter((post) => {
+    const normalized = post.data.category?.toLowerCase().replace(/\s+/g, '-');
+    return normalized === categorySlug;
+  })
+  .sort((a, b) => {
+    // Latest first
+    return new Date(b.data.date).getTime() - new Date(a.data.date).getTime();
+  });
 
-const bt = (c: string) => {
-  if (c === 'Streaming') return 'blue';
-  if (c === 'Manhwa') return 'purple';
-  if (c === 'Gaming') return 'gold';
-  return 'pink';
-};
+// Human-readable category name for display
+const categoryDisplayName = categorySlug
+  .split('-')
+  .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+  .join(' ');
+
+// Pagination: 12 posts per page (all on one page for now, can add pagination later)
+const POSTS_PER_PAGE = 12;
+const displayedPosts = categoryPosts.slice(0, POSTS_PER_PAGE);
+const hasMore = categoryPosts.length > POSTS_PER_PAGE;
+
+// SEO meta
+const pageTitle = `${categoryDisplayName} — AniTube Buzz`;
+const pageDesc = `Browse the latest ${categoryDisplayName} posts on AniTube Buzz. Updated daily with fresh anime, streaming, and gaming content.`;
 ---
 
-<BaseLayout
-  title={`${category} — AniTube Buzz`}
-  description={`Browse all ${category} articles on AniTube Buzz. Latest anime news, recaps, and updates.`}
->
-  <Header />
+<BaseLayout title={pageTitle} description={pageDesc}>
+  <div class="category-page">
 
-  <main class="category-page">
-    <div class="container">
-
-      <div class="cat-hero">
-        <div class="cat-hero-inner">
-          <span class="cat-hero-emoji">
-            {category === 'Anime Recap' ? '🎬' :
-             category === 'Manhwa' ? '📖' :
-             category === 'Streaming' ? '📺' :
-             category === 'Gaming' ? '🎮' :
-             category === 'News' ? '📰' : '⚡'}
-          </span>
-          <h1>{category}</h1>
-          <p>{posts.length} article{posts.length !== 1 ? 's' : ''}</p>
-        </div>
+    <!-- Category Hero Banner -->
+    <section class="category-hero">
+      <div class="category-hero-inner">
+        <div class="category-badge">{categoryDisplayName}</div>
+        <h1 class="category-title">
+          <span class="glow-text">{categoryDisplayName}</span>
+        </h1>
+        <p class="category-subtitle">
+          {categoryPosts.length} article{categoryPosts.length !== 1 ? 's' : ''} — updated daily
+        </p>
+        <!-- Category nav pills -->
+        <nav class="category-nav" aria-label="Browse categories">
+          <a href="/category/news" class={`cat-pill ${categorySlug === 'news' ? 'active' : ''}`}>News</a>
+          <a href="/category/anime-recap" class={`cat-pill ${categorySlug === 'anime-recap' ? 'active' : ''}`}>Anime Recap</a>
+          <a href="/category/manhwa" class={`cat-pill ${categorySlug === 'manhwa' ? 'active' : ''}`}>Manhwa</a>
+          <a href="/category/streaming" class={`cat-pill ${categorySlug === 'streaming' ? 'active' : ''}`}>Streaming</a>
+          <a href="/category/gaming" class={`cat-pill ${categorySlug === 'gaming' ? 'active' : ''}`}>Gaming</a>
+        </nav>
       </div>
+    </section>
 
-      {posts.length === 0 ? (
-        <div class="cat-empty">
-          <p>No articles in this category yet.</p>
-          <a href="/" class="btn-primary">Go to Homepage</a>
-        </div>
-      ) : (
-        <div class="cat-grid">
-          {posts.map(post => (
-            <NewsCard
-              title={post.data.title}
-              excerpt={post.data.excerpt}
-              category={post.data.category}
-              date={fmt(post.data.date)}
-              readTime={rt(post.body)}
-              image={post.data.image}
-              slug={`/posts/${post.slug}`}
-              badgeType={bt(post.data.category)}
-            />
-          ))}
-        </div>
-      )}
+    <!-- Main content area -->
+    <div class="category-layout">
+      <main class="category-main">
 
+        {categoryPosts.length === 0 ? (
+          <!-- Empty state -->
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <h2>No posts in {categoryDisplayName} yet</h2>
+            <p>We're working on fresh {categoryDisplayName} content. Check back soon!</p>
+            <a href="/" class="btn-home">← Back to Homepage</a>
+          </div>
+        ) : (
+          <>
+            <!-- Post count header -->
+            <div class="results-header">
+              <span class="results-count">
+                Showing {displayedPosts.length} of {categoryPosts.length} posts
+              </span>
+              <span class="results-sort">Latest first</span>
+            </div>
+
+            <!-- Posts grid -->
+            <div class="category-grid">
+              {displayedPosts.map((post) => (
+                <NewsCard
+                  title={post.data.title}
+                  excerpt={post.data.excerpt}
+                  category={post.data.category}
+                  date={post.data.date}
+                  image={post.data.image}
+                  imageAlt={post.data.imageAlt || post.data.title}
+                  slug={post.slug}
+                  featured={post.data.featured}
+                  trending={post.data.trending}
+                />
+              ))}
+            </div>
+
+            {hasMore && (
+              <div class="load-more-wrapper">
+                <p class="load-more-note">
+                  Showing {POSTS_PER_PAGE} of {categoryPosts.length} posts.
+                  More content added automatically every few hours.
+                </p>
+              </div>
+            )}
+          </>
+        )}
+      </main>
+
+      <!-- Sidebar -->
+      <aside class="category-sidebar">
+        <Sidebar />
+      </aside>
     </div>
-  </main>
 
-  <Footer />
+  </div>
 </BaseLayout>
 
 <style>
+  /* ── Category Page Layout ── */
   .category-page {
-    padding-top: 24px;
-    padding-bottom: 60px;
-    min-height: 70vh;
+    min-height: 100vh;
   }
 
-  .cat-hero {
+  /* ── Hero Banner ── */
+  .category-hero {
+    background: linear-gradient(
+      135deg,
+      rgba(139, 0, 255, 0.15) 0%,
+      rgba(0, 212, 255, 0.08) 50%,
+      rgba(255, 0, 128, 0.1) 100%
+    );
+    border-bottom: 1px solid rgba(139, 0, 255, 0.3);
+    padding: 3rem 1.5rem 2rem;
     text-align: center;
-    padding: 48px 24px;
-    margin-bottom: 40px;
-    background: var(--bg-card);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--border-color);
     position: relative;
     overflow: hidden;
   }
 
-  .cat-hero::before {
+  .category-hero::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--accent-gradient);
-    opacity: 0.04;
+    background: radial-gradient(
+      ellipse at 50% 0%,
+      rgba(139, 0, 255, 0.2) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
   }
 
-  .cat-hero-emoji {
-    font-size: 3rem;
-    display: block;
-    margin-bottom: 12px;
-    animation: float 3s ease-in-out infinite;
+  .category-hero-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
   }
 
-  .cat-hero h1 {
-    font-size: 2.2rem;
+  .category-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #8b00ff, #00d4ff);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.3rem 1rem;
+    border-radius: 999px;
+    margin-bottom: 1rem;
+  }
+
+  .category-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
     font-weight: 800;
-    margin-bottom: 8px;
-    background: var(--accent-gradient);
+    margin: 0 0 0.5rem;
+    line-height: 1.1;
+  }
+
+  .glow-text {
+    background: linear-gradient(135deg, #fff 0%, #c084fc 50%, #00d4ff 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(139, 0, 255, 0.4));
   }
 
-  .cat-hero p {
-    color: var(--text-muted);
-    font-size: 1rem;
+  .category-subtitle {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.95rem;
+    margin: 0 0 1.5rem;
   }
 
-  .cat-grid {
+  /* ── Category Nav Pills ── */
+  .category-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  .cat-pill {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid rgba(139, 0, 255, 0.4);
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(139, 0, 255, 0.08);
+    transition: all 0.2s ease;
+  }
+
+  .cat-pill:hover {
+    background: rgba(139, 0, 255, 0.25);
+    border-color: rgba(139, 0, 255, 0.7);
+    color: #fff;
+    transform: translateY(-1px);
+  }
+
+  .cat-pill.active {
+    background: linear-gradient(135deg, #8b00ff, #5500cc);
+    border-color: #8b00ff;
+    color: #fff;
+    box-shadow: 0 0 15px rgba(139, 0, 255, 0.4);
+  }
+
+  /* ── Page Layout: Main + Sidebar ── */
+  .category-layout {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
+    grid-template-columns: 1fr 320px;
+    gap: 2rem;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
   }
 
-  .cat-empty {
+  /* ── Results Header ── */
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(139, 0, 255, 0.2);
+  }
+
+  .results-count {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+  }
+
+  .results-sort {
+    color: rgba(139, 0, 255, 0.8);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Posts Grid ── */
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  /* ── Load More ── */
+  .load-more-wrapper {
+    margin-top: 2rem;
     text-align: center;
-    padding: 60px 24px;
-    background: var(--bg-card);
-    border-radius: var(--radius-lg);
-    border: 1px dashed var(--border-color);
   }
 
-  .cat-empty p {
-    color: var(--text-muted);
-    margin-bottom: 20px;
-    font-size: 1rem;
+  .load-more-note {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.82rem;
+    line-height: 1.5;
   }
 
-  @media (max-width: 900px) {
-    .cat-grid { grid-template-columns: repeat(2, 1fr); }
+  /* ── Empty State ── */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: rgba(139, 0, 255, 0.05);
+    border: 1px solid rgba(139, 0, 255, 0.15);
+    border-radius: 16px;
   }
 
-  @media (max-width: 600px) {
-    .cat-grid { grid-template-columns: 1fr; }
-    .cat-hero h1 { font-size: 1.7rem; }
+  .empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state h2 {
+    font-size: 1.4rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state p {
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 1.5rem;
+  }
+
+  .btn-home {
+    display: inline-block;
+    padding: 0.6rem 1.5rem;
+    background: linear-gradient(135deg, #8b00ff, #5500cc);
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+  }
+
+  .btn-home:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(139, 0, 255, 0.4);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 1024px) {
+    .category-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .category-sidebar {
+      order: 2;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .category-hero {
+      padding: 2rem 1rem 1.5rem;
+    }
+
+    .category-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .results-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+    }
   }
 </style>
