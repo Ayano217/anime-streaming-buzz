@@ -1,0 +1,530 @@
+---
+interface Props {
+  videoId: string;
+  title?: string;
+  autoplay?: boolean;
+  poster?: string;
+}
+
+const { 
+  videoId, 
+  title = 'Video',
+  autoplay = false,
+  poster = '',
+} = Astro.props;
+
+const uniqueId = `ytp-${Math.random().toString(36).substr(2, 9)}`;
+---
+
+<div class="yt-player" id={uniqueId} data-video-id={videoId} data-autoplay={autoplay ? 'true' : 'false'}>
+  
+  <!-- Animated gradient border -->
+  <div class="yt-border-glow"></div>
+  
+  <!-- Corner brackets (matches your logo style) -->
+  <div class="yt-corner yt-corner-tl"></div>
+  <div class="yt-corner yt-corner-tr"></div>
+  <div class="yt-corner yt-corner-bl"></div>
+  <div class="yt-corner yt-corner-br"></div>
+
+  <div class="yt-frame">
+    
+    <!-- Custom poster overlay (before play) -->
+    <div class="yt-poster" data-poster>
+      {poster && <img src={poster} alt={title} class="yt-poster-img" />}
+      <div class="yt-poster-dim"></div>
+      
+      <!-- Big custom play button -->
+      <button class="yt-play-btn" aria-label="Play video" data-play-btn>
+        <div class="yt-play-ring yt-play-ring-1"></div>
+        <div class="yt-play-ring yt-play-ring-2"></div>
+        <div class="yt-play-ring yt-play-ring-3"></div>
+        <div class="yt-play-inner">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </div>
+      </button>
+      
+      <!-- Live badge (top right) -->
+      <div class="yt-live-badge">
+        <span class="yt-live-dot"></span>
+        <span>NOW PLAYING</span>
+      </div>
+      
+      <!-- HD quality badge -->
+      <div class="yt-quality-badge">4K HD</div>
+      
+      <!-- Bottom title bar -->
+      <div class="yt-title-bar">
+        <div class="yt-title-text">{title}</div>
+      </div>
+    </div>
+    
+    <!-- Actual YouTube iframe (loaded on play click) -->
+    <div class="yt-iframe-container" data-iframe-container></div>
+    
+    <!-- Watermark logo overlay -->
+    <div class="yt-watermark">
+      <span class="yt-wm-ani">Ani</span><span class="yt-wm-tube">Tube</span><span class="yt-wm-buzz">Buzz</span>
+    </div>
+    
+    <!-- Unmute button (shows during autoplay) -->
+    <button class="yt-unmute-btn" data-unmute-btn style="display:none;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+      </svg>
+      <span>TAP TO UNMUTE</span>
+    </button>
+    
+  </div>
+</div>
+
+<script is:inline define:vars={{ uniqueId, videoId, autoplay }}>
+  (function() {
+    var player = document.getElementById(uniqueId);
+    if (!player) return;
+    
+    var poster = player.querySelector('[data-poster]');
+    var playBtn = player.querySelector('[data-play-btn]');
+    var iframeContainer = player.querySelector('[data-iframe-container]');
+    var unmuteBtn = player.querySelector('[data-unmute-btn]');
+    var isPlaying = false;
+    
+    function loadIframe(muted) {
+      if (isPlaying) return;
+      isPlaying = true;
+      
+      var params = [
+        'autoplay=1',
+        muted ? 'mute=1' : 'mute=0',
+        'rel=0',                    // No related videos
+        'modestbranding=1',         // Reduce YouTube branding
+        'controls=1',               // Show controls
+        'iv_load_policy=3',         // Hide annotations
+        'fs=1',                     // Allow fullscreen
+        'playsinline=1',            // Play inline on mobile
+        'enablejsapi=1',
+        'origin=' + encodeURIComponent(window.location.origin)
+      ].join('&');
+      
+      var iframe = document.createElement('iframe');
+      iframe.src = 'https://www.youtube-nocookie.com/embed/' + videoId + '?' + params;
+      iframe.setAttribute('frameborder', '0');
+      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+      iframe.setAttribute('allowfullscreen', 'true');
+      iframe.setAttribute('title', 'Video Player');
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = 'none';
+      iframe.style.borderRadius = '18px';
+      
+      iframeContainer.innerHTML = '';
+      iframeContainer.appendChild(iframe);
+      iframeContainer.classList.add('active');
+      poster.classList.add('hidden');
+      
+      if (muted && unmuteBtn) {
+        unmuteBtn.style.display = 'flex';
+        setTimeout(function() {
+          unmuteBtn.style.opacity = '1';
+        }, 500);
+      }
+    }
+    
+    // Click to play
+    if (playBtn) {
+      playBtn.addEventListener('click', function() {
+        loadIframe(false);
+      });
+    }
+    
+    // Unmute click reloads with sound
+    if (unmuteBtn) {
+      unmuteBtn.addEventListener('click', function() {
+        unmuteBtn.style.display = 'none';
+        isPlaying = false;
+        loadIframe(false);
+      });
+    }
+    
+    // Autoplay if requested (muted required by browsers)
+    if (autoplay === 'true' || autoplay === true) {
+      setTimeout(function() {
+        loadIframe(true);
+      }, 800);
+    }
+    
+    // Also allow clicking anywhere on poster to play
+    if (poster) {
+      poster.addEventListener('click', function(e) {
+        if (e.target === playBtn || playBtn.contains(e.target)) return;
+        loadIframe(false);
+      });
+    }
+    
+  })();
+</script>
+
+<style>
+  .yt-player {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    max-width: 100%;
+    margin: 0 auto;
+  }
+  
+  /* Animated border */
+  .yt-border-glow {
+    position: absolute;
+    inset: -3px;
+    border-radius: 22px;
+    background: conic-gradient(
+      from 0deg,
+      #c084fc,
+      #e879f9,
+      #7dd3fc,
+      #a855f7,
+      #c084fc
+    );
+    animation: yt-border-spin 60s linear infinite;
+    z-index: 0;
+    opacity: 0.6;
+    filter: blur(2px);
+  }
+  
+  @keyframes yt-border-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  
+  /* Corner brackets */
+  .yt-corner {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--cyan, #7dd3fc);
+    z-index: 10;
+    pointer-events: none;
+    filter: drop-shadow(0 0 6px var(--cyan, #7dd3fc));
+  }
+  
+  .yt-corner-tl { top: -6px; left: -6px; border-right: none; border-bottom: none; border-radius: 6px 0 0 0; }
+  .yt-corner-tr { top: -6px; right: -6px; border-left: none; border-bottom: none; border-radius: 0 6px 0 0; }
+  .yt-corner-bl { bottom: -6px; left: -6px; border-right: none; border-top: none; border-radius: 0 0 0 6px; }
+  .yt-corner-br { bottom: -6px; right: -6px; border-left: none; border-top: none; border-radius: 0 0 6px 0; }
+  
+  /* Main frame */
+  .yt-frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    border-radius: 20px;
+    overflow: hidden;
+    z-index: 1;
+    box-shadow: 
+      0 25px 60px rgba(0, 0, 0, 0.6),
+      0 0 40px rgba(192, 132, 252, 0.15);
+  }
+  
+  /* Poster overlay */
+  .yt-poster {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    cursor: pointer;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+  
+  .yt-poster.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  
+  .yt-poster-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  
+  .yt-poster-dim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.1) 40%,
+      rgba(0, 0, 0, 0.7) 100%
+    );
+  }
+  
+  /* CUSTOM PLAY BUTTON — Matches logo colors */
+  .yt-play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding-left: 5px;
+    box-shadow: 
+      0 15px 40px rgba(192, 132, 252, 0.6),
+      0 0 60px rgba(232, 121, 249, 0.4);
+    transition: transform 0.3s ease;
+    z-index: 6;
+  }
+  
+  .yt-play-btn:hover {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  
+  .yt-play-inner {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Pulse rings around play button */
+  .yt-play-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid rgba(192, 132, 252, 0.6);
+    pointer-events: none;
+  }
+  
+  .yt-play-ring-1 {
+    animation: yt-ring-pulse 2s ease-out infinite;
+  }
+  
+  .yt-play-ring-2 {
+    animation: yt-ring-pulse 2s ease-out infinite;
+    animation-delay: 0.5s;
+  }
+  
+  .yt-play-ring-3 {
+    animation: yt-ring-pulse 2s ease-out infinite;
+    animation-delay: 1s;
+  }
+  
+  @keyframes yt-ring-pulse {
+    0%   { transform: scale(1);   opacity: 1; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+  
+  /* Live badge */
+  .yt-live-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    z-index: 7;
+    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.5);
+  }
+  
+  .yt-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 6px #fff;
+    animation: yt-blink 1.5s ease infinite;
+  }
+  
+  @keyframes yt-blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+  
+  /* Quality badge */
+  .yt-quality-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: rgba(125, 211, 252, 0.9);
+    color: #0a0517;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    z-index: 7;
+    backdrop-filter: blur(10px);
+  }
+  
+  /* Title bar */
+  .yt-title-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20px 24px 24px;
+    z-index: 6;
+    background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.85));
+  }
+  
+  .yt-title-text {
+    color: #fff;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* Iframe container */
+  .yt-iframe-container {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  
+  .yt-iframe-container.active {
+    opacity: 1;
+  }
+  
+  .yt-iframe-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+  
+  /* Watermark (top-left corner, over YouTube) */
+  .yt-watermark {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 8;
+    pointer-events: none;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    background: rgba(10, 5, 23, 0.8);
+    padding: 5px 10px;
+    border-radius: 6px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(192, 132, 252, 0.3);
+  }
+  
+  .yt-iframe-container.active ~ .yt-watermark {
+    opacity: 0.85;
+  }
+  
+  .yt-wm-ani {
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .yt-wm-tube {
+    color: #fff;
+  }
+  
+  .yt-wm-buzz {
+    background: linear-gradient(135deg, #e879f9, #7dd3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Unmute button */
+  .yt-unmute-btn {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.5s ease, transform 0.2s ease;
+    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.5);
+    animation: yt-unmute-bounce 2s ease infinite;
+  }
+  
+  .yt-unmute-btn:hover {
+    transform: translateX(-50%) scale(1.05);
+  }
+  
+  @keyframes yt-unmute-bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%       { transform: translateX(-50%) translateY(-4px); }
+  }
+  
+  /* Responsive */
+  @media (max-width: 640px) {
+    .yt-play-btn {
+      width: 68px;
+      height: 68px;
+    }
+    
+    .yt-play-inner svg {
+      width: 26px;
+      height: 26px;
+    }
+    
+    .yt-title-text {
+      font-size: 0.9rem;
+    }
+    
+    .yt-live-badge {
+      font-size: 0.58rem;
+      padding: 4px 9px;
+    }
+    
+    .yt-quality-badge {
+      font-size: 0.6rem;
+      padding: 4px 8px;
+    }
+    
+    .yt-corner {
+      width: 18px;
+      height: 18px;
+    }
+  }
+</style>
