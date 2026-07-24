@@ -24,15 +24,12 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
 
-  <!-- Primary SEO -->
   <title>{fullTitle}</title>
   <meta name="description" content={description} />
   <link rel="canonical" href={canonicalURL} />
   {noindex && <meta name="robots" content="noindex,nofollow" />}
 
-  <!-- Open Graph -->
   <meta property="og:type"        content={type} />
   <meta property="og:url"         content={canonicalURL} />
   <meta property="og:title"       content={fullTitle} />
@@ -41,28 +38,17 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   <meta property="og:site_name"   content="AniTube Buzz" />
   <meta property="og:locale"      content="en_US" />
 
-  <!-- Twitter Card -->
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content={fullTitle} />
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image"       content={image} />
 
-  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-  <!-- Fonts -->
+  <!-- Premium Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap"
-    media="print"
-    onload="this.media='all'"
-  />
-
-  <!-- Monetag Ads -->
-  <script async src="https://alwingulla.com/88/tag.min.js"
-    data-zone="YOUR_ZONE_ID" is:inline></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
   <!-- Schema.org -->
   <script type="application/ld+json" is:inline>
@@ -71,7 +57,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     "@type": "WebSite",
     "name": "AniTube Buzz",
     "url": "https://anime-streaming-buzz.pages.dev",
-    "description": "Premium anime news, reviews, streaming guides and gaming content for US anime fans.",
     "potentialAction": {
       "@type": "SearchAction",
       "target": "https://anime-streaming-buzz.pages.dev/search?q={search_term_string}",
@@ -84,33 +69,30 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 <body>
   <!-- Page Loader -->
   <div id="page-loader" aria-hidden="true">
-    <div class="loader-logo">AniTube Buzz</div>
-    <div class="loader-bar-wrap">
-      <div class="loader-bar"></div>
+    <div class="loader-brand">ANITUBE BUZZ</div>
+    <div class="loader-bar-track">
+      <div class="loader-bar-fill"></div>
     </div>
-    <div class="loader-text">Loading...</div>
+    <div class="loader-sub">Loading your anime experience</div>
+  </div>
+
+  <!-- Anime Background System -->
+  <div id="anime-bg" aria-hidden="true">
+    <div class="anime-bg-image" id="bg-img-1"></div>
+    <div class="anime-bg-image" id="bg-img-2"></div>
+    <div class="anime-bg-overlay"></div>
+    <div class="anime-bg-gradient"></div>
+    <canvas id="particle-canvas"></canvas>
   </div>
 
   <!-- Custom Cursor (desktop only) -->
-  <div id="cursor-dot"  aria-hidden="true"></div>
+  <div id="cursor-dot" aria-hidden="true"></div>
   <div id="cursor-ring" aria-hidden="true"></div>
-  <div id="cursor-trail" aria-hidden="true"></div>
 
-  <!-- Click ripple container -->
-  <div class="ripple-container" id="ripple-container" aria-hidden="true"></div>
+  <!-- Click ripple -->
+  <div id="ripple-container" class="ripple-container" aria-hidden="true"></div>
 
-  <!-- Animated Background -->
-  <div id="anime-bg" aria-hidden="true">
-    <div class="bg-grid"></div>
-    <div class="bg-scanlines"></div>
-    <canvas id="particle-canvas"></canvas>
-    <div class="bg-orb bg-orb-1"></div>
-    <div class="bg-orb bg-orb-2"></div>
-    <div class="bg-orb bg-orb-3"></div>
-    <div class="bg-orb bg-orb-4"></div>
-  </div>
-
-  <!-- App wrapper -->
+  <!-- App -->
   <div id="app-wrapper">
     <slot name="header" />
     <main id="main-content">
@@ -120,126 +102,109 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   </div>
 
   <!-- Back to top -->
-  <button id="back-to-top" aria-label="Back to top" title="Back to top">↑</button>
+  <button id="back-to-top" aria-label="Back to top">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>
+  </button>
 
-  <!-- Toast container -->
+  <!-- Toast -->
   <div id="toast-container" aria-live="polite"></div>
 
   <script is:inline>
   (function () {
     'use strict';
 
-    // ── Page Loader ──────────────────────────────────────────────────────────
+    var isMobile = window.innerWidth <= 768;
+
+    // ── Page Loader ──────────────────────────────────────
     window.addEventListener('load', function () {
       setTimeout(function () {
-        var loader = document.getElementById('page-loader');
-        if (loader) loader.classList.add('hidden');
-      }, 800);
+        var l = document.getElementById('page-loader');
+        if (l) l.classList.add('hidden');
+      }, 900);
     });
 
-    // ── Custom Cursor ────────────────────────────────────────────────────────
-    var isMobile = window.matchMedia('(max-width: 768px)').matches;
+    // ── Anime Background Image Rotation ──────────────────
+    // High quality anime scene URLs from MAL CDN (official key visuals)
+    var bgImages = [
+      'https://cdn.myanimelist.net/images/anime/1015/138006l.jpg',
+      'https://cdn.myanimelist.net/images/anime/1286/99889l.jpg',
+      'https://cdn.myanimelist.net/images/anime/1337/99013l.jpg',
+      'https://cdn.myanimelist.net/images/anime/1170/124312l.jpg',
+      'https://cdn.myanimelist.net/images/anime/1208/94745l.jpg',
+      'https://cdn.myanimelist.net/images/anime/1764/126627l.jpg',
+      'https://cdn.myanimelist.net/images/anime/1935/127974l.jpg',
+      'https://cdn.myanimelist.net/images/anime/1015/138006l.jpg',
+      'https://cdn.myanimelist.net/images/anime/1792/134026l.jpg',
+      'https://cdn.myanimelist.net/images/anime/1004/131809l.jpg',
+    ];
 
-    if (!isMobile) {
-      var dot       = document.getElementById('cursor-dot');
-      var ring      = document.getElementById('cursor-ring');
-      var trailEl   = document.getElementById('cursor-trail');
-      var dotX = 0, dotY = 0;
-      var ringX = 0, ringY = 0;
-      var mouseX = 0, mouseY = 0;
-      var particles = [];
-      var lastParticleTime = 0;
+    var bgEl1 = document.getElementById('bg-img-1');
+    var bgEl2 = document.getElementById('bg-img-2');
+    var currentBg = 0;
+    var activeEl = bgEl1;
 
-      document.addEventListener('mousemove', function (e) {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-
-        // Dot follows instantly
-        dotX = mouseX;
-        dotY = mouseY;
-        dot.style.transform = 'translate(' + (dotX - 4) + 'px, ' + (dotY - 4) + 'px)';
-
-        // Trail particles
-        var now = Date.now();
-        if (now - lastParticleTime > 40) {
-          createCursorParticle(mouseX, mouseY);
-          lastParticleTime = now;
-        }
-      });
-
-      // Ring follows with lag
-      function animateRing() {
-        ringX += (mouseX - ringX) * 0.12;
-        ringY += (mouseY - ringY) * 0.12;
-        ring.style.transform = 'translate(' + (ringX - 16) + 'px, ' + (ringY - 16) + 'px)';
-        requestAnimationFrame(animateRing);
-      }
-      animateRing();
-
-      // Cursor hover effect on interactive elements
-      var hoverEls = document.querySelectorAll('a, button, [role="button"], input, textarea, select, .fb-card, .card');
-      hoverEls.forEach(function (el) {
-        el.addEventListener('mouseenter', function () {
-          document.body.classList.add('cursor-hover');
-        });
-        el.addEventListener('mouseleave', function () {
-          document.body.classList.remove('cursor-hover');
-        });
-      });
-
-      // Create cursor trail particle
-      function createCursorParticle(x, y) {
-        var colors = ['#8b00ff', '#00d4ff', '#ff0080', '#ffd700', '#c084fc'];
-        var color  = colors[Math.floor(Math.random() * colors.length)];
-        var size   = Math.random() * 4 + 2;
-        var p = document.createElement('div');
-        p.className = 'cursor-particle';
-        p.style.cssText = [
-          'width:' + size + 'px',
-          'height:' + size + 'px',
-          'background:' + color,
-          'left:' + x + 'px',
-          'top:' + y + 'px',
-          '--tx:' + (Math.random() * 30 - 15) + 'px',
-          '--ty:' + (Math.random() * 30 - 15) + 'px',
-        ].join(';');
-        trailEl.appendChild(p);
-        setTimeout(function () { p.remove(); }, 800);
-      }
+    function preloadImage(url, cb) {
+      var img = new Image();
+      img.onload = function () { cb(url); };
+      img.onerror = function () { cb(null); };
+      img.src = url;
     }
 
-    // ── Particle Background ──────────────────────────────────────────────────
-    var canvas  = document.getElementById('particle-canvas');
-    var ctx     = canvas ? canvas.getContext('2d') : null;
-    var pts     = [];
-    var animId;
+    function setInitialBg() {
+      if (!bgEl1) return;
+      var idx = Math.floor(Math.random() * bgImages.length);
+      currentBg = idx;
+      bgEl1.style.backgroundImage = 'url(' + bgImages[idx] + ')';
+      bgEl1.style.opacity = '1';
+    }
+
+    function rotateBg() {
+      currentBg = (currentBg + 1) % bgImages.length;
+      var nextUrl = bgImages[currentBg];
+      var inactiveEl = activeEl === bgEl1 ? bgEl2 : bgEl1;
+
+      preloadImage(nextUrl, function (url) {
+        if (!url) return;
+        inactiveEl.style.backgroundImage = 'url(' + url + ')';
+        inactiveEl.style.opacity = '1';
+        activeEl.style.opacity = '0';
+        activeEl = inactiveEl;
+      });
+    }
+
+    setInitialBg();
+    setInterval(rotateBg, 12000); // Change every 12 seconds
+
+    // ── Particle System ──────────────────────────────────
+    var canvas = document.getElementById('particle-canvas');
+    var ctx = canvas ? canvas.getContext('2d') : null;
+    var pts = [];
 
     function resizeCanvas() {
       if (!canvas) return;
-      canvas.width  = window.innerWidth;
+      canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
 
-    function initParticles(count) {
+    function initPts(n) {
       pts = [];
-      for (var i = 0; i < count; i++) {
+      for (var i = 0; i < n; i++) {
         pts.push({
-          x:   Math.random() * canvas.width,
-          y:   Math.random() * canvas.height,
-          vx:  (Math.random() - 0.5) * 0.3,
-          vy:  (Math.random() - 0.5) * 0.3,
-          r:   Math.random() * 1.5 + 0.5,
-          a:   Math.random() * 0.4 + 0.1,
-          color: ['#8b00ff','#00d4ff','#ff0080','#c084fc'][Math.floor(Math.random() * 4)],
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: (Math.random() - 0.5) * 0.2,
+          vy: (Math.random() - 0.5) * 0.2,
+          r: Math.random() * 1.2 + 0.3,
+          a: Math.random() * 0.3 + 0.05,
         });
       }
     }
 
-    function drawParticles() {
+    function drawPts() {
       if (!ctx) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      pts.forEach(function (p) {
+      for (var i = 0; i < pts.length; i++) {
+        var p = pts[i];
         p.x += p.vx;
         p.y += p.vy;
         if (p.x < 0) p.x = canvas.width;
@@ -249,56 +214,72 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.a;
+        ctx.fillStyle = 'rgba(192, 132, 252, ' + p.a + ')';
         ctx.fill();
-        ctx.globalAlpha = 1;
-      });
-
-      // Draw connections
-      for (var i = 0; i < pts.length; i++) {
-        for (var j = i + 1; j < pts.length; j++) {
-          var dx   = pts[i].x - pts[j].x;
-          var dy   = pts[i].y - pts[j].y;
-          var dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 100) {
-            ctx.beginPath();
-            ctx.moveTo(pts[i].x, pts[i].y);
-            ctx.lineTo(pts[j].x, pts[j].y);
-            ctx.strokeStyle = 'rgba(139,0,255,' + (0.06 * (1 - dist / 100)) + ')';
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
       }
-
-      animId = requestAnimationFrame(drawParticles);
+      requestAnimationFrame(drawPts);
     }
 
     if (canvas) {
       resizeCanvas();
-      initParticles(isMobile ? 30 : 60);
-      drawParticles();
+      initPts(isMobile ? 20 : 40);
+      drawPts();
       window.addEventListener('resize', function () {
         resizeCanvas();
-        initParticles(isMobile ? 30 : 60);
+        initPts(isMobile ? 20 : 40);
       });
     }
 
-    // ── Click Ripple ─────────────────────────────────────────────────────────
-    var rippleContainer = document.getElementById('ripple-container');
+    // ── Custom Cursor (desktop) ──────────────────────────
+    if (!isMobile) {
+      var dot = document.getElementById('cursor-dot');
+      var ring = document.getElementById('cursor-ring');
+      var mx = 0, my = 0, rx = 0, ry = 0;
 
+      document.addEventListener('mousemove', function (e) {
+        mx = e.clientX;
+        my = e.clientY;
+        if (dot) dot.style.transform = 'translate(' + (mx - 4) + 'px,' + (my - 4) + 'px)';
+      });
+
+      function animRing() {
+        rx += (mx - rx) * 0.12;
+        ry += (my - ry) * 0.12;
+        if (ring) ring.style.transform = 'translate(' + (rx - 16) + 'px,' + (ry - 16) + 'px)';
+        requestAnimationFrame(animRing);
+      }
+      animRing();
+
+      document.addEventListener('mousedown', function () {
+        document.body.classList.add('cursor-click');
+      });
+      document.addEventListener('mouseup', function () {
+        document.body.classList.remove('cursor-click');
+      });
+
+      // Hover effect
+      var hoverSel = 'a, button, [role="button"], input, textarea, .card, .fb-card, .news-card';
+      document.addEventListener('mouseover', function (e) {
+        if (e.target.closest(hoverSel)) document.body.classList.add('cursor-hover');
+      });
+      document.addEventListener('mouseout', function (e) {
+        if (e.target.closest(hoverSel)) document.body.classList.remove('cursor-hover');
+      });
+    }
+
+    // ── Click Ripple ─────────────────────────────────────
     document.addEventListener('click', function (e) {
-      if (!rippleContainer) return;
+      var c = document.getElementById('ripple-container');
+      if (!c) return;
       var r = document.createElement('div');
       r.className = 'click-ripple';
       r.style.left = e.clientX + 'px';
-      r.style.top  = e.clientY + 'px';
-      rippleContainer.appendChild(r);
+      r.style.top = e.clientY + 'px';
+      c.appendChild(r);
       setTimeout(function () { r.remove(); }, 700);
     });
 
-    // ── Back to Top ──────────────────────────────────────────────────────────
+    // ── Back to Top ──────────────────────────────────────
     var btt = document.getElementById('back-to-top');
     if (btt) {
       window.addEventListener('scroll', function () {
@@ -309,70 +290,19 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       });
     }
 
-    // ── Intersection Observer (reveal animations) ────────────────────────────
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    // ── Scroll Reveal ────────────────────────────────────
+    if ('IntersectionObserver' in window) {
+      var obs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (en.isIntersecting) {
+            en.target.classList.add('visible');
+            obs.unobserve(en.target);
+          }
+        });
+      }, { threshold: 0.08 });
 
-    document.querySelectorAll('.reveal').forEach(function (el) {
-      observer.observe(el);
-    });
-
-    // ── Button Ripple ────────────────────────────────────────────────────────
-    document.querySelectorAll('.btn').forEach(function (btn) {
-      btn.addEventListener('click', function (e) {
-        var rect = btn.getBoundingClientRect();
-        var r    = document.createElement('span');
-        r.className = 'btn-ripple';
-        var size = Math.max(rect.width, rect.height);
-        r.style.width  = size + 'px';
-        r.style.height = size + 'px';
-        r.style.left   = (e.clientX - rect.left - size / 2) + 'px';
-        r.style.top    = (e.clientY - rect.top  - size / 2) + 'px';
-        btn.appendChild(r);
-        setTimeout(function () { r.remove(); }, 700);
-      });
-    });
-
-    // ── Toast System (global) ────────────────────────────────────────────────
-    window.showToast = function (msg, duration) {
-      duration = duration || 3000;
-      var container = document.getElementById('toast-container');
-      if (!container) return;
-      var t = document.createElement('div');
-      t.className = 'toast';
-      t.textContent = msg;
-      container.appendChild(t);
-      setTimeout(function () {
-        t.style.animation = 'toast-in 0.3s ease reverse forwards';
-        setTimeout(function () { t.remove(); }, 300);
-      }, duration);
-    };
-
-    // ── Page Transition ──────────────────────────────────────────────────────
-    document.querySelectorAll('a[href]').forEach(function (link) {
-      var href = link.getAttribute('href');
-      if (!href || href.startsWith('#') || href.startsWith('http') ||
-          href.startsWith('mailto') || link.target === '_blank') return;
-
-      link.addEventListener('click', function (e) {
-        e.preventDefault();
-        var loader = document.getElementById('page-loader');
-        if (loader) {
-          loader.style.opacity = '1';
-          loader.style.visibility = 'visible';
-          loader.classList.remove('hidden');
-        }
-        setTimeout(function () {
-          window.location.href = href;
-        }, 300);
-      });
-    });
+      document.querySelectorAll('.reveal').forEach(function (el) { obs.observe(el); });
+    }
 
   })();
   </script>
@@ -380,5 +310,310 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 </html>
 
 <style is:global>
-  @import '../styles/global.css';
+  /* ── Fonts ── */
+  body {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #04020f;
+    color: #fff;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', 'Outfit', sans-serif;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* ── Anime Background ── */
+  #anime-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .anime-bg-image {
+    position: absolute;
+    inset: -20px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 3s ease-in-out;
+    filter: blur(12px) brightness(0.25) saturate(1.4);
+    transform: scale(1.1);
+  }
+
+  .anime-bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(4, 2, 15, 0.65);
+  }
+
+  .anime-bg-gradient {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(139,0,255,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(0,212,255,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(255,0,128,0.04) 0%, transparent 60%);
+  }
+
+  #particle-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ── App Wrapper ── */
+  #app-wrapper {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  main { flex: 1; }
+
+  /* ── Page Loader ── */
+  #page-loader {
+    position: fixed;
+    inset: 0;
+    background: #04020f;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1.2rem;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+  }
+
+  #page-loader.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .loader-brand {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    background: linear-gradient(135deg, #8b00ff, #00d4ff, #ff0080);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-shift 2s ease infinite;
+  }
+
+  .loader-bar-track {
+    width: 180px;
+    height: 3px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .loader-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8b00ff, #00d4ff);
+    border-radius: 999px;
+    animation: loader-fill 1s ease forwards;
+  }
+
+  @keyframes loader-fill {
+    0%   { width: 0; }
+    60%  { width: 75%; }
+    100% { width: 100%; }
+  }
+
+  .loader-sub {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  @keyframes gradient-shift {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* ── Cursor ── */
+  @media (min-width: 769px) {
+    body { cursor: none; }
+    a, button, input, textarea, select { cursor: none; }
+  }
+
+  #cursor-dot {
+    width: 8px;
+    height: 8px;
+    background: #8b00ff;
+    border-radius: 50%;
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 99998;
+    box-shadow: 0 0 8px #8b00ff, 0 0 16px rgba(139,0,255,0.5);
+    transition: transform 0.05s linear;
+  }
+
+  #cursor-ring {
+    width: 32px;
+    height: 32px;
+    border: 1.5px solid rgba(139,0,255,0.5);
+    border-radius: 50%;
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 99997;
+    transition: width 0.2s ease, height 0.2s ease, border-color 0.2s ease;
+  }
+
+  body.cursor-hover #cursor-dot {
+    transform: scale(2.5) !important;
+    background: #00d4ff;
+    box-shadow: 0 0 12px #00d4ff;
+  }
+
+  body.cursor-hover #cursor-ring {
+    width: 48px;
+    height: 48px;
+    border-color: rgba(0,212,255,0.5);
+  }
+
+  body.cursor-click #cursor-dot {
+    transform: scale(0.5) !important;
+  }
+
+  @media (max-width: 768px) {
+    #cursor-dot, #cursor-ring { display: none !important; }
+  }
+
+  /* ── Click Ripple ── */
+  .ripple-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 99995;
+    overflow: hidden;
+  }
+
+  .click-ripple {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid rgba(139,0,255,0.6);
+    border-radius: 50%;
+    animation: ripple-out 0.6s ease-out forwards;
+    pointer-events: none;
+  }
+
+  @keyframes ripple-out {
+    0%   { transform: scale(0); opacity: 1; }
+    100% { transform: scale(6); opacity: 0; }
+  }
+
+  /* ── Back to Top ── */
+  #back-to-top {
+    position: fixed;
+    bottom: 2rem;
+    right: 1.5rem;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8b00ff, #5500cc);
+    border: 1px solid rgba(139,0,255,0.5);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(139,0,255,0.4);
+  }
+
+  #back-to-top.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  #back-to-top:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(139,0,255,0.5);
+  }
+
+  /* ── Toast ── */
+  #toast-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 5rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    pointer-events: none;
+  }
+
+  .toast {
+    background: rgba(13, 6, 32, 0.95);
+    border: 1px solid rgba(139,0,255,0.3);
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    color: rgba(255,255,255,0.8);
+    font-size: 0.8rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    animation: toast-slide 0.3s ease forwards;
+    pointer-events: auto;
+    max-width: 280px;
+  }
+
+  @keyframes toast-slide {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Links ── */
+  a { color: inherit; text-decoration: none; }
+
+  img { max-width: 100%; height: auto; display: block; }
+
+  /* ── Selection ── */
+  ::selection {
+    background: rgba(139,0,255,0.35);
+    color: #fff;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+  ::-webkit-scrollbar-thumb { background: rgba(139,0,255,0.3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(139,0,255,0.5); }
+
+  /* ── Accessibility ── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+    .anime-bg-image { transition-duration: 0.01ms !important; }
+  }
 </style>
