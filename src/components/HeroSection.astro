@@ -45,18 +45,18 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
           <!-- Left content -->
           <div class="hero-left">
             <h1 class="hero-welcome">
-              <span class="grad-text">Welcome</span> to<br/>
+              <span class="grad-text">Welcome</span> <span class="tube-text">to</span><br/>
               <span class="tube-text">AniTube Buzz</span>
             </h1>
 
             <p class="hero-desc">{anime.synopsis}</p>
 
             <div class="hero-play-row">
-              <button class="hero-play-btn" onclick={`window.location.href='${anime.malUrl}'`} aria-label="Play trailer">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <a href={anime.malUrl} target="_blank" rel="noopener" class="hero-play-btn" aria-label="Watch">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M8 5v14l11-7z"/>
                 </svg>
-              </button>
+              </a>
               <div class="hero-play-info">
                 <div class="hero-date">{firstDate}</div>
                 <div class="hero-season">
@@ -67,7 +67,7 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
             </div>
           </div>
 
-          <!-- Right image -->
+          <!-- Right image (BIG, HD, NO BLUR) -->
           <div class="hero-right">
             <div class="hero-image-glow"></div>
             {anime.image && (
@@ -137,7 +137,7 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
 
 <style>
   .hero {
-    padding: 2rem 0 3rem;
+    padding: 3rem 0 4rem;
     position: relative;
   }
 
@@ -147,20 +147,20 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
 
   .hero-slides {
     position: relative;
-    min-height: 480px;
+    min-height: 560px;
   }
 
   .hero-slide {
     position: absolute;
     inset: 0;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1.2fr;
     align-items: center;
-    gap: 3rem;
+    gap: 4rem;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.8s ease;
-    padding: 2rem 0;
+    padding: 1rem 0;
   }
 
   .hero-slide.active {
@@ -172,34 +172,35 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
   .hero-left {
     position: relative;
     z-index: 2;
+    animation-delay: 0.2s;
   }
 
   .hero-welcome {
     font-family: var(--font-heading);
-    font-size: clamp(2rem, 5vw, 3.6rem);
+    font-size: clamp(2.2rem, 5.5vw, 4rem);
     font-weight: 800;
     line-height: 1.1;
     letter-spacing: -0.03em;
-    margin-bottom: 1.2rem;
+    margin-bottom: 1.5rem;
   }
 
   .hero-desc {
-    font-size: 0.95rem;
+    font-size: 1rem;
     color: var(--text-muted);
     line-height: 1.7;
-    max-width: 400px;
-    margin-bottom: 2rem;
+    max-width: 420px;
+    margin-bottom: 2.5rem;
   }
 
   .hero-play-row {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.2rem;
   }
 
   .hero-play-btn {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     background: var(--grad);
     border: none;
@@ -210,8 +211,9 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
     justify-content: center;
     padding-left: 3px;
     transition: transform 0.2s ease;
-    box-shadow: 0 8px 25px rgba(255, 51, 102, 0.4);
+    box-shadow: 0 8px 25px rgba(255, 51, 153, 0.4);
     position: relative;
+    text-decoration: none;
   }
 
   .hero-play-btn::before {
@@ -219,7 +221,7 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
     position: absolute;
     inset: -6px;
     border-radius: 50%;
-    border: 1.5px solid rgba(255, 51, 102, 0.3);
+    border: 1.5px solid rgba(255, 51, 153, 0.3);
     animation: play-ring 2s ease infinite;
   }
 
@@ -228,25 +230,23 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
     100% { transform: scale(1.5); opacity: 0; }
   }
 
-  .hero-play-btn:hover {
-    transform: scale(1.1);
-  }
+  .hero-play-btn:hover { transform: scale(1.1); }
 
   .hero-play-info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
   }
 
   .hero-date {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     color: var(--text-muted);
     font-weight: 500;
   }
 
   .hero-season {
     font-family: var(--font-heading);
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -255,17 +255,17 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
 
   .hero-anime-name {
     font-family: var(--font-heading);
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-primary);
     letter-spacing: -0.01em;
   }
 
-  /* Right image */
+  /* Right image — BIG, HD */
   .hero-right {
     position: relative;
     height: 100%;
-    min-height: 420px;
+    min-height: 560px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -276,21 +276,21 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 90%;
-    height: 90%;
+    width: 110%;
+    height: 110%;
     border-radius: 50%;
     background: radial-gradient(circle,
-      rgba(255, 51, 102, 0.4) 0%,
-      rgba(255, 0, 128, 0.3) 30%,
-      rgba(0, 212, 255, 0.2) 60%,
+      rgba(255, 51, 153, 0.5) 0%,
+      rgba(204, 51, 204, 0.3) 30%,
+      rgba(0, 212, 255, 0.25) 60%,
       transparent 75%
     );
-    filter: blur(60px);
+    filter: blur(80px);
     animation: glow-pulse 4s ease infinite;
   }
 
   @keyframes glow-pulse {
-    0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+    0%, 100% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
     50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.05); }
   }
 
@@ -298,18 +298,17 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
     position: relative;
     z-index: 2;
     width: 100%;
-    max-width: 480px;
+    max-width: 520px;
     aspect-ratio: 3/4;
-    border-radius: 24px;
+    border-radius: 28px;
     overflow: hidden;
-    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
   }
 
   .hero-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    /* NO BLUR — full HD */
     animation: hero-img-in 1s ease forwards;
   }
 
@@ -320,18 +319,18 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
 
   .hero-score-badge {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 24px;
+    right: 24px;
     z-index: 3;
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    background: rgba(0, 0, 0, 0.75);
+    gap: 0.35rem;
+    background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(10px);
     color: #ffd700;
-    padding: 0.4rem 0.75rem;
+    padding: 0.5rem 0.85rem;
     border-radius: 999px;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 700;
     border: 1px solid rgba(255, 215, 0, 0.3);
   }
@@ -346,7 +345,7 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
   }
 
   .hero-dot {
-    width: 28px;
+    width: 32px;
     height: 4px;
     border-radius: 4px;
     background: rgba(255, 255, 255, 0.15);
@@ -355,18 +354,17 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
     transition: all 0.3s ease;
   }
 
-  .hero-dot:hover {
-    background: rgba(255, 255, 255, 0.35);
-  }
+  .hero-dot:hover { background: rgba(255, 255, 255, 0.35); }
 
   .hero-dot.active {
     background: var(--grad);
-    width: 40px;
-    box-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
+    width: 48px;
+    box-shadow: 0 0 10px rgba(255, 51, 153, 0.5);
   }
 
   /* ── Responsive ── */
   @media (max-width: 900px) {
+    .hero { padding: 2rem 0 3rem; }
     .hero-slides { min-height: auto; }
     .hero-slide {
       grid-template-columns: 1fr;
@@ -376,8 +374,11 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
     }
     .hero-slide:not(.active) { display: none; }
     .hero-left { order: 2; }
-    .hero-right { order: 1; min-height: 350px; }
-    .hero-image-wrap { max-width: 300px; }
+    .hero-right {
+      order: 1;
+      min-height: 400px;
+    }
+    .hero-image-wrap { max-width: 320px; }
     .hero-desc { margin: 0 auto 2rem; }
     .hero-play-row { justify-content: center; }
     .hero-dots {
@@ -390,7 +391,8 @@ const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month
   }
 
   @media (max-width: 480px) {
-    .hero-welcome { font-size: 1.8rem; }
-    .hero-image-wrap { max-width: 240px; }
+    .hero-welcome { font-size: 1.9rem; }
+    .hero-image-wrap { max-width: 260px; }
+    .hero-right { min-height: 340px; }
   }
 </style>
