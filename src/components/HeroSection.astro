@@ -1,7 +1,5 @@
 ---
-// Fetch top airing anime + latest news posts
 let heroAnime = [];
-let episodes = [];
 
 try {
   const res = await fetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=5');
@@ -20,6 +18,7 @@ try {
       genres:   (a.genres || []).slice(0, 2).map(g => g.name),
       malUrl:   a.url,
       status:   a.status || '',
+      malId:    a.mal_id,
     }));
   }
 } catch (e) {
@@ -29,22 +28,30 @@ try {
 if (heroAnime.length === 0) {
   heroAnime = [{
     title: 'Discover Anime',
-    titleJp: '',
     synopsis: 'Explore the latest anime series and streaming guides.',
-    image: '',
-    score: null, year: 2025, episodes: '?', type: 'TV',
-    studio: 'AniTube Buzz',
-    genres: ['Anime'],
-    malUrl: '#', status: 'Featured',
+    image: '', score: null, year: 2025, episodes: '?', type: 'TV',
+    studio: 'AniTube', genres: ['Anime'], malUrl: '#', status: 'Featured',
   }];
 }
 
-// Fetch latest news for episode cards
+// Fetch latest news posts, filter out ones with picsum placeholder
 import { getCollection } from 'astro:content';
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
 const latestNews = allPosts
   .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
+  .filter(post => {
+    const img = post.data.image || '';
+    // Skip picsum placeholders — only real anime images
+    return img && !img.includes('picsum.photos') && !img.includes('placeholder');
+  })
   .slice(0, 4);
+
+// If not enough good posts, get whatever we have
+const displayEpisodes = latestNews.length >= 4
+  ? latestNews
+  : allPosts
+      .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
+      .slice(0, 4);
 ---
 
 <section class="hero-strm" id="heroStrm">
@@ -56,31 +63,58 @@ const latestNews = allPosts
 
           <div class="hero-strm-inner">
 
-            <!-- Left Info Column -->
+            <!-- Backdrop tint image behind everything -->
+            {anime.image && (
+              <div class="hero-backdrop" style={`background-image: url(${anime.image})`}></div>
+            )}
+            <div class="hero-backdrop-tint"></div>
+
+            <!-- Left Info -->
             <div class="hero-info">
 
-              <div class="hero-studio-badge">
-                <div class="studio-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M13 2L4 14H12L11 22L20 10H12L13 2Z" fill="currentColor"/>
-                  </svg>
+              <div class="hero-badges-top">
+                <div class="hero-studio-badge">
+                  <div class="studio-icon">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M13 2L4 14H12L11 22L20 10H12L13 2Z"/>
+                    </svg>
+                  </div>
+                  <span>{anime.studio}</span>
+                  <span class="studio-orig">Original</span>
                 </div>
-                <span>{anime.studio}</span>
-                <span class="studio-orig">original</span>
+
+                <div class="hero-quality-badge">
+                  <span class="quality-dot"></span>
+                  <span>HD</span>
+                </div>
+
+                <div class="hero-new-badge">
+                  <span class="new-pulse"></span>
+                  <span>NEW</span>
+                </div>
               </div>
 
               <h1 class="hero-strm-title">{anime.title}</h1>
 
+              {anime.titleJp && (
+                <p class="hero-title-jp">{anime.titleJp}</p>
+              )}
+
               <div class="hero-strm-meta">
-                {anime.year && <span class="hero-strm-year">{anime.year}</span>}
-                <span class="hero-strm-eps">{anime.episodes} Episodes</span>
+                {anime.year && <span class="meta-pill meta-year">{anime.year}</span>}
+                <span class="meta-pill meta-eps">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.7">
+                    <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+                  </svg>
+                  {anime.episodes} EP
+                </span>
                 {anime.genres.length > 0 && (
-                  <span class="hero-strm-cat">{anime.genres[0]}</span>
+                  <span class="meta-pill meta-genre">{anime.genres[0]}</span>
                 )}
                 {anime.score && (
-                  <span class="hero-strm-rating">
+                  <span class="meta-pill meta-rating">
                     {[1,2,3,4,5].map(s => (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill={s <= Math.round(anime.score/2) ? '#fbbf24' : 'rgba(255,255,255,0.2)'}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill={s <= Math.round(anime.score/2) ? '#fbbf24' : 'rgba(255,255,255,0.25)'}>
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                       </svg>
                     ))}
@@ -98,23 +132,38 @@ const latestNews = allPosts
                       <path d="M8 5v14l11-7z"/>
                     </svg>
                   </div>
-                  <span class="play-cta-txt">Play <span class="play-price">$1</span></span>
+                  <span class="play-cta-txt">Watch Now</span>
+                </a>
+
+                <a href={anime.malUrl} target="_blank" rel="noopener" class="hero-info-cta">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 16v-4M12 8h.01"/>
+                  </svg>
+                  <span>More Info</span>
                 </a>
               </div>
 
             </div>
 
-            <!-- Right Image Column -->
+            <!-- Right Poster -->
             <div class="hero-visual">
               {anime.image && (
-                <div class="hero-visual-wrap">
-                  <img
-                    src={anime.image}
-                    alt={anime.title}
-                    class="hero-visual-img"
-                    loading={idx === 0 ? 'eager' : 'lazy'}
-                  />
-                  <div class="hero-visual-vignette"></div>
+                <div class="hero-poster-frame">
+                  <div class="hero-poster-glow"></div>
+                  <div class="hero-poster-wrap">
+                    <img
+                      src={anime.image}
+                      alt={anime.title}
+                      class="hero-poster-img"
+                      loading={idx === 0 ? 'eager' : 'lazy'}
+                    />
+                  </div>
+                  <!-- Corner accents (gaming style) -->
+                  <div class="corner corner-tl"></div>
+                  <div class="corner corner-tr"></div>
+                  <div class="corner corner-bl"></div>
+                  <div class="corner corner-br"></div>
                 </div>
               )}
             </div>
@@ -126,35 +175,56 @@ const latestNews = allPosts
     </div>
 
     <!-- Season tabs -->
-    <div class="season-tabs">
-      <button class="season-tab active">Season 1</button>
-      <button class="season-tab">Season 2</button>
-      <button class="season-tab">Season 3</button>
-      <button class="season-tab">Season 4</button>
-      <button class="season-tab">Season 5</button>
+    <div class="season-tabs-row">
+      <div class="season-tabs">
+        <button class="season-tab active">Season 1</button>
+        <button class="season-tab">Season 2</button>
+        <button class="season-tab">Season 3</button>
+        <button class="season-tab">Season 4</button>
+        <button class="season-tab">Season 5</button>
+      </div>
+      <div class="season-count">
+        <span class="grad-text">Live</span>
+        <span class="live-dot"></span>
+      </div>
     </div>
 
-    <!-- Episode cards row -->
-    {latestNews.length > 0 && (
+    <!-- Latest news / episodes -->
+    {displayEpisodes.length > 0 && (
       <div class="episodes-row">
-        {latestNews.map((post, idx) => (
-          <a href={`/posts/${post.slug}`} class="episode-card">
-            <div class="ep-thumb">
-              {post.data.image && (
-                <img src={post.data.image} alt={post.data.title} loading="lazy" />
-              )}
-              <div class="ep-play-overlay">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
+        {displayEpisodes.map((post, idx) => {
+          const dateStr = new Date(post.data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const cat = (post.data.category || 'News');
+          const catSlug = cat.toLowerCase().replace(/\s+/g, '-');
+          return (
+            <a href={`/posts/${post.slug}`} class="episode-card">
+              <div class="ep-thumb">
+                {post.data.image && !post.data.image.includes('picsum') ? (
+                  <img src={post.data.image} alt={post.data.title} loading="lazy" />
+                ) : (
+                  <div class="ep-thumb-fallback">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" opacity="0.3">
+                      <path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/>
+                    </svg>
+                  </div>
+                )}
+                <div class="ep-play-overlay">
+                  <div class="ep-play-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                </div>
+                <div class="ep-date-badge">{dateStr}</div>
+                <div class="ep-hd-badge">HD</div>
               </div>
-            </div>
-            <div class="ep-info">
-              <div class="ep-num">Episode {idx + 1}</div>
-              <div class="ep-title">{post.data.title}</div>
-            </div>
-          </a>
-        ))}
+              <div class="ep-info">
+                <div class="ep-cat">{cat}</div>
+                <div class="ep-title">{post.data.title}</div>
+              </div>
+            </a>
+          );
+        })}
       </div>
     )}
 
@@ -214,21 +284,14 @@ const latestNews = allPosts
     position: relative;
   }
 
-  .hero-strm-cnt {
-    position: relative;
-  }
-
-  /* ── Slides Container ── */
+  /* ═══ SLIDES ═══ */
   .hero-strm-slides {
     position: relative;
-    min-height: 480px;
+    min-height: 520px;
     border-radius: var(--radius-xl);
     overflow: hidden;
-    background: linear-gradient(135deg,
-      rgba(42, 21, 71, 0.9) 0%,
-      rgba(30, 15, 54, 0.95) 100%);
-    border: 1px solid var(--border-color);
     box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+    isolation: isolate;
   }
 
   .hero-strm-slide {
@@ -246,33 +309,60 @@ const latestNews = allPosts
 
   .hero-strm-inner {
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    height: 100%;
-    min-height: 480px;
-    gap: 2rem;
+    grid-template-columns: 1.1fr 1fr;
+    min-height: 520px;
+    position: relative;
+    z-index: 1;
   }
 
-  /* ── Left Info ── */
+  /* Backdrop blurred image (gives cinematic feel) */
+  .hero-backdrop {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    z-index: 0;
+    filter: blur(30px) brightness(0.35) saturate(1.3);
+    transform: scale(1.1);
+  }
+
+  .hero-backdrop-tint {
+    position: absolute;
+    inset: 0;
+    background: var(--hero-bg-inner);
+    z-index: 0;
+    backdrop-filter: brightness(0.7);
+  }
+
+  /* ═══ LEFT INFO ═══ */
   .hero-info {
     display: flex;
     flex-direction: column;
     justify-content: center;
     padding: 3rem 2.5rem;
     z-index: 2;
+    position: relative;
+  }
+
+  .hero-badges-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
   }
 
   .hero-studio-badge {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--border-color);
-    padding: 0.35rem 0.75rem 0.35rem 0.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 0.35rem 0.85rem 0.35rem 0.4rem;
     border-radius: 999px;
-    width: fit-content;
-    margin-bottom: 1.5rem;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
+    color: #fff;
     backdrop-filter: blur(10px);
   }
 
@@ -287,72 +377,139 @@ const latestNews = allPosts
   }
 
   .studio-orig {
-    color: var(--text-muted);
-    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.68rem;
     font-weight: 500;
-    margin-left: 0.25rem;
+    margin-left: 0.2rem;
+  }
+
+  .hero-quality-badge, .hero-new-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #fff;
+  }
+
+  .hero-quality-badge {
+    background: rgba(125, 211, 252, 0.15);
+    border: 1px solid rgba(125, 211, 252, 0.4);
+    color: var(--cyan);
+    box-shadow: 0 0 15px rgba(125, 211, 252, 0.2);
+  }
+
+  .quality-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+  }
+
+  .hero-new-badge {
+    background: rgba(240, 171, 252, 0.15);
+    border: 1px solid rgba(240, 171, 252, 0.4);
+    color: var(--pink);
+    box-shadow: 0 0 15px rgba(240, 171, 252, 0.2);
+  }
+
+  .new-pulse {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--pink);
+    box-shadow: 0 0 8px var(--pink);
+    animation: pulse-new 1.5s ease infinite;
+  }
+
+  @keyframes pulse-new {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(1.2); }
   }
 
   .hero-strm-title {
     font-family: var(--font-heading);
-    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    font-size: clamp(2rem, 5vw, 3.4rem);
     font-weight: 800;
-    color: var(--text-primary);
+    color: #ffffff !important;
     line-height: 1.05;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     letter-spacing: -0.03em;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .hero-title-jp {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: rgba(125, 211, 252, 0.85);
+    margin-bottom: 1rem;
+    letter-spacing: 0.02em;
   }
 
   .hero-strm-meta {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.5rem;
     margin-bottom: 1.25rem;
     flex-wrap: wrap;
-    font-size: 0.8rem;
-    color: var(--text-secondary);
   }
 
-  .hero-strm-year { font-weight: 600; }
-
-  .hero-strm-eps {
-    color: var(--text-muted);
-  }
-
-  .hero-strm-cat {
-    background: rgba(192, 132, 252, 0.15);
-    color: var(--purple);
-    padding: 0.2rem 0.6rem;
-    border-radius: 6px;
-    font-size: 0.72rem;
-    font-weight: 600;
-  }
-
-  .hero-strm-rating {
+  .meta-pill {
     display: inline-flex;
     align-items: center;
-    gap: 3px;
+    gap: 0.35rem;
+    padding: 0.28rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+  }
+
+  .meta-year {
+    font-family: var(--font-mono);
+    background: rgba(125, 211, 252, 0.12);
+    color: var(--cyan);
+    border-color: rgba(125, 211, 252, 0.3);
+  }
+
+  .meta-genre {
+    background: rgba(192, 132, 252, 0.15);
+    color: var(--purple);
+    border-color: rgba(192, 132, 252, 0.3);
+  }
+
+  .meta-rating {
+    background: rgba(251, 191, 36, 0.1);
+    border-color: rgba(251, 191, 36, 0.3);
   }
 
   .rating-num {
     color: #fbbf24;
     font-weight: 700;
-    margin-left: 4px;
-    font-size: 0.8rem;
+    margin-left: 3px;
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
   }
 
   .hero-strm-desc {
     font-size: 0.9rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.85) !important;
+    line-height: 1.65;
     margin-bottom: 1.75rem;
-    max-width: 460px;
+    max-width: 500px;
   }
 
-  /* ── Play CTA ── */
+  /* ═══ CTA BUTTONS ═══ */
   .hero-strm-actions {
     display: flex;
     gap: 0.75rem;
+    flex-wrap: wrap;
   }
 
   .hero-play-cta {
@@ -362,15 +519,18 @@ const latestNews = allPosts
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 999px;
-    padding: 0.35rem 1.2rem 0.35rem 0.35rem;
+    padding: 0.35rem 1.3rem 0.35rem 0.35rem;
     transition: all 0.2s ease;
     backdrop-filter: blur(10px);
+    text-decoration: none;
+    color: #fff;
   }
 
   .hero-play-cta:hover {
-    background: rgba(192, 132, 252, 0.15);
-    border-color: rgba(192, 132, 252, 0.4);
+    background: rgba(192, 132, 252, 0.2);
+    border-color: rgba(192, 132, 252, 0.5);
     transform: translateY(-2px);
+    box-shadow: var(--neon-purple);
   }
 
   .play-btn-circle {
@@ -387,36 +547,86 @@ const latestNews = allPosts
   }
 
   .play-cta-txt {
-    color: var(--text-primary);
+    color: #fff;
     font-weight: 600;
     font-size: 0.88rem;
   }
 
-  .play-price {
-    color: var(--purple);
-    margin-left: 0.3rem;
-    font-weight: 700;
+  .hero-info-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.85);
+    padding: 0.7rem 1.25rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    backdrop-filter: blur(10px);
   }
 
-  /* ── Right Visual ── */
+  .hero-info-cta:hover {
+    background: rgba(125, 211, 252, 0.1);
+    border-color: rgba(125, 211, 252, 0.5);
+    color: var(--cyan);
+    box-shadow: var(--neon-cyan);
+  }
+
+  /* ═══ RIGHT POSTER ═══ */
   .hero-visual {
     position: relative;
-    height: 100%;
-    min-height: 480px;
-    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
   }
 
-  .hero-visual-wrap {
+  .hero-poster-frame {
+    position: relative;
+    width: 100%;
+    max-width: 340px;
+    aspect-ratio: 3/4;
+  }
+
+  .hero-poster-glow {
+    position: absolute;
+    inset: -20%;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(192, 132, 252, 0.5) 0%,
+      rgba(240, 171, 252, 0.3) 30%,
+      rgba(125, 211, 252, 0.2) 60%,
+      transparent 75%
+    );
+    filter: blur(50px);
+    animation: poster-glow 4s ease infinite;
+    z-index: 0;
+  }
+
+  @keyframes poster-glow {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50%       { opacity: 1;   transform: scale(1.05); }
+  }
+
+  .hero-poster-wrap {
     position: relative;
     width: 100%;
     height: 100%;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    z-index: 1;
+    box-shadow:
+      0 30px 60px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
   }
 
-  .hero-visual-img {
+  .hero-poster-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
     animation: img-in 1s ease forwards;
   }
 
@@ -425,43 +635,60 @@ const latestNews = allPosts
     to   { transform: scale(1);    opacity: 1; }
   }
 
-  .hero-visual-vignette {
+  /* Corner accents (gaming HUD style) */
+  .corner {
     position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg,
-      rgba(30, 15, 54, 0.9) 0%,
-      rgba(30, 15, 54, 0.3) 30%,
-      transparent 60%);
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--purple);
+    z-index: 2;
+    opacity: 0.7;
   }
 
-  /* ── Season Tabs ── */
+  .corner-tl { top: -6px; left: -6px; border-right: none; border-bottom: none; border-radius: 6px 0 0 0; }
+  .corner-tr { top: -6px; right: -6px; border-left: none; border-bottom: none; border-radius: 0 6px 0 0; }
+  .corner-bl { bottom: -6px; left: -6px; border-right: none; border-top: none; border-radius: 0 0 0 6px; }
+  .corner-br { bottom: -6px; right: -6px; border-left: none; border-top: none; border-radius: 0 0 6px 0; }
+
+  /* ═══ SEASON TABS ═══ */
+  .season-tabs-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
   .season-tabs {
     display: flex;
     gap: 0.5rem;
-    margin-top: 2rem;
     padding: 0.5rem 0;
     overflow-x: auto;
     scrollbar-width: none;
+    flex: 1;
   }
   .season-tabs::-webkit-scrollbar { display: none; }
 
   .season-tab {
-    padding: 0.6rem 1.4rem;
-    background: transparent;
+    padding: 0.55rem 1.3rem;
+    background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--border-color);
     border-radius: 999px;
     color: var(--text-secondary);
     font-family: inherit;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
+    backdrop-filter: blur(10px);
   }
 
   .season-tab:hover {
-    background: rgba(192, 132, 252, 0.08);
+    background: rgba(192, 132, 252, 0.1);
     color: var(--text-primary);
+    border-color: rgba(192, 132, 252, 0.3);
   }
 
   .season-tab.active {
@@ -471,7 +698,26 @@ const latestNews = allPosts
     box-shadow: 0 4px 15px rgba(192, 132, 252, 0.35);
   }
 
-  /* ── Episodes Row ── */
+  .season-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 8px #ef4444;
+    animation: pulse-new 1.5s ease infinite;
+  }
+
+  /* ═══ EPISODES ROW ═══ */
   .episodes-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -490,12 +736,13 @@ const latestNews = allPosts
     text-decoration: none;
     color: inherit;
     backdrop-filter: blur(10px);
+    position: relative;
   }
 
   .episode-card:hover {
-    transform: translateY(-4px);
-    border-color: rgba(192, 132, 252, 0.4);
-    box-shadow: 0 10px 30px rgba(192, 132, 252, 0.15);
+    transform: translateY(-5px);
+    border-color: rgba(192, 132, 252, 0.5);
+    box-shadow: 0 12px 30px rgba(192, 132, 252, 0.2);
   }
 
   .ep-thumb {
@@ -512,7 +759,16 @@ const latestNews = allPosts
     transition: transform 0.5s ease;
   }
 
-  .episode-card:hover .ep-thumb img { transform: scale(1.08); }
+  .episode-card:hover .ep-thumb img { transform: scale(1.1); }
+
+  .ep-thumb-fallback {
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(192, 132, 252, 0.1), rgba(125, 211, 252, 0.1));
+    color: var(--purple);
+  }
 
   .ep-play-overlay {
     position: absolute;
@@ -521,7 +777,6 @@ const latestNews = allPosts
     align-items: center;
     justify-content: center;
     background: rgba(0, 0, 0, 0);
-    color: #fff;
     opacity: 0;
     transition: all 0.3s ease;
   }
@@ -531,45 +786,81 @@ const latestNews = allPosts
     background: rgba(30, 15, 54, 0.5);
   }
 
-  .ep-play-overlay svg {
-    background: var(--grad);
-    padding: 12px;
+  .ep-play-btn {
+    width: 44px; height: 44px;
     border-radius: 50%;
-    box-shadow: 0 0 20px rgba(192, 132, 252, 0.5);
-    width: 44px;
-    height: 44px;
+    background: var(--grad);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 2px;
+    box-shadow: 0 0 20px rgba(192, 132, 252, 0.6);
+    transform: scale(0.7);
+    transition: transform 0.3s ease;
+  }
+
+  .episode-card:hover .ep-play-btn { transform: scale(1); }
+
+  .ep-date-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    backdrop-filter: blur(6px);
+  }
+
+  .ep-hd-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(125, 211, 252, 0.9);
+    color: #0f0620;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
   }
 
   .ep-info {
     padding: 0.75rem 0.9rem;
   }
 
-  .ep-num {
+  .ep-cat {
     font-family: var(--font-heading);
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
     background: var(--grad);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.35rem;
   }
 
   .ep-title {
     font-family: var(--font-heading);
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-primary);
-    line-height: 1.3;
+    line-height: 1.35;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  /* ── Slide Dots ── */
+  /* ═══ DOTS ═══ */
   .hero-strm-dots {
     display: flex;
     justify-content: center;
@@ -592,41 +883,29 @@ const latestNews = allPosts
   .strm-dot.active {
     background: var(--grad);
     width: 42px;
-    box-shadow: 0 0 8px rgba(192, 132, 252, 0.5);
+    box-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
   }
 
-  /* ── Responsive ── */
+  /* ═══ RESPONSIVE ═══ */
   @media (max-width: 900px) {
-    .hero-strm-inner {
-      grid-template-columns: 1fr;
-    }
+    .hero-strm-inner { grid-template-columns: 1fr; }
     .hero-visual {
-      min-height: 300px;
+      min-height: 320px;
       order: -1;
+      padding: 2rem 2rem 0;
     }
-    .hero-visual-vignette {
-      background: linear-gradient(180deg,
-        transparent 0%,
-        rgba(30, 15, 54, 0.5) 60%,
-        rgba(30, 15, 54, 0.95) 100%);
-    }
-    .hero-info {
-      padding: 2rem 1.5rem;
-    }
-    .episodes-row {
-      grid-template-columns: repeat(2, 1fr);
-    }
+    .hero-poster-frame { max-width: 220px; }
+    .hero-info { padding: 2rem 1.5rem; }
+    .episodes-row { grid-template-columns: repeat(2, 1fr); }
   }
 
   @media (max-width: 640px) {
     .hero-strm-title { font-size: 1.9rem; }
     .hero-strm-desc { font-size: 0.85rem; }
     .hero-info { padding: 1.5rem 1.2rem; }
+    .hero-badges-top { gap: 0.35rem; }
     .season-tab { padding: 0.5rem 1rem; font-size: 0.78rem; }
-    .episodes-row {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.75rem;
-    }
+    .episodes-row { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
     .ep-info { padding: 0.6rem 0.7rem; }
     .ep-title { font-size: 0.78rem; }
   }
