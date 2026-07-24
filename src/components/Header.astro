@@ -6,7 +6,6 @@ const navLinks = [
   { name: "Streaming", href: "/category/streaming" },
   { name: "News", href: "/category/news" },
   { name: "Gaming", href: "/category/gaming" },
-  { name: "Search", href: "/search" },
 ];
 ---
 
@@ -14,11 +13,10 @@ const navLinks = [
   <div class="header-inner container">
 
     <!-- Logo -->
-    <a href="/" class="logo">
+    <a href="/" class="logo" aria-label="AniTube Buzz Home">
       <span class="logo-icon">⚡</span>
       <span class="logo-text">
-        <span class="gradient-text">Ani</span><span class="logo-accent">Tube</span>
-        <span class="logo-buzz">Buzz</span>
+        <span class="logo-ani">Ani</span><span class="logo-tube">Tube</span><span class="logo-buzz">Buzz</span>
       </span>
     </a>
 
@@ -27,9 +25,7 @@ const navLinks = [
       <ul class="nav-list">
         {navLinks.map(link => (
           <li>
-            <a href={link.href} class="nav-link">
-              {link.name}
-            </a>
+            <a href={link.href} class="nav-link">{link.name}</a>
           </li>
         ))}
       </ul>
@@ -37,8 +33,6 @@ const navLinks = [
 
     <!-- Right Actions -->
     <div class="header-actions">
-
-      <!-- Search -->
       <a href="/search" class="action-btn" aria-label="Search">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <circle cx="11" cy="11" r="7"/>
@@ -46,14 +40,17 @@ const navLinks = [
         </svg>
       </a>
 
-      <!-- Theme -->
-      <button class="action-btn" id="themeToggle" aria-label="Toggle Theme">
-        <span class="theme-icon-dark">🌙</span>
-        <span class="theme-icon-light">☀️</span>
+      <button class="action-btn theme-toggle-btn" id="themeToggle" aria-label="Toggle theme" type="button">
+        <svg class="theme-icon icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="theme-icon icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
       </button>
 
-      <!-- Mobile Menu -->
-      <button class="mobile-btn" id="mobileMenuBtn" aria-label="Menu">
+      <button class="mobile-btn" id="mobileMenuBtn" aria-label="Menu" type="button">
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
         <span class="hamburger-line"></span>
@@ -65,22 +62,20 @@ const navLinks = [
   <div class="mobile-nav" id="mobileNav">
     <ul class="mobile-nav-list">
       {navLinks.map(link => (
-        <li>
-          <a href={link.href} class="mobile-nav-link">{link.name}</a>
-        </li>
+        <li><a href={link.href} class="mobile-nav-link">{link.name}</a></li>
       ))}
+      <li><a href="/search" class="mobile-nav-link">Search</a></li>
     </ul>
   </div>
 </header>
 
 <!-- Spacer -->
-<div style={`height: var(--header-height);`}></div>
+<div class="header-spacer"></div>
 
 <style>
   .site-header {
     position: fixed;
-    top: 0;
-    left: 0;
+    top: 0; left: 0;
     width: 100%;
     height: var(--header-height);
     z-index: 1000;
@@ -88,13 +83,14 @@ const navLinks = [
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border-color);
-    transition: all var(--transition-normal);
+    transition: background 0.3s ease, border-color 0.3s ease;
   }
 
   .site-header.scrolled {
-    background: rgba(11, 11, 20, 0.95);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
   }
+
+  .header-spacer { height: var(--header-height); }
 
   .header-inner {
     display: flex;
@@ -114,7 +110,7 @@ const navLinks = [
   }
 
   .logo-icon {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     animation: pulse-glow 2.5s ease-in-out infinite;
   }
 
@@ -122,17 +118,23 @@ const navLinks = [
     font-family: var(--font-heading);
     font-size: 1.35rem;
     font-weight: 800;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.02em;
+    line-height: 1;
   }
 
-  .logo-accent {
-    color: var(--text-primary);
+  .logo-ani {
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
+
+  .logo-tube { color: var(--text-primary); }
 
   .logo-buzz {
     color: var(--accent-tertiary);
-    text-shadow: 0 0 12px rgba(0, 204, 255, 0.35);
-    margin-left: 2px;
+    margin-left: 3px;
+    text-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
   }
 
   /* Nav */
@@ -150,7 +152,7 @@ const navLinks = [
 
   .nav-link {
     display: block;
-    padding: 8px 16px;
+    padding: 8px 14px;
     border-radius: var(--radius-round);
     font-size: 0.88rem;
     font-weight: 500;
@@ -161,8 +163,8 @@ const navLinks = [
   }
 
   .nav-link:hover {
-    color: var(--text-primary);
-    background: rgba(255, 51, 102, 0.08);
+    color: var(--accent-primary);
+    background: rgba(255, 51, 102, 0.06);
   }
 
   .nav-link::after {
@@ -171,16 +173,14 @@ const navLinks = [
     bottom: 2px;
     left: 50%;
     transform: translateX(-50%) scaleX(0);
-    width: 20px;
+    width: 18px;
     height: 2px;
     background: var(--accent-gradient);
     border-radius: 1px;
     transition: transform var(--transition-fast);
   }
 
-  .nav-link:hover::after {
-    transform: translateX(-50%) scaleX(1);
-  }
+  .nav-link:hover::after { transform: translateX(-50%) scaleX(1); }
 
   /* Actions */
   .header-actions {
@@ -191,8 +191,7 @@ const navLinks = [
   }
 
   .action-btn {
-    width: 40px;
-    height: 40px;
+    width: 38px; height: 38px;
     border-radius: var(--radius-md);
     border: 1px solid var(--border-color);
     background: transparent;
@@ -203,27 +202,28 @@ const navLinks = [
     justify-content: center;
     transition: all var(--transition-fast);
     text-decoration: none;
+    font-family: inherit;
   }
 
   .action-btn:hover {
     color: var(--accent-primary);
-    border-color: rgba(255, 51, 102, 0.3);
+    border-color: var(--border-hover);
     background: rgba(255, 51, 102, 0.06);
     box-shadow: var(--glow-pink);
   }
 
-  /* Theme */
-  .theme-icon-light { display: none; }
-  [data-theme="light"] .theme-icon-dark { display: none; }
-  [data-theme="light"] .theme-icon-light { display: inline; }
+  /* Theme toggle icon visibility */
+  .theme-icon { transition: opacity 0.2s, transform 0.3s; }
+  .icon-sun { display: none; }
+  [data-theme="light"] .icon-moon { display: none; }
+  [data-theme="light"] .icon-sun  { display: block; }
 
   /* Mobile Button */
   .mobile-btn {
     display: none;
     flex-direction: column;
-    gap: 5px;
-    width: 40px;
-    height: 40px;
+    gap: 4px;
+    width: 38px; height: 38px;
     align-items: center;
     justify-content: center;
     border: 1px solid var(--border-color);
@@ -233,115 +233,122 @@ const navLinks = [
     transition: all var(--transition-fast);
   }
 
-  .mobile-btn:hover {
-    border-color: var(--accent-primary);
-  }
+  .mobile-btn:hover { border-color: var(--accent-primary); }
 
   .hamburger-line {
-    width: 18px;
-    height: 2px;
+    width: 18px; height: 2px;
     background: var(--text-primary);
     border-radius: 2px;
     transition: all var(--transition-fast);
   }
 
-  .mobile-btn.active .hamburger-line:nth-child(1) {
-    transform: rotate(45deg) translate(5px, 5px);
-  }
-
-  .mobile-btn.active .hamburger-line:nth-child(2) {
-    opacity: 0;
-  }
-
-  .mobile-btn.active .hamburger-line:nth-child(3) {
-    transform: rotate(-45deg) translate(5px, -5px);
-  }
+  .mobile-btn.active .hamburger-line:nth-child(1) { transform: rotate(45deg) translate(4px, 5px); }
+  .mobile-btn.active .hamburger-line:nth-child(2) { opacity: 0; }
+  .mobile-btn.active .hamburger-line:nth-child(3) { transform: rotate(-45deg) translate(4px, -5px); }
 
   /* Mobile Nav */
   .mobile-nav {
     display: none;
     position: fixed;
-    top: var(--header-height);
-    left: 0;
+    top: var(--header-height); left: 0;
     width: 100%;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
-    padding: 16px;
+    padding: 12px;
     z-index: 999;
-    animation: fadeIn 0.3s ease;
+    max-height: calc(100vh - var(--header-height));
+    overflow-y: auto;
   }
 
   .mobile-nav.active {
     display: block;
+    animation: mobileNavIn 0.25s ease;
+  }
+
+  @keyframes mobileNavIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   .mobile-nav-list {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
   }
 
   .mobile-nav-link {
     display: block;
-    padding: 14px 20px;
+    padding: 12px 16px;
     border-radius: var(--radius-md);
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 500;
     color: var(--text-secondary);
     transition: all var(--transition-fast);
   }
 
   .mobile-nav-link:hover {
-    color: var(--text-primary);
+    color: var(--accent-primary);
     background: rgba(255, 51, 102, 0.08);
   }
 
   /* Responsive */
-  @media (max-width: 768px) {
-    .main-nav {
-      display: none;
-    }
+  @media (max-width: 900px) {
+    .main-nav { display: none; }
+    .mobile-btn { display: flex; }
+  }
 
-    .mobile-btn {
-      display: flex;
-    }
+  @media (max-width: 480px) {
+    .logo-text { font-size: 1.15rem; }
+    .logo-icon { font-size: 1.2rem; }
   }
 </style>
 
 <script is:inline>
-  // Theme toggle
-  document.getElementById('themeToggle')?.addEventListener('click', function() {
-    var html = document.documentElement;
-    var current = html.getAttribute('data-theme');
-    var next = current === 'dark' ? 'light' : 'dark';
-    html.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
-  });
+  (function() {
+    'use strict';
 
-  // Mobile menu
-  document.getElementById('mobileMenuBtn')?.addEventListener('click', function() {
-    this.classList.toggle('active');
-    document.getElementById('mobileNav')?.classList.toggle('active');
-  });
-
-  // Close mobile on link click
-  document.querySelectorAll('.mobile-nav-link').forEach(function(link) {
-    link.addEventListener('click', function() {
-      document.getElementById('mobileMenuBtn')?.classList.remove('active');
-      document.getElementById('mobileNav')?.classList.remove('active');
-    });
-  });
-
-  // Scroll header effect
-  window.addEventListener('scroll', function() {
-    var header = document.getElementById('siteHeader');
-    if (header) {
-      if (window.scrollY > 50) {
-        header.classList.add('scrolled');
-      } else {
-        header.classList.remove('scrolled');
-      }
+    // ── Theme Toggle ──
+    var toggle = document.getElementById('themeToggle');
+    if(toggle) {
+      toggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        var html = document.documentElement;
+        var current = html.getAttribute('data-theme') || 'dark';
+        var next = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+      });
     }
-  });
+
+    // ── Mobile Menu ──
+    var menuBtn = document.getElementById('mobileMenuBtn');
+    var mobileNav = document.getElementById('mobileNav');
+    if(menuBtn && mobileNav) {
+      menuBtn.addEventListener('click', function() {
+        menuBtn.classList.toggle('active');
+        mobileNav.classList.toggle('active');
+      });
+    }
+
+    // Close on link click
+    document.querySelectorAll('.mobile-nav-link').forEach(function(link) {
+      link.addEventListener('click', function() {
+        if(menuBtn) menuBtn.classList.remove('active');
+        if(mobileNav) mobileNav.classList.remove('active');
+      });
+    });
+
+    // ── Scroll effect ──
+    var header = document.getElementById('siteHeader');
+    if(header) {
+      window.addEventListener('scroll', function() {
+        if(window.scrollY > 50) {
+          header.classList.add('scrolled');
+        } else {
+          header.classList.remove('scrolled');
+        }
+      });
+    }
+  })();
 </script>
