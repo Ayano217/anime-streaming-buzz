@@ -18,7 +18,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 ---
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -37,11 +37,19 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image" content={image} />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-
-  <!-- Premium Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Prevent flash: apply saved theme instantly -->
+  <script is:inline>
+    (function(){
+      var saved = localStorage.getItem('anitube-theme');
+      if(saved === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
 </head>
 
 <body>
@@ -52,13 +60,13 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     <div class="ld-track"><div class="ld-bar"></div></div>
   </div>
 
-  <!-- Anime Background (real anime images, crossfade) -->
+  <!-- Animated Background -->
   <div id="anime-bg" aria-hidden="true">
-    <div class="abg-slide abg-active" id="abg-1"></div>
-    <div class="abg-slide" id="abg-2"></div>
-    <div class="abg-dark"></div>
-    <div class="abg-gradient"></div>
-    <div class="abg-vignette"></div>
+    <div class="abg-glow abg-g1"></div>
+    <div class="abg-glow abg-g2"></div>
+    <div class="abg-glow abg-g3"></div>
+    <div class="abg-glow abg-g4"></div>
+    <div class="abg-grid"></div>
   </div>
 
   <!-- App -->
@@ -95,88 +103,39 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       btt.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); });
     }
 
-    // ── Anime Background Slideshow ──
-    // Using free anime wallpapers from public CDNs
-    var walls = [
-      'https://wallpapercave.com/uwp/uwp4101404.png',
-      'https://wallpapercave.com/uwp/uwp4101406.png',
-      'https://wallpapercave.com/uwp/uwp4101410.png',
-      'https://wallpapercave.com/uwp/uwp4101412.png',
-      'https://wallpapercave.com/uwp/uwp4101414.png',
-      'https://images8.alphacoders.com/135/1350069.jpeg',
-      'https://images6.alphacoders.com/135/1354519.jpeg',
-      'https://images3.alphacoders.com/132/1325484.jpeg',
-      'https://images2.alphacoders.com/131/1311475.jpeg',
-      'https://images7.alphacoders.com/133/1339901.png',
-    ];
+    // ── THEME TOGGLE SYSTEM ──
+    // This makes ANY element with class "theme-toggle" work
+    window.toggleTheme = function() {
+      var html = document.documentElement;
+      var current = html.getAttribute('data-theme');
+      var next = (current === 'dark') ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('anitube-theme', next);
 
-    // Fallback gradient backgrounds (always works, no CORS)
-    var gradients = [
-      'linear-gradient(135deg, #0a0020 0%, #1a0040 30%, #0d002e 60%, #05001a 100%)',
-      'linear-gradient(135deg, #05001a 0%, #200050 30%, #0a0030 60%, #02000f 100%)',
-      'linear-gradient(135deg, #100025 0%, #0a003a 30%, #1a0050 60%, #08001e 100%)',
-      'linear-gradient(135deg, #02000f 0%, #150035 30%, #0d0028 60%, #060015 100%)',
-    ];
-
-    var slide1 = document.getElementById('abg-1');
-    var slide2 = document.getElementById('abg-2');
-    var current = 0;
-    var activeSlide = slide1;
-    var loadedImages = {};
-
-    function tryLoadImage(url, onSuccess, onFail) {
-      if(loadedImages[url] === true) { onSuccess(url); return; }
-      if(loadedImages[url] === false) { onFail(); return; }
-      var img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = function() {
-        loadedImages[url] = true;
-        onSuccess(url);
-      };
-      img.onerror = function() {
-        loadedImages[url] = false;
-        onFail();
-      };
-      img.src = url;
-    }
-
-    function setSlideBackground(el, idx) {
-      var wallUrl = walls[idx % walls.length];
-      var gradIdx = idx % gradients.length;
-
-      tryLoadImage(wallUrl,
-        function(url) {
-          el.style.backgroundImage = 'url(' + url + ')';
-        },
-        function() {
-          // Fallback to gradient
-          el.style.backgroundImage = gradients[gradIdx];
+      // Update all toggle buttons
+      document.querySelectorAll('.theme-toggle').forEach(function(btn){
+        var icon = btn.querySelector('.theme-icon');
+        if(icon) {
+          icon.textContent = (next === 'dark') ? '☀️' : '🌙';
         }
-      );
-    }
+        btn.setAttribute('aria-label', next === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+      });
+    };
 
-    // Initial
-    if(slide1) {
-      var startIdx = Math.floor(Math.random() * walls.length);
-      current = startIdx;
-      setSlideBackground(slide1, current);
-    }
+    // Attach to all toggle buttons on page
+    document.addEventListener('click', function(e) {
+      var toggle = e.target.closest('.theme-toggle');
+      if(toggle) {
+        e.preventDefault();
+        window.toggleTheme();
+      }
+    });
 
-    // Rotate every 15 seconds
-    setInterval(function() {
-      if(!slide1 || !slide2) return;
-      current = (current + 1) % walls.length;
-      var inactiveSlide = (activeSlide === slide1) ? slide2 : slide1;
-
-      setSlideBackground(inactiveSlide, current);
-
-      // Crossfade
-      setTimeout(function() {
-        inactiveSlide.classList.add('abg-active');
-        activeSlide.classList.remove('abg-active');
-        activeSlide = inactiveSlide;
-      }, 100);
-    }, 15000);
+    // Set initial icon state
+    var currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    document.querySelectorAll('.theme-toggle .theme-icon').forEach(function(icon){
+      icon.textContent = (currentTheme === 'dark') ? '☀️' : '🌙';
+    });
 
   })();
   </script>
@@ -192,40 +151,114 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   html { scroll-behavior: smooth; }
 
   /* ══════════════════════════════════════
+     THEME VARIABLES — DARK MODE
+     ══════════════════════════════════════ */
+  [data-theme="dark"] {
+    --bg-base:      #06020e;
+    --bg-surface:   rgba(12, 6, 28, 0.8);
+    --bg-card:      rgba(12, 6, 28, 0.75);
+    --bg-card-hover: rgba(18, 10, 38, 0.85);
+    --bg-header:    rgba(6, 2, 14, 0.9);
+
+    --text-primary:   #f0f0f0;
+    --text-secondary: rgba(255,255,255,0.72);
+    --text-muted:     rgba(255,255,255,0.4);
+    --text-faint:     rgba(255,255,255,0.18);
+
+    --border:       rgba(139,0,255,0.14);
+    --border-hover: rgba(139,0,255,0.35);
+
+    --primary:      #8b00ff;
+    --primary-soft: #c084fc;
+    --accent:       #00d4ff;
+    --accent-pink:  #ff0080;
+
+    --glow-1-color: rgba(139, 0, 255, 0.12);
+    --glow-2-color: rgba(0, 212, 255, 0.08);
+    --glow-3-color: rgba(255, 0, 128, 0.06);
+    --glow-4-color: rgba(255, 215, 0, 0.04);
+
+    --grid-color:   rgba(139,0,255,0.04);
+    --ticker-bg:    rgba(139,0,255,0.04);
+    --ticker-border: rgba(139,0,255,0.1);
+    --ticker-label-bg: rgba(139,0,255,0.85);
+    --ticker-fade:  #06020e;
+
+    --scrollbar-thumb: rgba(139,0,255,0.3);
+  }
+
+  /* ══════════════════════════════════════
+     THEME VARIABLES — LIGHT MODE
+     ══════════════════════════════════════ */
+  [data-theme="light"] {
+    --bg-base:      #f5f0ff;
+    --bg-surface:   rgba(255, 255, 255, 0.9);
+    --bg-card:      rgba(255, 255, 255, 0.85);
+    --bg-card-hover: rgba(255, 255, 255, 0.95);
+    --bg-header:    rgba(245, 240, 255, 0.95);
+
+    --text-primary:   #1a1025;
+    --text-secondary: rgba(26, 16, 37, 0.75);
+    --text-muted:     rgba(26, 16, 37, 0.45);
+    --text-faint:     rgba(26, 16, 37, 0.2);
+
+    --border:       rgba(139,0,255,0.12);
+    --border-hover: rgba(139,0,255,0.3);
+
+    --primary:      #7c00e6;
+    --primary-soft: #a855f7;
+    --accent:       #0099cc;
+    --accent-pink:  #e6006e;
+
+    --glow-1-color: rgba(139, 0, 255, 0.06);
+    --glow-2-color: rgba(0, 180, 220, 0.05);
+    --glow-3-color: rgba(255, 0, 128, 0.03);
+    --glow-4-color: rgba(255, 200, 0, 0.03);
+
+    --grid-color:   rgba(139,0,255,0.03);
+    --ticker-bg:    rgba(139,0,255,0.03);
+    --ticker-border: rgba(139,0,255,0.08);
+    --ticker-label-bg: rgba(139,0,255,0.8);
+    --ticker-fade:  #f5f0ff;
+
+    --scrollbar-thumb: rgba(139,0,255,0.2);
+  }
+
+  /* ══════════════════════════════════════
      BODY + FONTS
      ══════════════════════════════════════ */
   body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: #06020e;
-    color: #f0f0f0;
+    background: var(--bg-base);
+    color: var(--text-primary);
     line-height: 1.65;
     min-height: 100vh;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+    transition: background 0.4s ease, color 0.4s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Rajdhani', 'Plus Jakarta Sans', sans-serif;
     font-weight: 700;
     line-height: 1.15;
-    letter-spacing: -0.01em;
+    color: var(--text-primary);
   }
 
   a { color: inherit; text-decoration: none; }
   img { max-width: 100%; height: auto; display: block; }
-  ::selection { background: rgba(139,0,255,0.4); color: #fff; }
+  ::selection { background: rgba(139,0,255,0.3); color: #fff; }
 
-  /* Scrollbar */
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(139,0,255,0.3); border-radius: 9px; }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 9px; }
 
   /* ══════════════════════════════════════
      PAGE LOADER
      ══════════════════════════════════════ */
   #loader {
     position: fixed; inset: 0;
-    background: #06020e;
+    background: var(--bg-base);
     z-index: 99999;
     display: flex; align-items: center; justify-content: center;
     flex-direction: column; gap: 0.8rem;
@@ -234,8 +267,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   .ld-brand {
     font-family: 'Rajdhani', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 700;
+    font-size: 1.5rem; font-weight: 700;
     letter-spacing: 0.25em;
     background: linear-gradient(90deg, #8b00ff, #00d4ff, #ff0080, #8b00ff);
     background-size: 300% 100%;
@@ -252,9 +284,8 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   .ld-track {
     width: 140px; height: 2px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 9px;
-    overflow: hidden;
+    background: var(--text-faint);
+    border-radius: 9px; overflow: hidden;
   }
 
   .ld-bar {
@@ -267,62 +298,88 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   @keyframes ld-fill { from { width: 0; } to { width: 100%; } }
 
   /* ══════════════════════════════════════
-     ANIME BACKGROUND
+     ANIMATED BACKGROUND (CSS only, no CORS)
      ══════════════════════════════════════ */
   #anime-bg {
     position: fixed; inset: 0;
-    z-index: 0;
-    overflow: hidden;
+    z-index: 0; overflow: hidden;
     pointer-events: none;
+    transition: opacity 0.4s ease;
   }
 
-  .abg-slide {
+  .abg-glow {
     position: absolute;
-    inset: -30px;
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
-    opacity: 0;
-    transition: opacity 3s ease-in-out;
-    /* VISIBLE blur — not too much, anime still visible */
-    filter: blur(6px) brightness(0.35) saturate(1.3);
-    transform: scale(1.08);
+    border-radius: 50%;
+    filter: blur(80px);
   }
 
-  .abg-slide.abg-active {
-    opacity: 1;
+  .abg-g1 {
+    width: 45vw; height: 45vw;
+    max-width: 600px; max-height: 600px;
+    background: var(--glow-1-color);
+    top: -10%; left: -5%;
+    animation: glow-move-1 18s ease-in-out infinite;
   }
 
-  /* Dark overlay — lets anime show through */
-  .abg-dark {
+  .abg-g2 {
+    width: 35vw; height: 35vw;
+    max-width: 450px; max-height: 450px;
+    background: var(--glow-2-color);
+    top: 35%; right: -8%;
+    animation: glow-move-2 22s ease-in-out infinite;
+  }
+
+  .abg-g3 {
+    width: 40vw; height: 40vw;
+    max-width: 500px; max-height: 500px;
+    background: var(--glow-3-color);
+    bottom: -8%; left: 25%;
+    animation: glow-move-3 20s ease-in-out infinite;
+  }
+
+  .abg-g4 {
+    width: 25vw; height: 25vw;
+    max-width: 350px; max-height: 350px;
+    background: var(--glow-4-color);
+    top: 55%; left: 60%;
+    animation: glow-move-1 24s ease-in-out infinite reverse;
+  }
+
+  /* Subtle grid */
+  .abg-grid {
     position: absolute; inset: 0;
-    background: rgba(6, 2, 14, 0.45);
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 60px 60px;
+    opacity: 0.6;
   }
 
-  /* Color gradient on top */
-  .abg-gradient {
-    position: absolute; inset: 0;
-    background:
-      radial-gradient(ellipse at 15% 5%, rgba(139,0,255,0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 85% 90%, rgba(0,212,255,0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 50%, rgba(255,0,128,0.04) 0%, transparent 60%);
+  @keyframes glow-move-1 {
+    0%, 100% { transform: translate(0, 0); }
+    33%      { transform: translate(4vw, 3vw); }
+    66%      { transform: translate(-3vw, 4vw); }
   }
 
-  /* Edge vignette */
-  .abg-vignette {
-    position: absolute; inset: 0;
-    background: radial-gradient(ellipse at center, transparent 40%, rgba(6,2,14,0.7) 100%);
+  @keyframes glow-move-2 {
+    0%, 100% { transform: translate(0, 0); }
+    33%      { transform: translate(-3vw, -2vw); }
+    66%      { transform: translate(2vw, -3vw); }
+  }
+
+  @keyframes glow-move-3 {
+    0%, 100% { transform: translate(0, 0); }
+    33%      { transform: translate(3vw, -3vw); }
+    66%      { transform: translate(-4vw, 2vw); }
   }
 
   /* ══════════════════════════════════════
      APP WRAPPER
      ══════════════════════════════════════ */
   #app {
-    position: relative;
-    z-index: 1;
+    position: relative; z-index: 1;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
   }
 
   main { flex: 1; }
@@ -339,17 +396,14 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
      BACK TO TOP
      ══════════════════════════════════════ */
   #btt {
-    position: fixed;
-    bottom: 1.5rem; right: 1.5rem;
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
     width: 38px; height: 38px;
     border-radius: 50%;
     background: rgba(139,0,255,0.85);
-    border: none;
-    color: #fff;
+    border: none; color: #fff;
     display: flex; align-items: center; justify-content: center;
     z-index: 1000;
-    opacity: 0;
-    pointer-events: none;
+    opacity: 0; pointer-events: none;
     transition: opacity 0.3s, transform 0.2s;
     cursor: pointer;
   }
@@ -357,68 +411,90 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   #btt:hover { transform: translateY(-3px); }
 
   /* ══════════════════════════════════════
+     THEME TOGGLE BUTTON (works in any component)
+     ══════════════════════════════════════ */
+  .theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--text-primary);
+  }
+
+  .theme-toggle:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-hover);
+    transform: scale(1.1);
+  }
+
+  .theme-icon {
+    font-size: 1rem;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  /* ══════════════════════════════════════
      SECTION HELPERS
      ══════════════════════════════════════ */
   .section-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
+    display: inline-flex; align-items: center; gap: 0.3rem;
     background: rgba(139,0,255,0.1);
     border: 1px solid rgba(139,0,255,0.22);
-    color: #c084fc;
+    color: var(--primary-soft);
     padding: 0.2rem 0.65rem;
     border-radius: 999px;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
     margin-bottom: 0.5rem;
   }
 
   .section-title {
     font-size: clamp(1.4rem, 3vw, 2.1rem);
-    font-weight: 700;
-    margin-bottom: 0.15rem;
+    font-weight: 700; margin-bottom: 0.15rem;
   }
 
   .section-sub {
-    color: rgba(255,255,255,0.38);
-    font-size: 0.82rem;
-    margin-bottom: 1.3rem;
+    color: var(--text-muted);
+    font-size: 0.82rem; margin-bottom: 1.3rem;
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #fff, #c084fc 50%, #00d4ff);
+    background: linear-gradient(135deg, var(--text-primary), var(--primary-soft), var(--accent));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   /* ══════════════════════════════════════
-     TRENDING TICKER
+     TRENDING TICKER (90s, smooth)
      ══════════════════════════════════════ */
   .ticker-wrap {
-    background: rgba(139,0,255,0.04);
-    border-top: 1px solid rgba(139,0,255,0.1);
-    border-bottom: 1px solid rgba(139,0,255,0.1);
+    background: var(--ticker-bg);
+    border-top: 1px solid var(--ticker-border);
+    border-bottom: 1px solid var(--ticker-border);
     overflow: hidden;
     padding: 0.45rem 0;
     position: relative;
   }
 
   .ticker-wrap::before, .ticker-wrap::after {
-    content: '';
-    position: absolute; top: 0; bottom: 0;
-    width: 50px; z-index: 2;
-    pointer-events: none;
+    content: ''; position: absolute; top: 0; bottom: 0;
+    width: 50px; z-index: 2; pointer-events: none;
   }
 
-  .ticker-wrap::before { left: 0; background: linear-gradient(90deg, #06020e, transparent); }
-  .ticker-wrap::after  { right: 0; background: linear-gradient(-90deg, #06020e, transparent); }
+  .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--ticker-fade), transparent); }
+  .ticker-wrap::after  { right: 0; background: linear-gradient(-90deg, var(--ticker-fade), transparent); }
 
   .ticker-label {
     position: absolute; left: 0; top: 0; bottom: 0; z-index: 3;
-    background: rgba(139,0,255,0.85);
+    background: var(--ticker-label-bg);
     display: flex; align-items: center;
     padding: 0 0.65rem;
     font-family: 'Rajdhani', sans-serif;
@@ -433,30 +509,23 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     width: max-content;
     padding-left: 100px;
     will-change: transform;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
   }
 
   .ticker-track:hover { animation-play-state: paused; }
 
   .ticker-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
+    display: inline-flex; align-items: center; gap: 0.3rem;
     padding: 0 1.1rem;
-    font-size: 0.73rem;
-    color: rgba(255,255,255,0.6);
-    white-space: nowrap;
-    text-decoration: none;
+    font-size: 0.73rem; color: var(--text-secondary);
+    white-space: nowrap; text-decoration: none;
     transition: color 0.2s;
   }
 
-  .ticker-item:hover { color: #fff; }
+  .ticker-item:hover { color: var(--text-primary); }
 
   .ticker-sep {
-    color: rgba(139,0,255,0.35);
-    padding: 0 0.4rem;
-    font-size: 0.4rem;
+    color: var(--text-faint);
+    padding: 0 0.4rem; font-size: 0.4rem;
   }
 
   @keyframes ticker-move {
@@ -468,18 +537,17 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
      CARDS
      ══════════════════════════════════════ */
   .card {
-    background: rgba(12, 6, 28, 0.75);
-    border: 1px solid rgba(139,0,255,0.12);
-    border-radius: 12px;
-    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden;
     transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
     backdrop-filter: blur(4px);
   }
 
   .card:hover {
-    border-color: rgba(139,0,255,0.35);
+    border-color: var(--border-hover);
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(139,0,255,0.1);
+    box-shadow: 0 8px 25px rgba(139,0,255,0.08);
   }
 
   /* ══════════════════════════════════════
@@ -493,14 +561,14 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     letter-spacing: 0.04em; text-transform: uppercase;
   }
 
-  .badge-purple { background: rgba(139,0,255,0.15); color: #c084fc; }
-  .badge-cyan   { background: rgba(0,212,255,0.1);  color: #00d4ff; }
+  .badge-purple { background: rgba(139,0,255,0.15); color: var(--primary-soft); }
+  .badge-cyan   { background: rgba(0,212,255,0.1);  color: var(--accent); }
   .badge-pink   { background: rgba(255,0,128,0.1);  color: #ff6eb4; }
   .badge-gold   { background: rgba(255,215,0,0.1);  color: #ffd700; }
 
   .cat-news        { background: rgba(255,107,0,0.12); color: #ff9f4a; }
-  .cat-anime-recap { background: rgba(139,0,255,0.12); color: #c084fc; }
-  .cat-manhwa      { background: rgba(0,212,255,0.1);  color: #00d4ff; }
+  .cat-anime-recap { background: rgba(139,0,255,0.12); color: var(--primary-soft); }
+  .cat-manhwa      { background: rgba(0,212,255,0.1);  color: var(--accent); }
   .cat-streaming   { background: rgba(255,0,128,0.1);  color: #ff6eb4; }
   .cat-gaming      { background: rgba(0,255,128,0.08); color: #00ff80; }
   .cat-manga       { background: rgba(255,215,0,0.1);  color: #ffd700; }
@@ -510,13 +578,11 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
      ══════════════════════════════════════ */
   .btn {
     display: inline-flex; align-items: center; justify-content: center;
-    gap: 0.4rem;
-    padding: 0.55rem 1.3rem;
+    gap: 0.4rem; padding: 0.55rem 1.3rem;
     border-radius: 10px;
     font-size: 0.82rem; font-weight: 600;
     font-family: inherit; cursor: pointer;
-    border: none;
-    transition: all 0.2s ease;
+    border: none; transition: all 0.2s ease;
     text-decoration: none;
   }
 
@@ -530,46 +596,37 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
 
   .btn-secondary {
-    background: rgba(139,0,255,0.1);
-    border: 1px solid rgba(139,0,255,0.2);
-    color: rgba(255,255,255,0.7);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
   }
   .btn-secondary:hover {
-    background: rgba(139,0,255,0.2);
-    color: #fff;
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
   }
 
   /* ══════════════════════════════════════
-     SCORE
-     ══════════════════════════════════════ */
-  .score-badge {
-    display: inline-flex; align-items: center;
-    gap: 0.2rem;
-    padding: 0.15rem 0.4rem;
-    border-radius: 999px;
-    font-size: 0.68rem; font-weight: 700;
-    background: rgba(255,215,0,0.1);
-    color: #ffd700;
-  }
-
-  /* ══════════════════════════════════════
-     DIVIDER
+     DIVIDER + VIDEO + SCORE
      ══════════════════════════════════════ */
   .divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(139,0,255,0.18), transparent);
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
     margin: 1.5rem 0;
   }
 
-  /* ══════════════════════════════════════
-     VIDEO EMBED
-     ══════════════════════════════════════ */
+  .score-badge {
+    display: inline-flex; align-items: center; gap: 0.2rem;
+    padding: 0.15rem 0.4rem; border-radius: 999px;
+    font-size: 0.68rem; font-weight: 700;
+    background: rgba(255,215,0,0.1); color: #ffd700;
+  }
+
   .video-embed-wrapper {
     position: relative; width: 100%;
     aspect-ratio: 16/9;
     border-radius: 12px; overflow: hidden;
     background: #000;
-    border: 1px solid rgba(139,0,255,0.12);
+    border: 1px solid var(--border);
     margin: 1.3rem 0;
   }
 
@@ -579,105 +636,84 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
 
   /* ══════════════════════════════════════
-     PROSE (article body)
+     PROSE
      ══════════════════════════════════════ */
-  .prose { color: rgba(255,255,255,0.72); line-height: 1.8; font-size: 0.95rem; }
-
+  .prose { color: var(--text-secondary); line-height: 1.8; font-size: 0.95rem; }
   .prose h2 {
-    font-size: 1.3rem; color: #fff;
+    font-size: 1.3rem; color: var(--text-primary);
     margin: 1.8rem 0 0.6rem;
     padding-bottom: 0.35rem;
-    border-bottom: 1px solid rgba(139,0,255,0.12);
+    border-bottom: 1px solid var(--border);
   }
-
-  .prose h3 { font-size: 1.05rem; color: #fff; margin: 1.3rem 0 0.4rem; }
+  .prose h3 { font-size: 1.05rem; color: var(--text-primary); margin: 1.3rem 0 0.4rem; }
   .prose p { margin-bottom: 0.85rem; }
-  .prose a { color: #c084fc; text-decoration: underline; text-underline-offset: 3px; }
-  .prose a:hover { color: #fff; }
+  .prose a { color: var(--primary-soft); text-decoration: underline; text-underline-offset: 3px; }
+  .prose a:hover { color: var(--text-primary); }
   .prose ul, .prose ol { padding-left: 1.5rem; margin-bottom: 0.85rem; }
   .prose li { margin-bottom: 0.2rem; }
-
   .prose blockquote {
-    border-left: 3px solid #8b00ff;
+    border-left: 3px solid var(--primary);
     padding: 0.55rem 0.85rem;
     background: rgba(139,0,255,0.05);
     border-radius: 0 8px 8px 0;
     margin: 0.75rem 0;
     font-style: italic;
   }
-
   .prose table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.82rem; }
-
   .prose th {
-    background: rgba(139,0,255,0.08); color: #c084fc;
+    background: rgba(139,0,255,0.08); color: var(--primary-soft);
     padding: 0.45rem 0.65rem; text-align: left;
-    border-bottom: 1px solid rgba(139,0,255,0.12);
+    border-bottom: 1px solid var(--border);
     font-size: 0.65rem; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.05em;
   }
-
-  .prose td { padding: 0.45rem 0.65rem; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .prose td { padding: 0.45rem 0.65rem; border-bottom: 1px solid rgba(139,0,255,0.05); }
   .prose tr:hover td { background: rgba(139,0,255,0.03); }
-
   .prose hr {
     border: none; height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(139,0,255,0.18), transparent);
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
     margin: 1.5rem 0;
   }
 
   /* ══════════════════════════════════════
-     TABS
+     TABS + SKELETON + HIGHLIGHT + REVEAL
      ══════════════════════════════════════ */
   .tabs {
     display: flex; gap: 0.15rem;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--text-faint);
     margin-bottom: 1rem;
     overflow-x: auto; scrollbar-width: none;
   }
   .tabs::-webkit-scrollbar { display: none; }
-
   .tab {
     padding: 0.45rem 0.85rem;
     font-size: 0.76rem; font-weight: 600;
-    color: rgba(255,255,255,0.38);
+    color: var(--text-muted);
     border: none; background: transparent;
     border-bottom: 2px solid transparent;
     cursor: pointer; white-space: nowrap;
     font-family: inherit; transition: color 0.2s;
     margin-bottom: -1px;
   }
-  .tab:hover { color: rgba(255,255,255,0.65); }
-  .tab.active { color: #c084fc; border-bottom-color: #8b00ff; }
+  .tab:hover { color: var(--text-secondary); }
+  .tab.active { color: var(--primary-soft); border-bottom-color: var(--primary); }
 
-  /* ══════════════════════════════════════
-     SKELETON
-     ══════════════════════════════════════ */
   .skeleton {
     background: linear-gradient(90deg,
-      rgba(255,255,255,0.03) 25%,
-      rgba(255,255,255,0.06) 50%,
-      rgba(255,255,255,0.03) 75%
+      rgba(139,0,255,0.03) 25%,
+      rgba(139,0,255,0.06) 50%,
+      rgba(139,0,255,0.03) 75%
     );
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
     border-radius: 8px;
   }
+  @keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
 
-  @keyframes shimmer {
-    from { background-position: -200% 0; }
-    to   { background-position:  200% 0; }
-  }
+  mark.hl { background: rgba(139,0,255,0.25); color: var(--text-primary); border-radius: 2px; padding: 0 2px; }
 
-  /* ══════════════════════════════════════
-     SEARCH HIGHLIGHT
-     ══════════════════════════════════════ */
-  mark.hl { background: rgba(139,0,255,0.3); color: #fff; border-radius: 2px; padding: 0 2px; }
-
-  /* ══════════════════════════════════════
-     SCROLL REVEAL
-     ══════════════════════════════════════ */
   .reveal {
-    opacity: 0; transform: translateY(15px);
+    opacity: 0; transform: translateY(12px);
     transition: opacity 0.5s ease, transform 0.5s ease;
   }
   .reveal.visible { opacity: 1; transform: translateY(0); }
