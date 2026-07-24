@@ -38,12 +38,10 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   <meta name="twitter:image" content={image} />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-  <!-- Premium Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-  <!-- Prevent theme flash -->
   <script is:inline>
     (function(){
       var saved = localStorage.getItem('theme');
@@ -64,13 +62,19 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     <div class="ld-track"><div class="ld-bar"></div></div>
   </div>
 
-  <!-- Anime Background (LOCAL images from /public/bg/) -->
+  <!-- Anime Background -->
   <div id="anime-bg" aria-hidden="true">
     <div class="abg-slide abg-active" id="abg-1"></div>
     <div class="abg-slide" id="abg-2"></div>
     <div class="abg-dark"></div>
     <div class="abg-gradient"></div>
     <div class="abg-grid"></div>
+  </div>
+
+  <!-- Now Showing badge (which anime is background) -->
+  <div id="bg-now-showing" class="bg-now-showing" style="display:none;">
+    <span class="bns-label">Now Featuring</span>
+    <span class="bns-title" id="bns-title"></span>
   </div>
 
   <!-- App -->
@@ -107,29 +111,22 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       btt.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); });
     }
 
-    // ── ANIME BACKGROUND SLIDESHOW (Local images) ──
-    var bgImages = [
-      '/bg/bg1.jpg',
-      '/bg/bg2.jpg',
-      '/bg/bg3.jpg',
-      '/bg/bg4.jpg',
-      '/bg/bg5.jpg',
-      '/bg/bg6.jpg',
-      '/bg/bg7.jpg',
-      '/bg/bg8.jpg',
-      '/bg/bg9.jpg',
-      '/bg/bg10.jpg'
-    ];
+    // ══════════════════════════════════════════════════════
+    // ANIME BACKGROUND — Auto-loads from /public/bg/meta.json
+    // ══════════════════════════════════════════════════════
 
     var slide1 = document.getElementById('abg-1');
     var slide2 = document.getElementById('abg-2');
-    var current = 0;
+    var nowShowing = document.getElementById('bg-now-showing');
+    var nowTitle = document.getElementById('bns-title');
     var activeSlide = slide1;
+    var current = 0;
+    var images = [];
 
-    function testImage(url, callback) {
+    function preloadImage(url, cb) {
       var img = new Image();
-      img.onload = function() { callback(true); };
-      img.onerror = function() { callback(false); };
+      img.onload = function() { cb(true, url); };
+      img.onerror = function() { cb(false, url); };
       img.src = url;
     }
 
@@ -137,49 +134,98 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       el.style.backgroundImage = 'url(' + url + ')';
     }
 
-    // Filter to only working images
-    var workingImages = [];
-    var checkedCount = 0;
+    function updateNowShowing(imageData) {
+      if (!nowShowing || !nowTitle) return;
+      if (imageData && imageData.title) {
+        nowTitle.textContent = imageData.title;
+        nowShowing.style.display = 'flex';
+        nowShowing.classList.remove('bns-fade');
+        void nowShowing.offsetWidth; // Force reflow
+        nowShowing.classList.add('bns-fade');
+      }
+    }
 
-    bgImages.forEach(function(url, idx) {
-      testImage(url, function(works) {
-        checkedCount++;
-        if(works) workingImages.push(url);
+    function rotateBackground() {
+      if (images.length <= 1) return;
+      current = (current + 1) % images.length;
+      var inactiveSlide = (activeSlide === slide1) ? slide2 : slide1;
+      var next = images[current];
 
-        // When all checked, start slideshow
-        if(checkedCount === bgImages.length) {
-          if(workingImages.length === 0) {
-            console.warn('No background images found in /public/bg/');
-            return;
-          }
-          startSlideshow();
+      preloadImage(next.url, function(ok) {
+        if (!ok) {
+          // Try next one
+          setTimeout(rotateBackground, 100);
+          return;
         }
-      });
-    });
-
-    function startSlideshow() {
-      if(!slide1 || workingImages.length === 0) return;
-
-      // Set initial
-      current = 0;
-      setBg(slide1, workingImages[current]);
-
-      if(workingImages.length === 1) return; // Only 1 image, no rotation
-
-      // Rotate every 15 seconds
-      setInterval(function() {
-        current = (current + 1) % workingImages.length;
-        var inactiveSlide = (activeSlide === slide1) ? slide2 : slide1;
-
-        setBg(inactiveSlide, workingImages[current]);
-
+        setBg(inactiveSlide, next.url);
         setTimeout(function() {
           inactiveSlide.classList.add('abg-active');
           activeSlide.classList.remove('abg-active');
           activeSlide = inactiveSlide;
+          updateNowShowing(next);
         }, 100);
-      }, 15000);
+      });
     }
+
+    function startSlideshow() {
+      if (!slide1 || images.length === 0) return;
+
+      // Shuffle images for variety
+      images.sort(function() { return Math.random() - 0.5; });
+
+      // Set initial
+      current = 0;
+      preloadImage(images[0].url, function(ok) {
+        if (ok) {
+          setBg(slide1, images[0].url);
+          updateNowShowing(images[0]);
+        }
+      });
+
+      if (images.length > 1) {
+        // Rotate every 15 seconds
+        setInterval(rotateBackground, 15000);
+      }
+    }
+
+    // Try to load meta.json first (has titles)
+    fetch('/bg/meta.json')
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(meta) {
+        if (meta && meta.images && meta.images.length > 0) {
+          images = meta.images.map(function(img) {
+            return {
+              url: '/bg/' + img.filename,
+              title: img.title || '',
+              score: img.score || null
+            };
+          });
+          startSlideshow();
+        } else {
+          // Fallback: try to load bg1.jpg through bg15.jpg
+          fallbackScan();
+        }
+      })
+      .catch(function() { fallbackScan(); });
+
+    function fallbackScan() {
+      var candidates = [];
+      for (var i = 1; i <= 15; i++) {
+        candidates.push('/bg/bg' + i + '.jpg');
+      }
+
+      var checked = 0;
+      candidates.forEach(function(url) {
+        preloadImage(url, function(ok, u) {
+          checked++;
+          if (ok) images.push({ url: u, title: '', score: null });
+          if (checked === candidates.length) {
+            if (images.length > 0) startSlideshow();
+          }
+        });
+      });
+    }
+
   })();
   </script>
 
@@ -187,11 +233,11 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 </html>
 
 <style is:global>
-  /* ══════════════════════════════════════ RESET ══════════════════════════════════════ */
+  /* ═══ RESET ═══ */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
 
-  /* ══════════════════════════════════════ DARK THEME ══════════════════════════════════════ */
+  /* ═══ DARK THEME ═══ */
   [data-theme="dark"] {
     --bg-primary:    #0a0510;
     --bg-secondary:  #12081e;
@@ -215,12 +261,12 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     --glow-pink: 0 0 20px rgba(255, 51, 102, 0.3);
     --glow-cyan: 0 0 20px rgba(0, 212, 255, 0.3);
 
-    --bg-dim-overlay: rgba(6, 2, 14, 0.7);
+    --bg-dim-overlay: rgba(6, 2, 14, 0.68);
     --grid-color:     rgba(255, 51, 102, 0.03);
     --scrollbar-thumb: rgba(255, 51, 102, 0.3);
   }
 
-  /* ══════════════════════════════════════ LIGHT THEME ══════════════════════════════════════ */
+  /* ═══ LIGHT THEME ═══ */
   [data-theme="light"] {
     --bg-primary:    #fef5f7;
     --bg-secondary:  #ffffff;
@@ -244,28 +290,25 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     --glow-pink: 0 0 20px rgba(255, 51, 102, 0.2);
     --glow-cyan: 0 0 20px rgba(0, 153, 204, 0.2);
 
-    --bg-dim-overlay: rgba(254, 245, 247, 0.75);
+    --bg-dim-overlay: rgba(254, 245, 247, 0.78);
     --grid-color:     rgba(255, 51, 102, 0.03);
     --scrollbar-thumb: rgba(255, 51, 102, 0.25);
   }
 
-  /* ══════════════════════════════════════ LAYOUT VARS ══════════════════════════════════════ */
+  /* ═══ LAYOUT VARS ═══ */
   :root {
     --header-height: 64px;
     --font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-heading: 'Bricolage Grotesque', 'DM Sans', sans-serif;
-
-    --radius-sm:    8px;
-    --radius-md:    12px;
-    --radius-lg:    16px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
     --radius-round: 999px;
-
-    --transition-fast:   0.2s ease;
+    --transition-fast: 0.2s ease;
     --transition-normal: 0.3s ease;
-    --transition-slow:   0.5s ease;
   }
 
-  /* ══════════════════════════════════════ BODY ══════════════════════════════════════ */
+  /* ═══ BODY ═══ */
   body {
     font-family: var(--font-body);
     background: var(--bg-primary);
@@ -286,7 +329,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
 
   p, li { color: var(--text-secondary); }
-
   a { color: inherit; text-decoration: none; }
   img { max-width: 100%; height: auto; display: block; }
   ::selection { background: rgba(255, 51, 102, 0.35); color: #fff; }
@@ -295,7 +337,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 9px; }
 
-  /* ══════════════════════════════════════ LOADER ══════════════════════════════════════ */
+  /* ═══ LOADER ═══ */
   #loader {
     position: fixed; inset: 0;
     background: var(--bg-primary);
@@ -328,7 +370,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   @keyframes ld-fill { from { width: 0; } to { width: 100%; } }
 
-  /* ══════════════════════════════════════ ANIME BACKGROUND ══════════════════════════════════════ */
+  /* ═══ ANIME BACKGROUND ═══ */
   #anime-bg {
     position: fixed; inset: 0;
     z-index: 0; overflow: hidden;
@@ -341,22 +383,20 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     background-position: center center;
     background-repeat: no-repeat;
     opacity: 0;
-    transition: opacity 3s ease-in-out;
-    /* VISIBLE anime — light blur, moderate darken */
-    filter: blur(4px) brightness(0.45) saturate(1.3);
-    transform: scale(1.06);
+    transition: opacity 2.5s ease-in-out;
+    /* PERFECT BALANCE: anime visible + text readable */
+    filter: blur(5px) brightness(0.5) saturate(1.4);
+    transform: scale(1.08);
   }
 
   .abg-slide.abg-active { opacity: 1; }
 
-  /* Dim overlay — anime still visible */
   .abg-dark {
     position: absolute; inset: 0;
     background: var(--bg-dim-overlay);
     transition: background 0.4s ease;
   }
 
-  /* Color gradient */
   .abg-gradient {
     position: absolute; inset: 0;
     background:
@@ -370,26 +410,84 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       linear-gradient(var(--grid-color) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
     background-size: 60px 60px;
-    opacity: 0.5;
+    opacity: 0.4;
   }
 
-  /* Light mode adjustments for background */
   [data-theme="light"] .abg-slide {
-    filter: blur(6px) brightness(1.1) saturate(0.7) contrast(0.85);
-    opacity: 0.15 !important;
+    filter: blur(7px) brightness(1.15) saturate(0.6) contrast(0.9);
+    opacity: 0.2 !important;
   }
-
   [data-theme="light"] .abg-slide.abg-active {
-    opacity: 0.15 !important;
+    opacity: 0.2 !important;
   }
 
-  /* ══════════════════════════════════════ APP ══════════════════════════════════════ */
+  /* ═══ NOW SHOWING BADGE ═══ */
+  .bg-now-showing {
+    position: fixed;
+    bottom: 1.2rem;
+    left: 1.2rem;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: rgba(10, 5, 16, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 51, 102, 0.2);
+    padding: 0.5rem 0.8rem;
+    border-radius: 8px;
+    max-width: 260px;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .bg-now-showing.bns-fade {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .bns-label {
+    font-family: var(--font-heading);
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent-primary);
+    line-height: 1;
+  }
+
+  .bns-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  [data-theme="light"] .bg-now-showing {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(255, 51, 102, 0.25);
+  }
+
+  [data-theme="light"] .bns-title {
+    color: #1a0510;
+  }
+
+  @media (max-width: 640px) {
+    .bg-now-showing { display: none !important; }
+  }
+
+  /* ═══ APP ═══ */
   #app {
     position: relative; z-index: 1;
     min-height: 100vh;
     display: flex; flex-direction: column;
   }
-
   main { flex: 1; }
 
   .container {
@@ -397,10 +495,9 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     margin: 0 auto;
     padding: 0 1.5rem;
   }
-
   @media (max-width: 640px) { .container { padding: 0 1rem; } }
 
-  /* ══════════════════════════════════════ BACK TO TOP ══════════════════════════════════════ */
+  /* ═══ BACK TO TOP ═══ */
   #btt {
     position: fixed; bottom: 1.5rem; right: 1.5rem;
     width: 42px; height: 42px;
@@ -414,28 +511,23 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     cursor: pointer;
     box-shadow: var(--glow-pink);
   }
-
   #btt:hover { transform: translateY(-3px); }
 
-  /* ══════════════════════════════════════ LOGO STYLES (SHARED) ══════════════════════════════════════ */
+  /* ═══ LOGO SHARED ═══ */
   .logo-ani {
     background: var(--accent-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-
-  .logo-tube {
-    color: var(--text-primary);
-  }
-
+  .logo-tube { color: var(--text-primary); }
   .logo-buzz {
     color: var(--accent-tertiary);
     margin-left: 3px;
     text-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
   }
 
-  /* ══════════════════════════════════════ SECTION HELPERS ══════════════════════════════════════ */
+  /* ═══ SECTION HELPERS ═══ */
   .section-label {
     display: inline-flex; align-items: center; gap: 0.3rem;
     background: rgba(255, 51, 102, 0.08);
@@ -447,7 +539,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     letter-spacing: 0.12em; text-transform: uppercase;
     margin-bottom: 0.5rem;
   }
-
   .section-title {
     font-family: var(--font-heading);
     font-size: clamp(1.4rem, 3vw, 2.1rem);
@@ -455,13 +546,11 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     margin-bottom: 0.15rem;
     color: var(--text-primary);
   }
-
   .section-sub {
     color: var(--text-muted);
     font-size: 0.85rem;
     margin-bottom: 1.3rem;
   }
-
   .gradient-text {
     background: var(--accent-gradient);
     -webkit-background-clip: text;
@@ -469,7 +558,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     background-clip: text;
   }
 
-  /* ══════════════════════════════════════ TICKER ══════════════════════════════════════ */
+  /* ═══ TICKER ═══ */
   .ticker-wrap {
     background: rgba(255, 51, 102, 0.04);
     border-top: 1px solid rgba(255, 51, 102, 0.1);
@@ -478,15 +567,12 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     padding: 0.5rem 0;
     position: relative;
   }
-
   .ticker-wrap::before, .ticker-wrap::after {
     content: ''; position: absolute; top: 0; bottom: 0;
     width: 50px; z-index: 2; pointer-events: none;
   }
-
   .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg-primary), transparent); }
   .ticker-wrap::after  { right: 0; background: linear-gradient(-90deg, var(--bg-primary), transparent); }
-
   .ticker-label {
     position: absolute; left: 0; top: 0; bottom: 0; z-index: 3;
     background: rgba(255, 51, 102, 0.85);
@@ -497,7 +583,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     letter-spacing: 0.1em; text-transform: uppercase;
     color: #fff; white-space: nowrap;
   }
-
   .ticker-track {
     display: flex;
     animation: ticker-move 90s linear infinite;
@@ -505,9 +590,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     padding-left: 110px;
     will-change: transform;
   }
-
   .ticker-track:hover { animation-play-state: paused; }
-
   .ticker-item {
     display: inline-flex; align-items: center; gap: 0.3rem;
     padding: 0 1.1rem;
@@ -516,16 +599,14 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     white-space: nowrap; text-decoration: none;
     transition: color 0.2s;
   }
-
   .ticker-item:hover { color: var(--accent-primary); }
   .ticker-sep { color: var(--text-faint); padding: 0 0.4rem; font-size: 0.4rem; }
-
   @keyframes ticker-move {
     from { transform: translateX(0); }
     to   { transform: translateX(-50%); }
   }
 
-  /* ══════════════════════════════════════ CARDS ══════════════════════════════════════ */
+  /* ═══ CARDS ═══ */
   .card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -533,14 +614,13 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     transition: all var(--transition-normal);
     backdrop-filter: blur(8px);
   }
-
   .card:hover {
     border-color: var(--border-hover);
     transform: translateY(-3px);
     box-shadow: 0 8px 25px rgba(255, 51, 102, 0.1);
   }
 
-  /* ══════════════════════════════════════ BADGES ══════════════════════════════════════ */
+  /* ═══ BADGES ═══ */
   .badge {
     display: inline-flex; align-items: center;
     padding: 0.15rem 0.45rem;
@@ -548,7 +628,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     font-size: 0.6rem; font-weight: 700;
     letter-spacing: 0.04em; text-transform: uppercase;
   }
-
   .badge-pink   { background: rgba(255, 51, 102, 0.15); color: var(--accent-primary); }
   .badge-purple { background: rgba(139, 0, 255, 0.15); color: #c084fc; }
   .badge-cyan   { background: rgba(0, 212, 255, 0.1);  color: var(--accent-tertiary); }
@@ -561,7 +640,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   .cat-gaming      { background: rgba(0, 255, 128, 0.08); color: #00ff80; }
   .cat-manga       { background: rgba(255, 215, 0, 0.1);  color: #ffd700; }
 
-  /* ══════════════════════════════════════ BUTTONS ══════════════════════════════════════ */
+  /* ═══ BUTTONS ═══ */
   .btn {
     display: inline-flex; align-items: center; justify-content: center;
     gap: 0.4rem;
@@ -572,7 +651,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     border: none; transition: all var(--transition-fast);
     text-decoration: none;
   }
-
   .btn-primary {
     background: var(--accent-gradient);
     color: #fff;
@@ -582,7 +660,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(255, 51, 102, 0.4);
   }
-
   .btn-secondary {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -594,20 +671,18 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     color: var(--text-primary);
   }
 
-  /* ══════════════════════════════════════ MISC ══════════════════════════════════════ */
+  /* ═══ MISC ═══ */
   .divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--border-color), transparent);
     margin: 1.5rem 0;
   }
-
   .score-badge {
     display: inline-flex; align-items: center; gap: 0.2rem;
     padding: 0.15rem 0.45rem; border-radius: 999px;
     font-size: 0.7rem; font-weight: 700;
     background: rgba(255, 215, 0, 0.12); color: #ffd700;
   }
-
   .video-embed-wrapper {
     position: relative; width: 100%;
     aspect-ratio: 16/9;
@@ -616,13 +691,12 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     border: 1px solid var(--border-color);
     margin: 1.3rem 0;
   }
-
   .video-embed-wrapper iframe {
     position: absolute; inset: 0;
     width: 100%; height: 100%; border: none;
   }
 
-  /* Prose */
+  /* ═══ PROSE ═══ */
   .prose { color: var(--text-secondary); line-height: 1.8; font-size: 0.95rem; }
   .prose h2 {
     font-size: 1.3rem; color: var(--text-primary);
@@ -659,7 +733,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     margin: 1.5rem 0;
   }
 
-  /* Tabs */
+  /* ═══ TABS ═══ */
   .tabs {
     display: flex; gap: 0.15rem;
     border-bottom: 1px solid var(--border-color);
@@ -680,7 +754,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   .tab:hover { color: var(--text-secondary); }
   .tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
 
-  /* Skeleton */
+  /* ═══ SKELETON ═══ */
   .skeleton {
     background: linear-gradient(90deg,
       rgba(255, 51, 102, 0.03) 25%,
