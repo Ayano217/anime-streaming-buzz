@@ -1,0 +1,395 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+// Fetch trending anime for suggestions
+let trending = [];
+try {
+  const res = await fetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=12');
+  if (res.ok) {
+    const data = await res.json();
+    trending = data?.data || [];
+  }
+} catch (e) {
+  console.warn('404 trending fetch failed:', e);
+}
+
+function makeSlug(str) {
+  return (str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
+}
+---
+
+<BaseLayout title="Page Not Found | AniTube Buzz" description="The page you're looking for doesn't exist. Explore trending anime instead.">
+  <Header slot="header" />
+
+  <div class="nf-page container">
+    
+    <div class="nf-hero">
+      <div class="nf-code grad-text">404</div>
+      <div class="nf-decoration">
+        <div class="nf-dec nf-dec-1"></div>
+        <div class="nf-dec nf-dec-2"></div>
+        <div class="nf-dec nf-dec-3"></div>
+      </div>
+    </div>
+    
+    <h1 class="nf-title">
+      Page <span class="grad-text">Not Found</span>
+    </h1>
+    
+    <p class="nf-desc">
+      The page you're looking for has gone on a mysterious adventure.
+      <br/>Maybe you'd like to explore some trending anime instead?
+    </p>
+    
+    <div class="nf-actions">
+      <a href="/" class="nf-btn nf-btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span>Back to Homepage</span>
+      </a>
+      
+      <a href="/search" class="nf-btn nf-btn-secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"/>
+          <path d="m20 20-3.5-3.5"/>
+        </svg>
+        <span>Search Anime</span>
+      </a>
+    </div>
+    
+    {trending.length > 0 && (
+      <div class="nf-suggestions">
+        <div class="nf-sug-header">
+          <div class="nf-sug-bar"></div>
+          <div>
+            <div class="nf-sug-tag">TRENDING NOW</div>
+            <h2 class="nf-sug-title">
+              Explore <span class="grad-text">Hot Anime</span>
+            </h2>
+          </div>
+        </div>
+        
+        <div class="nf-sug-grid">
+          {trending.slice(0, 12).map(a => {
+            const rTitle = a.title_english || a.title;
+            const rImage = a.images?.jpg?.large_image_url || a.images?.jpg?.image_url;
+            const rSlug = makeSlug(rTitle) || `anime-${a.mal_id}`;
+            const rScore = a.score;
+            const rIsNew = a.status === 'Currently Airing';
+            return (
+              <a href={`/anime/${rSlug}`} class="nf-sug-card">
+                <div class="nf-sug-thumb">
+                  {rImage && <img src={rImage} alt={rTitle} loading="lazy" />}
+                  <div class="nf-sug-overlay"></div>
+                  <div class="nf-sug-play">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                  {rIsNew && <div class="nf-sug-new">NEW</div>}
+                  {rScore && (
+                    <div class="nf-sug-score">
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                      {rScore}
+                    </div>
+                  )}
+                  <div class="nf-sug-name">{rTitle}</div>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+    )}
+  </div>
+
+  <Footer slot="footer" />
+</BaseLayout>
+
+<style>
+  .nf-page {
+    padding: 4rem 1.5rem 5rem;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .nf-hero {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 2rem;
+    height: 200px;
+  }
+  
+  .nf-code {
+    font-family: var(--font-heading);
+    font-size: clamp(6rem, 15vw, 12rem);
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 8px 30px rgba(192, 132, 252, 0.4);
+  }
+  
+  .nf-decoration { position: absolute; inset: 0; pointer-events: none; }
+  
+  .nf-dec {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+  }
+  
+  .nf-dec-1 {
+    width: 200px; height: 200px;
+    background: rgba(192, 132, 252, 0.4);
+    top: 0; left: 20%;
+    animation: nf-float-1 8s ease infinite;
+  }
+  
+  .nf-dec-2 {
+    width: 160px; height: 160px;
+    background: rgba(232, 121, 249, 0.35);
+    bottom: 0; right: 20%;
+    animation: nf-float-2 10s ease infinite;
+  }
+  
+  .nf-dec-3 {
+    width: 140px; height: 140px;
+    background: rgba(125, 211, 252, 0.3);
+    top: 30%; right: 30%;
+    animation: nf-float-3 12s ease infinite;
+  }
+  
+  @keyframes nf-float-1 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(30px,-20px); } }
+  @keyframes nf-float-2 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-25px,20px); } }
+  @keyframes nf-float-3 { 0%,100% { transform: translate(0,0); } 50% { transform: translate(20px,30px); } }
+  
+  .nf-title {
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    margin: 0 0 1rem;
+    letter-spacing: -0.03em;
+  }
+  
+  .nf-desc {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+    max-width: 520px;
+    margin: 0 auto 2rem;
+  }
+  
+  .nf-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 3rem;
+  }
+  
+  .nf-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.88rem;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+  }
+  
+  .nf-btn-primary {
+    background: var(--grad);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.4);
+  }
+  
+  .nf-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.55);
+  }
+  
+  .nf-btn-secondary {
+    background: rgba(125, 211, 252, 0.15);
+    border: 1px solid rgba(125, 211, 252, 0.4);
+    color: var(--cyan);
+  }
+  
+  .nf-btn-secondary:hover {
+    background: rgba(125, 211, 252, 0.25);
+    transform: translateY(-2px);
+  }
+  
+  .nf-suggestions {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-top: 3rem;
+    border-top: 1px solid var(--border-color);
+    text-align: left;
+  }
+  
+  .nf-sug-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .nf-sug-bar {
+    width: 4px;
+    height: 42px;
+    background: var(--grad);
+    border-radius: 3px;
+    box-shadow: 0 0 12px rgba(192, 132, 252, 0.5);
+  }
+  
+  .nf-sug-tag {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--purple);
+    margin-bottom: 4px;
+  }
+  
+  .nf-sug-title {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+  
+  .nf-sug-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+  }
+  
+  .nf-sug-card {
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.3s ease;
+  }
+  
+  .nf-sug-card:hover { transform: translateY(-6px); }
+  
+  .nf-sug-thumb {
+    position: relative;
+    aspect-ratio: 3/4;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(28, 15, 61, 0.5);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .nf-sug-card:hover .nf-sug-thumb {
+    box-shadow: 0 15px 35px rgba(192, 132, 252, 0.3);
+  }
+  
+  .nf-sug-thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  
+  .nf-sug-card:hover .nf-sug-thumb img { transform: scale(1.08); }
+  
+  .nf-sug-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(10, 5, 23, 0.95) 100%);
+  }
+  
+  .nf-sug-play {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--grad);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    padding-left: 2px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 3;
+    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.5);
+  }
+  
+  .nf-sug-card:hover .nf-sug-play {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  
+  .nf-sug-new {
+    position: absolute;
+    top: 8px; left: 8px;
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff;
+    padding: 3px 7px;
+    border-radius: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    z-index: 3;
+  }
+  
+  .nf-sug-score {
+    position: absolute;
+    top: 8px; right: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fbbf24;
+    padding: 3px 7px;
+    border-radius: 5px;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    font-weight: 800;
+    z-index: 3;
+    backdrop-filter: blur(6px);
+  }
+  
+  .nf-sug-name {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 10px 12px 12px;
+    color: #fff;
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    z-index: 2;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  }
+  
+  @media (max-width: 1200px) { .nf-sug-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 900px) {
+    .nf-sug-grid { grid-template-columns: repeat(3, 1fr); }
+    .nf-code { font-size: 6rem; }
+    .nf-hero { height: 150px; }
+  }
+  @media (max-width: 640px) {
+    .nf-sug-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .nf-actions { flex-direction: column; align-items: stretch; }
+    .nf-btn { justify-content: center; }
+  }
+</style>
