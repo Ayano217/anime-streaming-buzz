@@ -41,11 +41,17 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800;12..96,900&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
+  <!-- FORCE DARK BY DEFAULT unless user chose light -->
   <script is:inline>
     (function(){
       var saved = localStorage.getItem('theme');
+      // Only apply light if user EXPLICITLY chose it
       if(saved === 'light') {
         document.documentElement.setAttribute('data-theme', 'light');
+      } else {
+        // Force dark for everyone else (including first visit)
+        document.documentElement.setAttribute('data-theme', 'dark');
+        if(!saved) localStorage.setItem('theme', 'dark');
       }
     })();
   </script>
@@ -100,9 +106,9 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 <style is:global>
   /* ═══ RESET ═══ */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; background: #0d0d10; }
 
-  /* ═══ THEME VARS ═══ */
+  /* ═══ DARK THEME (default) ═══ */
   [data-theme="dark"] {
     --bg-primary:    #0d0d10;
     --bg-secondary:  #16161b;
@@ -117,7 +123,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     --text-faint:     rgba(255, 255, 255, 0.25);
 
     --border-color:  rgba(255, 255, 255, 0.08);
-    --border-hover:  rgba(255, 51, 102, 0.4);
+    --border-hover:  rgba(255, 51, 153, 0.4);
   }
 
   [data-theme="light"] {
@@ -126,7 +132,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     --bg-elevated:   #ffffff;
     --bg-glass:      rgba(247, 247, 250, 0.9);
     --bg-card:       #ffffff;
-    --bg-card-hover: #ffffff;
+    --bg-card-hover: #f0f0f5;
 
     --text-primary:   #0d0d10;
     --text-secondary: rgba(13, 13, 16, 0.75);
@@ -134,15 +140,16 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     --text-faint:     rgba(13, 13, 16, 0.22);
 
     --border-color:  rgba(13, 13, 16, 0.08);
-    --border-hover:  rgba(255, 51, 102, 0.4);
+    --border-hover:  rgba(255, 51, 153, 0.4);
   }
 
-  /* ═══ SHARED GRADIENT (Pink → Cyan) ═══ */
+  /* ═══ PINK → BLUE GRADIENT (no red) ═══ */
   :root {
-    --grad: linear-gradient(135deg, #ff3366 0%, #ff0080 50%, #00d4ff 100%);
-    --grad-pink: linear-gradient(135deg, #ff3366, #ff0080);
-    --grad-cyan: linear-gradient(135deg, #00d4ff, #0099cc);
-    --grad-glow: 0 0 20px rgba(255, 51, 102, 0.3);
+    --pink:  #ff3399;
+    --blue:  #00d4ff;
+    --grad: linear-gradient(135deg, #ff3399 0%, #cc33cc 50%, #00d4ff 100%);
+    --grad-simple: linear-gradient(135deg, #ff3399, #00d4ff);
+    --grad-glow: 0 0 20px rgba(255, 51, 153, 0.35);
 
     --header-h: 68px;
     --font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -180,11 +187,11 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   p, li { color: var(--text-secondary); }
   a { color: inherit; text-decoration: none; }
   img { max-width: 100%; height: auto; display: block; }
-  ::selection { background: rgba(255, 51, 102, 0.35); color: #fff; }
+  ::selection { background: rgba(255, 51, 153, 0.35); color: #fff; }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255, 51, 102, 0.3); border-radius: 9px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255, 51, 153, 0.3); border-radius: 9px; }
 
   /* ═══ GRADIENT TEXT (universal) ═══ */
   .grad-text {
@@ -193,13 +200,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     display: inline-block;
-  }
-
-  .grad-text-pink {
-    background: var(--grad-pink);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
   }
 
   .tube-text { color: var(--text-primary); }
@@ -244,7 +244,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     display: flex;
     flex-direction: column;
   }
-
   main { flex: 1; }
 
   .container {
@@ -270,7 +269,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
   #btt:hover { transform: translateY(-3px); }
 
-  /* ═══ SECTION HEADERS ═══ */
+  /* ═══ SECTIONS ═══ */
   .section-block {
     padding: 3rem 0;
   }
@@ -282,13 +281,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     color: var(--text-primary);
     margin: 0 0 1.5rem;
     letter-spacing: -0.03em;
-  }
-
-  .section-title-grad {
-    background: var(--grad);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
   }
 
   /* ═══ BUTTONS ═══ */
@@ -312,11 +304,11 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   .btn-grad {
     background: var(--grad);
     color: #fff;
-    box-shadow: 0 4px 20px rgba(255, 51, 102, 0.35);
+    box-shadow: 0 4px 20px rgba(255, 51, 153, 0.35);
   }
   .btn-grad:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(255, 51, 102, 0.5);
+    box-shadow: 0 8px 30px rgba(255, 51, 153, 0.5);
   }
 
   .btn-outline {
@@ -325,24 +317,8 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     color: var(--text-primary);
   }
   .btn-outline:hover {
-    border-color: rgba(255, 51, 102, 0.5);
-    background: rgba(255, 51, 102, 0.06);
-  }
-
-  .btn-play-round {
-    background: rgba(255, 255, 255, 0.9);
-    color: #0d0d10;
-    border-radius: 50%;
-    width: 56px;
-    height: 56px;
-    padding: 0;
-    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.15);
-  }
-
-  .btn-play-round:hover {
-    transform: scale(1.1);
-    background: #fff;
-    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 51, 153, 0.5);
+    background: rgba(255, 51, 153, 0.06);
   }
 
   /* ═══ CARDS ═══ */
@@ -450,15 +426,14 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   .prose ul, .prose ol { padding-left: 1.5rem; margin-bottom: 1rem; color: var(--text-secondary); }
   .prose li { margin-bottom: 0.3rem; }
   .prose blockquote {
-    border-left: 3px solid transparent;
-    border-image: var(--grad) 1;
+    border-left: 3px solid var(--pink);
     padding: 0.75rem 1rem;
-    background: rgba(255, 51, 102, 0.04);
+    background: rgba(255, 51, 153, 0.04);
     margin: 1rem 0; font-style: italic;
   }
   .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
   .prose th {
-    background: rgba(255, 51, 102, 0.06);
+    background: rgba(255, 51, 153, 0.06);
     color: var(--text-primary);
     padding: 0.7rem 0.9rem; text-align: left;
     border-bottom: 1px solid var(--border-color);
@@ -486,7 +461,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   @keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
 
   mark.hl {
-    background: rgba(255, 51, 102, 0.25);
+    background: rgba(255, 51, 153, 0.25);
     color: var(--text-primary);
     border-radius: 2px;
     padding: 0 3px;
