@@ -131,40 +131,53 @@ const displayEpisodes = allPosts
 
             </div>
 
+            <!-- COVER — wrapped in padded frame so badges stay INSIDE -->
             <div class="slide-right">
               {anime.image && (
-                <div class="cover-container">
-                  <div class="cover-glow"></div>
+                <div class="cover-frame">
+                  <div class="cover-container">
+                    <!-- Animated glowing border -->
+                    <div class="cover-border-glow"></div>
 
-                  <div class="cover-inner">
-                    <img
-                      src={anime.image}
-                      alt={anime.title}
-                      class="cover-img"
-                      loading={idx === 0 ? 'eager' : 'lazy'}
-                    />
+                    <!-- Static backdrop glow -->
+                    <div class="cover-glow"></div>
 
-                    <div class="corner-acc corner-tl"></div>
-                    <div class="corner-acc corner-tr"></div>
-                    <div class="corner-acc corner-bl"></div>
-                    <div class="corner-acc corner-br"></div>
+                    <div class="cover-inner">
+                      <img
+                        src={anime.image}
+                        alt={anime.title}
+                        class="cover-img"
+                        loading={idx === 0 ? 'eager' : 'lazy'}
+                      />
+
+                      <!-- Sparkles overlay -->
+                      <div class="sparkle sparkle-1"></div>
+                      <div class="sparkle sparkle-2"></div>
+
+                      <!-- Corner brackets -->
+                      <div class="corner-acc corner-tl"></div>
+                      <div class="corner-acc corner-tr"></div>
+                      <div class="corner-acc corner-bl"></div>
+                      <div class="corner-acc corner-br"></div>
+
+                      <!-- Badges INSIDE cover bounds -->
+                      {anime.score && (
+                        <div class="score-badge">
+                          <div class="score-inner">
+                            <div class="score-value">{anime.score}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {anime.rank && anime.rank <= 100 && (
+                        <div class="rank-badge">
+                          <span class="rank-hash">#</span>
+                          <span class="rank-num">{anime.rank}</span>
+                        </div>
+                      )}
+                    </div>
+
                   </div>
-
-                  {anime.score && (
-                    <div class="score-float">
-                      <div class="score-inner">
-                        <div class="score-value">{anime.score}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {anime.rank && anime.rank <= 100 && (
-                    <div class="rank-float">
-                      <div class="rank-hash">#</div>
-                      <div class="rank-num">{anime.rank}</div>
-                    </div>
-                  )}
-
                 </div>
               )}
             </div>
@@ -293,7 +306,7 @@ const displayEpisodes = allPosts
     position: relative;
   }
 
-  /* ═══ DARK BG BEHIND HERO ═══ */
+  /* Hero background */
   .hero-bg-force {
     position: absolute;
     top: 2rem;
@@ -327,7 +340,7 @@ const displayEpisodes = allPosts
     padding: 2rem 1.5rem;
   }
 
-  /* ═══ SLIDES ═══ */
+  /* Slides */
   .hero-slides {
     position: relative;
     min-height: 560px;
@@ -354,7 +367,7 @@ const displayEpisodes = allPosts
     min-height: 560px;
   }
 
-  /* ═══ LEFT INFO ═══ */
+  /* LEFT INFO */
   .slide-left {
     animation: slideInLeft 0.7s ease;
   }
@@ -501,7 +514,6 @@ const displayEpisodes = allPosts
     border-radius: 6px;
     font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.02em;
   }
 
   .rating {
@@ -560,7 +572,6 @@ const displayEpisodes = allPosts
     padding-left: 3px;
   }
 
-  /* ── SLOW pulse ring (4 seconds) ── */
   .pulse-ring {
     position: absolute;
     inset: 0;
@@ -597,12 +608,12 @@ const displayEpisodes = allPosts
     transform: translateY(-2px);
   }
 
-  /* ═══ RIGHT COVER — NO 3D TILT, NO SPINNING BORDER ═══ */
+  /* ═══ RIGHT COVER — WRAPPED IN FRAME ═══ */
   .slide-right {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 1rem;
+    padding: 0;
     animation: slideInRight 0.7s ease;
   }
 
@@ -611,33 +622,62 @@ const displayEpisodes = allPosts
     to   { opacity: 1; transform: translateX(0); }
   }
 
+  /* Frame wrapper — has padding so nothing spills out */
+  .cover-frame {
+    padding: 20px;
+    max-width: 100%;
+  }
+
   .cover-container {
     position: relative;
     width: 100%;
-    max-width: 380px;
+    max-width: 360px;
     aspect-ratio: 3/4;
   }
 
-  /* Simple static glow (no rotation) */
+  /* Animated glowing border — SLOW (30s) */
+  .cover-border-glow {
+    position: absolute;
+    inset: -2px;
+    border-radius: 22px;
+    background: conic-gradient(
+      from 0deg,
+      #c084fc,
+      #e879f9,
+      #7dd3fc,
+      #a855f7,
+      #c084fc
+    );
+    animation: border-spin 30s linear infinite;
+    z-index: 0;
+    opacity: 0.5;
+    filter: blur(1px);
+  }
+
+  @keyframes border-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* Static ambient glow behind */
   .cover-glow {
     position: absolute;
-    inset: -15%;
+    inset: -10%;
     border-radius: 50%;
     background: radial-gradient(circle,
-      rgba(192, 132, 252, 0.5) 0%,
-      rgba(232, 121, 249, 0.3) 30%,
-      rgba(125, 211, 252, 0.2) 60%,
+      rgba(192, 132, 252, 0.45) 0%,
+      rgba(232, 121, 249, 0.25) 30%,
+      rgba(125, 211, 252, 0.15) 60%,
       transparent 75%
     );
     filter: blur(50px);
     z-index: 0;
-    /* Very slow gentle pulse */
-    animation: glow-breathe 10s ease-in-out infinite;
+    animation: glow-breathe 8s ease-in-out infinite;
   }
 
   @keyframes glow-breathe {
-    0%, 100% { opacity: 0.6; }
-    50%       { opacity: 0.9; }
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50%       { opacity: 1;   transform: scale(1.03); }
   }
 
   .cover-inner {
@@ -647,18 +687,12 @@ const displayEpisodes = allPosts
     border-radius: 20px;
     overflow: hidden;
     z-index: 1;
-    box-shadow:
-      0 25px 60px rgba(0, 0, 0, 0.5),
-      0 0 0 1px rgba(192, 132, 252, 0.3);
-    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    transition: transform 0.4s ease;
   }
 
-  /* Simple hover — no 3D tilt */
   .cover-inner:hover {
-    transform: scale(1.02) translateY(-4px);
-    box-shadow:
-      0 35px 70px rgba(0, 0, 0, 0.55),
-      0 0 0 2px rgba(192, 132, 252, 0.6);
+    transform: scale(1.02);
   }
 
   .cover-img {
@@ -668,7 +702,28 @@ const displayEpisodes = allPosts
     display: block;
   }
 
-  /* Static corner brackets — no animation */
+  /* Sparkles */
+  .sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #fff, 0 0 12px var(--cyan);
+    animation: sparkle-twinkle 5s ease infinite;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .sparkle-1 { top: 20%; left: 15%; animation-delay: 0s; }
+  .sparkle-2 { bottom: 25%; right: 20%; animation-delay: 2.5s; }
+
+  @keyframes sparkle-twinkle {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50%       { opacity: 1; transform: scale(1.5); }
+  }
+
+  /* Corner brackets */
   .corner-acc {
     position: absolute;
     width: 20px;
@@ -684,44 +739,51 @@ const displayEpisodes = allPosts
   .corner-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
   .corner-br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
 
-  /* Score badge — no floating animation on desktop */
-  .score-float {
+  /* ═══ SCORE BADGE — INSIDE COVER BOUNDS ═══ */
+  .score-badge {
     position: absolute;
-    top: -15px;
-    right: -15px;
-    z-index: 5;
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+    animation: float-gentle 5s ease infinite;
+  }
+
+  @keyframes float-gentle {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-4px); }
   }
 
   .score-inner {
     background: var(--grad);
     border-radius: 50%;
-    width: 70px;
-    height: 70px;
+    width: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff !important;
-    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.5);
-    border: 3px solid var(--bg-base);
+    box-shadow: 0 6px 20px rgba(192, 132, 252, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.15);
   }
 
   .score-value {
     font-family: var(--font-mono);
-    font-size: 1.3rem;
+    font-size: 1.05rem;
     font-weight: 800;
     line-height: 1;
     color: #fff !important;
   }
 
-  .rank-float {
+  /* ═══ RANK BADGE — INSIDE COVER BOUNDS ═══ */
+  .rank-badge {
     position: absolute;
-    top: 15px;
-    left: -10px;
-    z-index: 5;
+    top: 12px;
+    left: 12px;
+    z-index: 3;
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(10px);
     color: #fff !important;
-    padding: 0.4rem 0.7rem;
+    padding: 0.35rem 0.65rem;
     border-radius: 8px;
     display: flex;
     align-items: baseline;
@@ -738,12 +800,12 @@ const displayEpisodes = allPosts
   }
 
   .rank-num {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 800;
     color: #fff !important;
   }
 
-  /* ═══ HERO CONTROLS ═══ */
+  /* Hero Controls */
   .hero-controls {
     display: flex;
     align-items: center;
@@ -801,7 +863,7 @@ const displayEpisodes = allPosts
     transform: scale(1.1);
   }
 
-  /* ═══ LATEST UPDATES ═══ */
+  /* Latest Updates */
   .latest-updates {
     margin-top: 3rem;
     position: relative;
@@ -822,7 +884,6 @@ const displayEpisodes = allPosts
     font-family: var(--font-heading);
     font-size: clamp(1.4rem, 2.5vw, 1.8rem);
     font-weight: 700;
-    letter-spacing: -0.02em;
     color: var(--text-primary);
     margin: 0;
   }
@@ -983,13 +1044,12 @@ const displayEpisodes = allPosts
 
   /* ═══ RESPONSIVE ═══ */
   @media (max-width: 1024px) {
-    .cover-container { max-width: 340px; }
+    .cover-container { max-width: 320px; }
   }
 
   @media (max-width: 900px) {
     .hero-sec { padding: 1.5rem 0 2.5rem; }
 
-    /* BG covers whole hero including cover */
     .hero-bg-force {
       top: 1.5rem;
       height: calc(100% - 4rem);
@@ -1003,23 +1063,27 @@ const displayEpisodes = allPosts
       min-height: auto;
     }
 
-    /* STACK LAYOUT */
     .slide-content {
       grid-template-columns: 1fr !important;
-      gap: 2.5rem;
+      gap: 2rem;
       min-height: auto;
       text-align: center;
     }
 
-    /* COVER ON TOP */
     .slide-right {
       order: -1;
-      padding: 1rem 0;
+      padding: 0;
+    }
+
+    .cover-frame {
+      padding: 15px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
     }
 
     .cover-container {
       max-width: 240px;
-      margin: 0 auto;
     }
 
     .slide-left {
@@ -1037,26 +1101,18 @@ const displayEpisodes = allPosts
 
     .badges { display: inline-flex; }
 
-    /* Score badge inside cover bounds */
-    .score-float {
-      top: -8px;
-      right: -8px;
-    }
-
+    /* Score/Rank badges — smaller on mobile */
     .score-inner {
-      width: 52px;
-      height: 52px;
-      border-width: 2px;
+      width: 46px;
+      height: 46px;
     }
 
     .score-value {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
 
-    .rank-float {
-      top: 10px;
-      left: -5px;
-      padding: 0.25rem 0.5rem;
+    .rank-badge {
+      padding: 0.28rem 0.55rem;
     }
 
     .rank-num {
@@ -1067,24 +1123,21 @@ const displayEpisodes = allPosts
       font-size: 0.65rem;
     }
 
+    /* Slower animations on mobile */
+    .cover-border-glow {
+      animation-duration: 45s;
+    }
+
     .updates-grid {
       grid-template-columns: repeat(2, 1fr);
     }
   }
 
   @media (max-width: 640px) {
-    .cover-container {
-      max-width: 200px;
-    }
-
-    .slide-title {
-      font-size: 1.7rem;
-    }
-
-    .slide-desc {
-      font-size: 0.85rem;
-      max-width: 100%;
-    }
+    .cover-frame { padding: 12px; }
+    .cover-container { max-width: 200px; }
+    .slide-title { font-size: 1.7rem; }
+    .slide-desc { font-size: 0.85rem; max-width: 100%; }
 
     .slide-actions {
       flex-direction: column;
@@ -1099,16 +1152,12 @@ const displayEpisodes = allPosts
     }
 
     .score-inner {
-      width: 46px;
-      height: 46px;
+      width: 42px;
+      height: 42px;
     }
 
     .score-value {
-      font-size: 0.85rem;
-    }
-
-    .rank-num {
-      font-size: 0.7rem;
+      font-size: 0.82rem;
     }
 
     .updates-grid {
@@ -1117,17 +1166,8 @@ const displayEpisodes = allPosts
   }
 
   @media (max-width: 400px) {
-    .cover-container {
-      max-width: 170px;
-    }
-
-    .score-inner {
-      width: 40px;
-      height: 40px;
-    }
-
-    .score-value {
-      font-size: 0.78rem;
-    }
+    .cover-container { max-width: 170px; }
+    .score-inner { width: 38px; height: 38px; }
+    .score-value { font-size: 0.75rem; }
   }
 </style>
