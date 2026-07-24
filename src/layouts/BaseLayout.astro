@@ -39,7 +39,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800;12..96,900&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800;12..96,900&family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
 
   <script is:inline>
     (function(){
@@ -69,6 +69,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     <div class="ambient-glow ambient-glow-1"></div>
     <div class="ambient-glow ambient-glow-2"></div>
     <div class="ambient-glow ambient-glow-3"></div>
+    <div class="ambient-grid"></div>
   </div>
 
   <!-- App -->
@@ -112,15 +113,15 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
 
-  /* ═══ DARK THEME (Deep Purple) ═══ */
+  /* ═══ DARK THEME ═══ */
   [data-theme="dark"] {
-    --bg-base:     #1a0b2e;
-    --bg-primary:  #1e0f36;
-    --bg-secondary: #2a1547;
-    --bg-elevated:  #331a56;
-    --bg-glass:    rgba(30, 15, 54, 0.75);
-    --bg-card:     rgba(42, 21, 71, 0.6);
-    --bg-card-hover: rgba(51, 26, 86, 0.75);
+    --bg-base:      #0f0620;
+    --bg-primary:   #1a0b2e;
+    --bg-secondary: #241141;
+    --bg-elevated:  #2d1750;
+    --bg-glass:     rgba(15, 6, 32, 0.8);
+    --bg-card:      rgba(36, 17, 65, 0.5);
+    --bg-card-hover: rgba(45, 23, 80, 0.7);
 
     --text-primary:   #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.78);
@@ -130,44 +131,59 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     --border-color:  rgba(192, 132, 252, 0.15);
     --border-hover:  rgba(192, 132, 252, 0.4);
 
-    /* Body gradient background */
+    --hero-title-color: #ffffff;
+    --hero-desc-color:  rgba(255, 255, 255, 0.75);
+    --hero-meta-color:  rgba(255, 255, 255, 0.7);
+    --hero-bg-inner:    rgba(15, 6, 32, 0.4);
+
     --body-bg: radial-gradient(ellipse at top left, #2d1b4e 0%, #1a0b2e 50%, #0f0620 100%);
   }
 
+  /* ═══ LIGHT THEME (fixed contrast) ═══ */
   [data-theme="light"] {
-    --bg-base:     #faf5ff;
-    --bg-primary:  #ffffff;
+    --bg-base:      #faf5ff;
+    --bg-primary:   #ffffff;
     --bg-secondary: #f3e8ff;
     --bg-elevated:  #ffffff;
-    --bg-glass:    rgba(255, 255, 255, 0.85);
-    --bg-card:     #ffffff;
+    --bg-glass:     rgba(255, 255, 255, 0.9);
+    --bg-card:      #ffffff;
     --bg-card-hover: #faf5ff;
 
     --text-primary:   #1e0f36;
-    --text-secondary: rgba(30, 15, 54, 0.75);
-    --text-muted:     rgba(30, 15, 54, 0.5);
+    --text-secondary: rgba(30, 15, 54, 0.8);
+    --text-muted:     rgba(30, 15, 54, 0.55);
     --text-faint:     rgba(30, 15, 54, 0.25);
 
-    --border-color:  rgba(192, 132, 252, 0.2);
-    --border-hover:  rgba(192, 132, 252, 0.5);
+    --border-color:  rgba(192, 132, 252, 0.25);
+    --border-hover:  rgba(168, 85, 247, 0.5);
+
+    /* Hero specifically for light mode — WHITE text on darker overlay */
+    --hero-title-color: #ffffff;
+    --hero-desc-color:  rgba(255, 255, 255, 0.9);
+    --hero-meta-color:  rgba(255, 255, 255, 0.85);
+    --hero-bg-inner:    rgba(30, 15, 54, 0.85);
 
     --body-bg: radial-gradient(ellipse at top left, #f3e8ff 0%, #faf5ff 50%, #ffffff 100%);
   }
 
-  /* ═══ SOFTER GRADIENT (Purple → Pink → Cyan) ═══ */
+  /* ═══ SOFTER GRADIENT ═══ */
   :root {
     --purple: #c084fc;
     --pink:   #f0abfc;
     --cyan:   #7dd3fc;
+    --purple-deep: #a855f7;
 
     --grad: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
     --grad-simple: linear-gradient(135deg, #c084fc, #7dd3fc);
-    --grad-purple: linear-gradient(135deg, #a855f7, #c084fc);
     --grad-glow: 0 0 30px rgba(192, 132, 252, 0.4);
+
+    --neon-purple: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(168, 85, 247, 0.3);
+    --neon-cyan:   0 0 10px rgba(125, 211, 252, 0.6), 0 0 20px rgba(125, 211, 252, 0.3);
 
     --header-h: 68px;
     --font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-heading: 'Bricolage Grotesque', 'DM Sans', sans-serif;
+    --font-mono:    'JetBrains Mono', monospace;
     --radius-sm: 10px;
     --radius-md: 14px;
     --radius-lg: 22px;
@@ -208,12 +224,10 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.3); border-radius: 9px; }
 
-  /* ═══ AMBIENT BACKGROUND GLOWS ═══ */
+  /* ═══ AMBIENT BG ═══ */
   .ambient-bg {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
+    position: fixed; inset: 0;
+    z-index: 0; overflow: hidden;
     pointer-events: none;
   }
 
@@ -225,45 +239,53 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
 
   .ambient-glow-1 {
-    width: 600px;
-    height: 600px;
+    width: 600px; height: 600px;
     background: #c084fc;
-    top: -20%;
-    left: -10%;
+    top: -20%; left: -10%;
     animation: glow-drift-1 20s ease-in-out infinite;
   }
 
   .ambient-glow-2 {
-    width: 500px;
-    height: 500px;
+    width: 500px; height: 500px;
     background: #e879f9;
-    top: 30%;
-    right: -10%;
+    top: 30%; right: -10%;
     animation: glow-drift-2 25s ease-in-out infinite;
   }
 
   .ambient-glow-3 {
-    width: 400px;
-    height: 400px;
+    width: 400px; height: 400px;
     background: #7dd3fc;
-    bottom: -15%;
-    left: 40%;
-    opacity: 0.2;
+    bottom: -15%; left: 40%;
+    opacity: 0.25;
     animation: glow-drift-3 22s ease-in-out infinite;
   }
 
-  [data-theme="light"] .ambient-glow { opacity: 0.15; }
+  /* Subtle grid overlay (gaming feel) */
+  .ambient-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(192, 132, 252, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(192, 132, 252, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);
+  }
+
+  [data-theme="light"] .ambient-glow { opacity: 0.18; }
+  [data-theme="light"] .ambient-grid {
+    background-image:
+      linear-gradient(rgba(30, 15, 54, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(30, 15, 54, 0.04) 1px, transparent 1px);
+  }
 
   @keyframes glow-drift-1 {
     0%, 100% { transform: translate(0, 0) scale(1); }
     50%       { transform: translate(50px, 30px) scale(1.1); }
   }
-
   @keyframes glow-drift-2 {
     0%, 100% { transform: translate(0, 0) scale(1); }
     50%       { transform: translate(-40px, 50px) scale(0.9); }
   }
-
   @keyframes glow-drift-3 {
     0%, 100% { transform: translate(0, 0) scale(1); }
     50%       { transform: translate(30px, -40px) scale(1.05); }
@@ -348,9 +370,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   #btt:hover { transform: translateY(-3px); }
 
   /* ═══ SECTIONS ═══ */
-  .section-block {
-    padding: 3rem 0;
-  }
+  .section-block { padding: 3rem 0; }
 
   .section-title {
     font-family: var(--font-heading);
@@ -427,12 +447,19 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     position: relative;
   }
 
+  [data-theme="light"] .ticker-wrap {
+    background: rgba(255, 255, 255, 0.6);
+  }
+
   .ticker-wrap::before, .ticker-wrap::after {
     content: ''; position: absolute; top: 0; bottom: 0;
     width: 60px; z-index: 2; pointer-events: none;
   }
   .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg-base), transparent); }
   .ticker-wrap::after  { right: 0; background: linear-gradient(-90deg, var(--bg-base), transparent); }
+
+  [data-theme="light"] .ticker-wrap::before { background: linear-gradient(90deg, var(--bg-base), transparent); }
+  [data-theme="light"] .ticker-wrap::after  { background: linear-gradient(-90deg, var(--bg-base), transparent); }
 
   .ticker-label {
     position: absolute; left: 0; top: 0; bottom: 0; z-index: 3;
