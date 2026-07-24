@@ -1,7 +1,4 @@
 ---
-// This fetches trending anime from Jikan API at build time
-// Falls back to static featured list if API fails
-
 let heroAnime = [];
 
 try {
@@ -11,107 +8,85 @@ try {
     heroAnime = (data.data || []).slice(0, 5).map(a => ({
       title:    a.title_english || a.title,
       titleJp:  a.title_japanese || '',
-      synopsis: (a.synopsis || '').substring(0, 200) + '...',
+      synopsis: (a.synopsis || '').substring(0, 180) + '...',
       image:    a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || '',
       score:    a.score,
-      year:     a.year,
-      episodes: a.episodes,
-      genres:   (a.genres || []).slice(0, 3).map(g => g.name),
-      studio:   a.studios?.[0]?.name || '',
+      year:     a.year || '',
+      genre:    (a.genres?.[0]?.name) || 'Anime',
       malUrl:   a.url,
-      type:     a.type || 'TV',
-      status:   a.status || '',
+      season:   a.status === 'Currently Airing' ? 'Now Airing' : (a.status || 'New Season'),
     }));
   }
 } catch (e) {
-  console.warn('[HeroSection] Jikan fetch failed:', e);
+  console.warn('Jikan fetch failed:', e);
 }
 
-// Fallback if no data
 if (heroAnime.length === 0) {
   heroAnime = [{
-    title: 'Loading Featured Anime',
+    title: 'Discover Anime',
     titleJp: '',
-    synopsis: 'Fresh anime content updated daily. Discover the latest trending series, official trailers, and streaming guides.',
+    synopsis: 'Explore latest anime series, official trailers, and streaming guides.',
     image: '',
-    score: null,
-    year: 2025,
-    episodes: null,
-    genres: ['Action', 'Adventure'],
-    studio: 'AniTube Buzz',
-    malUrl: '#',
-    type: 'TV',
-    status: 'Featured',
+    score: null, year: '', genre: 'Anime', malUrl: '#',
+    season: 'Coming Soon',
   }];
 }
+
+const firstDate = new Date().toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
 ---
 
-<section class="hero-section" id="heroSection">
-  <div class="hero-container container">
+<section class="hero" id="heroSec">
+  <div class="hero-cnt container">
 
-    <!-- Slides -->
     <div class="hero-slides" id="heroSlides">
       {heroAnime.map((anime, idx) => (
         <div class={`hero-slide ${idx === 0 ? 'active' : ''}`} data-index={idx}>
 
-          <!-- Backdrop image -->
-          {anime.image && (
-            <div class="hero-backdrop" style={`background-image: url(${anime.image})`}></div>
-          )}
-          <div class="hero-backdrop-overlay"></div>
+          <!-- Left content -->
+          <div class="hero-left">
+            <h1 class="hero-welcome">
+              <span class="grad-text">Welcome</span> to<br/>
+              <span class="tube-text">AniTube Buzz</span>
+            </h1>
 
-          <!-- Content -->
-          <div class="hero-content">
-            <div class="hero-meta stagger-in">
-              <span class="hero-badge">
-                <span class="hero-dot"></span>
-                Featured Anime
-              </span>
-              {anime.score && (
-                <span class="hero-score">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                  </svg>
-                  {anime.score}
-                </span>
-              )}
-              {anime.type && <span class="hero-info-pill">{anime.type}</span>}
-              {anime.year && <span class="hero-info-pill">{anime.year}</span>}
-              {anime.episodes && <span class="hero-info-pill">{anime.episodes} EP</span>}
-            </div>
+            <p class="hero-desc">{anime.synopsis}</p>
 
-            <h1 class="hero-title stagger-in">{anime.title}</h1>
-
-            {anime.titleJp && <p class="hero-title-jp stagger-in">{anime.titleJp}</p>}
-
-            {anime.genres.length > 0 && (
-              <div class="hero-genres stagger-in">
-                {anime.genres.map(g => <span class="hero-genre">{g}</span>)}
-              </div>
-            )}
-
-            <p class="hero-synopsis stagger-in">{anime.synopsis}</p>
-
-            <div class="hero-actions stagger-in">
-              <a href={`/search?q=${encodeURIComponent(anime.title)}`} class="hero-btn hero-btn-play">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <div class="hero-play-row">
+              <button class="hero-play-btn" onclick={`window.location.href='${anime.malUrl}'`} aria-label="Play trailer">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M8 5v14l11-7z"/>
                 </svg>
-                Watch Now
-              </a>
-              <a href={anime.malUrl} target="_blank" rel="noopener" class="hero-btn hero-btn-info">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 16v-4M12 8h.01"/>
-                </svg>
-                More Info
-              </a>
+              </button>
+              <div class="hero-play-info">
+                <div class="hero-date">{firstDate}</div>
+                <div class="hero-season">
+                  <span class="grad-text">{anime.season}</span>
+                </div>
+                <div class="hero-anime-name">{anime.title}</div>
+              </div>
             </div>
+          </div>
 
-            {anime.studio && (
-              <p class="hero-studio stagger-in">
-                Studio: <span>{anime.studio}</span>
-              </p>
+          <!-- Right image -->
+          <div class="hero-right">
+            <div class="hero-image-glow"></div>
+            {anime.image && (
+              <div class="hero-image-wrap">
+                <img
+                  src={anime.image}
+                  alt={anime.title}
+                  class="hero-image"
+                  loading={idx === 0 ? 'eager' : 'lazy'}
+                />
+              </div>
+            )}
+            {anime.score && (
+              <div class="hero-score-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+                {anime.score}
+              </div>
             )}
           </div>
 
@@ -119,24 +94,11 @@ if (heroAnime.length === 0) {
       ))}
     </div>
 
-    <!-- Navigation dots -->
-    <div class="hero-dots" id="heroDots">
+    <!-- Dots -->
+    <div class="hero-dots">
       {heroAnime.map((_, idx) => (
-        <button class={`hero-dot-btn ${idx === 0 ? 'active' : ''}`} data-index={idx} aria-label={`Slide ${idx + 1}`}></button>
+        <button class={`hero-dot ${idx === 0 ? 'active' : ''}`} data-index={idx} aria-label={`Slide ${idx + 1}`}></button>
       ))}
-    </div>
-
-    <!-- Arrow controls -->
-    <button class="hero-arrow hero-arrow-left" id="heroPrev" aria-label="Previous">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-    </button>
-    <button class="hero-arrow hero-arrow-right" id="heroNext" aria-label="Next">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-    </button>
-
-    <!-- Progress bar -->
-    <div class="hero-progress" id="heroProgress">
-      <div class="hero-progress-bar" id="heroProgressBar"></div>
     </div>
 
   </div>
@@ -144,14 +106,10 @@ if (heroAnime.length === 0) {
 
 <script is:inline>
   (function() {
-    'use strict';
-
     var slides = document.querySelectorAll('.hero-slide');
-    var dots   = document.querySelectorAll('.hero-dot-btn');
-    var progressBar = document.getElementById('heroProgressBar');
+    var dots   = document.querySelectorAll('.hero-dot');
     var current = 0;
     var interval;
-    var duration = 7000; // 7 seconds per slide
 
     if(slides.length === 0) return;
 
@@ -161,87 +119,48 @@ if (heroAnime.length === 0) {
       current = (idx + slides.length) % slides.length;
       slides[current].classList.add('active');
       dots[current] && dots[current].classList.add('active');
-      restartProgress();
     }
 
-    function next(){ goto(current + 1); }
-    function prev(){ goto(current - 1); }
-
-    function restartProgress(){
-      if(!progressBar) return;
-      progressBar.style.transition = 'none';
-      progressBar.style.width = '0%';
-      void progressBar.offsetWidth;
-      progressBar.style.transition = 'width ' + duration + 'ms linear';
-      progressBar.style.width = '100%';
-    }
-
-    function startAuto(){
-      restartProgress();
-      interval = setInterval(next, duration);
-    }
-
-    function stopAuto(){ clearInterval(interval); }
-
-    // Arrow controls
-    document.getElementById('heroPrev').addEventListener('click', function(){
-      stopAuto(); prev(); startAuto();
-    });
-    document.getElementById('heroNext').addEventListener('click', function(){
-      stopAuto(); next(); startAuto();
-    });
-
-    // Dot controls
     dots.forEach(function(dot){
       dot.addEventListener('click', function(){
-        stopAuto();
+        clearInterval(interval);
         goto(parseInt(dot.dataset.index));
-        startAuto();
+        interval = setInterval(function(){ goto(current + 1); }, 6000);
       });
     });
 
-    // Pause on hover
-    var hero = document.getElementById('heroSection');
-    if(hero) {
-      hero.addEventListener('mouseenter', stopAuto);
-      hero.addEventListener('mouseleave', startAuto);
+    if(slides.length > 1) {
+      interval = setInterval(function(){ goto(current + 1); }, 6000);
     }
-
-    // Start
-    if(slides.length > 1) startAuto();
-
   })();
 </script>
 
 <style>
-  .hero-section {
-    padding: 1.5rem 0;
+  .hero {
+    padding: 2rem 0 3rem;
     position: relative;
   }
 
-  .hero-container {
+  .hero-cnt {
     position: relative;
   }
 
   .hero-slides {
     position: relative;
-    height: 520px;
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    min-height: 480px;
   }
 
   .hero-slide {
     position: absolute;
     inset: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 3rem;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 1s ease, visibility 1s ease;
-    display: flex;
-    align-items: center;
-    padding: 3rem 3.5rem;
+    transition: opacity 0.8s ease;
+    padding: 2rem 0;
   }
 
   .hero-slide.active {
@@ -249,350 +168,229 @@ if (heroAnime.length === 0) {
     visibility: visible;
   }
 
-  /* Backdrop image (right side, faded) */
-  .hero-backdrop {
-    position: absolute;
-    inset: 0;
-    background-size: cover;
-    background-position: center right;
-    z-index: 0;
-    transform: scale(1);
-    transition: transform 8s ease;
-  }
-
-  .hero-slide.active .hero-backdrop {
-    transform: scale(1.08);
-  }
-
-  .hero-backdrop-overlay {
-    position: absolute;
-    inset: 0;
-    background:
-      linear-gradient(90deg,
-        rgba(6, 2, 14, 0.95) 0%,
-        rgba(6, 2, 14, 0.7) 40%,
-        rgba(6, 2, 14, 0.3) 70%,
-        transparent 100%
-      ),
-      linear-gradient(180deg,
-        transparent 0%,
-        transparent 60%,
-        rgba(6, 2, 14, 0.8) 100%
-      );
-    z-index: 1;
-  }
-
-  [data-theme="light"] .hero-backdrop-overlay {
-    background:
-      linear-gradient(90deg,
-        rgba(254, 245, 247, 0.95) 0%,
-        rgba(254, 245, 247, 0.7) 40%,
-        rgba(254, 245, 247, 0.3) 70%,
-        transparent 100%
-      );
-  }
-
-  /* Content */
-  .hero-content {
+  /* Left content */
+  .hero-left {
     position: relative;
     z-index: 2;
-    max-width: 55%;
   }
 
-  .hero-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-  }
-
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: rgba(255, 51, 102, 0.12);
-    border: 1px solid rgba(255, 51, 102, 0.3);
-    color: var(--accent-pink);
-    padding: 0.3rem 0.8rem;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .hero-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent-pink);
-    box-shadow: 0 0 8px var(--accent-pink);
-    animation: pulse-dot 1.5s ease infinite;
-  }
-
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.4; }
-  }
-
-  .hero-score {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    background: rgba(255, 215, 0, 0.15);
-    border: 1px solid rgba(255, 215, 0, 0.3);
-    color: #ffd700;
-    padding: 0.3rem 0.7rem;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 700;
-  }
-
-  .hero-info-pill {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: var(--text-secondary);
-    padding: 0.3rem 0.7rem;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-  }
-
-  [data-theme="light"] .hero-info-pill {
-    background: rgba(26, 5, 16, 0.06);
-    border-color: rgba(26, 5, 16, 0.1);
-  }
-
-  .hero-title {
+  .hero-welcome {
     font-family: var(--font-heading);
-    font-size: clamp(2rem, 5vw, 3.8rem);
+    font-size: clamp(2rem, 5vw, 3.6rem);
     font-weight: 800;
-    color: var(--text-primary);
-    line-height: 1.05;
-    margin: 0 0 0.5rem;
+    line-height: 1.1;
     letter-spacing: -0.03em;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    margin-bottom: 1.2rem;
   }
 
-  .hero-title-jp {
+  .hero-desc {
     font-size: 0.95rem;
-    color: var(--accent-cyan);
-    margin-bottom: 1rem;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-  }
-
-  .hero-genres {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-bottom: 1rem;
-  }
-
-  .hero-genre {
-    background: rgba(0, 212, 255, 0.1);
-    border: 1px solid rgba(0, 212, 255, 0.25);
-    color: var(--accent-cyan);
-    padding: 0.25rem 0.7rem;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 600;
-  }
-
-  .hero-synopsis {
-    font-size: 0.95rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
-    max-width: 500px;
-  }
-
-  .hero-actions {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    margin-bottom: 1rem;
-  }
-
-  .hero-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.85rem 1.8rem;
-    border-radius: 999px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    text-decoration: none;
-    transition: all var(--transition-fast);
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-  }
-
-  .hero-btn-play {
-    background: var(--accent-gradient);
-    color: #fff;
-    box-shadow: 0 8px 25px rgba(255, 51, 102, 0.4);
-  }
-
-  .hero-btn-play:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 35px rgba(255, 51, 102, 0.55);
-  }
-
-  .hero-btn-info {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-  }
-
-  .hero-btn-info:hover {
-    background: rgba(0, 212, 255, 0.15);
-    border-color: var(--accent-cyan);
-    color: var(--accent-cyan);
-    box-shadow: var(--accent-cyan-glow);
-    transform: translateY(-3px);
-  }
-
-  .hero-studio {
-    font-size: 0.78rem;
     color: var(--text-muted);
+    line-height: 1.7;
+    max-width: 400px;
+    margin-bottom: 2rem;
   }
 
-  .hero-studio span {
-    color: var(--text-primary);
-    font-weight: 600;
-  }
-
-  /* ── Stagger animations ── */
-  .stagger-in {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  .hero-slide.active .stagger-in {
-    animation: fadeInUp 0.8s ease forwards;
-  }
-
-  .hero-slide.active .hero-meta      { animation-delay: 0.2s; }
-  .hero-slide.active .hero-title     { animation-delay: 0.3s; }
-  .hero-slide.active .hero-title-jp  { animation-delay: 0.4s; }
-  .hero-slide.active .hero-genres    { animation-delay: 0.5s; }
-  .hero-slide.active .hero-synopsis  { animation-delay: 0.6s; }
-  .hero-slide.active .hero-actions   { animation-delay: 0.7s; }
-  .hero-slide.active .hero-studio    { animation-delay: 0.8s; }
-
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ── Dots ── */
-  .hero-dots {
-    position: absolute;
-    bottom: 25px;
-    left: 50%;
-    transform: translateX(-50%);
+  .hero-play-row {
     display: flex;
-    gap: 8px;
-    z-index: 10;
+    align-items: center;
+    gap: 1rem;
   }
 
-  .hero-dot-btn {
-    width: 26px;
-    height: 4px;
-    border-radius: 4px;
-    background: rgba(255, 255, 255, 0.3);
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-  }
-
-  .hero-dot-btn:hover {
-    background: rgba(255, 255, 255, 0.5);
-  }
-
-  .hero-dot-btn.active {
-    background: var(--accent-gradient);
-    width: 40px;
-    box-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
-  }
-
-  /* ── Arrows ── */
-  .hero-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 44px;
-    height: 44px;
+  .hero-play-btn {
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--grad);
+    border: none;
     color: #fff;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
-    opacity: 0;
-    transition: all 0.25s ease;
+    padding-left: 3px;
+    transition: transform 0.2s ease;
+    box-shadow: 0 8px 25px rgba(255, 51, 102, 0.4);
+    position: relative;
   }
 
-  .hero-container:hover .hero-arrow { opacity: 1; }
-
-  .hero-arrow:hover {
-    background: var(--accent-pink);
-    border-color: var(--accent-pink);
-    box-shadow: var(--accent-pink-glow);
-    transform: translateY(-50%) scale(1.1);
-  }
-
-  .hero-arrow-left  { left: 15px; }
-  .hero-arrow-right { right: 15px; }
-
-  /* ── Progress ── */
-  .hero-progress {
+  .hero-play-btn::before {
+    content: '';
     position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.05);
-    overflow: hidden;
-    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    inset: -6px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 51, 102, 0.3);
+    animation: play-ring 2s ease infinite;
   }
 
-  .hero-progress-bar {
+  @keyframes play-ring {
+    0%   { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+  }
+
+  .hero-play-btn:hover {
+    transform: scale(1.1);
+  }
+
+  .hero-play-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .hero-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .hero-season {
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .hero-anime-name {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  /* Right image */
+  .hero-right {
+    position: relative;
     height: 100%;
-    width: 0%;
-    background: var(--accent-gradient);
-    box-shadow: 0 0 10px rgba(255, 51, 102, 0.6);
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-image-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    height: 90%;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(255, 51, 102, 0.4) 0%,
+      rgba(255, 0, 128, 0.3) 30%,
+      rgba(0, 212, 255, 0.2) 60%,
+      transparent 75%
+    );
+    filter: blur(60px);
+    animation: glow-pulse 4s ease infinite;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+    50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.05); }
+  }
+
+  .hero-image-wrap {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 480px;
+    aspect-ratio: 3/4;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  .hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* NO BLUR — full HD */
+    animation: hero-img-in 1s ease forwards;
+  }
+
+  @keyframes hero-img-in {
+    from { transform: scale(1.05); opacity: 0.5; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+
+  .hero-score-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(10px);
+    color: #ffd700;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+  }
+
+  /* Dots */
+  .hero-dots {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    gap: 8px;
+  }
+
+  .hero-dot {
+    width: 28px;
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .hero-dot:hover {
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  .hero-dot.active {
+    background: var(--grad);
+    width: 40px;
+    box-shadow: 0 0 10px rgba(255, 51, 102, 0.5);
   }
 
   /* ── Responsive ── */
   @media (max-width: 900px) {
-    .hero-slides { height: 450px; }
-    .hero-slide { padding: 2rem 2rem; }
-    .hero-content { max-width: 70%; }
+    .hero-slides { min-height: auto; }
+    .hero-slide {
+      grid-template-columns: 1fr;
+      text-align: center;
+      gap: 2rem;
+      position: relative;
+    }
+    .hero-slide:not(.active) { display: none; }
+    .hero-left { order: 2; }
+    .hero-right { order: 1; min-height: 350px; }
+    .hero-image-wrap { max-width: 300px; }
+    .hero-desc { margin: 0 auto 2rem; }
+    .hero-play-row { justify-content: center; }
+    .hero-dots {
+      position: relative;
+      bottom: auto;
+      left: auto;
+      justify-content: center;
+      margin-top: 2rem;
+    }
   }
 
-  @media (max-width: 640px) {
-    .hero-slides { height: 500px; }
-    .hero-slide { padding: 1.5rem; align-items: flex-end; }
-    .hero-content { max-width: 100%; }
-    .hero-backdrop-overlay {
-      background:
-        linear-gradient(180deg,
-          rgba(6, 2, 14, 0.4) 0%,
-          rgba(6, 2, 14, 0.85) 50%,
-          rgba(6, 2, 14, 0.98) 100%
-        );
-    }
-    .hero-title { font-size: 2rem; }
-    .hero-synopsis { font-size: 0.85rem; }
-    .hero-btn { padding: 0.7rem 1.3rem; font-size: 0.82rem; }
-    .hero-arrow { display: none; }
+  @media (max-width: 480px) {
+    .hero-welcome { font-size: 1.8rem; }
+    .hero-image-wrap { max-width: 240px; }
   }
 </style>
