@@ -38,7 +38,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   <meta name="twitter:image" content={image} />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
-  <!-- Premium Anime Fonts -->
+  <!-- Premium Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -59,17 +59,17 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   <!-- Loader -->
   <div id="loader">
     <div class="ld-brand">
-      <span class="ld-ani">Ani</span><span class="ld-tube">Tube</span><span class="ld-buzz">Buzz</span>
+      <span class="logo-ani">Ani</span><span class="logo-tube">Tube</span><span class="logo-buzz">Buzz</span>
     </div>
     <div class="ld-track"><div class="ld-bar"></div></div>
   </div>
 
-  <!-- Animated Background -->
+  <!-- Anime Background (LOCAL images from /public/bg/) -->
   <div id="anime-bg" aria-hidden="true">
-    <div class="abg-glow abg-g1"></div>
-    <div class="abg-glow abg-g2"></div>
-    <div class="abg-glow abg-g3"></div>
-    <div class="abg-glow abg-g4"></div>
+    <div class="abg-slide abg-active" id="abg-1"></div>
+    <div class="abg-slide" id="abg-2"></div>
+    <div class="abg-dark"></div>
+    <div class="abg-gradient"></div>
     <div class="abg-grid"></div>
   </div>
 
@@ -87,7 +87,8 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   <script is:inline>
   (function(){
-    // Loader hide
+
+    // Loader
     window.addEventListener('load', function(){
       setTimeout(function(){
         var l = document.getElementById('loader');
@@ -105,6 +106,80 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       });
       btt.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); });
     }
+
+    // ── ANIME BACKGROUND SLIDESHOW (Local images) ──
+    var bgImages = [
+      '/bg/bg1.jpg',
+      '/bg/bg2.jpg',
+      '/bg/bg3.jpg',
+      '/bg/bg4.jpg',
+      '/bg/bg5.jpg',
+      '/bg/bg6.jpg',
+      '/bg/bg7.jpg',
+      '/bg/bg8.jpg',
+      '/bg/bg9.jpg',
+      '/bg/bg10.jpg'
+    ];
+
+    var slide1 = document.getElementById('abg-1');
+    var slide2 = document.getElementById('abg-2');
+    var current = 0;
+    var activeSlide = slide1;
+
+    function testImage(url, callback) {
+      var img = new Image();
+      img.onload = function() { callback(true); };
+      img.onerror = function() { callback(false); };
+      img.src = url;
+    }
+
+    function setBg(el, url) {
+      el.style.backgroundImage = 'url(' + url + ')';
+    }
+
+    // Filter to only working images
+    var workingImages = [];
+    var checkedCount = 0;
+
+    bgImages.forEach(function(url, idx) {
+      testImage(url, function(works) {
+        checkedCount++;
+        if(works) workingImages.push(url);
+
+        // When all checked, start slideshow
+        if(checkedCount === bgImages.length) {
+          if(workingImages.length === 0) {
+            console.warn('No background images found in /public/bg/');
+            return;
+          }
+          startSlideshow();
+        }
+      });
+    });
+
+    function startSlideshow() {
+      if(!slide1 || workingImages.length === 0) return;
+
+      // Set initial
+      current = 0;
+      setBg(slide1, workingImages[current]);
+
+      if(workingImages.length === 1) return; // Only 1 image, no rotation
+
+      // Rotate every 15 seconds
+      setInterval(function() {
+        current = (current + 1) % workingImages.length;
+        var inactiveSlide = (activeSlide === slide1) ? slide2 : slide1;
+
+        setBg(inactiveSlide, workingImages[current]);
+
+        setTimeout(function() {
+          inactiveSlide.classList.add('abg-active');
+          activeSlide.classList.remove('abg-active');
+          activeSlide = inactiveSlide;
+        }, 100);
+      }, 15000);
+    }
   })();
   </script>
 
@@ -112,111 +187,69 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 </html>
 
 <style is:global>
-  /* ══════════════════════════════════════
-     RESET
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ RESET ══════════════════════════════════════ */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
 
-  /* ══════════════════════════════════════
-     DARK MODE (default)
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ DARK THEME ══════════════════════════════════════ */
   [data-theme="dark"] {
-    /* Backgrounds */
     --bg-primary:    #0a0510;
     --bg-secondary:  #12081e;
     --bg-glass:      rgba(10, 5, 16, 0.75);
     --bg-card:       rgba(18, 8, 30, 0.75);
     --bg-card-hover: rgba(24, 12, 40, 0.85);
 
-    /* Text — WHITE in dark mode */
     --text-primary:   #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.72);
     --text-muted:     rgba(255, 255, 255, 0.45);
     --text-faint:     rgba(255, 255, 255, 0.2);
 
-    /* Borders */
     --border-color:  rgba(255, 51, 102, 0.15);
     --border-hover:  rgba(255, 51, 102, 0.4);
 
-    /* Accents — PINK/RED (from your logo color) */
     --accent-primary:   #ff3366;
     --accent-secondary: #ff0080;
     --accent-tertiary:  #00d4ff;
     --accent-gradient:  linear-gradient(135deg, #ff3366, #ff0080);
 
-    /* Glows */
     --glow-pink: 0 0 20px rgba(255, 51, 102, 0.3);
     --glow-cyan: 0 0 20px rgba(0, 212, 255, 0.3);
 
-    /* Background glows */
-    --glow-1-color: rgba(255, 51, 102, 0.1);
-    --glow-2-color: rgba(255, 0, 128, 0.08);
-    --glow-3-color: rgba(0, 212, 255, 0.06);
-    --glow-4-color: rgba(139, 0, 255, 0.05);
-
-    /* Grid + ticker */
-    --grid-color:      rgba(255, 51, 102, 0.03);
-    --ticker-bg:       rgba(255, 51, 102, 0.04);
-    --ticker-border:   rgba(255, 51, 102, 0.1);
-    --ticker-label-bg: rgba(255, 51, 102, 0.85);
-    --ticker-fade:     #0a0510;
-
-    /* Scrollbar */
+    --bg-dim-overlay: rgba(6, 2, 14, 0.7);
+    --grid-color:     rgba(255, 51, 102, 0.03);
     --scrollbar-thumb: rgba(255, 51, 102, 0.3);
   }
 
-  /* ══════════════════════════════════════
-     LIGHT MODE
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ LIGHT THEME ══════════════════════════════════════ */
   [data-theme="light"] {
-    /* Backgrounds */
     --bg-primary:    #fef5f7;
     --bg-secondary:  #ffffff;
     --bg-glass:      rgba(254, 245, 247, 0.85);
     --bg-card:       rgba(255, 255, 255, 0.9);
     --bg-card-hover: rgba(255, 255, 255, 1);
 
-    /* Text — BLACK in light mode */
     --text-primary:   #1a0510;
     --text-secondary: rgba(26, 5, 16, 0.78);
     --text-muted:     rgba(26, 5, 16, 0.5);
     --text-faint:     rgba(26, 5, 16, 0.22);
 
-    /* Borders */
     --border-color:  rgba(255, 51, 102, 0.15);
     --border-hover:  rgba(255, 51, 102, 0.4);
 
-    /* Accents — same pink/red */
     --accent-primary:   #e6295a;
     --accent-secondary: #cc0066;
     --accent-tertiary:  #0099cc;
     --accent-gradient:  linear-gradient(135deg, #e6295a, #cc0066);
 
-    /* Glows */
     --glow-pink: 0 0 20px rgba(255, 51, 102, 0.2);
     --glow-cyan: 0 0 20px rgba(0, 153, 204, 0.2);
 
-    /* Background glows (lighter) */
-    --glow-1-color: rgba(255, 51, 102, 0.06);
-    --glow-2-color: rgba(255, 0, 128, 0.04);
-    --glow-3-color: rgba(0, 153, 204, 0.04);
-    --glow-4-color: rgba(139, 0, 255, 0.03);
-
-    /* Grid + ticker */
-    --grid-color:      rgba(255, 51, 102, 0.03);
-    --ticker-bg:       rgba(255, 51, 102, 0.03);
-    --ticker-border:   rgba(255, 51, 102, 0.08);
-    --ticker-label-bg: rgba(230, 41, 90, 0.85);
-    --ticker-fade:     #fef5f7;
-
-    /* Scrollbar */
+    --bg-dim-overlay: rgba(254, 245, 247, 0.75);
+    --grid-color:     rgba(255, 51, 102, 0.03);
     --scrollbar-thumb: rgba(255, 51, 102, 0.25);
   }
 
-  /* ══════════════════════════════════════
-     LAYOUT VARS (theme-independent)
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ LAYOUT VARS ══════════════════════════════════════ */
   :root {
     --header-height: 64px;
     --font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -232,9 +265,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     --transition-slow:   0.5s ease;
   }
 
-  /* ══════════════════════════════════════
-     BODY + FONTS
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ BODY ══════════════════════════════════════ */
   body {
     font-family: var(--font-body);
     background: var(--bg-primary);
@@ -254,11 +285,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     letter-spacing: -0.02em;
   }
 
-  p, span, div, li, td, th, a, button, input, textarea, label {
-    color: inherit;
-  }
-
-  /* Force text color inheritance for common elements */
   p, li { color: var(--text-secondary); }
 
   a { color: inherit; text-decoration: none; }
@@ -269,9 +295,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 9px; }
 
-  /* ══════════════════════════════════════
-     PAGE LOADER
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ LOADER ══════════════════════════════════════ */
   #loader {
     position: fixed; inset: 0;
     background: var(--bg-primary);
@@ -286,20 +310,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     font-size: 1.8rem;
     font-weight: 800;
     letter-spacing: -0.02em;
-  }
-
-  .ld-ani {
-    background: var(--accent-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .ld-tube { color: var(--text-primary); }
-
-  .ld-buzz {
-    color: var(--accent-tertiary);
-    margin-left: 3px;
+    line-height: 1;
   }
 
   .ld-track {
@@ -317,52 +328,40 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   @keyframes ld-fill { from { width: 0; } to { width: 100%; } }
 
-  /* ══════════════════════════════════════
-     ANIMATED BACKGROUND
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ ANIME BACKGROUND ══════════════════════════════════════ */
   #anime-bg {
     position: fixed; inset: 0;
     z-index: 0; overflow: hidden;
     pointer-events: none;
-    transition: opacity 0.4s ease;
   }
 
-  .abg-glow {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(80px);
+  .abg-slide {
+    position: absolute; inset: -30px;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 3s ease-in-out;
+    /* VISIBLE anime — light blur, moderate darken */
+    filter: blur(4px) brightness(0.45) saturate(1.3);
+    transform: scale(1.06);
   }
 
-  .abg-g1 {
-    width: 45vw; height: 45vw;
-    max-width: 600px; max-height: 600px;
-    background: var(--glow-1-color);
-    top: -10%; left: -5%;
-    animation: glow-move-1 18s ease-in-out infinite;
+  .abg-slide.abg-active { opacity: 1; }
+
+  /* Dim overlay — anime still visible */
+  .abg-dark {
+    position: absolute; inset: 0;
+    background: var(--bg-dim-overlay);
+    transition: background 0.4s ease;
   }
 
-  .abg-g2 {
-    width: 35vw; height: 35vw;
-    max-width: 450px; max-height: 450px;
-    background: var(--glow-2-color);
-    top: 35%; right: -8%;
-    animation: glow-move-2 22s ease-in-out infinite;
-  }
-
-  .abg-g3 {
-    width: 40vw; height: 40vw;
-    max-width: 500px; max-height: 500px;
-    background: var(--glow-3-color);
-    bottom: -8%; left: 25%;
-    animation: glow-move-3 20s ease-in-out infinite;
-  }
-
-  .abg-g4 {
-    width: 25vw; height: 25vw;
-    max-width: 350px; max-height: 350px;
-    background: var(--glow-4-color);
-    top: 55%; left: 60%;
-    animation: glow-move-1 24s ease-in-out infinite reverse;
+  /* Color gradient */
+  .abg-gradient {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 15% 5%, rgba(255, 51, 102, 0.15) 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 90%, rgba(0, 212, 255, 0.1) 0%, transparent 55%);
   }
 
   .abg-grid {
@@ -374,27 +373,17 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     opacity: 0.5;
   }
 
-  @keyframes glow-move-1 {
-    0%, 100% { transform: translate(0, 0); }
-    33%      { transform: translate(4vw, 3vw); }
-    66%      { transform: translate(-3vw, 4vw); }
+  /* Light mode adjustments for background */
+  [data-theme="light"] .abg-slide {
+    filter: blur(6px) brightness(1.1) saturate(0.7) contrast(0.85);
+    opacity: 0.15 !important;
   }
 
-  @keyframes glow-move-2 {
-    0%, 100% { transform: translate(0, 0); }
-    33%      { transform: translate(-3vw, -2vw); }
-    66%      { transform: translate(2vw, -3vw); }
+  [data-theme="light"] .abg-slide.abg-active {
+    opacity: 0.15 !important;
   }
 
-  @keyframes glow-move-3 {
-    0%, 100% { transform: translate(0, 0); }
-    33%      { transform: translate(3vw, -3vw); }
-    66%      { transform: translate(-4vw, 2vw); }
-  }
-
-  /* ══════════════════════════════════════
-     APP WRAPPER
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ APP ══════════════════════════════════════ */
   #app {
     position: relative; z-index: 1;
     min-height: 100vh;
@@ -411,9 +400,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   @media (max-width: 640px) { .container { padding: 0 1rem; } }
 
-  /* ══════════════════════════════════════
-     BACK TO TOP
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ BACK TO TOP ══════════════════════════════════════ */
   #btt {
     position: fixed; bottom: 1.5rem; right: 1.5rem;
     width: 42px; height: 42px;
@@ -430,9 +417,25 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   #btt:hover { transform: translateY(-3px); }
 
-  /* ══════════════════════════════════════
-     SECTION HELPERS
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ LOGO STYLES (SHARED) ══════════════════════════════════════ */
+  .logo-ani {
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-tube {
+    color: var(--text-primary);
+  }
+
+  .logo-buzz {
+    color: var(--accent-tertiary);
+    margin-left: 3px;
+    text-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
+  }
+
+  /* ══════════════════════════════════════ SECTION HELPERS ══════════════════════════════════════ */
   .section-label {
     display: inline-flex; align-items: center; gap: 0.3rem;
     background: rgba(255, 51, 102, 0.08);
@@ -466,13 +469,11 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     background-clip: text;
   }
 
-  /* ══════════════════════════════════════
-     TICKER
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ TICKER ══════════════════════════════════════ */
   .ticker-wrap {
-    background: var(--ticker-bg);
-    border-top: 1px solid var(--ticker-border);
-    border-bottom: 1px solid var(--ticker-border);
+    background: rgba(255, 51, 102, 0.04);
+    border-top: 1px solid rgba(255, 51, 102, 0.1);
+    border-bottom: 1px solid rgba(255, 51, 102, 0.1);
     overflow: hidden;
     padding: 0.5rem 0;
     position: relative;
@@ -483,12 +484,12 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     width: 50px; z-index: 2; pointer-events: none;
   }
 
-  .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--ticker-fade), transparent); }
-  .ticker-wrap::after  { right: 0; background: linear-gradient(-90deg, var(--ticker-fade), transparent); }
+  .ticker-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg-primary), transparent); }
+  .ticker-wrap::after  { right: 0; background: linear-gradient(-90deg, var(--bg-primary), transparent); }
 
   .ticker-label {
     position: absolute; left: 0; top: 0; bottom: 0; z-index: 3;
-    background: var(--ticker-label-bg);
+    background: rgba(255, 51, 102, 0.85);
     display: flex; align-items: center;
     padding: 0 0.75rem;
     font-family: var(--font-heading);
@@ -517,20 +518,14 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
 
   .ticker-item:hover { color: var(--accent-primary); }
-
-  .ticker-sep {
-    color: var(--text-faint);
-    padding: 0 0.4rem; font-size: 0.4rem;
-  }
+  .ticker-sep { color: var(--text-faint); padding: 0 0.4rem; font-size: 0.4rem; }
 
   @keyframes ticker-move {
     from { transform: translateX(0); }
     to   { transform: translateX(-50%); }
   }
 
-  /* ══════════════════════════════════════
-     CARDS
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ CARDS ══════════════════════════════════════ */
   .card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -545,9 +540,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     box-shadow: 0 8px 25px rgba(255, 51, 102, 0.1);
   }
 
-  /* ══════════════════════════════════════
-     BADGES
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ BADGES ══════════════════════════════════════ */
   .badge {
     display: inline-flex; align-items: center;
     padding: 0.15rem 0.45rem;
@@ -568,9 +561,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   .cat-gaming      { background: rgba(0, 255, 128, 0.08); color: #00ff80; }
   .cat-manga       { background: rgba(255, 215, 0, 0.1);  color: #ffd700; }
 
-  /* ══════════════════════════════════════
-     BUTTONS
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ BUTTONS ══════════════════════════════════════ */
   .btn {
     display: inline-flex; align-items: center; justify-content: center;
     gap: 0.4rem;
@@ -603,9 +594,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     color: var(--text-primary);
   }
 
-  /* ══════════════════════════════════════
-     MISC
-     ══════════════════════════════════════ */
+  /* ══════════════════════════════════════ MISC ══════════════════════════════════════ */
   .divider {
     height: 1px;
     background: linear-gradient(90deg, transparent, var(--border-color), transparent);
@@ -633,7 +622,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     width: 100%; height: 100%; border: none;
   }
 
-  /* Prose (article) */
+  /* Prose */
   .prose { color: var(--text-secondary); line-height: 1.8; font-size: 0.95rem; }
   .prose h2 {
     font-size: 1.3rem; color: var(--text-primary);
@@ -704,17 +693,14 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
   @keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
 
-  /* Highlight */
   mark.hl { background: rgba(255, 51, 102, 0.3); color: var(--text-primary); border-radius: 2px; padding: 0 2px; }
 
-  /* Reveal */
   .reveal {
     opacity: 0; transform: translateY(15px);
     transition: opacity 0.5s ease, transform 0.5s ease;
   }
   .reveal.visible { opacity: 1; transform: translateY(0); }
 
-  /* Pulse glow animation (for logo etc) */
   @keyframes pulse-glow {
     0%, 100% { filter: drop-shadow(0 0 5px rgba(255, 51, 102, 0.5)); }
     50%       { filter: drop-shadow(0 0 15px rgba(255, 51, 102, 0.8)); }
