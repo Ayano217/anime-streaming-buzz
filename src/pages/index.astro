@@ -51,7 +51,7 @@ const latest  = sortedPosts.slice(8, 16);
         <button class="cat-tab" data-source="top">Top Rated</button>
         <button class="cat-tab" data-source="upcoming">Upcoming</button>
         <button class="cat-tab" data-source="popular">Popular</button>
-        <button class="cat-tab" data-source="movie">Movies</button>
+        <button class="cat-tab" data-source="movies">Movies</button>
       </div>
       
       <div class="arrivals-grid" id="arrivalsGrid">
@@ -180,12 +180,12 @@ const latest  = sortedPosts.slice(8, 16);
 
   <Footer slot="footer" />
 </BaseLayout>
+
 <script is:inline>
 (function() {
   var currentSource = 'airing';
-  var page = 1;
   var loading = false;
-  var hasMore = true;
+  var hasMore = false; // new API returns all at once for now
   var totalLoaded = 0;
   var allIds = {};
   
@@ -215,12 +215,12 @@ const latest  = sortedPosts.slice(8, 16);
   function createCard(anime, index) {
     var title    = anime.title || 'Unknown';
     var image    = anime.image || '';
-    var slug     = makeSlug(title) || ('anime-' + anime.id);
-    var score    = anime.score;
+    var slug     = anime.slug || makeSlug(title) || ('anime-' + anime.id);
+    var score    = anime.score ? Number(anime.score).toFixed(1) : '';
     var year     = anime.year || '';
-    var episodes = anime.episodes || '?';
-    var genre    = anime.genre || '';
-    var isNew    = anime.status === 'Currently Airing';
+    var episodes = anime.episodes || '';
+    var genre    = (anime.genres && anime.genres.length) ? anime.genres[0] : '';
+    var isNew    = anime.status === 'current' || anime.status === 'Currently Airing';
     
     var card = document.createElement('a');
     card.href = '/anime/' + slug;
@@ -286,20 +286,15 @@ const latest  = sortedPosts.slice(8, 16);
     requestAnimationFrame(counter);
   }
   
-  async function loadAnime(pageNum, source) {
+  async function loadAnime(source) {
     if (loading) return;
     loading = true;
     
     if (errorMsg) errorMsg.style.display = 'none';
     
-    if (pageNum > 1) {
-      if (loadingEl) loadingEl.style.display = 'flex';
-      if (loadWrap) loadWrap.style.display = 'none';
-    }
-    
     try {
-      // Use own API endpoint (works because hybrid mode is set up)
-      var res = await fetch('/api/anime?source=' + source + '&page=' + pageNum);
+      // NEW API: /api/anime?category=airing (was source= before)
+      var res = await fetch('/api/anime?category=' + source);
       
       if (!res.ok) throw new Error('API returned ' + res.status);
       
@@ -307,7 +302,8 @@ const latest  = sortedPosts.slice(8, 16);
       
       if (!json.success) throw new Error(json.error || 'API returned failure');
       
-      var items = json.data || [];
+      // NEW API shape: json.anime (was json.data before)
+      var items = json.anime || [];
       
       var newItems = items.filter(function(a) {
         if (!a.id || allIds[a.id]) return false;
@@ -315,34 +311,26 @@ const latest  = sortedPosts.slice(8, 16);
         return true;
       });
       
-      if (pageNum === 1) {
-        grid.innerHTML = '';
-      }
+      grid.innerHTML = '';
       
-      if (newItems.length === 0 && pageNum === 1) {
-        throw new Error('No anime data');
+      if (newItems.length === 0) {
+        throw new Error('No anime data returned');
       }
       
       newItems.forEach(function(anime, idx) {
-        var card = createCard(anime, totalLoaded + idx);
+        var card = createCard(anime, idx);
         grid.appendChild(card);
         totalLoaded++;
       });
       
       updateCount();
       
-      var pag = json.pagination || {};
-      if (pag.has_next_page === false) {
-        hasMore = false;
-      }
-      
       if (loadingEl) loadingEl.style.display = 'none';
       
-      if (hasMore) {
-        if (loadWrap) loadWrap.style.display = 'flex';
-      } else {
-        if (loadWrap) loadWrap.style.display = 'none';
-        if (endMsg) endMsg.style.display = 'block';
+      // For now, API returns all data at once — hide load more
+      if (loadWrap) loadWrap.style.display = 'none';
+      if (newItems.length >= 20 && endMsg) {
+        endMsg.style.display = 'none';
       }
       
       loading = false;
@@ -352,7 +340,7 @@ const latest  = sortedPosts.slice(8, 16);
       loading = false;
       if (loadingEl) loadingEl.style.display = 'none';
       
-      if (pageNum === 1 && totalLoaded === 0) {
+      if (totalLoaded === 0) {
         grid.innerHTML = '';
         if (errorMsg) {
           errorMsg.style.display = 'block';
@@ -360,8 +348,6 @@ const latest  = sortedPosts.slice(8, 16);
             errorSub.textContent = 'Anime database is temporarily unavailable. Please try again in a moment.';
           }
         }
-      } else {
-        if (loadWrap) loadWrap.style.display = 'flex';
       }
     }
   }
@@ -375,8 +361,6 @@ const latest  = sortedPosts.slice(8, 16);
       tab.classList.add('active');
       
       currentSource = source;
-      page = 1;
-      hasMore = true;
       totalLoaded = 0;
       allIds = {};
       if (countEl) countEl.textContent = '0';
@@ -391,37 +375,22 @@ const latest  = sortedPosts.slice(8, 16);
         '<div class="skeleton-card"></div>' +
         '<div class="skeleton-card"></div>';
       
-      loadAnime(1, source);
+      loadAnime(source);
     });
   });
   
   if (loadBtn) {
     loadBtn.addEventListener('click', function() {
-      page++;
-      loadAnime(page, currentSource);
+      // Reserved for future pagination
+      loadAnime(currentSource);
     });
   }
   
-  var scrollTimeout;
-  window.addEventListener('scroll', function() {
-    if (loading || !hasMore) return;
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(function() {
-      var scrollPos = window.scrollY + window.innerHeight;
-      var pageHeight = document.body.offsetHeight;
-      if (scrollPos > pageHeight - 800) {
-        page++;
-        loadAnime(page, currentSource);
-      }
-    }, 200);
-  }, { passive: true });
-  
-  loadAnime(1, currentSource);
+  loadAnime(currentSource);
 })();
 </script>
 
 <style>
-  /* All previous styles preserved - keeping same as before */
   .arrivals-block { position: relative; }
   
   .arrivals-header {
@@ -929,7 +898,6 @@ const latest  = sortedPosts.slice(8, 16);
     to   { background-position:  200% 0; }
   }
   
-  /* NOVELTY/NEWS/LATEST — Same as before */
   .novelty-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
   
   .novelty-card {
