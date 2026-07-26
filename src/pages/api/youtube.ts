@@ -5,6 +5,20 @@ import type { APIRoute } from 'astro';
 const CACHE: Record<string, { data: any; time: number }> = {};
 const CACHE_TTL = 60 * 60 * 1000;
 
+// Official/trusted anime channels — boost these
+const OFFICIAL_CHANNELS = [
+  'muse asia', 'ani-one asia', 'aniplex', 'crunchyroll',
+  'bandai namco', 'medialink', 'anime digital network',
+  'kadokawaanime', 'aniplus asia', 'toei animation'
+];
+
+// Bad keywords — filter these out
+const BAD_KEYWORDS = [
+  'reaction', 'review', 'analysis', 'explained', 'recap',
+  'top 10', 'ranked', 'amv', 'edit', 'compilation',
+  'moments', 'best of', 'funny', 'meme', 'tik tok'
+];
+
 function jsonRes(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -16,13 +30,43 @@ function jsonRes(data: any, status = 200) {
   });
 }
 
+function scoreVideo(video: any, isEpisode: boolean): number {
+  const title = (video.title || '').toLowerCase();
+  const channel = (video.channelTitle || '').toLowerCase();
+  let score = 0;
+  
+  // Boost official channels
+  for (const official of OFFICIAL_CHANNELS) {
+    if (channel.includes(official)) { score += 20; break; }
+  }
+  
+  // Penalize bad content
+  for (const bad of BAD_KEYWORDS) {
+    if (title.includes(bad)) score -= 15;
+  }
+  
+  if (isEpisode) {
+    // Boost episode indicators
+    if (title.includes('full episode') || title.includes('full ep')) score += 10;
+    if (/\bep\s*\d+\b|episode\s*\d+/i.test(title)) score += 5;
+    if (title.includes('english sub') || title.includes('subbed')) score += 3;
+    if (title.includes('english dub') || title.includes('dubbed')) score += 3;
+    
+    // Penalize non-episodes
+    if (title.includes('trailer')) score -= 10;
+    if (title.includes('preview')) score -= 8;
+    if (title.includes('opening') || title.includes('op')) score -= 5;
+    if (title.includes('ending') || title.includes('ed')) score -= 5;
+  }
+  
+  return score;
+}
+
 export const GET: APIRoute = async ({ url, locals }) => {
   const rawQuery = (url.searchParams.get('q') || '').trim();
   const type = url.searchParams.get('type') || 'auto';
 
-  if (!rawQuery) {
-    return jsonRes({ success: false, error: 'Query required' }, 400);
-  }
+  if (!rawQuery) return jsonRes({ success: false, error: 'Query required' }, 400);
 
   const env = (locals as any)?.runtime?.env || {};
   const API_KEY = env.YOUTUBE_API_KEY || (globalThis as any).YOUTUBE_API_KEY || '';
@@ -35,20 +79,20 @@ export const GET: APIRoute = async ({ url, locals }) => {
     }, 500);
   }
 
-  // Detect intent from query
   const lowerQuery = rawQuery.toLowerCase();
   const isEpisode = /episode|ep\s*\d+/i.test(lowerQuery);
   const isTrailer = /trailer/i.test(lowerQuery);
-
+  
   let searchQuery = rawQuery;
   let videoDuration = 'any';
 
   if (isEpisode) {
-    // For episodes: prefer longer videos + english sub
     if (!lowerQuery.includes('english') && !lowerQuery.includes('sub') && !lowerQuery.includes('dub')) {
-      searchQuery = rawQuery + ' english sub';
+      searchQuery = rawQuery + ' english sub full episode';
+    } else {
+      searchQuery = rawQuery + ' full episode';
     }
-    videoDuration = 'medium'; // 4-20 min preferred for episodes
+    videoDuration = 'long'; // > 20 min = real episodes
   } else if (isTrailer) {
     searchQuery = rawQuery.includes('official') ? rawQuery : rawQuery + ' official';
     videoDuration = 'short';
@@ -68,20 +112,17 @@ export const GET: APIRoute = async ({ url, locals }) => {
       part: 'snippet',
       q: searchQuery,
       type: 'video',
-      maxResults: '10',
+      maxResults: '15',
       videoEmbeddable: 'true',
       videoSyndicated: 'true',
       safeSearch: 'moderate',
+      order: 'relevance',
       key: API_KEY
     });
-
-    if (videoDuration !== 'any') {
-      params.set('videoDuration', videoDuration);
-    }
+    if (videoDuration !== 'any') params.set('videoDuration', videoDuration);
 
     const ytUrl = `https://www.googleapis.com/youtube/v3/search?${params.toString()}`;
     const res = await fetch(ytUrl);
-    
     if (!res.ok) {
       const errText = await res.text();
       throw new Error(`YouTube API ${res.status}: ${errText.slice(0, 100)}`);
@@ -97,36 +138,22 @@ export const GET: APIRoute = async ({ url, locals }) => {
       description: item.snippet.description
     }));
 
-    // For episode searches, prefer videos with "full" or "ep" in title, deprioritize "trailer"
+    // Score and sort
+    items = items.map((v: any) => ({ ...v, _score: scoreVideo(v, isEpisode) }));
+    items.sort((a: any, b: any) => b._score - a._score);
+    
+    // Filter out heavily negative scores (bad videos)
     if (isEpisode) {
-      items.sort((a: any, b: any) => {
-        const aTitle = a.title.toLowerCase();
-        const bTitle = b.title.toLowerCase();
-        const aScore = 
-          (aTitle.includes('full') ? 3 : 0) +
-          (aTitle.includes('episode') || aTitle.includes(' ep ') ? 2 : 0) +
-          (aTitle.includes('english') || aTitle.includes('sub') || aTitle.includes('dub') ? 1 : 0) -
-          (aTitle.includes('trailer') ? 5 : 0) -
-          (aTitle.includes('reaction') ? 3 : 0) -
-          (aTitle.includes('review') ? 2 : 0);
-        const bScore = 
-          (bTitle.includes('full') ? 3 : 0) +
-          (bTitle.includes('episode') || bTitle.includes(' ep ') ? 2 : 0) +
-          (bTitle.includes('english') || bTitle.includes('sub') || bTitle.includes('dub') ? 1 : 0) -
-          (bTitle.includes('trailer') ? 5 : 0) -
-          (bTitle.includes('reaction') ? 3 : 0) -
-          (bTitle.includes('review') ? 2 : 0);
-        return bScore - aScore;
-      });
+      items = items.filter((v: any) => v._score > -20);
     }
 
-    if (items.length === 0) {
-      return jsonRes({ success: false, error: 'No videos found' }, 404);
-    }
+    if (items.length === 0) return jsonRes({ success: false, error: 'No videos found' }, 404);
 
+    // Return top 5 for picker
+    const topVideos = items.slice(0, 5);
     const result = {
-      videos: items,
-      primary: items[0],
+      videos: topVideos,
+      primary: topVideos[0],
       query: searchQuery
     };
 
