@@ -15,30 +15,30 @@ const { slug } = Astro.params;
   <Header slot="header" />
   
   <div class="ap-wrap">
-    <div id="loader" class="ap-loader">
+    <div id="apLoader" class="ap-loader">
       <div class="lo-orb"><div class="lo-ring"></div><div class="lo-core"></div></div>
-      <p id="loaderText">Loading anime details...</p>
-      <p id="loaderSubtext" style="font-size:0.7rem;opacity:0.5;margin-top:0.5rem;"></p>
+      <p id="apLoaderText">Loading anime details...</p>
+      <p id="apLoaderSub" style="font-size:0.7rem;opacity:0.5;margin-top:0.5rem;"></p>
     </div>
     
-    <div id="notFound" class="ap-nf" style="display:none;">
+    <div id="apNotFound" class="ap-nf" style="display:none;">
       <div class="nf-ic"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg></div>
       <h1>Anime Not Found</h1>
-      <p id="nfMsg">This anime doesn't exist or couldn't be loaded.</p>
+      <p id="apNfMsg">This anime doesn't exist or couldn't be loaded.</p>
       <div class="nf-btns">
         <a href="/" class="nf-bk">← Back to Homepage</a>
         <button onclick="location.reload()" class="nf-rt">🔄 Try Again</button>
       </div>
     </div>
     
-    <div id="content" style="display:none;">
+    <div id="apContent" style="display:none;">
       <div class="ap-hero">
         <div class="ap-bg" id="apBg"></div>
         <div class="ap-fade"></div>
         <div class="container">
           <div class="ap-hero-in">
             <div class="ap-poster">
-              <img id="posterImg" alt="" />
+              <img id="apPosterImg" alt="" />
             </div>
             <div class="ap-info">
               <div class="ap-badges" id="apBadges"></div>
@@ -47,11 +47,11 @@ const { slug } = Astro.params;
               <div class="ap-genres" id="apGenres"></div>
               <p class="ap-syno" id="apSyno"></p>
               <div class="ap-actions">
-                <button class="ap-btn ap-btn-p" id="watchBtn">
+                <button class="ap-btn ap-btn-p" id="apWatchBtn">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                   <span>Watch Now</span>
                 </button>
-                <button class="ap-btn ap-btn-s" id="infoBtn">
+                <button class="ap-btn ap-btn-s" id="apInfoBtn">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
                   <span>More Info</span>
                 </button>
@@ -61,35 +61,35 @@ const { slug } = Astro.params;
         </div>
       </div>
       
-      <section class="section-block ap-player" id="playerBlock" style="display:none;">
+      <section class="section-block ap-player" id="apPlayerBlock" style="display:none;">
         <div class="container">
           <div class="pl-head">
-            <h2 class="section-title" id="playerTitle"><span class="grad-text">Now Playing</span></h2>
-            <button class="pl-close" id="closePlayer">
+            <h2 class="section-title" id="apPlayerTitle"><span class="grad-text">Now Playing</span></h2>
+            <button class="pl-close" id="apClosePlayer">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
           </div>
           <div class="pl-wrap">
-            <div id="playerFrame" class="pl-frame">
+            <div id="apPlayerFrame" class="pl-frame">
               <div class="pl-load">Loading player...</div>
             </div>
           </div>
         </div>
       </section>
       
-      <section class="section-block ap-details" id="detailsBlock">
+      <section class="section-block ap-details" id="apDetailsBlock">
         <div class="container">
           <div class="ap-grid">
             <div class="ap-main">
               <div class="ap-sec">
                 <h2 class="ap-sh">Synopsis</h2>
-                <p class="ap-desc" id="fullSyno">Loading...</p>
+                <p class="ap-desc" id="apFullSyno">Loading...</p>
               </div>
               
               <div class="ap-sec">
                 <h2 class="ap-sh">Episodes</h2>
-                <div class="ap-seasons" id="seasonsTabs"></div>
-                <div class="ap-eps" id="episodesList">
+                <div class="ap-seasons" id="apSeasonsTabs"></div>
+                <div class="ap-eps" id="apEpisodesList">
                   <div class="ep-ld">
                     <div class="lo-orb sm"><div class="lo-ring"></div><div class="lo-core"></div></div>
                     <span>Loading episodes...</span>
@@ -101,7 +101,7 @@ const { slug } = Astro.params;
             <aside class="ap-side">
               <div class="ap-card">
                 <h3 class="ac-t">Information</h3>
-                <div class="ac-list" id="infoList"></div>
+                <div class="ac-list" id="apInfoList"></div>
               </div>
               
               <div class="ap-card">
@@ -141,7 +141,7 @@ const { slug } = Astro.params;
       <section class="section-block ap-related">
         <div class="container">
           <h2 class="section-title"><span class="grad-text">You Might Also Like</span></h2>
-          <div id="relatedGrid" class="rel-grid">
+          <div id="apRelatedGrid" class="rel-grid">
             <div class="rel-sk"></div><div class="rel-sk"></div><div class="rel-sk"></div>
             <div class="rel-sk"></div><div class="rel-sk"></div><div class="rel-sk"></div>
           </div>
@@ -157,40 +157,6 @@ const { slug } = Astro.params;
 console.log('[AniTube] Page script starting for slug:', slug);
 
 (async function(){
-  var loader, notFound, content, apBg, posterImg, apTitle, apMeta, apGenres, apSyno, apBadges,
-      fullSyno, infoList, seasonsTabs, episodesList, relatedGrid, playerBlock, playerFrame,
-      playerTitle, closePlayer, watchBtn, infoBtn, detailsBlock, loaderText, loaderSubtext, nfMsg;
-  
-  function getEl(id) { return document.getElementById(id); }
-  
-  function initElements() {
-    loader = getEl('loader');
-    loaderText = getEl('loaderText');
-    loaderSubtext = getEl('loaderSubtext');
-    notFound = getEl('notFound');
-    nfMsg = getEl('nfMsg');
-    content = getEl('content');
-    apBg = getEl('apBg');
-    posterImg = getEl('posterImg');
-    apTitle = getEl('apTitle');
-    apMeta = getEl('apMeta');
-    apGenres = getEl('apGenres');
-    apSyno = getEl('apSyno');
-    apBadges = getEl('apBadges');
-    fullSyno = getEl('fullSyno');
-    infoList = getEl('infoList');
-    seasonsTabs = getEl('seasonsTabs');
-    episodesList = getEl('episodesList');
-    relatedGrid = getEl('relatedGrid');
-    playerBlock = getEl('playerBlock');
-    playerFrame = getEl('playerFrame');
-    playerTitle = getEl('playerTitle');
-    closePlayer = getEl('closePlayer');
-    watchBtn = getEl('watchBtn');
-    infoBtn = getEl('infoBtn');
-    detailsBlock = getEl('detailsBlock');
-  }
-
   function esc(s) {
     try { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
     catch(e) { return ''; }
@@ -234,9 +200,9 @@ console.log('[AniTube] Page script starting for slug:', slug);
     }
   }
 
-  async function loadAnimeData() {
+  async function loadAnimeData(loaderText, loaderSub) {
     if (loaderText) loaderText.textContent = 'Loading anime details...';
-    if (loaderSubtext) loaderSubtext.textContent = 'Trying direct lookup...';
+    if (loaderSub) loaderSub.textContent = 'Direct lookup...';
     
     var j = await fetchJSON('/api/anime?action=detail&slug=' + encodeURIComponent(slug), 10000);
     if (j && j.success && j.anime) {
@@ -245,7 +211,7 @@ console.log('[AniTube] Page script starting for slug:', slug);
     }
 
     if (loaderText) loaderText.textContent = 'Searching for anime...';
-    if (loaderSubtext) loaderSubtext.textContent = 'Trying search...';
+    if (loaderSub) loaderSub.textContent = 'Fallback search...';
     var searchTerm = slug.replace(/-/g, ' ');
     var s = await fetchJSON('/api/anime?action=search&q=' + encodeURIComponent(searchTerm), 10000);
     if (s && s.success && s.anime && s.anime.length > 0) {
@@ -259,7 +225,7 @@ console.log('[AniTube] Page script starting for slug:', slug);
     return null;
   }
 
-  async function playVideo(query, title) {
+  async function playVideo(query, title, playerBlock, playerFrame, playerTitle) {
     try {
       if (!playerBlock || !playerFrame) return;
       playerBlock.style.display = 'block';
@@ -286,23 +252,19 @@ console.log('[AniTube] Page script starting for slug:', slug);
     }
   }
 
-  function safeRender(a) {
+  function safeRender(a, els) {
     console.log('[AniTube] Starting render for:', a.title);
     
-    try {
-      document.title = (a.title || 'Anime') + ' - AniTube Buzz';
-    } catch(e) { console.warn('title fail:', e); }
+    try { document.title = (a.title || 'Anime') + ' - AniTube Buzz'; } catch(e){}
     
     try {
       if (a.image) {
-        if (apBg) apBg.style.backgroundImage = 'url(' + a.image + ')';
-        if (posterImg) { posterImg.src = a.image; posterImg.alt = a.title || ''; }
+        if (els.bg) els.bg.style.backgroundImage = 'url(' + a.image + ')';
+        if (els.poster) { els.poster.src = a.image; els.poster.alt = a.title || ''; }
       }
     } catch(e) { console.warn('bg/poster fail:', e); }
     
-    try {
-      if (apTitle) apTitle.textContent = a.title || 'Untitled';
-    } catch(e) { console.warn('title text fail:', e); }
+    try { if (els.title) els.title.textContent = a.title || 'Untitled'; } catch(e){}
     
     try {
       var b = [];
@@ -310,7 +272,7 @@ console.log('[AniTube] Page script starting for slug:', slug);
       if (a.score != null) b.push('<span class="ap-b ap-b-sc"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + Number(a.score).toFixed(1) + '</span>');
       b.push('<span class="ap-b ap-b-hd">HD</span>');
       if (a.ageRating) b.push('<span class="ap-b ap-b-age">' + esc(a.ageRating) + '</span>');
-      if (apBadges) apBadges.innerHTML = b.join('');
+      if (els.badges) els.badges.innerHTML = b.join('');
     } catch(e) { console.warn('badges fail:', e); }
     
     try {
@@ -319,19 +281,19 @@ console.log('[AniTube] Page script starting for slug:', slug);
       if (a.episodes && a.episodes > 0) m.push(a.episodes + ' Episodes');
       if (a.subtype) m.push(String(a.subtype));
       if (a.status) m.push(capitalize(a.status));
-      if (apMeta) apMeta.innerHTML = m.map(function(x){ return '<span>' + esc(x) + '</span>'; }).join('<span class="mp-sep">·</span>');
+      if (els.meta) els.meta.innerHTML = m.map(function(x){ return '<span>' + esc(x) + '</span>'; }).join('<span class="mp-sep">·</span>');
     } catch(e) { console.warn('meta fail:', e); }
     
     try {
-      if (a.genres && Array.isArray(a.genres) && a.genres.length > 0 && apGenres) {
-        apGenres.innerHTML = a.genres.slice(0, 6).map(function(g){ return '<span class="ap-gp">' + esc(g) + '</span>'; }).join('');
+      if (a.genres && Array.isArray(a.genres) && a.genres.length > 0 && els.genres) {
+        els.genres.innerHTML = a.genres.slice(0, 6).map(function(g){ return '<span class="ap-gp">' + esc(g) + '</span>'; }).join('');
       }
     } catch(e) { console.warn('genres fail:', e); }
     
     try {
       var syn = a.description || a.synopsis || 'No synopsis available.';
-      if (apSyno) apSyno.textContent = syn.length > 250 ? syn.slice(0, 250) + '...' : syn;
-      if (fullSyno) fullSyno.textContent = syn;
+      if (els.syno) els.syno.textContent = syn.length > 250 ? syn.slice(0, 250) + '...' : syn;
+      if (els.fullSyno) els.fullSyno.textContent = syn;
     } catch(e) { console.warn('synopsis fail:', e); }
     
     try {
@@ -344,8 +306,8 @@ console.log('[AniTube] Page script starting for slug:', slug);
         ['Rating', a.ageRating || 'Not Rated'],
         ['Genres', (a.genres && a.genres.length) ? a.genres.join(', ') : 'N/A']
       ];
-      if (infoList) {
-        infoList.innerHTML = rows.map(function(r){
+      if (els.infoList) {
+        els.infoList.innerHTML = rows.map(function(r){
           return '<div class="ir"><span class="ir-l">' + esc(r[0]) + '</span><span class="ir-v">' + esc(String(r[1])) + '</span></div>';
         }).join('');
       }
@@ -365,27 +327,27 @@ console.log('[AniTube] Page script starting for slug:', slug);
     console.log('[AniTube] Render complete');
   }
 
-  function renderEpisodes(eps, title) {
+  function renderEpisodes(eps, title, els) {
     try {
-      if (!episodesList) return;
+      if (!els.episodesList) return;
       if (!eps || !eps.length) {
-        episodesList.innerHTML = '<div class="ep-empty">Episodes not available yet. Click Watch Now for the trailer!</div>';
-        if (seasonsTabs) seasonsTabs.style.display = 'none';
+        els.episodesList.innerHTML = '<div class="ep-empty">Episodes not available yet. Click Watch Now for the trailer!</div>';
+        if (els.seasonsTabs) els.seasonsTabs.style.display = 'none';
         return;
       }
       var seasons = {};
       eps.forEach(function(e){ var s = e.seasonNumber || 1; if (!seasons[s]) seasons[s] = []; seasons[s].push(e); });
       var nums = Object.keys(seasons).map(Number).sort(function(a,b){ return a-b; });
       
-      if (seasonsTabs) {
-        seasonsTabs.innerHTML = nums.map(function(s, i){
+      if (els.seasonsTabs) {
+        els.seasonsTabs.innerHTML = nums.map(function(s, i){
           return '<button class="ap-st' + (i===0?' active':'') + '" data-s="' + s + '">Season ' + s + ' <span class="st-c">' + seasons[s].length + ' EP</span></button>';
         }).join('');
       }
       
       function show(s) {
         var list = seasons[s];
-        episodesList.innerHTML = list.map(function(e){
+        els.episodesList.innerHTML = list.map(function(e){
           var t = e.thumbnail ? '<img src="' + esc(e.thumbnail) + '" alt="" loading="lazy" />' : '<div class="ep-nt"></div>';
           return '<div class="ep-i" data-n="' + e.number + '" data-t="' + esc(e.title) + '">' +
             '<div class="ep-th">' + t + '<div class="ep-pl"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="ep-nm">EP ' + e.number + '</div></div>' +
@@ -394,17 +356,18 @@ console.log('[AniTube] Page script starting for slug:', slug);
             (e.airdate ? '<div class="ep-m">Aired: ' + fmt(e.airdate) + (e.length ? ' · ' + e.length + ' min' : '') + '</div>' : '') +
             '</div></div>';
         }).join('');
-        episodesList.querySelectorAll('.ep-i').forEach(function(el){
+        els.episodesList.querySelectorAll('.ep-i').forEach(function(el){
           el.addEventListener('click', function(){
-            playVideo(title + ' episode ' + el.dataset.n, 'Episode ' + el.dataset.n + ': ' + el.dataset.t);
+            playVideo(title + ' episode ' + el.dataset.n, 'Episode ' + el.dataset.n + ': ' + el.dataset.t,
+              els.playerBlock, els.playerFrame, els.playerTitle);
           });
         });
       }
       
-      if (seasonsTabs) {
-        seasonsTabs.querySelectorAll('.ap-st').forEach(function(t){
+      if (els.seasonsTabs) {
+        els.seasonsTabs.querySelectorAll('.ap-st').forEach(function(t){
           t.addEventListener('click', function(){
-            seasonsTabs.querySelectorAll('.ap-st').forEach(function(x){ x.classList.remove('active'); });
+            els.seasonsTabs.querySelectorAll('.ap-st').forEach(function(x){ x.classList.remove('active'); });
             t.classList.add('active');
             show(Number(t.dataset.s));
           });
@@ -414,14 +377,14 @@ console.log('[AniTube] Page script starting for slug:', slug);
     } catch(e) { console.error('[AniTube] renderEpisodes error:', e); }
   }
 
-  function renderRelated(list) {
+  function renderRelated(list, els) {
     try {
-      if (!relatedGrid) return;
+      if (!els.relatedGrid) return;
       if (!list || !list.length) {
-        relatedGrid.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem;grid-column:1/-1;">No related anime found.</p>';
+        els.relatedGrid.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem;grid-column:1/-1;">No related anime found.</p>';
         return;
       }
-      relatedGrid.innerHTML = list.map(function(a){
+      els.relatedGrid.innerHTML = list.map(function(a){
         var img = a.image ? '<img src="' + esc(a.image) + '" alt="" loading="lazy" />' : '<div class="rc-no"></div>';
         return '<a href="/anime/' + esc(a.slug) + '" class="rel-c">' +
           '<div class="rc-p">' + img + '<div class="rc-pl"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>' +
@@ -430,87 +393,117 @@ console.log('[AniTube] Page script starting for slug:', slug);
     } catch(e) { console.error('[AniTube] renderRelated error:', e); }
   }
 
-  // Wait for DOM ready
   function domReady(cb) {
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', cb);
-    } else {
-      cb();
-    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cb);
+    else cb();
   }
 
   domReady(async function(){
     console.log('[AniTube] DOM ready, initializing');
-    initElements();
     
-    if (!loader || !content) {
-      console.error('[AniTube] Critical elements missing');
+    // Get ALL elements using unique ap- prefixed IDs
+    var els = {
+      loader:       document.getElementById('apLoader'),
+      loaderText:   document.getElementById('apLoaderText'),
+      loaderSub:    document.getElementById('apLoaderSub'),
+      notFound:     document.getElementById('apNotFound'),
+      nfMsg:        document.getElementById('apNfMsg'),
+      content:      document.getElementById('apContent'),
+      bg:           document.getElementById('apBg'),
+      poster:       document.getElementById('apPosterImg'),
+      title:        document.getElementById('apTitle'),
+      meta:         document.getElementById('apMeta'),
+      genres:       document.getElementById('apGenres'),
+      syno:         document.getElementById('apSyno'),
+      badges:       document.getElementById('apBadges'),
+      fullSyno:     document.getElementById('apFullSyno'),
+      infoList:     document.getElementById('apInfoList'),
+      seasonsTabs:  document.getElementById('apSeasonsTabs'),
+      episodesList: document.getElementById('apEpisodesList'),
+      relatedGrid:  document.getElementById('apRelatedGrid'),
+      playerBlock:  document.getElementById('apPlayerBlock'),
+      playerFrame:  document.getElementById('apPlayerFrame'),
+      playerTitle:  document.getElementById('apPlayerTitle'),
+      closePlayer:  document.getElementById('apClosePlayer'),
+      watchBtn:     document.getElementById('apWatchBtn'),
+      infoBtn:      document.getElementById('apInfoBtn'),
+      detailsBlock: document.getElementById('apDetailsBlock')
+    };
+    
+    console.log('[AniTube] Elements found:', {
+      loader: !!els.loader,
+      content: !!els.content,
+      notFound: !!els.notFound,
+      title: !!els.title
+    });
+    
+    if (!els.loader || !els.content) {
+      console.error('[AniTube] Critical: apLoader or apContent element missing');
       return;
     }
     
-    // Hard timeout: never let loader spin > 25s
     var hardTimeout = setTimeout(function(){
-      if (loader.style.display !== 'none') {
+      if (els.loader.style.display !== 'none') {
         console.error('[AniTube] Hard timeout hit');
-        loader.style.display = 'none';
-        if (nfMsg) nfMsg.textContent = 'The anime data is taking too long to load. Please try again.';
-        if (notFound) notFound.style.display = 'flex';
+        els.loader.style.display = 'none';
+        if (els.nfMsg) els.nfMsg.textContent = 'Loading timeout. Please try again.';
+        if (els.notFound) els.notFound.style.display = 'flex';
       }
     }, 25000);
 
     try {
-      var anime = await loadAnimeData();
+      var anime = await loadAnimeData(els.loaderText, els.loaderSub);
       
       if (!anime) {
         console.warn('[AniTube] No anime data found');
         clearTimeout(hardTimeout);
-        loader.style.display = 'none';
-        if (nfMsg) nfMsg.textContent = 'This anime could not be found in our database.';
-        if (notFound) notFound.style.display = 'flex';
+        els.loader.style.display = 'none';
+        if (els.nfMsg) els.nfMsg.textContent = 'This anime could not be found in our database.';
+        if (els.notFound) els.notFound.style.display = 'flex';
         return;
       }
       
-      console.log('[AniTube] Anime data received:', anime);
+      console.log('[AniTube] Anime data received:', anime.title);
       
-      // Render main content FIRST
-      safeRender(anime);
+      safeRender(anime, els);
       
-      // Show content, hide loader
+      // FORCE hide loader with display:none AND remove from view
       clearTimeout(hardTimeout);
-      loader.style.display = 'none';
-      content.style.display = 'block';
-      console.log('[AniTube] Content shown');
+      els.loader.style.display = 'none';
+      els.loader.style.visibility = 'hidden';
+      els.content.style.display = 'block';
+      els.content.style.visibility = 'visible';
+      console.log('[AniTube] ✅ Content should now be VISIBLE');
       
-      // Load extras in background (non-blocking)
       if (anime.id) {
         fetchJSON('/api/anime?action=episodes&id=' + anime.id + '&page=1', 10000).then(function(epsData){
-          if (epsData && epsData.success) renderEpisodes(epsData.episodes || [], anime.title || '');
-          else renderEpisodes([], anime.title || '');
-        }).catch(function(e){ console.error('[AniTube] episodes fetch fail:', e); renderEpisodes([], anime.title || ''); });
+          if (epsData && epsData.success) renderEpisodes(epsData.episodes || [], anime.title || '', els);
+          else renderEpisodes([], anime.title || '', els);
+        }).catch(function(){ renderEpisodes([], anime.title || '', els); });
         
         fetchJSON('/api/anime?action=list&category=popular&page=1', 10000).then(function(relData){
           if (relData && relData.success) {
             var rel = (relData.anime || []).filter(function(x){ return x.slug !== slug; }).slice(0, 12);
-            renderRelated(rel);
-          } else renderRelated([]);
-        }).catch(function(e){ console.error('[AniTube] related fetch fail:', e); renderRelated([]); });
+            renderRelated(rel, els);
+          } else renderRelated([], els);
+        }).catch(function(){ renderRelated([], els); });
       }
       
-      // Wire up buttons
-      if (watchBtn) {
-        watchBtn.addEventListener('click', function(){
-          playVideo((anime.title || 'anime') + ' anime official trailer', (anime.title || 'Anime') + ' - Trailer');
+      if (els.watchBtn) {
+        els.watchBtn.addEventListener('click', function(){
+          playVideo((anime.title || 'anime') + ' anime official trailer', (anime.title || 'Anime') + ' - Trailer',
+            els.playerBlock, els.playerFrame, els.playerTitle);
         });
       }
-      if (infoBtn && detailsBlock) {
-        infoBtn.addEventListener('click', function(){
-          detailsBlock.scrollIntoView({ behavior:'smooth', block:'start' });
+      if (els.infoBtn && els.detailsBlock) {
+        els.infoBtn.addEventListener('click', function(){
+          els.detailsBlock.scrollIntoView({ behavior:'smooth', block:'start' });
         });
       }
-      if (closePlayer) {
-        closePlayer.addEventListener('click', function(){
-          if (playerBlock) playerBlock.style.display = 'none';
-          if (playerFrame) playerFrame.innerHTML = '';
+      if (els.closePlayer) {
+        els.closePlayer.addEventListener('click', function(){
+          if (els.playerBlock) els.playerBlock.style.display = 'none';
+          if (els.playerFrame) els.playerFrame.innerHTML = '';
         });
       }
       
@@ -526,9 +519,9 @@ console.log('[AniTube] Page script starting for slug:', slug);
     } catch(e) {
       clearTimeout(hardTimeout);
       console.error('[AniTube] Fatal error:', e, e.stack);
-      loader.style.display = 'none';
-      if (nfMsg) nfMsg.textContent = 'Error loading anime: ' + (e.message || 'Unknown error');
-      if (notFound) notFound.style.display = 'flex';
+      els.loader.style.display = 'none';
+      if (els.nfMsg) els.nfMsg.textContent = 'Error: ' + (e.message || 'Unknown');
+      if (els.notFound) els.notFound.style.display = 'flex';
     }
   });
 })();
