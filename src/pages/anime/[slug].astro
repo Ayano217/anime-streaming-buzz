@@ -66,9 +66,47 @@ const { slug } = Astro.params;
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
           </div>
-          <div class="pl-wrap">
-            <div id="apPlayerFrame" class="pl-frame">
-              <div class="pl-load">Loading player...</div>
+          
+          <div class="pl-wrap-full">
+            <div id="apPlayerFrame" class="pl-frame-full">
+              <div class="pl-load-msg">Loading player...</div>
+            </div>
+          </div>
+          
+          <!-- Multi-video picker -->
+          <div id="apVideoPicker" class="pl-picker" style="display:none;">
+            <div class="pl-picker-head">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+              <span>Not the right video? Try another:</span>
+            </div>
+            <div class="pl-picker-list" id="apPickerList"></div>
+          </div>
+          
+          <!-- Affiliate CTA bar -->
+          <div class="pl-affiliate">
+            <div class="af-title">🎬 Watch full episodes officially:</div>
+            <div class="af-btns">
+              <a href="#" class="af-btn af-cr" id="afCrunchyroll" target="_blank" rel="noopener">
+                <div class="af-btn-lg cr">CR</div>
+                <div class="af-btn-txt">
+                  <div class="af-btn-t">Crunchyroll</div>
+                  <div class="af-btn-s">1000+ anime series</div>
+                </div>
+              </a>
+              <a href="#" class="af-btn af-nf" id="afNetflix" target="_blank" rel="noopener">
+                <div class="af-btn-lg nf">N</div>
+                <div class="af-btn-txt">
+                  <div class="af-btn-t">Netflix</div>
+                  <div class="af-btn-s">Popular anime originals</div>
+                </div>
+              </a>
+              <a href="#" class="af-btn af-am" id="afAmazon" target="_blank" rel="noopener">
+                <div class="af-btn-lg am">A</div>
+                <div class="af-btn-txt">
+                  <div class="af-btn-t">Buy Merch</div>
+                  <div class="af-btn-s">Figures, manga, more</div>
+                </div>
+              </a>
             </div>
           </div>
         </div>
@@ -146,10 +184,7 @@ const { slug } = Astro.params;
   .at-ep-card:hover { transform: translateY(-6px) !important; }
   .at-ep-card:hover .at-thumb-wrap { 
     border-color: rgba(232, 121, 249, 0.9) !important;
-    box-shadow: 
-      0 15px 40px rgba(0,0,0,0.5),
-      0 0 25px rgba(192, 132, 252, 0.5),
-      0 0 0 1px rgba(232, 121, 249, 0.7) !important;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 25px rgba(192, 132, 252, 0.5), 0 0 0 1px rgba(232, 121, 249, 0.7) !important;
   }
   .at-ep-card:hover .at-play-wrap { opacity: 1 !important; transform: translate(-50%,-50%) scale(1) !important; }
   .at-ep-card:hover .at-thumb-img { transform: scale(1.08) !important; filter: brightness(0.65) !important; }
@@ -177,6 +212,7 @@ const { slug } = Astro.params;
   function esc(s){try{return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}catch(e){return'';}}
   function fmt(d){try{if(!d)return'N/A';var x=new Date(d);if(isNaN(x.getTime()))return'N/A';return x.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});}catch(e){return'N/A';}}
   function cap(s){try{if(!s)return'';var str=String(s).replace(/_/g,' ');return str.charAt(0).toUpperCase()+str.slice(1);}catch(e){return String(s||'');}}
+  function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n).trim()+'…':s;}
 
   async function fetchJSON(url,timeoutMs){
     timeoutMs=timeoutMs||10000;
@@ -204,29 +240,87 @@ const { slug } = Astro.params;
     return null;
   }
 
-  async function playVideo(query,title,els){
-    try{
-      if(!els.playerBlock||!els.playerFrame)return;
-      els.playerBlock.style.display='block';
-      if(els.playerTitle)els.playerTitle.innerHTML='<span class="grad-text">'+esc(title||'Now Playing')+'</span>';
-      els.playerFrame.innerHTML='<div class="pl-load"><div class="lo-orb sm"><div class="lo-ring"></div><div class="lo-core"></div></div><span style="margin-left:12px;">Finding best video...</span></div>';
+  function embedVideo(videoId, els) {
+    // Build iframe with EXPLICIT width/height ATTRIBUTES (not just CSS)
+    var iframe = document.createElement('iframe');
+    iframe.src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3';
+    iframe.setAttribute('width', '100%');
+    iframe.setAttribute('height', '100%');
+    iframe.setAttribute('frameborder', '0');
+    iframe.setAttribute('allow', 'accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture');
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;display:block;';
+    
+    els.playerFrame.innerHTML = '';
+    var brand = document.createElement('div');
+    brand.className = 'pl-brand';
+    brand.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · HD</span>';
+    els.playerFrame.appendChild(brand);
+    els.playerFrame.appendChild(iframe);
+  }
+
+  function renderVideoPicker(videos, els) {
+    if (!videos || videos.length <= 1) {
+      els.videoPicker.style.display = 'none';
+      return;
+    }
+    els.videoPicker.style.display = 'block';
+    els.pickerList.innerHTML = videos.map(function(v, idx) {
+      var isOfficial = /muse|ani-one|crunchyroll|aniplex|bandai|medialink/i.test(v.channelTitle || '');
+      return '<div class="pl-pick-item' + (idx === 0 ? ' active' : '') + '" data-vid="' + esc(v.videoId) + '">' +
+        '<div class="pl-pick-thumb"><img src="' + esc(v.thumbnail) + '" alt="" loading="lazy" />' +
+          (isOfficial ? '<div class="pl-pick-official">✓ OFFICIAL</div>' : '') +
+        '</div>' +
+        '<div class="pl-pick-info">' +
+          '<div class="pl-pick-title">' + esc(trunc(v.title, 60)) + '</div>' +
+          '<div class="pl-pick-channel">' + esc(v.channelTitle) + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    
+    els.pickerList.querySelectorAll('.pl-pick-item').forEach(function(el) {
+      el.addEventListener('click', function() {
+        els.pickerList.querySelectorAll('.pl-pick-item').forEach(function(x){x.classList.remove('active');});
+        el.classList.add('active');
+        embedVideo(el.dataset.vid, els);
+      });
+    });
+  }
+
+  async function playVideo(query, title, els) {
+    try {
+      if (!els.playerBlock || !els.playerFrame) return;
+      els.playerBlock.style.display = 'block';
+      if (els.playerTitle) els.playerTitle.innerHTML = '<span class="grad-text">' + esc(title || 'Now Playing') + '</span>';
+      els.playerFrame.innerHTML = '<div class="pl-load-msg"><div class="lo-orb sm"><div class="lo-ring"></div><div class="lo-core"></div></div><span style="margin-left:12px;">Finding best video...</span></div>';
+      if (els.videoPicker) els.videoPicker.style.display = 'none';
       setTimeout(function(){els.playerBlock.scrollIntoView({behavior:'smooth',block:'start'});},50);
       
-      var j=await fetchJSON('/api/youtube?q='+encodeURIComponent(query));
-      var vid=(j&&j.success&&j.primary&&j.primary.videoId)?j.primary.videoId:null;
+      var j = await fetchJSON('/api/youtube?q=' + encodeURIComponent(query));
       
-      if(vid){
-        els.playerFrame.innerHTML=
-          '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · HD</span></div>'+
-          '<iframe src="https://www.youtube.com/embed/'+vid+'?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3" '+
-          'frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>';
-      }else{
-        els.playerFrame.innerHTML=
-          '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · HD</span></div>'+
-          '<iframe src="https://www.youtube.com/embed?listType=search&list='+encodeURIComponent(query)+'" '+
-          'frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>';
+      if (j && j.success && j.videos && j.videos.length > 0) {
+        embedVideo(j.videos[0].videoId, els);
+        renderVideoPicker(j.videos, els);
+      } else {
+        // Ultimate fallback: search embed
+        els.playerFrame.innerHTML = '';
+        var brand = document.createElement('div');
+        brand.className = 'pl-brand';
+        brand.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · HD</span>';
+        els.playerFrame.appendChild(brand);
+        var iframe = document.createElement('iframe');
+        iframe.src = 'https://www.youtube.com/embed?listType=search&list=' + encodeURIComponent(query);
+        iframe.setAttribute('width', '100%');
+        iframe.setAttribute('height', '100%');
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allow', 'accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;display:block;';
+        els.playerFrame.appendChild(iframe);
       }
-    }catch(e){console.error('playVideo error:',e);}
+    } catch(e) {
+      console.error('playVideo error:', e);
+    }
   }
 
   function safeRender(a,els){
@@ -276,6 +370,13 @@ const { slug } = Astro.params;
         else if(p==='hulu')u='https://www.hulu.com/search?q='+qEnc;
         el.href=u;el.target='_blank';el.rel='noopener';
       });
+      // Affiliate CTA links
+      var afCr=document.getElementById('afCrunchyroll');
+      var afNf=document.getElementById('afNetflix');
+      var afAm=document.getElementById('afAmazon');
+      if(afCr)afCr.href='https://www.crunchyroll.com/search?q='+qEnc;
+      if(afNf)afNf.href='https://www.netflix.com/search?q='+qEnc;
+      if(afAm)afAm.href='https://www.amazon.com/s?k='+encodeURIComponent(a.title+' anime')+'&tag=YOUR_AMAZON_TAG';
     }catch(e){}
   }
 
@@ -283,27 +384,20 @@ const { slug } = Astro.params;
     var hasRealThumb = !!e.thumbnail;
     var thumb = e.thumbnail || posterFallback || '';
     var animDelay = ((idx % 12) * 40) + 'ms';
-    
     var imgStyle = hasRealThumb
       ? 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.6s ease, filter 0.35s ease;'
       : 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:all 0.35s ease;filter:blur(8px) brightness(0.45) saturate(1.3);transform:scale(1.45);';
     var imgClass = hasRealThumb ? 'at-thumb-img' : 'at-thumb-img at-thumb-img-fb';
-    
     var imgHtml = thumb
       ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" class="' + imgClass + '" style="' + imgStyle + '" />'
       : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15),rgba(125,211,252,0.2));"></div>';
     
     return '<div class="at-ep-card" data-n="' + e.number + '" data-t="' + esc(e.title) + '" ' +
       'style="position:relative;cursor:pointer;background:transparent;animation:atCardIn 0.5s ease backwards;animation-delay:' + animDelay + ';">' +
-      
-      // THUMBNAIL WRAPPER (with thin border only)
       '<div class="at-thumb-wrap" style="position:relative;width:100%;padding-top:56.25%;border-radius:14px;overflow:hidden;background:#0a0517;border:1px solid rgba(192,132,252,0.35);box-shadow:0 8px 20px rgba(0,0,0,0.4);transition:all 0.35s ease;">' +
         imgHtml +
-        // Shine sweep on hover
         '<div class="at-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.2),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
-        // Dark overlay on hover
         '<div class="at-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,5,23,0.85) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
-        // Play button (hidden until hover)
         '<div class="at-play-wrap" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.4);width:52px;height:52px;z-index:5;opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;">' +
           '<div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(192,132,252,0.8);animation:atPlayRing 2s ease-out infinite;"></div>' +
           '<div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(192,132,252,0.8);animation:atPlayRing 2s ease-out infinite;animation-delay:1s;"></div>' +
@@ -311,13 +405,9 @@ const { slug } = Astro.params;
             '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
           '</div>' +
         '</div>' +
-        // EP number badge
         '<div style="position:absolute;top:8px;left:8px;padding:4px 9px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;font-weight:800;letter-spacing:0.08em;border-radius:6px;z-index:6;box-shadow:0 3px 10px rgba(192,132,252,0.5);">EP ' + e.number + '</div>' +
-        // Duration
         (e.length ? '<div style="position:absolute;bottom:8px;right:8px;padding:3px 8px;background:rgba(10,5,23,0.9);border:1px solid rgba(192,132,252,0.3);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;font-weight:700;border-radius:5px;z-index:6;backdrop-filter:blur(8px);">' + e.length + 'm</div>' : '') +
       '</div>' +
-      
-      // Info section below thumbnail
       '<div style="padding:10px 4px 4px;position:relative;z-index:1;">' +
         '<h4 class="at-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text-primary);margin:0 0 4px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;">' + esc(e.title) + '</h4>' +
         (e.airdate ? '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.66rem;color:var(--text-muted);opacity:0.75;">' + fmt(e.airdate) + '</div>' : '') +
@@ -333,24 +423,17 @@ const { slug } = Astro.params;
         if(els.seasonsTabs)els.seasonsTabs.style.display='none';
         return;
       }
-      
       var sortInfo=document.getElementById('apSortInfo');
       if(sortInfo)sortInfo.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg> Latest first';
-      
       var seasons={};
       eps.forEach(function(e){var s=e.seasonNumber||1;if(!seasons[s])seasons[s]=[];seasons[s].push(e);});
       var nums=Object.keys(seasons).map(Number).sort(function(a,b){return a-b;});
-      
-      nums.forEach(function(s){
-        seasons[s].sort(function(a,b){return (b.number||0)-(a.number||0);});
-      });
-      
+      nums.forEach(function(s){seasons[s].sort(function(a,b){return (b.number||0)-(a.number||0);});});
       if(els.seasonsTabs){
         els.seasonsTabs.innerHTML=nums.map(function(s,i){
           return '<button class="ap-st'+(i===0?' active':'')+'" data-s="'+s+'">Season '+s+' <span class="st-c">'+seasons[s].length+' EP</span></button>';
         }).join('');
       }
-      
       function show(s){
         var list=seasons[s];
         els.episodesList.innerHTML=list.map(function(e,idx){return buildEpisodeCard(e,idx,title,posterFallback);}).join('');
@@ -362,7 +445,6 @@ const { slug } = Astro.params;
           });
         });
       }
-      
       if(els.seasonsTabs){
         els.seasonsTabs.querySelectorAll('.ap-st').forEach(function(t){
           t.addEventListener('click',function(){
@@ -416,7 +498,9 @@ const { slug } = Astro.params;
       closePlayer:document.getElementById('apClosePlayer'),
       watchBtn:document.getElementById('apWatchBtn'),
       infoBtn:document.getElementById('apInfoBtn'),
-      detailsBlock:document.getElementById('apDetailsBlock')
+      detailsBlock:document.getElementById('apDetailsBlock'),
+      videoPicker:document.getElementById('apVideoPicker'),
+      pickerList:document.getElementById('apPickerList')
     };
     
     if(!els.loader||!els.content)return;
@@ -438,7 +522,6 @@ const { slug } = Astro.params;
         if(els.notFound)els.notFound.style.display='flex';
         return;
       }
-      
       safeRender(anime,els);
       clearTimeout(hardTimeout);
       els.loader.style.display='none';
@@ -446,7 +529,6 @@ const { slug } = Astro.params;
       els.content.style.display='block';
       
       if(anime.id){
-        // Pass anime title to episodes API for AniList enrichment (real thumbnails!)
         var epsUrl='/api/anime?action=episodes&id='+anime.id+'&page=1&title='+encodeURIComponent(anime.title||'');
         fetchJSON(epsUrl,15000).then(function(epsData){
           if(epsData&&epsData.success)renderEpisodes(epsData.episodes||[],anime.title||'',anime.image||'',els);
@@ -480,7 +562,6 @@ const { slug } = Astro.params;
           else if(t==='copy'){navigator.clipboard.writeText(u);b.classList.add('cp');setTimeout(function(){b.classList.remove('cp');},1500);}
         });
       });
-      
     }catch(e){
       clearTimeout(hardTimeout);
       els.loader.style.display='none';
@@ -536,16 +617,229 @@ const { slug } = Astro.params;
   .ap-btn-p:hover{transform:translateY(-3px);box-shadow:0 14px 40px rgba(192,132,252,.65)}
   .ap-btn-s{background:rgba(28,15,61,.7);color:#fff;border:1px solid rgba(192,132,252,.4);backdrop-filter:blur(10px)}
   .ap-btn-s:hover{background:rgba(192,132,252,.2);transform:translateY(-3px)}
+  
+  /* ═══ PREMIUM FULL WIDTH PLAYER ═══ */
   .ap-player{padding:2rem 0}
   .pl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
   .pl-close{background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.3);color:var(--text-primary);width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s ease}
   .pl-close:hover{background:rgba(239,68,68,.2);color:#ef4444;transform:rotate(90deg)}
-  .pl-wrap{width:100%;border-radius:20px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.5),0 0 0 1px rgba(192,132,252,.2);background:#000}
-  .pl-frame{position:relative;width:100% !important;aspect-ratio:16/9;background:#000;overflow:hidden}
-  .pl-frame iframe{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;height:100% !important;border:0 !important;display:block !important}
-  .pl-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'JetBrains Mono',monospace;font-size:.85rem;background:#000}
-  .pl-brand{position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:6px;padding:5px 11px;background:rgba(10,5,23,.85);backdrop-filter:blur(12px);border:1px solid rgba(192,132,252,.3);border-radius:999px;color:#e879f9;font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;z-index:10;pointer-events:none;opacity:.9}
+  
+  .pl-wrap-full{
+    width:100%;
+    max-width:100%;
+    position:relative;
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 20px 50px rgba(0,0,0,.5),0 0 0 1px rgba(192,132,252,.2);
+    background:#000;
+  }
+  
+  .pl-frame-full{
+    position:relative;
+    width:100%;
+    padding-top:56.25%;
+    background:#000;
+    overflow:hidden;
+  }
+  
+  .pl-frame-full iframe{
+    position:absolute !important;
+    top:0 !important;
+    left:0 !important;
+    width:100% !important;
+    height:100% !important;
+    border:0 !important;
+    display:block !important;
+  }
+  
+  .pl-load-msg{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.85rem;
+    background:#000;
+  }
+  
+  .pl-brand{
+    position:absolute;
+    top:12px;left:12px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 11px;
+    background:rgba(10,5,23,.85);
+    backdrop-filter:blur(12px);
+    border:1px solid rgba(192,132,252,.3);
+    border-radius:999px;
+    color:#e879f9;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.7rem;
+    font-weight:700;
+    z-index:10;
+    pointer-events:none;
+    opacity:.9;
+  }
   .pl-brand span{color:#fff}
+  
+  /* Video picker */
+  .pl-picker{
+    margin-top:1rem;
+    padding:16px;
+    background:rgba(28,15,61,.4);
+    border:1px solid rgba(192,132,252,.2);
+    border-radius:14px;
+    backdrop-filter:blur(10px);
+  }
+  .pl-picker-head{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    color:#c084fc;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.75rem;
+    font-weight:700;
+    margin-bottom:12px;
+    letter-spacing:.03em;
+  }
+  .pl-picker-list{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:10px;
+  }
+  .pl-pick-item{
+    display:flex;
+    gap:10px;
+    padding:8px;
+    background:rgba(15,8,35,.6);
+    border:1px solid rgba(192,132,252,.15);
+    border-radius:10px;
+    cursor:pointer;
+    transition:all .25s ease;
+  }
+  .pl-pick-item:hover{
+    background:rgba(192,132,252,.1);
+    border-color:rgba(192,132,252,.5);
+    transform:translateX(3px);
+  }
+  .pl-pick-item.active{
+    background:rgba(192,132,252,.15);
+    border-color:#e879f9;
+    box-shadow:0 0 15px rgba(192,132,252,.3);
+  }
+  .pl-pick-thumb{
+    position:relative;
+    width:100px;
+    min-width:100px;
+    aspect-ratio:16/9;
+    border-radius:6px;
+    overflow:hidden;
+    background:#000;
+  }
+  .pl-pick-thumb img{width:100%;height:100%;object-fit:cover}
+  .pl-pick-official{
+    position:absolute;
+    top:4px;left:4px;
+    padding:2px 5px;
+    background:linear-gradient(135deg,#10b981,#059669);
+    color:#fff;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.55rem;
+    font-weight:800;
+    border-radius:3px;
+    letter-spacing:.05em;
+  }
+  .pl-pick-info{flex:1;min-width:0}
+  .pl-pick-title{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-size:.8rem;
+    font-weight:600;
+    color:var(--text-primary);
+    line-height:1.3;
+    margin-bottom:4px;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+  }
+  .pl-pick-channel{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.65rem;
+    color:var(--text-muted);
+  }
+  
+  /* Affiliate CTA */
+  .pl-affiliate{
+    margin-top:1.5rem;
+    padding:20px;
+    background:linear-gradient(135deg,rgba(192,132,252,.08),rgba(232,121,249,.05),rgba(125,211,252,.08));
+    border:1px solid rgba(192,132,252,.25);
+    border-radius:16px;
+    backdrop-filter:blur(10px);
+  }
+  .af-title{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-size:.95rem;
+    font-weight:700;
+    color:var(--text-primary);
+    margin-bottom:12px;
+  }
+  .af-btns{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+    gap:12px;
+  }
+  .af-btn{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 14px;
+    background:rgba(10,5,23,.6);
+    border:1px solid rgba(192,132,252,.25);
+    border-radius:12px;
+    text-decoration:none;
+    color:var(--text-primary);
+    transition:all .25s ease;
+  }
+  .af-btn:hover{
+    background:rgba(192,132,252,.15);
+    border-color:rgba(232,121,249,.6);
+    transform:translateY(-2px);
+    box-shadow:0 8px 20px rgba(192,132,252,.2);
+  }
+  .af-btn-lg{
+    width:44px;
+    height:44px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-weight:800;
+    font-size:1rem;
+    flex-shrink:0;
+  }
+  .af-btn-lg.cr{background:linear-gradient(135deg,#ff6600,#ff8800);color:#fff}
+  .af-btn-lg.nf{background:#e50914;color:#fff}
+  .af-btn-lg.am{background:linear-gradient(135deg,#ff9900,#ff6600);color:#fff}
+  .af-btn-txt{flex:1;min-width:0}
+  .af-btn-t{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-size:.9rem;
+    font-weight:700;
+    color:var(--text-primary);
+    margin-bottom:2px;
+  }
+  .af-btn-s{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.68rem;
+    color:var(--text-muted);
+    opacity:.8;
+  }
+  
   .ap-details{padding:3rem 0}
   .ap-grid{display:grid;grid-template-columns:1fr 320px;gap:2.5rem}
   .ap-sec{margin-bottom:2.5rem}
@@ -592,6 +886,6 @@ const { slug } = Astro.params;
   .rel-sk{aspect-ratio:3/4.4;border-radius:14px;background:linear-gradient(90deg,rgba(192,132,252,.05) 25%,rgba(192,132,252,.12) 50%,rgba(192,132,252,.05) 75%);background-size:200% 100%;animation:rkS 1.5s infinite}
   @keyframes rkS{from{background-position:-200% 0}to{background-position:200% 0}}
   @media(max-width:1024px){.ap-hero-in{grid-template-columns:220px 1fr;gap:2rem}.ap-grid{grid-template-columns:1fr;gap:1.5rem}.rel-grid{grid-template-columns:repeat(4,1fr)}}
-  @media(max-width:768px){.ap-hero{padding:2rem 0;min-height:auto}.ap-hero-in{grid-template-columns:1fr;gap:1.5rem;text-align:center}.ap-poster{max-width:200px;margin:0 auto}.ap-badges,.ap-meta,.ap-genres,.ap-actions{justify-content:center}.rel-grid{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:768px){.ap-hero{padding:2rem 0;min-height:auto}.ap-hero-in{grid-template-columns:1fr;gap:1.5rem;text-align:center}.ap-poster{max-width:200px;margin:0 auto}.ap-badges,.ap-meta,.ap-genres,.ap-actions{justify-content:center}.rel-grid{grid-template-columns:repeat(3,1fr)}.pl-picker-list{grid-template-columns:1fr}.af-btns{grid-template-columns:1fr}}
   @media(max-width:640px){.rel-grid{grid-template-columns:repeat(2,1fr)}.ap-btn{padding:11px 20px;font-size:.85rem}.ap-sh{font-size:1.2rem}}
 </style>
