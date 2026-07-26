@@ -17,14 +17,17 @@ const { slug } = Astro.params;
   <div class="ap-wrap">
     <div id="loader" class="ap-loader">
       <div class="lo-orb"><div class="lo-ring"></div><div class="lo-core"></div></div>
-      <p>Loading anime details...</p>
+      <p id="loaderText">Loading anime details...</p>
     </div>
     
     <div id="notFound" class="ap-nf" style="display:none;">
       <div class="nf-ic"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg></div>
       <h1>Anime Not Found</h1>
-      <p>This anime doesn't exist or was removed.</p>
-      <a href="/" class="nf-bk">← Back to Homepage</a>
+      <p id="nfMsg">This anime doesn't exist or couldn't be loaded.</p>
+      <div class="nf-btns">
+        <a href="/" class="nf-bk">← Back to Homepage</a>
+        <button onclick="location.reload()" class="nf-rt">🔄 Try Again</button>
+      </div>
     </div>
     
     <div id="content" style="display:none;">
@@ -152,7 +155,9 @@ const { slug } = Astro.params;
 <script is:inline define:vars={{ slug }}>
 (async function(){
   var loader=document.getElementById('loader'),
+      loaderText=document.getElementById('loaderText'),
       notFound=document.getElementById('notFound'),
+      nfMsg=document.getElementById('nfMsg'),
       content=document.getElementById('content'),
       apBg=document.getElementById('apBg'),
       posterImg=document.getElementById('posterImg'),
@@ -177,11 +182,65 @@ const { slug } = Astro.params;
   function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})}
   function fmt(d){if(!d)return'N/A';var x=new Date(d);return x.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});}
 
-  async function fetchJSON(url){
-    try{var r=await fetch(url);if(!r.ok)return null;return await r.json();}catch(e){return null;}
+  async function fetchJSON(url, timeoutMs){
+    timeoutMs = timeoutMs || 10000;
+    try{
+      var controller = new AbortController();
+      var timer = setTimeout(function(){ controller.abort(); }, timeoutMs);
+      var r = await fetch(url, { signal: controller.signal });
+      clearTimeout(timer);
+      if(!r.ok) return null;
+      return await r.json();
+    }catch(e){
+      console.warn('fetchJSON failed:', url, e.message);
+      return null;
+    }
   }
 
-  async function playVideo(query,title){
+  // ─── MULTI-STRATEGY ANIME FETCH ───
+  async function loadAnimeData(){
+    // Strategy 1: Direct detail lookup
+    loaderText.textContent = 'Loading anime details...';
+    var j = await fetchJSON('/api/anime?action=detail&slug=' + encodeURIComponent(slug), 8000);
+    if (j && j.success && j.anime) return j.anime;
+
+    // Strategy 2: Fallback to search
+    loaderText.textContent = 'Searching for anime...';
+    var searchTerm = slug.replace(/-/g, ' ');
+    var s = await fetchJSON('/api/anime?action=search&q=' + encodeURIComponent(searchTerm), 8000);
+    if (s && s.success && s.anime && s.anime.length > 0) {
+      // Try exact slug match first
+      var exact = s.anime.find(function(a){ return a.slug === slug; });
+      if (exact) {
+        // Get full detail using ID
+        var full = await fetchJSON('/api/anime?action=detail&id=' + exact.id, 5000);
+        if (full && full.success) return full.anime;
+        return exact; // fallback to basic info
+      }
+      // Otherwise use first result
+      var first = s.anime[0];
+      var fullFirst = await fetchJSON('/api/anime?action=detail&id=' + first.id, 5000);
+      if (fullFirst && fullFirst.success) return fullFirst.anime;
+      return first;
+    }
+
+    // Strategy 3: Try just the first significant word
+    loaderText.textContent = 'Searching with shorter query...';
+    var words = slug.split('-').filter(function(w){ return w.length > 2; });
+    if (words.length > 0) {
+      var s2 = await fetchJSON('/api/anime?action=search&q=' + encodeURIComponent(words[0]), 8000);
+      if (s2 && s2.success && s2.anime && s2.anime.length > 0) {
+        var pick = s2.anime.find(function(a){ return a.slug === slug; }) || s2.anime[0];
+        var fullPick = await fetchJSON('/api/anime?action=detail&id=' + pick.id, 5000);
+        if (fullPick && fullPick.success) return fullPick.anime;
+        return pick;
+      }
+    }
+
+    return null;
+  }
+
+  async function playVideo(query, title){
     playerBlock.style.display='block';
     playerTitle.innerHTML='<span class="grad-text">'+esc(title||'Now Playing')+'</span>';
     playerFrame.innerHTML='<div class="pl-load">Loading video...</div>';
@@ -305,24 +364,33 @@ const { slug } = Astro.params;
     }).join('');
   }
 
+  // Hard timeout: never let loader spin > 20s
+  var hardTimeout = setTimeout(function(){
+    if (loader.style.display !== 'none') {
+      loader.style.display = 'none';
+      if (nfMsg) nfMsg.textContent = 'The anime data is taking too long to load. Please try again.';
+      notFound.style.display = 'flex';
+    }
+  }, 20000);
+
   try{
-    // Fetch main data
-    var detailRes=await fetchJSON('/api/anime?action=detail&slug='+encodeURIComponent(slug));
-    if(!detailRes||!detailRes.success||!detailRes.anime){
+    var anime = await loadAnimeData();
+    clearTimeout(hardTimeout);
+    
+    if(!anime){
       loader.style.display='none';
+      if (nfMsg) nfMsg.textContent = 'This anime could not be found in our database.';
       notFound.style.display='flex';
       return;
     }
     
-    var anime=detailRes.anime;
     renderInfo(anime);
     loader.style.display='none';
     content.style.display='block';
     
-    // Fetch episodes + related in parallel (faster)
     Promise.all([
-      fetchJSON('/api/anime?action=episodes&id='+anime.id+'&page=1'),
-      fetchJSON('/api/anime?action=list&category=popular&page=1')
+      fetchJSON('/api/anime?action=episodes&id='+anime.id+'&page=1', 8000),
+      fetchJSON('/api/anime?action=list&category=popular&page=1', 8000)
     ]).then(function(res){
       var epsData=res[0];
       var relData=res[1];
@@ -354,8 +422,10 @@ const { slug } = Astro.params;
     });
     
   }catch(e){
+    clearTimeout(hardTimeout);
     console.error('Load error:',e);
     loader.style.display='none';
+    if (nfMsg) nfMsg.textContent = 'Something went wrong loading this anime.';
     notFound.style.display='flex';
   }
 })();
@@ -391,17 +461,19 @@ const { slug } = Astro.params;
     background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     margin-bottom: 0.5rem;
   }
-  .ap-nf p { color: var(--text-secondary); margin-bottom: 1.5rem; }
-  .nf-bk {
-    display: inline-block; padding: 12px 28px;
-    background: var(--grad); color: #fff; text-decoration: none;
-    border-radius: 999px; font-weight: 700;
-    box-shadow: 0 8px 24px rgba(192, 132, 252, 0.4);
+  .ap-nf p { color: var(--text-secondary); margin-bottom: 1.5rem; max-width: 400px; }
+  .nf-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .nf-bk, .nf-rt {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 12px 24px;
+    text-decoration: none; border: none; cursor: pointer;
+    border-radius: 999px; font-weight: 700; font-family: inherit; font-size: 0.9rem;
     transition: transform 0.2s ease;
   }
-  .nf-bk:hover { transform: translateY(-2px); }
+  .nf-bk { background: var(--grad); color: #fff; box-shadow: 0 8px 24px rgba(192, 132, 252, 0.4); }
+  .nf-rt { background: rgba(192, 132, 252, 0.1); border: 1px solid rgba(192, 132, 252, 0.3); color: var(--text-primary); }
+  .nf-bk:hover, .nf-rt:hover { transform: translateY(-2px); }
   
-  /* HERO */
   .ap-hero { position: relative; padding: 3rem 0; overflow: hidden; min-height: 480px; }
   .ap-bg {
     position: absolute; inset: 0;
@@ -491,7 +563,6 @@ const { slug } = Astro.params;
   }
   .ap-btn-s:hover { background: rgba(192, 132, 252, 0.2); transform: translateY(-3px); }
   
-  /* PLAYER */
   .ap-player { padding: 2rem 0; }
   .pl-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
   .pl-close {
@@ -520,7 +591,6 @@ const { slug } = Astro.params;
   }
   .pl-brand span { color: #fff; }
   
-  /* DETAILS */
   .ap-details { padding: 3rem 0; }
   .ap-grid { display: grid; grid-template-columns: 1fr 320px; gap: 2.5rem; }
   .ap-sec { margin-bottom: 2.5rem; }
@@ -607,7 +677,6 @@ const { slug } = Astro.params;
   .ep-ld { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 2rem; color: var(--text-muted); }
   .ep-empty { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem; background: rgba(192, 132, 252, 0.05); border-radius: 12px; }
   
-  /* SIDEBAR */
   .ap-side { display: flex; flex-direction: column; gap: 1.25rem; }
   .ap-card {
     background: rgba(28, 15, 61, 0.5);
@@ -662,7 +731,6 @@ const { slug } = Astro.params;
   .sh-btn:hover { background: var(--grad); color: #fff; border-color: transparent; }
   .sh-btn.cp { background: #10b981; color: #fff; border-color: transparent; }
   
-  /* RELATED */
   .ap-related { padding: 2rem 0 4rem; }
   .rel-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; }
   .rel-c { text-decoration: none; color: inherit; transition: transform 0.3s ease; }
