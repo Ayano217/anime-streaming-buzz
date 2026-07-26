@@ -1,0 +1,149 @@
+{
+  "updated": "2025-01-15",
+  "anime": [
+    {
+      "id": "1",
+      "title": "Attack on Titan",
+      "image": "https://media.kitsu.io/anime/poster_images/7442/large.jpg",
+      "score": 8.5,
+      "episodes": 75,
+      "status": "finished",
+      "synopsis": "Humanity fights for survival against giant humanoid Titans that devour humans without reason.",
+      "genres": ["Action", "Drama", "Fantasy"],
+      "year": 2013,
+      "slug": "attack-on-titan"
+    },
+    {
+      "id": "2",
+      "title": "Demon Slayer",
+      "image": "https://media.kitsu.io/anime/poster_images/41370/large.jpg",
+      "score": 8.7,
+      "episodes": 44,
+      "status": "current",
+      "synopsis": "Tanjiro becomes a demon slayer to save his sister Nezuko who was turned into a demon.",
+      "genres": ["Action", "Supernatural", "Historical"],
+      "year": 2019,
+      "slug": "demon-slayer"
+    },
+    {
+      "id": "3",
+      "title": "Jujutsu Kaisen",
+      "image": "https://media.kitsu.io/anime/poster_images/42765/large.jpg",
+      "score": 8.6,
+      "episodes": 47,
+      "status": "current",
+      "synopsis": "Yuji Itadori swallows a cursed talisman and enters the dangerous world of jujutsu sorcerers.",
+      "genres": ["Action", "Supernatural", "School"],
+      "year": 2020,
+      "slug": "jujutsu-kaisen"
+    },
+    {
+      "id": "4",
+      "title": "One Piece",
+      "image": "https://media.kitsu.io/anime/poster_images/12/large.jpg",
+      "score": 8.7,
+      "episodes": 1000,
+      "status": "current",
+      "synopsis": "Monkey D. Luffy and his Straw Hat Pirates search for the ultimate treasure known as One Piece.",
+      "genres": ["Adventure", "Comedy", "Fantasy"],
+      "year": 1999,
+      "slug": "one-piece"
+    },
+    {
+      "id": "5",
+      "title": "My Hero Academia",
+      "image": "https://media.kitsu.io/anime/poster_images/11469/large.jpg",
+      "score": 8.0,
+      "episodes": 138,
+      "status": "current",
+      "synopsis": "In a world of superpowers, a quirkless boy dreams of becoming the greatest hero.",
+      "genres": ["Action", "Superhero", "School"],
+      "year": 2016,
+      "slug": "my-hero-academia"
+    },
+    {
+      "id": "6",
+      "title": "Chainsaw Man",
+      "image": "https://media.kitsu.io/anime/poster_images/44081/large.jpg",
+      "score": 8.4,
+      "episodes": 12,
+      "status": "finished",
+      "synopsis": "Denji merges with his chainsaw devil pet Pochita and becomes a devil hunter.",
+      "genres": ["Action", "Horror", "Supernatural"],
+      "year": 2022,
+      "slug": "chainsaw-man"
+    },
+    {
+      "id": "7",
+      "title": "Spy x Family",
+      "image": "https://media.kitsu.io/anime/poster_images/46866/large.jpg",
+      "score": 8.5,
+      "episodes": 25,
+      "status": "current",
+      "synopsis": "A spy, an assassin, and a telepath form a fake family for a secret mission.",
+      "genres": ["Comedy", "Action", "Slice of Life"],
+      "year": 2022,
+      "slug": "spy-x-family"
+    },
+    {
+      "id": "8",
+      "title": "Frieren: Beyond Journey's End",
+      "image": "https://media.kitsu.io/anime/poster_images/47259/large.jpg",
+      "score": 9.0,
+      "episodes": 28,
+      "status": "finished",
+      "synopsis": "An elven mage reflects on her adventures after her human companions have passed away.",
+      "genres": ["Fantasy", "Drama", "Adventure"],
+      "year": 2023,
+      "slug": "frieren-beyond-journeys-end"
+    },
+    {
+      "id": "9",
+      "title": "Solo Leveling",
+      "image": "https://media.kitsu.io/anime/poster_images/46309/large.jpg",
+      "score": 8.4,
+      "episodes": 12,
+      "status": "finished",
+      "synopsis": "The weakest hunter gains a mysterious system that lets him level up infinitely.",
+      "genres": ["Action", "Fantasy", "Adventure"],
+      "year": 2024,
+      "slug": "solo-leveling"
+    },
+    {
+      "id": "10",
+      "title": "One Punch Man",
+      "image": "https://media.kitsu.io/anime/poster_images/10740/large.jpg",
+      "score": 8.5,
+      "episodes": 24,
+      "status": "finished",
+      "synopsis": "Saitama, a hero who can defeat any enemy with a single punch, searches for a worthy opponent.",
+      "genres": ["Action", "Comedy", "Superhero"],
+      "year": 2015,
+      "slug": "one-punch-man"
+    },
+    {
+      "id": "11",
+      "title": "Bleach: Thousand-Year Blood War",
+      "image": "https://media.kitsu.io/anime/poster_images/44740/large.jpg",
+      "score": 8.9,
+      "episodes": 39,
+      "status": "current",
+      "synopsis": "Ichigo Kurosaki returns to face the Quincy army led by Yhwach.",
+      "genres": ["Action", "Supernatural", "Adventure"],
+      "year": 2022,
+      "slug": "bleach-thousand-year-blood-war"
+    },
+    {
+      "id": "12",
+      "title": "Dandadan",
+      "image": "https://media.kitsu.io/anime/poster_images/48849/large.jpg",
+      "score": 8.6,
+      "episodes": 12,
+      "status": "current",
+      "synopsis": "A boy who believes in ghosts and a girl who believes in aliens face supernatural threats.",
+      "genres": ["Action", "Comedy", "Supernatural"],
+      "year": 2024,
+      "slug": "dandadan"
+    }
+  ]
+}
