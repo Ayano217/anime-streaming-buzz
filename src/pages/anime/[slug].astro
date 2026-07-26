@@ -441,7 +441,7 @@ const { slug } = Astro.params;
           el.addEventListener('click',function(){
             var epNum=el.dataset.n;
             var epTitle=el.dataset.t;
-            playVideo(title+' episode '+epNum+' full english sub','Episode '+epNum+': '+epTitle,els);
+            var searchQuery = epTitle && !epTitle.match(/^episode\s*\d+$/i) ? title+' "'+epTitle+'" episode '+epNum+' english sub' : title+' episode '+epNum+' english sub full episode';playVideo(searchQuery,'Episode '+epNum+': '+epTitle,els);
           });
         });
       }
