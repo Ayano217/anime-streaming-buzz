@@ -5,6 +5,8 @@ import type { APIRoute } from 'astro';
 const CACHE: Record<string, { data: any; time: number }> = {};
 const CACHE_TTL = 30 * 60 * 1000;
 const CONSUMET_BASE = 'https://api.consumet.org';
+const TMDB_BASE = 'https://api.themoviedb.org/3';
+const TMDB_IMG = 'https://image.tmdb.org/t/p/original';
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim().slice(0, 80);
@@ -118,7 +120,67 @@ async function kitsuEpisodes(kitsuId: string, page: number = 1) {
   return { episodes, hasNext, total: totalCount };
 }
 
-// ─── ANILIST: Episode data with streamingEpisodes ───
+// ─── TMDB: Search TV show by anime title ───
+async function tmdbSearchAnime(animeTitle: string, apiKey: string) {
+  try {
+    const url = `${TMDB_BASE}/search/tv?query=${encodeURIComponent(animeTitle)}&language=en-US&page=1&include_adult=false`;
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'application/json'
+      }
+    });
+    if (!res.ok) return null;
+    const json: any = await res.json();
+    if (!json.results || json.results.length === 0) return null;
+    
+    // Prefer results with high popularity and origin_country Japan
+    const scored = json.results.map((r: any) => {
+      let score = r.popularity || 0;
+      if (r.origin_country && r.origin_country.includes('JP')) score += 100;
+      if (r.original_language === 'ja') score += 50;
+      return { ...r, _score: score };
+    });
+    scored.sort((a: any, b: any) => b._score - a._score);
+    return scored[0];
+  } catch (e) {
+    console.warn('TMDB search failed:', e);
+    return null;
+  }
+}
+
+// ─── TMDB: Get season episodes with thumbnails ───
+async function tmdbEpisodes(tvId: number, seasonNumber: number, apiKey: string) {
+  try {
+    const url = `${TMDB_BASE}/tv/${tvId}/season/${seasonNumber}?language=en-US`;
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Accept': 'application/json'
+      }
+    });
+    if (!res.ok) return null;
+    const json: any = await res.json();
+    if (!json.episodes || json.episodes.length === 0) return null;
+    
+    return json.episodes.map((ep: any) => ({
+      id: `tmdb_${ep.id}`,
+      number: ep.episode_number,
+      title: ep.name || `Episode ${ep.episode_number}`,
+      synopsis: ep.overview || '',
+      thumbnail: ep.still_path ? `${TMDB_IMG}${ep.still_path}` : '',
+      airdate: ep.air_date || '',
+      seasonNumber: ep.season_number || 1,
+      length: ep.runtime || null,
+      rating: ep.vote_average || null
+    }));
+  } catch (e) {
+    console.warn('TMDB episodes failed:', e);
+    return null;
+  }
+}
+
+// ─── ANILIST: Backup ───
 async function anilistEpisodes(animeTitle: string) {
   const query = `
     query ($search: String) {
@@ -154,26 +216,20 @@ async function anilistEpisodes(animeTitle: string) {
   } catch { return null; }
 }
 
-// ─── CONSUMET: Episode data with premium thumbnails ───
+// ─── CONSUMET: Backup ───
 async function consumetEpisodes(animeTitle: string) {
   try {
-    // Search on Consumet AniList provider
     const searchUrl = `${CONSUMET_BASE}/meta/anilist/${encodeURIComponent(animeTitle)}`;
     const searchRes = await fetch(searchUrl);
     if (!searchRes.ok) return null;
     const searchJson: any = await searchRes.json();
     if (!searchJson.results || searchJson.results.length === 0) return null;
-    
     const animeId = searchJson.results[0].id;
-    
-    // Get detailed info with episodes
     const infoUrl = `${CONSUMET_BASE}/meta/anilist/info/${animeId}`;
     const infoRes = await fetch(infoUrl);
     if (!infoRes.ok) return null;
     const info: any = await infoRes.json();
-    
     if (!info.episodes || info.episodes.length === 0) return null;
-    
     return info.episodes.map((ep: any, idx: number) => ({
       id: ep.id || `consumet_${idx}`,
       number: ep.number || (idx + 1),
@@ -184,45 +240,77 @@ async function consumetEpisodes(animeTitle: string) {
       seasonNumber: 1,
       length: null
     }));
-  } catch (e) {
-    console.warn('Consumet fetch failed:', e);
-    return null;
-  }
+  } catch { return null; }
 }
 
-// ─── MERGE: Best thumbnails from all sources ───
-async function getEnrichedEpisodes(kitsuId: string, animeTitle: string, page: number) {
-  // Get base episodes from Kitsu (has titles, dates)
+// ─── MERGE: Best from all sources ───
+async function getEnrichedEpisodes(kitsuId: string, animeTitle: string, page: number, tmdbKey: string) {
   const kitsuData = await kitsuEpisodes(kitsuId, page);
   let episodes = kitsuData.episodes;
   
-  // Try Consumet (best thumbnails)
-  let consumetEps = null;
-  if (page === 1 && animeTitle) {
+  // TMDB (best quality thumbnails)
+  let tmdbEps: any = null;
+  if (page === 1 && animeTitle && tmdbKey) {
+    const tvShow = await tmdbSearchAnime(animeTitle, tmdbKey);
+    if (tvShow && tvShow.id) {
+      // Try season 1 first, then higher seasons if not enough episodes
+      tmdbEps = await tmdbEpisodes(tvShow.id, 1, tmdbKey);
+      
+      // If Kitsu has more episodes than TMDB season 1, try other seasons
+      if (tmdbEps && kitsuData.total > tmdbEps.length && tvShow.number_of_seasons > 1) {
+        const allSeasons: any[] = [...tmdbEps];
+        for (let s = 2; s <= Math.min(tvShow.number_of_seasons, 5); s++) {
+          const seasonEps = await tmdbEpisodes(tvShow.id, s, tmdbKey);
+          if (seasonEps) allSeasons.push(...seasonEps);
+        }
+        tmdbEps = allSeasons;
+      }
+    }
+  }
+  
+  // If TMDB has full data, use it directly (best quality)
+  if (tmdbEps && tmdbEps.length >= episodes.length && tmdbEps.length > 0) {
+    return { episodes: tmdbEps, hasNext: false, total: tmdbEps.length };
+  }
+  
+  // Backup: Consumet
+  let consumetEps: any = null;
+  if (page === 1 && animeTitle && (!tmdbEps || tmdbEps.length === 0)) {
     consumetEps = await consumetEpisodes(animeTitle);
   }
   
-  // Try AniList as backup
-  let anilistEps = null;
-  if (page === 1 && animeTitle) {
+  // Backup: AniList
+  let anilistEps: any = null;
+  if (page === 1 && animeTitle && !consumetEps) {
     anilistEps = await anilistEpisodes(animeTitle);
   }
   
-  // If we have consumet but no Kitsu episodes, use consumet directly
-  if (episodes.length === 0 && consumetEps && consumetEps.length > 0) {
-    return { episodes: consumetEps, hasNext: false, total: consumetEps.length };
+  // If Kitsu is empty, use best available
+  if (episodes.length === 0) {
+    if (tmdbEps && tmdbEps.length > 0) return { episodes: tmdbEps, hasNext: false, total: tmdbEps.length };
+    if (consumetEps && consumetEps.length > 0) return { episodes: consumetEps, hasNext: false, total: consumetEps.length };
+    if (anilistEps && anilistEps.length > 0) return { episodes: anilistEps, hasNext: false, total: anilistEps.length };
   }
   
-  if (episodes.length === 0 && anilistEps && anilistEps.length > 0) {
-    return { episodes: anilistEps, hasNext: false, total: anilistEps.length };
-  }
-  
-  // Enrich Kitsu episodes with thumbnails from Consumet/AniList
-  if (episodes.length > 0 && (consumetEps || anilistEps)) {
+  // Enrich Kitsu with thumbnails from other sources
+  if (episodes.length > 0) {
     episodes = episodes.map((kEp: any) => {
       if (kEp.thumbnail) return kEp;
       
-      // Try Consumet first
+      // Try TMDB
+      if (tmdbEps) {
+        const tMatch = tmdbEps.find((t: any) => t.number === kEp.number);
+        if (tMatch && tMatch.thumbnail) {
+          return { 
+            ...kEp, 
+            thumbnail: tMatch.thumbnail, 
+            synopsis: kEp.synopsis || tMatch.synopsis,
+            title: kEp.title.startsWith('Episode ') && tMatch.title !== `Episode ${tMatch.number}` ? tMatch.title : kEp.title
+          };
+        }
+      }
+      
+      // Try Consumet
       if (consumetEps) {
         const cMatch = consumetEps.find((c: any) => c.number === kEp.number);
         if (cMatch && cMatch.thumbnail) {
@@ -273,7 +361,7 @@ async function findAnimeBySlug(slug: string) {
   return null;
 }
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, locals }) => {
   const action = url.searchParams.get('action') || 'list';
   const category = url.searchParams.get('category') || 'airing';
   const page = parseInt(url.searchParams.get('page') || '1') || 1;
@@ -281,6 +369,9 @@ export const GET: APIRoute = async ({ url }) => {
   const id = url.searchParams.get('id') || '';
   const slug = url.searchParams.get('slug') || '';
   const animeTitle = url.searchParams.get('title') || '';
+
+  const env = (locals as any)?.runtime?.env || {};
+  const TMDB_KEY = env.TMDB_API_KEY || (globalThis as any).TMDB_API_KEY || '';
 
   try {
     if (action === 'list') {
@@ -325,7 +416,7 @@ export const GET: APIRoute = async ({ url }) => {
       const cacheKey = `eps:${id}:${page}:${animeTitle}`;
       const hit = cached(cacheKey);
       if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
-      const data = await getEnrichedEpisodes(id, animeTitle, page);
+      const data = await getEnrichedEpisodes(id, animeTitle, page, TMDB_KEY);
       setCache(cacheKey, data);
       return jsonRes({ success: true, source: 'enriched', ...data });
     }
