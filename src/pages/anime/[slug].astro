@@ -91,8 +91,8 @@ const { slug } = Astro.params;
                   <div class="ap-eps-sort" id="apSortInfo"></div>
                 </div>
                 <div class="ap-seasons" id="apSeasonsTabs"></div>
-                <div class="ap-eps" id="apEpisodesList">
-                  <div class="ep-ld">
+                <div class="ate-grid" id="apEpisodesList">
+                  <div class="ate-loading">
                     <div class="lo-orb sm"><div class="lo-ring"></div><div class="lo-core"></div></div>
                     <span>Loading episodes...</span>
                   </div>
@@ -266,12 +266,11 @@ const { slug } = Astro.params;
     try{
       if(!els.episodesList)return;
       if(!eps||!eps.length){
-        els.episodesList.innerHTML='<div class="ep-empty">Episodes not available yet. Click Watch Now for the trailer!</div>';
+        els.episodesList.innerHTML='<div class="ate-empty">Episodes not available yet. Click Watch Now for the trailer!</div>';
         if(els.seasonsTabs)els.seasonsTabs.style.display='none';
         return;
       }
       
-      // Update sort info
       var sortInfo=document.getElementById('apSortInfo');
       if(sortInfo)sortInfo.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg> Latest first';
       
@@ -279,7 +278,6 @@ const { slug } = Astro.params;
       eps.forEach(function(e){var s=e.seasonNumber||1;if(!seasons[s])seasons[s]=[];seasons[s].push(e);});
       var nums=Object.keys(seasons).map(Number).sort(function(a,b){return a-b;});
       
-      // Sort each season's episodes in REVERSE (latest first)
       nums.forEach(function(s){
         seasons[s].sort(function(a,b){return (b.number||0)-(a.number||0);});
       });
@@ -295,36 +293,36 @@ const { slug } = Astro.params;
         els.episodesList.innerHTML=list.map(function(e,idx){
           var hasRealThumb=!!e.thumbnail;
           var thumb=e.thumbnail||posterFallback||'';
+          var imgClass=hasRealThumb?'ate-img':'ate-img ate-img-fb';
           var imgHtml=thumb?
-            '<img src="'+esc(thumb)+'" alt="" loading="lazy" class="ep-img'+(hasRealThumb?'':' ep-img-fallback')+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/>'+
-            '<div class="ep-nt" style="display:none"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" opacity="0.4"><path d="M8 5v14l11-7z"/></svg></div>':
-            '<div class="ep-nt"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" opacity="0.4"><path d="M8 5v14l11-7z"/></svg></div>';
+            '<img src="'+esc(thumb)+'" alt="" loading="lazy" class="'+imgClass+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/>'+
+            '<div class="ate-nothumb" style="display:none"></div>':
+            '<div class="ate-nothumb"></div>';
           
-          // If using poster fallback, add big episode number overlay
-          var epNumOverlay=!hasRealThumb?'<div class="ep-num-big">'+e.number+'</div>':'';
+          var epNumBig=!hasRealThumb?'<div class="ate-epnum-big">'+e.number+'</div>':'';
           
-          return '<div class="ep-i" data-n="'+e.number+'" data-t="'+esc(e.title)+'" style="animation-delay:'+((idx%12)*40)+'ms">'+
-            '<div class="ep-border"></div>'+
-            '<div class="ep-poster">'+
+          return '<div class="ate-card" data-n="'+e.number+'" data-t="'+esc(e.title)+'" style="animation-delay:'+((idx%12)*40)+'ms">'+
+            '<div class="ate-neon"></div>'+
+            '<div class="ate-thumb">'+
               imgHtml+
-              epNumOverlay+
-              '<div class="ep-ov"></div>'+
-              '<div class="ep-shine"></div>'+
-              '<div class="ep-pl-wrap">'+
-                '<div class="ep-pl-ring"></div>'+
-                '<div class="ep-pl-ring ep-pl-ring-2"></div>'+
-                '<div class="ep-pl"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>'+
+              epNumBig+
+              '<div class="ate-shine"></div>'+
+              '<div class="ate-overlay"></div>'+
+              '<div class="ate-play">'+
+                '<div class="ate-play-ring"></div>'+
+                '<div class="ate-play-ring ate-play-ring-2"></div>'+
+                '<div class="ate-play-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>'+
               '</div>'+
-              '<div class="ep-nm">EP '+e.number+'</div>'+
-              (e.length?'<div class="ep-dur">'+e.length+'m</div>':'')+
+              '<div class="ate-epnum">EP '+e.number+'</div>'+
+              (e.length?'<div class="ate-dur">'+e.length+'m</div>':'')+
             '</div>'+
-            '<div class="ep-info">'+
-              '<h4 class="ep-t">'+esc(e.title)+'</h4>'+
-              (e.airdate?'<div class="ep-m">'+fmt(e.airdate)+'</div>':'')+
+            '<div class="ate-info">'+
+              '<h4 class="ate-title">'+esc(e.title)+'</h4>'+
+              (e.airdate?'<div class="ate-date">'+fmt(e.airdate)+'</div>':'')+
             '</div>'+
           '</div>';
         }).join('');
-        els.episodesList.querySelectorAll('.ep-i').forEach(function(el){
+        els.episodesList.querySelectorAll('.ate-card').forEach(function(el){
           el.addEventListener('click',function(){
             var epNum=el.dataset.n;
             var epTitle=el.dataset.t;
@@ -527,17 +525,7 @@ const { slug } = Astro.params;
   .ap-desc{color:var(--text-secondary);font-size:.95rem;line-height:1.75;white-space:pre-wrap}
   
   .ap-eps-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem}
-  .ap-eps-sort{
-    display:inline-flex;align-items:center;gap:6px;
-    padding:6px 12px;
-    background:rgba(192,132,252,.1);
-    border:1px solid rgba(192,132,252,.25);
-    border-radius:999px;
-    color:#c084fc;
-    font-family:'JetBrains Mono',monospace;
-    font-size:.7rem;font-weight:700;
-    letter-spacing:.03em;
-  }
+  .ap-eps-sort{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.25);border-radius:999px;color:#c084fc;font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700}
   
   .ap-seasons{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
   .ap-st{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:rgba(28,15,61,.5);border:1px solid rgba(192,132,252,.2);border-radius:12px;color:var(--text-secondary);font-family:'Bricolage Grotesque',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .25s ease}
@@ -547,252 +535,281 @@ const { slug } = Astro.params;
   .ap-st.active .st-c{background:rgba(255,255,255,.2)}
   
   /* ═══════════════════════════════════════════════
-     🎬 GRID EPISODE CARDS (4 columns) — Homepage Style
+     🎬 PREMIUM EPISODE GRID WITH NEON BORDER
      ═══════════════════════════════════════════════ */
-  .ap-eps{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:14px;
+  
+  .ate-grid{
+    display:grid !important;
+    grid-template-columns:repeat(4,1fr) !important;
+    gap:16px !important;
   }
   
-  .ep-i{
-    position:relative;
-    padding:2px;
-    border-radius:16px;
-    cursor:pointer;
-    transition:transform .4s cubic-bezier(.34,1.56,.64,1);
-    animation:epIn .5s ease backwards;
-    overflow:visible;
+  .ate-card{
+    position:relative !important;
+    padding:2px !important;
+    border-radius:14px !important;
+    cursor:pointer !important;
+    background:transparent !important;
+    transition:transform .4s cubic-bezier(.34,1.56,.64,1) !important;
+    animation:ateCardIn .5s ease backwards !important;
   }
   
-  @keyframes epIn{
+  @keyframes ateCardIn{
     from{opacity:0;transform:translateY(15px) scale(.95)}
     to{opacity:1;transform:translateY(0) scale(1)}
   }
   
-  /* ═══ RUNNING GRADIENT BORDER (brand colors) ═══ */
-  .ep-border{
-    position:absolute;
-    inset:0;
-    border-radius:16px;
+  .ate-card:hover{
+    transform:translateY(-6px) scale(1.02) !important;
+  }
+  
+  /* ═══ NEON ROTATING BORDER (brand colors) ═══ */
+  .ate-neon{
+    position:absolute !important;
+    inset:0 !important;
+    border-radius:14px !important;
     background:conic-gradient(from 0deg,
       #c084fc 0%,
       #e879f9 25%,
       #7dd3fc 50%,
       #e879f9 75%,
       #c084fc 100%
-    );
-    opacity:0.4;
-    z-index:0;
-    animation:epBorderSpin 4s linear infinite;
+    ) !important;
+    opacity:0.5 !important;
+    z-index:0 !important;
+    animation:ateNeonSpin 4s linear infinite !important;
+    filter:blur(2px) !important;
   }
   
-  .ep-i:hover .ep-border{
-    opacity:1;
-    animation-duration:2s;
+  .ate-card:hover .ate-neon{
+    opacity:1 !important;
+    animation-duration:2s !important;
+    filter:blur(1px) !important;
   }
   
-  @keyframes epBorderSpin{
+  @keyframes ateNeonSpin{
     from{transform:rotate(0deg)}
     to{transform:rotate(360deg)}
   }
   
-  .ep-i:hover{
-    transform:translateY(-6px) scale(1.02);
+  /* ═══ THUMBNAIL 16:9 (FORCED) ═══ */
+  .ate-thumb{
+    position:relative !important;
+    width:100% !important;
+    aspect-ratio:16/9 !important;
+    height:auto !important;
+    border-radius:12px !important;
+    overflow:hidden !important;
+    background:#0a0517 !important;
+    z-index:1 !important;
+    display:block !important;
   }
   
-  /* ═══ POSTER (16:9 thumbnail) ═══ */
-  .ep-poster{
-    position:relative;
-    aspect-ratio:16/9;
-    border-radius:14px;
-    overflow:hidden;
-    background:rgba(15,8,35,0.95);
-    z-index:1;
+  .ate-img{
+    position:absolute !important;
+    top:0 !important;
+    left:0 !important;
+    width:100% !important;
+    height:100% !important;
+    object-fit:cover !important;
+    display:block !important;
+    transition:transform .6s ease,filter .35s ease !important;
+    aspect-ratio:auto !important;
   }
   
-  .ep-img{
-    width:100%;height:100%;
-    object-fit:cover;
-    display:block;
-    transition:transform .6s ease,filter .35s ease;
+  /* Fallback poster: blur + zoom so vertical poster fits 16:9 space */
+  .ate-img-fb{
+    filter:blur(10px) brightness(.45) saturate(1.4) !important;
+    transform:scale(1.5) !important;
+    object-position:center !important;
   }
   
-  /* When using anime poster as fallback, blur it slightly */
-  .ep-img-fallback{
-    filter:blur(8px) brightness(.5) saturate(1.3);
-    transform:scale(1.15);
+  .ate-card:hover .ate-img{
+    transform:scale(1.1) !important;
+    filter:brightness(.6) !important;
+  }
+  .ate-card:hover .ate-img-fb{
+    filter:blur(8px) brightness(.3) saturate(1.5) !important;
+    transform:scale(1.6) !important;
   }
   
-  .ep-i:hover .ep-img{
-    transform:scale(1.1);
-    filter:brightness(.6);
-  }
-  .ep-i:hover .ep-img-fallback{
-    filter:blur(6px) brightness(.35) saturate(1.4);
+  .ate-nothumb{
+    position:absolute !important;
+    inset:0 !important;
+    background:linear-gradient(135deg,rgba(192,132,252,.25),rgba(232,121,249,.15),rgba(125,211,252,.2)) !important;
   }
   
-  .ep-nt{
-    width:100%;height:100%;
-    background:linear-gradient(135deg,rgba(192,132,252,.25),rgba(232,121,249,.15),rgba(125,211,252,.2));
-    display:flex;align-items:center;justify-content:center;
-    color:rgba(255,255,255,.5);
+  /* Big EP number for fallback thumbnails */
+  .ate-epnum-big{
+    position:absolute !important;
+    top:50% !important;
+    left:50% !important;
+    transform:translate(-50%,-50%) !important;
+    font-family:'Bricolage Grotesque',sans-serif !important;
+    font-size:3.2rem !important;
+    font-weight:900 !important;
+    color:#fff !important;
+    text-shadow:
+      0 4px 20px rgba(192,132,252,.9),
+      0 0 40px rgba(232,121,249,.7),
+      0 0 60px rgba(125,211,252,.5) !important;
+    z-index:2 !important;
+    letter-spacing:-.05em !important;
+    line-height:1 !important;
+    transition:opacity .3s ease,transform .3s ease !important;
+    pointer-events:none !important;
+  }
+  .ate-card:hover .ate-epnum-big{
+    opacity:0 !important;
+    transform:translate(-50%,-50%) scale(1.4) !important;
   }
   
-  /* Big EP number overlay (only when using fallback poster) */
-  .ep-num-big{
-    position:absolute;
-    top:50%;left:50%;
-    transform:translate(-50%,-50%);
-    font-family:'Bricolage Grotesque',sans-serif;
-    font-size:3rem;
-    font-weight:900;
-    color:#fff;
-    text-shadow:0 4px 20px rgba(192,132,252,.8),0 0 30px rgba(232,121,249,.6);
-    z-index:2;
-    letter-spacing:-.05em;
-    line-height:1;
-    opacity:.85;
-    transition:opacity .3s ease,transform .3s ease;
-    pointer-events:none;
+  .ate-shine{
+    position:absolute !important;
+    top:0 !important;
+    left:-80% !important;
+    width:60% !important;
+    height:100% !important;
+    background:linear-gradient(105deg,transparent,rgba(255,255,255,.2),transparent) !important;
+    z-index:3 !important;
+    transition:left .8s ease !important;
+    pointer-events:none !important;
   }
-  .ep-i:hover .ep-num-big{opacity:0;transform:translate(-50%,-50%) scale(1.3)}
+  .ate-card:hover .ate-shine{left:120% !important}
   
-  .ep-ov{
-    position:absolute;inset:0;
-    background:linear-gradient(180deg,transparent 40%,rgba(10,5,23,.9) 100%);
-    opacity:0;
-    transition:opacity .3s ease;
-    pointer-events:none;
-    z-index:3;
+  .ate-overlay{
+    position:absolute !important;
+    inset:0 !important;
+    background:linear-gradient(180deg,transparent 40%,rgba(10,5,23,.9) 100%) !important;
+    opacity:0 !important;
+    transition:opacity .3s ease !important;
+    pointer-events:none !important;
+    z-index:3 !important;
   }
-  .ep-i:hover .ep-ov{opacity:1}
+  .ate-card:hover .ate-overlay{opacity:1 !important}
   
-  /* Shine sweep effect on hover */
-  .ep-shine{
-    position:absolute;
-    top:0;left:-80%;
-    width:60%;height:100%;
-    background:linear-gradient(105deg,transparent,rgba(255,255,255,.15),transparent);
-    z-index:4;
-    transition:left .8s ease;
-    pointer-events:none;
-  }
-  .ep-i:hover .ep-shine{left:120%}
-  
-  /* ═══ FLOATING PLAY BUTTON (touch + hover) ═══ */
-  .ep-pl-wrap{
-    position:absolute;
-    top:50%;left:50%;
-    transform:translate(-50%,-50%) scale(.4);
-    width:48px;height:48px;
-    z-index:5;
-    opacity:0;
-    transition:all .4s cubic-bezier(.34,1.56,.64,1);
-    pointer-events:none;
+  /* ═══ FLOATING PLAY BUTTON (hover + touch) ═══ */
+  .ate-play{
+    position:absolute !important;
+    top:50% !important;
+    left:50% !important;
+    transform:translate(-50%,-50%) scale(.4) !important;
+    width:52px !important;
+    height:52px !important;
+    z-index:5 !important;
+    opacity:0 !important;
+    transition:all .4s cubic-bezier(.34,1.56,.64,1) !important;
+    pointer-events:none !important;
   }
   
-  .ep-i:hover .ep-pl-wrap,
-  .ep-i:active .ep-pl-wrap{
-    opacity:1;
-    transform:translate(-50%,-50%) scale(1);
+  .ate-card:hover .ate-play,
+  .ate-card:active .ate-play{
+    opacity:1 !important;
+    transform:translate(-50%,-50%) scale(1) !important;
   }
   
-  .ep-pl{
-    position:absolute;inset:0;
-    border-radius:50%;
-    background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);
-    display:flex;align-items:center;justify-content:center;
-    color:#fff;padding-left:3px;
+  .ate-play-btn{
+    position:absolute !important;
+    inset:0 !important;
+    border-radius:50% !important;
+    background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%) !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    color:#fff !important;
+    padding-left:3px !important;
     box-shadow:
-      0 8px 25px rgba(192,132,252,.7),
+      0 10px 30px rgba(192,132,252,.7),
       0 0 40px rgba(232,121,249,.5),
-      inset 0 0 15px rgba(255,255,255,.15);
-    z-index:2;
+      inset 0 0 15px rgba(255,255,255,.15) !important;
+    z-index:2 !important;
   }
   
-  .ep-pl-ring{
-    position:absolute;inset:0;
-    border-radius:50%;
-    border:2px solid rgba(192,132,252,.8);
-    animation:epPlRing 2s ease-out infinite;
+  .ate-play-ring{
+    position:absolute !important;
+    inset:0 !important;
+    border-radius:50% !important;
+    border:2px solid rgba(192,132,252,.8) !important;
+    animation:atePlayRing 2s ease-out infinite !important;
   }
-  .ep-pl-ring-2{animation-delay:1s}
+  .ate-play-ring-2{animation-delay:1s !important}
   
-  @keyframes epPlRing{
+  @keyframes atePlayRing{
     0%{transform:scale(1);opacity:.9}
     100%{transform:scale(1.7);opacity:0}
   }
   
-  /* EP number badge (top-left corner) */
-  .ep-nm{
-    position:absolute;
-    top:8px;left:8px;
-    padding:4px 9px;
-    background:linear-gradient(135deg,#c084fc,#e879f9);
-    color:#fff;
-    font-family:'JetBrains Mono',monospace;
-    font-size:.62rem;
-    font-weight:800;
-    letter-spacing:.08em;
-    border-radius:6px;
-    z-index:6;
-    box-shadow:0 3px 10px rgba(192,132,252,.5);
+  /* EP badges */
+  .ate-epnum{
+    position:absolute !important;
+    top:8px !important;
+    left:8px !important;
+    padding:4px 9px !important;
+    background:linear-gradient(135deg,#c084fc,#e879f9) !important;
+    color:#fff !important;
+    font-family:'JetBrains Mono',monospace !important;
+    font-size:.62rem !important;
+    font-weight:800 !important;
+    letter-spacing:.08em !important;
+    border-radius:6px !important;
+    z-index:6 !important;
+    box-shadow:0 3px 10px rgba(192,132,252,.5) !important;
   }
   
-  .ep-dur{
-    position:absolute;
-    bottom:8px;right:8px;
-    padding:3px 8px;
-    background:rgba(10,5,23,.9);
-    border:1px solid rgba(192,132,252,.3);
-    color:#fff;
-    font-family:'JetBrains Mono',monospace;
-    font-size:.58rem;
-    font-weight:700;
-    border-radius:5px;
-    z-index:6;
-    backdrop-filter:blur(8px);
+  .ate-dur{
+    position:absolute !important;
+    bottom:8px !important;
+    right:8px !important;
+    padding:3px 8px !important;
+    background:rgba(10,5,23,.9) !important;
+    border:1px solid rgba(192,132,252,.3) !important;
+    color:#fff !important;
+    font-family:'JetBrains Mono',monospace !important;
+    font-size:.58rem !important;
+    font-weight:700 !important;
+    border-radius:5px !important;
+    z-index:6 !important;
+    backdrop-filter:blur(8px) !important;
   }
   
-  /* Info section below thumbnail */
-  .ep-info{
-    padding:10px 4px 4px;
-    position:relative;
-    z-index:1;
+  /* Info below thumb */
+  .ate-info{
+    padding:10px 4px 4px !important;
+    position:relative !important;
+    z-index:1 !important;
   }
   
-  .ep-t{
-    font-family:'Bricolage Grotesque',sans-serif;
-    font-size:.85rem;
-    font-weight:700;
-    color:var(--text-primary);
-    margin:0 0 4px;
-    line-height:1.3;
-    display:-webkit-box;
-    -webkit-line-clamp:2;
-    -webkit-box-orient:vertical;
-    overflow:hidden;
-    transition:all .3s ease;
+  .ate-title{
+    font-family:'Bricolage Grotesque',sans-serif !important;
+    font-size:.85rem !important;
+    font-weight:700 !important;
+    color:var(--text-primary) !important;
+    margin:0 0 4px !important;
+    line-height:1.3 !important;
+    display:-webkit-box !important;
+    -webkit-line-clamp:2 !important;
+    -webkit-box-orient:vertical !important;
+    overflow:hidden !important;
+    transition:all .3s ease !important;
   }
   
-  .ep-i:hover .ep-t{
-    background:linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
-    background-clip:text;
+  .ate-card:hover .ate-title{
+    background:linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc) !important;
+    -webkit-background-clip:text !important;
+    -webkit-text-fill-color:transparent !important;
+    background-clip:text !important;
   }
   
-  .ep-m{
-    font-family:'JetBrains Mono',monospace;
-    font-size:.66rem;
-    color:var(--text-muted);
-    opacity:.75;
+  .ate-date{
+    font-family:'JetBrains Mono',monospace !important;
+    font-size:.66rem !important;
+    color:var(--text-muted) !important;
+    opacity:.75 !important;
   }
   
-  .ep-ld{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:12px;padding:2rem;color:var(--text-muted)}
-  .ep-ld span{font-family:'JetBrains Mono',monospace;font-size:.85rem}
-  .ep-empty{grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);font-size:.9rem;background:rgba(192,132,252,.05);border:1px dashed rgba(192,132,252,.2);border-radius:12px}
+  .ate-loading{grid-column:1/-1 !important;display:flex !important;align-items:center !important;justify-content:center !important;gap:12px !important;padding:2rem !important;color:var(--text-muted) !important}
+  .ate-loading span{font-family:'JetBrains Mono',monospace;font-size:.85rem}
+  .ate-empty{grid-column:1/-1 !important;text-align:center !important;padding:2rem !important;color:var(--text-muted) !important;font-size:.9rem !important;background:rgba(192,132,252,.05) !important;border:1px dashed rgba(192,132,252,.2) !important;border-radius:12px !important}
   
   /* Sidebar */
   .ap-side{display:flex;flex-direction:column;gap:1.25rem}
@@ -834,7 +851,7 @@ const { slug } = Astro.params;
     .ap-hero-in{grid-template-columns:220px 1fr;gap:2rem}
     .ap-grid{grid-template-columns:1fr;gap:1.5rem}
     .rel-grid{grid-template-columns:repeat(4,1fr)}
-    .ap-eps{grid-template-columns:repeat(3,1fr)}
+    .ate-grid{grid-template-columns:repeat(3,1fr) !important}
   }
   @media(max-width:768px){
     .ap-hero{padding:2rem 0;min-height:auto}
@@ -842,16 +859,15 @@ const { slug } = Astro.params;
     .ap-poster{max-width:200px;margin:0 auto}
     .ap-badges,.ap-meta,.ap-genres,.ap-actions{justify-content:center}
     .rel-grid{grid-template-columns:repeat(3,1fr)}
-    .ap-eps{grid-template-columns:repeat(2,1fr);gap:10px}
-    .ep-num-big{font-size:2.5rem}
-    .ep-pl-wrap{opacity:1;transform:translate(-50%,-50%) scale(.85)}
+    .ate-grid{grid-template-columns:repeat(2,1fr) !important;gap:12px !important}
+    .ate-epnum-big{font-size:2.5rem !important}
+    .ate-play{opacity:1 !important;transform:translate(-50%,-50%) scale(.85) !important}
   }
   @media(max-width:640px){
     .rel-grid{grid-template-columns:repeat(2,1fr)}
     .ap-btn{padding:11px 20px;font-size:.85rem}
     .ap-sh{font-size:1.2rem}
-    .ap-eps{grid-template-columns:repeat(2,1fr);gap:8px}
-    .ep-t{font-size:.78rem}
-    .ep-num-big{font-size:2rem}
+    .ate-title{font-size:.78rem !important}
+    .ate-epnum-big{font-size:2rem !important}
   }
 </style>
