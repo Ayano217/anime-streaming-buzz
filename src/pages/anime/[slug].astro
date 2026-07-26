@@ -138,20 +138,22 @@ const { slug } = Astro.params;
   <Footer slot="footer" />
 </BaseLayout>
 
-<!-- ═══ INLINE KEYFRAME + HOVER STYLES (bypass ALL scoped CSS) ═══ -->
 <style is:global>
-  @keyframes atNeonSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
   @keyframes atPlayRing { 0%{transform:scale(1);opacity:.9} 100%{transform:scale(1.7);opacity:0} }
   @keyframes atCardIn { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
   
-  /* Hover states via class */
   .at-ep-card { transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1) !important; }
-  .at-ep-card:hover { transform: translateY(-8px) scale(1.03) !important; }
-  .at-ep-card:hover .at-neon-border { opacity: 1 !important; animation-duration: 2s !important; }
+  .at-ep-card:hover { transform: translateY(-6px) !important; }
+  .at-ep-card:hover .at-thumb-wrap { 
+    border-color: rgba(232, 121, 249, 0.9) !important;
+    box-shadow: 
+      0 15px 40px rgba(0,0,0,0.5),
+      0 0 25px rgba(192, 132, 252, 0.5),
+      0 0 0 1px rgba(232, 121, 249, 0.7) !important;
+  }
   .at-ep-card:hover .at-play-wrap { opacity: 1 !important; transform: translate(-50%,-50%) scale(1) !important; }
-  .at-ep-card:hover .at-thumb-img { transform: scale(1.1) !important; filter: brightness(0.6) !important; }
-  .at-ep-card:hover .at-thumb-img-fb { filter: blur(10px) brightness(0.35) saturate(1.5) !important; transform: scale(1.6) !important; }
-  .at-ep-card:hover .at-epnum-big { opacity: 0 !important; transform: translate(-50%,-50%) scale(1.4) !important; }
+  .at-ep-card:hover .at-thumb-img { transform: scale(1.08) !important; filter: brightness(0.65) !important; }
+  .at-ep-card:hover .at-thumb-img-fb { filter: blur(6px) brightness(0.3) saturate(1.5) !important; transform: scale(1.55) !important; }
   .at-ep-card:hover .at-shine { left: 120% !important; }
   .at-ep-card:hover .at-overlay { opacity: 1 !important; }
   .at-ep-card:hover .at-title { 
@@ -161,7 +163,6 @@ const { slug } = Astro.params;
     background-clip: text !important; 
   }
   
-  /* Mobile: always show play button */
   @media (max-width: 768px) {
     .at-play-wrap { opacity: 1 !important; transform: translate(-50%,-50%) scale(0.85) !important; }
     #apEpisodesList { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
@@ -285,34 +286,24 @@ const { slug } = Astro.params;
     
     var imgStyle = hasRealThumb
       ? 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.6s ease, filter 0.35s ease;'
-      : 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:all 0.35s ease;filter:blur(10px) brightness(0.45) saturate(1.4);transform:scale(1.5);';
+      : 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:all 0.35s ease;filter:blur(8px) brightness(0.45) saturate(1.3);transform:scale(1.45);';
     var imgClass = hasRealThumb ? 'at-thumb-img' : 'at-thumb-img at-thumb-img-fb';
     
     var imgHtml = thumb
       ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" class="' + imgClass + '" style="' + imgStyle + '" />'
       : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15),rgba(125,211,252,0.2));"></div>';
     
-    var epNumBig = !hasRealThumb 
-      ? '<div class="at-epnum-big" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:\'Bricolage Grotesque\',sans-serif;font-size:3.2rem;font-weight:900;color:#fff;text-shadow:0 4px 20px rgba(192,132,252,0.9),0 0 40px rgba(232,121,249,0.7);z-index:2;letter-spacing:-0.05em;line-height:1;transition:all 0.3s ease;pointer-events:none;">' + e.number + '</div>'
-      : '';
-    
     return '<div class="at-ep-card" data-n="' + e.number + '" data-t="' + esc(e.title) + '" ' +
-      'style="position:relative;padding:2px;border-radius:14px;cursor:pointer;background:transparent;animation:atCardIn 0.5s ease backwards;animation-delay:' + animDelay + ';">' +
+      'style="position:relative;cursor:pointer;background:transparent;animation:atCardIn 0.5s ease backwards;animation-delay:' + animDelay + ';">' +
       
-      // NEON BORDER
-      '<div class="at-neon-border" style="position:absolute;inset:0;border-radius:14px;' +
-      'background:conic-gradient(from 0deg,#c084fc 0%,#e879f9 25%,#7dd3fc 50%,#e879f9 75%,#c084fc 100%);' +
-      'opacity:0.5;z-index:0;animation:atNeonSpin 4s linear infinite;filter:blur(2px);transition:opacity 0.3s ease;"></div>' +
-      
-      // THUMBNAIL (FORCED 16:9)
-      '<div style="position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#0a0517;z-index:1;">' +
+      // THUMBNAIL WRAPPER (with thin border only)
+      '<div class="at-thumb-wrap" style="position:relative;width:100%;padding-top:56.25%;border-radius:14px;overflow:hidden;background:#0a0517;border:1px solid rgba(192,132,252,0.35);box-shadow:0 8px 20px rgba(0,0,0,0.4);transition:all 0.35s ease;">' +
         imgHtml +
-        epNumBig +
-        // Shine
+        // Shine sweep on hover
         '<div class="at-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.2),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
-        // Overlay
-        '<div class="at-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,5,23,0.9) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
-        // Play button
+        // Dark overlay on hover
+        '<div class="at-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,5,23,0.85) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
+        // Play button (hidden until hover)
         '<div class="at-play-wrap" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.4);width:52px;height:52px;z-index:5;opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;">' +
           '<div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(192,132,252,0.8);animation:atPlayRing 2s ease-out infinite;"></div>' +
           '<div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(192,132,252,0.8);animation:atPlayRing 2s ease-out infinite;animation-delay:1s;"></div>' +
@@ -320,13 +311,13 @@ const { slug } = Astro.params;
             '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
           '</div>' +
         '</div>' +
-        // EP badge
+        // EP number badge
         '<div style="position:absolute;top:8px;left:8px;padding:4px 9px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;font-weight:800;letter-spacing:0.08em;border-radius:6px;z-index:6;box-shadow:0 3px 10px rgba(192,132,252,0.5);">EP ' + e.number + '</div>' +
         // Duration
         (e.length ? '<div style="position:absolute;bottom:8px;right:8px;padding:3px 8px;background:rgba(10,5,23,0.9);border:1px solid rgba(192,132,252,0.3);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;font-weight:700;border-radius:5px;z-index:6;backdrop-filter:blur(8px);">' + e.length + 'm</div>' : '') +
       '</div>' +
       
-      // INFO
+      // Info section below thumbnail
       '<div style="padding:10px 4px 4px;position:relative;z-index:1;">' +
         '<h4 class="at-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text-primary);margin:0 0 4px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;">' + esc(e.title) + '</h4>' +
         (e.airdate ? '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.66rem;color:var(--text-muted);opacity:0.75;">' + fmt(e.airdate) + '</div>' : '') +
@@ -455,7 +446,9 @@ const { slug } = Astro.params;
       els.content.style.display='block';
       
       if(anime.id){
-        fetchJSON('/api/anime?action=episodes&id='+anime.id+'&page=1',10000).then(function(epsData){
+        // Pass anime title to episodes API for AniList enrichment (real thumbnails!)
+        var epsUrl='/api/anime?action=episodes&id='+anime.id+'&page=1&title='+encodeURIComponent(anime.title||'');
+        fetchJSON(epsUrl,15000).then(function(epsData){
           if(epsData&&epsData.success)renderEpisodes(epsData.episodes||[],anime.title||'',anime.image||'',els);
           else renderEpisodes([],anime.title||'',anime.image||'',els);
         }).catch(function(){renderEpisodes([],anime.title||'',anime.image||'',els);});
