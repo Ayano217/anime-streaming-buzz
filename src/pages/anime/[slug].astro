@@ -189,7 +189,7 @@ const { slug } = Astro.params;
       if(!els.playerBlock||!els.playerFrame)return;
       els.playerBlock.style.display='block';
       if(els.playerTitle)els.playerTitle.innerHTML='<span class="grad-text">'+esc(title||'Now Playing')+'</span>';
-      els.playerFrame.innerHTML='<div class="pl-load"><div class="lo-orb sm"><div class="lo-ring"></div><div class="lo-core"></div></div><span style="margin-left:8px;">Finding best video...</span></div>';
+      els.playerFrame.innerHTML='<div class="pl-load"><div class="lo-orb sm"><div class="lo-ring"></div><div class="lo-core"></div></div><span style="margin-left:12px;">Finding best video...</span></div>';
       setTimeout(function(){els.playerBlock.scrollIntoView({behavior:'smooth',block:'start'});},50);
       
       var j=await fetchJSON('/api/youtube?q='+encodeURIComponent(query));
@@ -279,20 +279,32 @@ const { slug } = Astro.params;
       
       function show(s){
         var list=seasons[s];
-        els.episodesList.innerHTML=list.map(function(e){
+        els.episodesList.innerHTML=list.map(function(e,idx){
           var thumb=e.thumbnail||posterFallback||'';
-          var t=thumb?'<img src="'+esc(thumb)+'" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="ep-nt" style="display:none"></div>':'<div class="ep-nt"></div>';
-          return '<div class="ep-i" data-n="'+e.number+'" data-t="'+esc(e.title)+'">'+
-            '<div class="ep-th">'+t+
-              '<div class="ep-ov"></div>'+
-              '<div class="ep-pl-wrap"><div class="ep-pl-ring"></div><div class="ep-pl"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>'+
-              '<div class="ep-nm">EP '+e.number+'</div>'+
-              (e.length?'<div class="ep-dur">'+e.length+' min</div>':'')+
+          var imgHtml=thumb?
+            '<img src="'+esc(thumb)+'" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/>'+
+            '<div class="ep-nt" style="display:none"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/></svg></div>':
+            '<div class="ep-nt"><svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/></svg></div>';
+          return '<div class="ep-i" data-n="'+e.number+'" data-t="'+esc(e.title)+'" style="animation-delay:'+(idx*40)+'ms">'+
+            '<div class="ep-border"></div>'+
+            '<div class="ep-inner">'+
+              '<div class="ep-th">'+imgHtml+
+                '<div class="ep-ov"></div>'+
+                '<div class="ep-pl-wrap">'+
+                  '<div class="ep-pl-ring"></div>'+
+                  '<div class="ep-pl-ring ep-pl-ring-2"></div>'+
+                  '<div class="ep-pl"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>'+
+                '</div>'+
+                '<div class="ep-nm">EP '+e.number+'</div>'+
+                (e.length?'<div class="ep-dur">'+e.length+' min</div>':'')+
+              '</div>'+
+              '<div class="ep-in">'+
+                '<h4 class="ep-t">'+esc(e.title)+'</h4>'+
+                (e.synopsis?'<p class="ep-d">'+esc(e.synopsis.slice(0,150))+(e.synopsis.length>150?'...':'')+'</p>':'<p class="ep-d ep-d-empty">Watch this episode on AniTube Buzz. Click to play now.</p>')+
+                (e.airdate?'<div class="ep-m"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> '+fmt(e.airdate)+'</div>':'')+
+              '</div>'+
             '</div>'+
-            '<div class="ep-in"><h4 class="ep-t">'+esc(e.title)+'</h4>'+
-            (e.synopsis?'<p class="ep-d">'+esc(e.synopsis.slice(0,150))+(e.synopsis.length>150?'...':'')+'</p>':'')+
-            (e.airdate?'<div class="ep-m">Aired: '+fmt(e.airdate)+'</div>':'')+
-            '</div></div>';
+          '</div>';
         }).join('');
         els.episodesList.querySelectorAll('.ep-i').forEach(function(el){
           el.addEventListener('click',function(){
@@ -478,38 +490,13 @@ const { slug } = Astro.params;
   .ap-btn-s{background:rgba(28,15,61,.7);color:#fff;border:1px solid rgba(192,132,252,.4);backdrop-filter:blur(10px)}
   .ap-btn-s:hover{background:rgba(192,132,252,.2);transform:translateY(-3px)}
   
-  /* ═══ FULL WIDTH VIDEO PLAYER ═══ */
   .ap-player{padding:2rem 0}
   .pl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
   .pl-close{background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.3);color:var(--text-primary);width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s ease}
   .pl-close:hover{background:rgba(239,68,68,.2);color:#ef4444;transform:rotate(90deg)}
-  
-  .pl-wrap{
-    width:100%;
-    border-radius:20px;
-    overflow:hidden;
-    box-shadow:0 20px 50px rgba(0,0,0,.5),0 0 0 1px rgba(192,132,252,.2);
-    background:#000;
-  }
-  
-  .pl-frame{
-    position:relative;
-    width:100% !important;
-    aspect-ratio:16/9;
-    background:#000;
-    overflow:hidden;
-  }
-  
-  .pl-frame iframe{
-    position:absolute !important;
-    top:0 !important;
-    left:0 !important;
-    width:100% !important;
-    height:100% !important;
-    border:0 !important;
-    display:block !important;
-  }
-  
+  .pl-wrap{width:100%;border-radius:20px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.5),0 0 0 1px rgba(192,132,252,.2);background:#000}
+  .pl-frame{position:relative;width:100% !important;aspect-ratio:16/9;background:#000;overflow:hidden}
+  .pl-frame iframe{position:absolute !important;top:0 !important;left:0 !important;width:100% !important;height:100% !important;border:0 !important;display:block !important}
   .pl-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'JetBrains Mono',monospace;font-size:.85rem;background:#000}
   .pl-brand{position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:6px;padding:5px 11px;background:rgba(10,5,23,.85);backdrop-filter:blur(12px);border:1px solid rgba(192,132,252,.3);border-radius:999px;color:#e879f9;font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;z-index:10;pointer-events:none;opacity:.9}
   .pl-brand span{color:#fff}
@@ -521,98 +508,260 @@ const { slug } = Astro.params;
   .ap-sh::after{content:'';position:absolute;left:0;bottom:-2px;width:40px;height:2px;background:var(--grad);border-radius:2px}
   .ap-desc{color:var(--text-secondary);font-size:.95rem;line-height:1.75;white-space:pre-wrap}
   
-  .ap-seasons{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap}
-  .ap-st{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:rgba(28,15,61,.5);border:1px solid var(--border-color,rgba(192,132,252,.2));border-radius:12px;color:var(--text-secondary);font-family:'Bricolage Grotesque',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .25s ease}
+  .ap-seasons{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
+  .ap-st{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:rgba(28,15,61,.5);border:1px solid rgba(192,132,252,.2);border-radius:12px;color:var(--text-secondary);font-family:'Bricolage Grotesque',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .25s ease}
   .ap-st:hover{background:rgba(192,132,252,.12);color:var(--text-primary)}
   .ap-st.active{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 6px 20px rgba(192,132,252,.35)}
   .st-c{font-family:'JetBrains Mono',monospace;font-size:.7rem;opacity:.8;background:rgba(0,0,0,.2);padding:2px 8px;border-radius:6px}
   .ap-st.active .st-c{background:rgba(255,255,255,.2)}
   
-  /* ═══ PREMIUM EPISODE CARDS ═══ */
-  .ap-eps{display:grid;grid-template-columns:1fr;gap:12px}
+  /* ═══════════════════════════════════════════════
+     🎬 PREMIUM EPISODE CARDS WITH ANIMATED BORDERS
+     ═══════════════════════════════════════════════ */
+  .ap-eps{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:16px;
+  }
   
   .ep-i{
-    display:flex;gap:14px;padding:12px;
-    background:rgba(28,15,61,.4);
-    border:1px solid rgba(192,132,252,.15);
+    position:relative;
+    padding:2px;
+    border-radius:18px;
+    cursor:pointer;
+    transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+    animation:epIn .5s ease backwards;
+    overflow:hidden;
+  }
+  
+  @keyframes epIn{
+    from{opacity:0;transform:translateY(15px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+  
+  /* Animated gradient border (running rainbow in brand colors) */
+  .ep-border{
+    position:absolute;
+    inset:0;
+    border-radius:18px;
+    background:conic-gradient(from 0deg,
+      #c084fc 0%,
+      #e879f9 20%,
+      #7dd3fc 40%,
+      #c084fc 60%,
+      #e879f9 80%,
+      #c084fc 100%
+    );
+    opacity:0.35;
+    z-index:0;
+    animation:epBorderSpin 4s linear infinite;
+  }
+  
+  .ep-i:hover .ep-border{
+    opacity:1;
+    animation-duration:2s;
+  }
+  
+  @keyframes epBorderSpin{
+    from{transform:rotate(0deg)}
+    to{transform:rotate(360deg)}
+  }
+  
+  .ep-inner{
+    position:relative;
+    z-index:1;
+    display:flex;
+    gap:16px;
+    padding:14px;
+    background:rgba(15,8,35,0.92);
     border-radius:16px;
-    cursor:pointer;transition:all .3s ease;
+    backdrop-filter:blur(20px);
+    transition:background .3s ease;
   }
+  
   .ep-i:hover{
-    background:rgba(192,132,252,.08);
-    border-color:rgba(232,121,249,.5);
-    transform:translateX(6px);
-    box-shadow:0 8px 25px rgba(192,132,252,.15),0 0 0 1px rgba(232,121,249,.3);
+    transform:translateY(-6px) scale(1.01);
   }
   
+  .ep-i:hover .ep-inner{
+    background:rgba(20,10,45,0.95);
+  }
+  
+  /* Episode thumbnail */
   .ep-th{
-    position:relative;width:180px;min-width:180px;
-    aspect-ratio:16/9;border-radius:12px;overflow:hidden;
-    background:rgba(0,0,0,.4);
-    border:1px solid rgba(192,132,252,.2);
+    position:relative;
+    width:220px;
+    min-width:220px;
+    aspect-ratio:16/9;
+    border-radius:12px;
+    overflow:hidden;
+    background:rgba(0,0,0,.5);
   }
-  .ep-th img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
-  .ep-i:hover .ep-th img{transform:scale(1.1)}
-  .ep-nt{width:100%;height:100%;background:linear-gradient(135deg,rgba(192,132,252,.2),rgba(125,211,252,.15));display:flex;align-items:center;justify-content:center}
   
-  .ep-ov{position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,5,23,.7) 100%);opacity:0;transition:opacity .3s ease;pointer-events:none;z-index:1}
-  .ep-i:hover .ep-ov{opacity:1}
+  .ep-th img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    transition:transform .6s ease;
+  }
   
+  .ep-i:hover .ep-th img{
+    transform:scale(1.12);
+  }
+  
+  .ep-nt{
+    width:100%;
+    height:100%;
+    background:linear-gradient(135deg,rgba(192,132,252,.3),rgba(232,121,249,.2),rgba(125,211,252,.25));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:rgba(255,255,255,.6);
+  }
+  
+  .ep-ov{
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg,transparent 50%,rgba(10,5,23,.85) 100%);
+    opacity:0;
+    transition:opacity .3s ease;
+    pointer-events:none;
+    z-index:1;
+  }
+  
+  .ep-i:hover .ep-ov,
+  .ep-i:active .ep-ov{opacity:1}
+  
+  /* Play button - shows on hover AND touch */
   .ep-pl-wrap{
-    position:absolute;top:50%;left:50%;
-    transform:translate(-50%,-50%) scale(.6);
-    width:52px;height:52px;
+    position:absolute;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%) scale(.5);
+    width:56px;height:56px;
     z-index:3;
     opacity:0;
-    transition:all .3s cubic-bezier(.34,1.56,.64,1);
+    transition:all .4s cubic-bezier(.34,1.56,.64,1);
   }
-  .ep-i:hover .ep-pl-wrap{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  
+  .ep-i:hover .ep-pl-wrap,
+  .ep-i:active .ep-pl-wrap{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1);
+  }
   
   .ep-pl{
     position:absolute;inset:0;
     border-radius:50%;
-    background:linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
+    background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);
     display:flex;align-items:center;justify-content:center;
     color:#fff;padding-left:3px;
-    box-shadow:0 8px 25px rgba(192,132,252,.6),0 0 30px rgba(232,121,249,.4);
+    box-shadow:
+      0 10px 30px rgba(192,132,252,.7),
+      0 0 40px rgba(232,121,249,.5),
+      inset 0 0 20px rgba(255,255,255,.15);
     z-index:2;
   }
+  
   .ep-pl-ring{
     position:absolute;inset:0;
     border-radius:50%;
-    border:2px solid rgba(192,132,252,.7);
-    animation:epRing 2s ease-out infinite;
+    border:2px solid rgba(192,132,252,.8);
+    animation:epPlRing 2s ease-out infinite;
   }
-  @keyframes epRing{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.6);opacity:0}}
+  .ep-pl-ring-2{animation-delay:1s}
   
+  @keyframes epPlRing{
+    0%{transform:scale(1);opacity:.9}
+    100%{transform:scale(1.7);opacity:0}
+  }
+  
+  /* Episode number badge */
   .ep-nm{
-    position:absolute;top:8px;left:8px;
-    background:rgba(10,5,23,.9);color:#fff;
-    padding:4px 9px;border-radius:6px;
+    position:absolute;
+    top:10px;left:10px;
+    padding:5px 10px;
+    background:linear-gradient(135deg,#c084fc,#e879f9);
+    color:#fff;
     font-family:'JetBrains Mono',monospace;
-    font-size:.64rem;font-weight:800;letter-spacing:.06em;
-    backdrop-filter:blur(8px);z-index:3;
-    border:1px solid rgba(192,132,252,.3);
-  }
-  .ep-dur{
-    position:absolute;bottom:8px;right:8px;
-    background:rgba(10,5,23,.85);color:#fff;
-    padding:3px 8px;border-radius:5px;
-    font-family:'JetBrains Mono',monospace;
-    font-size:.6rem;font-weight:700;
-    backdrop-filter:blur(8px);z-index:3;
+    font-size:.66rem;
+    font-weight:800;
+    letter-spacing:.08em;
+    border-radius:6px;
+    z-index:3;
+    box-shadow:0 4px 12px rgba(192,132,252,.5);
   }
   
-  .ep-in{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;padding:4px 0}
-  .ep-t{font-family:'Bricolage Grotesque',sans-serif;font-size:1rem;font-weight:700;color:var(--text-primary);margin:0 0 6px;line-height:1.3;transition:color .25s ease}
-  .ep-i:hover .ep-t{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-  .ep-d{color:var(--text-muted);font-size:.82rem;line-height:1.55;margin:0 0 8px}
-  .ep-m{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text-muted);opacity:.75}
+  .ep-dur{
+    position:absolute;
+    bottom:10px;right:10px;
+    padding:4px 9px;
+    background:rgba(10,5,23,.9);
+    border:1px solid rgba(192,132,252,.3);
+    color:#fff;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.62rem;
+    font-weight:700;
+    border-radius:5px;
+    z-index:3;
+    backdrop-filter:blur(8px);
+  }
+  
+  /* Episode info */
+  .ep-in{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:4px 4px 4px 0;
+  }
+  
+  .ep-t{
+    font-family:'Bricolage Grotesque',sans-serif;
+    font-size:1.05rem;
+    font-weight:700;
+    color:var(--text-primary);
+    margin:0 0 8px;
+    line-height:1.3;
+    transition:all .3s ease;
+  }
+  
+  .ep-i:hover .ep-t{
+    background:linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  
+  .ep-d{
+    color:var(--text-muted);
+    font-size:.85rem;
+    line-height:1.55;
+    margin:0 0 10px;
+  }
+  
+  .ep-d-empty{
+    opacity:0.6;
+    font-style:italic;
+  }
+  
+  .ep-m{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.7rem;
+    color:var(--text-muted);
+    opacity:.8;
+  }
+  
+  .ep-m svg{color:#c084fc}
   
   .ep-ld{display:flex;align-items:center;justify-content:center;gap:12px;padding:2rem;color:var(--text-muted)}
   .ep-ld span{font-family:'JetBrains Mono',monospace;font-size:.85rem}
   .ep-empty{text-align:center;padding:2rem;color:var(--text-muted);font-size:.9rem;background:rgba(192,132,252,.05);border:1px dashed rgba(192,132,252,.2);border-radius:12px}
   
+  /* Sidebar */
   .ap-side{display:flex;flex-direction:column;gap:1.25rem}
   .ap-card{background:rgba(28,15,61,.5);border:1px solid rgba(192,132,252,.15);border-radius:16px;padding:1.25rem;backdrop-filter:blur(10px)}
   .ac-t{font-family:'Bricolage Grotesque',sans-serif;font-size:1rem;font-weight:800;margin:0 0 1rem;color:var(--text-primary);padding-bottom:.5rem;border-bottom:1px solid rgba(192,132,252,.15)}
@@ -648,25 +797,46 @@ const { slug } = Astro.params;
   .rel-sk{aspect-ratio:3/4.4;border-radius:14px;background:linear-gradient(90deg,rgba(192,132,252,.05) 25%,rgba(192,132,252,.12) 50%,rgba(192,132,252,.05) 75%);background-size:200% 100%;animation:rkS 1.5s infinite}
   @keyframes rkS{from{background-position:-200% 0}to{background-position:200% 0}}
   
+  /* ═══ RESPONSIVE — TABLET ═══ */
   @media(max-width:1024px){
     .ap-hero-in{grid-template-columns:220px 1fr;gap:2rem}
     .ap-grid{grid-template-columns:1fr;gap:1.5rem}
     .rel-grid{grid-template-columns:repeat(4,1fr)}
+    .ep-th{width:180px;min-width:180px}
   }
+  
+  /* ═══ RESPONSIVE — MOBILE ═══ */
   @media(max-width:768px){
     .ap-hero{padding:2rem 0;min-height:auto}
     .ap-hero-in{grid-template-columns:1fr;gap:1.5rem;text-align:center}
     .ap-poster{max-width:200px;margin:0 auto}
     .ap-badges,.ap-meta,.ap-genres,.ap-actions{justify-content:center}
     .rel-grid{grid-template-columns:repeat(3,1fr)}
-    .ep-th{width:140px;min-width:140px}
+    
+    /* Episodes on mobile - VERTICAL stack but with proper 16:9 thumbnail */
+    .ep-inner{
+      flex-direction:column;
+      gap:12px;
+      padding:12px;
+    }
+    .ep-th{
+      width:100%;
+      min-width:0;
+      aspect-ratio:16/9;
+    }
+    .ep-pl-wrap{
+      opacity:1;
+      transform:translate(-50%,-50%) scale(.9);
+    }
+    .ep-in{padding:0}
+    .ep-t{font-size:.95rem}
+    .ep-d{font-size:.8rem}
   }
+  
   @media(max-width:640px){
     .rel-grid{grid-template-columns:repeat(2,1fr)}
     .ap-btn{padding:11px 20px;font-size:.85rem}
-    .ep-i{flex-direction:column;gap:10px}
-    .ep-th{width:100%;min-width:0}
     .ap-sh{font-size:1.2rem}
-    .ep-pl-wrap{opacity:1;transform:translate(-50%,-50%) scale(.85);width:44px;height:44px}
+    .ep-inner{padding:10px}
   }
 </style>
