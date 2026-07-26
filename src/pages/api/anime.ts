@@ -4,7 +4,6 @@ import type { APIRoute } from 'astro';
 
 const CACHE: Record<string, { data: any; time: number }> = {};
 const CACHE_TTL = 30 * 60 * 1000;
-const SLUG_INDEX: Record<string, any> = {}; // slug -> basic anime
 
 function slugify(text: string): string {
   return text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').trim().slice(0, 80);
@@ -47,7 +46,6 @@ function normalizeAnime(item: any) {
   };
 }
 
-// ─── KITSU: List anime with pagination ───
 async function kitsuList(category: string, page: number) {
   const sortMap: Record<string, string> = {
     airing: '-startDate', top: '-averageRating', upcoming: 'startDate', popular: '-userCount', movies: '-userCount'
@@ -68,17 +66,11 @@ async function kitsuList(category: string, page: number) {
   const json: any = await res.json();
   
   const anime = json.data.map(normalizeAnime);
-  
-  // Index by slug for later lookup
-  anime.forEach((a: any) => { SLUG_INDEX[a.slug] = a; });
-
   const totalCount = json.meta?.count || 10000;
   const hasNext = offset + limit < totalCount;
-
   return { anime, hasNext, total: totalCount };
 }
 
-// ─── KITSU: Search anime ───
 async function kitsuSearch(query: string) {
   const url = `https://kitsu.io/api/edge/anime?filter[text]=${encodeURIComponent(query)}&page[limit]=20&fields[anime]=canonicalTitle,titles,posterImage,averageRating,episodeCount,status,synopsis,startDate,subtype`;
   const res = await fetch(url, {
@@ -86,12 +78,9 @@ async function kitsuSearch(query: string) {
   });
   if (!res.ok) throw new Error(`Kitsu search ${res.status}`);
   const json: any = await res.json();
-  const results = json.data.map(normalizeAnime);
-  results.forEach((a: any) => { SLUG_INDEX[a.slug] = a; });
-  return results;
+  return json.data.map(normalizeAnime);
 }
 
-// ─── KITSU: Get full anime detail by ID ───
 async function kitsuDetail(kitsuId: string) {
   const url = `https://kitsu.io/api/edge/anime/${kitsuId}?include=genres&fields[genres]=name`;
   const res = await fetch(url, {
@@ -127,7 +116,6 @@ async function kitsuDetail(kitsuId: string) {
   };
 }
 
-// ─── KITSU: Episodes ───
 async function kitsuEpisodes(kitsuId: string, page: number = 1) {
   const limit = 20;
   const offset = (page - 1) * limit;
@@ -154,29 +142,85 @@ async function kitsuEpisodes(kitsuId: string, page: number = 1) {
 
   const totalCount = json.meta?.count || 0;
   const hasNext = offset + limit < totalCount;
-
   return { episodes, hasNext, total: totalCount };
 }
 
-// ─── SMART DETAIL FINDER: Multi-strategy ───
-async function findAnimeBySlug(slug: string) {
-  // Strategy 1: Check in-memory slug index (from prior list/search calls)
-  if (SLUG_INDEX[slug]) {
-    const basic = SLUG_INDEX[slug];
-    try {
-      return await kitsuDetail(basic.id);
-    } catch {
-      return basic; // fallback: use basic info
+// ─── ANILIST: Get episodes with real thumbnails ───
+async function anilistEpisodes(animeTitle: string) {
+  const query = `
+    query ($search: String) {
+      Media(search: $search, type: ANIME) {
+        id
+        title { romaji english native }
+        episodes
+        streamingEpisodes {
+          title
+          thumbnail
+          url
+          site
+        }
+        coverImage { large extraLarge }
+        bannerImage
+      }
     }
+  `;
+  
+  try {
+    const res = await fetch('https://graphql.anilist.co', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ query, variables: { search: animeTitle } })
+    });
+    
+    if (!res.ok) return null;
+    const json: any = await res.json();
+    const media = json.data?.Media;
+    if (!media) return null;
+    
+    const streamingEps = media.streamingEpisodes || [];
+    if (streamingEps.length === 0) return null;
+    
+    // Parse episode number from title (e.g., "Episode 5 - The Beginning")
+    const episodes = streamingEps.map((ep: any, idx: number) => {
+      const titleMatch = (ep.title || '').match(/(?:episode|ep\.?)\s*(\d+)/i);
+      const num = titleMatch ? parseInt(titleMatch[1]) : (idx + 1);
+      const cleanTitle = (ep.title || '')
+        .replace(/^(?:episode|ep\.?)\s*\d+\s*[-:–]\s*/i, '')
+        .replace(/^(?:episode|ep\.?)\s*\d+$/i, '')
+        .trim() || `Episode ${num}`;
+      
+      return {
+        id: `anilist_${num}`,
+        number: num,
+        title: cleanTitle,
+        synopsis: '',
+        thumbnail: ep.thumbnail || '',
+        airdate: '',
+        seasonNumber: 1,
+        length: null,
+        streamUrl: ep.url || '',
+        streamSite: ep.site || ''
+      };
+    });
+    
+    // Sort by episode number
+    episodes.sort((a: any, b: any) => a.number - b.number);
+    
+    return episodes;
+  } catch (e) {
+    console.warn('AniList episodes fetch failed:', e);
+    return null;
   }
+}
 
-  // Strategy 2: Direct search with slug converted to words
+async function findAnimeBySlug(slug: string) {
   const searchTerm = slug.replace(/-/g, ' ');
   try {
     const results = await kitsuSearch(searchTerm);
-    // Try exact slug match
     let match = results.find((a: any) => a.slug === slug);
-    // Fuzzy: first result
     if (!match && results.length > 0) match = results[0];
     if (match) {
       try {
@@ -189,36 +233,16 @@ async function findAnimeBySlug(slug: string) {
     console.warn('Search strategy failed:', e);
   }
 
-  // Strategy 3: Try progressively shorter search queries
   const words = slug.split('-').filter(w => w.length > 2);
   if (words.length > 1) {
-    // Try first 3 words
     try {
       const shortQuery = words.slice(0, 3).join(' ');
       const results = await kitsuSearch(shortQuery);
       let match = results.find((a: any) => a.slug === slug);
       if (!match && results.length > 0) match = results[0];
       if (match) {
-        try {
-          return await kitsuDetail(match.id);
-        } catch {
-          return match;
-        }
-      }
-    } catch {}
-  }
-
-  // Strategy 4: Try just the first word
-  if (words.length > 0) {
-    try {
-      const results = await kitsuSearch(words[0]);
-      const match = results.find((a: any) => a.slug === slug) || results[0];
-      if (match) {
-        try {
-          return await kitsuDetail(match.id);
-        } catch {
-          return match;
-        }
+        try { return await kitsuDetail(match.id); }
+        catch { return match; }
       }
     } catch {}
   }
@@ -226,7 +250,6 @@ async function findAnimeBySlug(slug: string) {
   return null;
 }
 
-// ─── MAIN HANDLER ───
 export const GET: APIRoute = async ({ url }) => {
   const action = url.searchParams.get('action') || 'list';
   const category = url.searchParams.get('category') || 'airing';
@@ -234,13 +257,13 @@ export const GET: APIRoute = async ({ url }) => {
   const query = url.searchParams.get('q') || '';
   const id = url.searchParams.get('id') || '';
   const slug = url.searchParams.get('slug') || '';
+  const animeTitle = url.searchParams.get('title') || '';
 
   try {
     if (action === 'list') {
       const cacheKey = `list:${category}:${page}`;
       const hit = cached(cacheKey);
       if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
-
       const data = await kitsuList(category, page);
       setCache(cacheKey, data);
       return jsonRes({ success: true, source: 'kitsu', ...data });
@@ -250,7 +273,6 @@ export const GET: APIRoute = async ({ url }) => {
       const cacheKey = `search:${query}`;
       const hit = cached(cacheKey);
       if (hit) return jsonRes({ success: true, source: 'cache', anime: hit });
-
       const results = await kitsuSearch(query);
       setCache(cacheKey, results);
       return jsonRes({ success: true, source: 'kitsu', anime: results });
@@ -261,7 +283,6 @@ export const GET: APIRoute = async ({ url }) => {
         const cacheKey = `detail:${id}`;
         const hit = cached(cacheKey);
         if (hit) return jsonRes({ success: true, source: 'cache', anime: hit });
-
         const detail = await kitsuDetail(id);
         setCache(cacheKey, detail);
         return jsonRes({ success: true, source: 'kitsu', anime: detail });
@@ -270,7 +291,6 @@ export const GET: APIRoute = async ({ url }) => {
         const cacheKey = `slug:${slug}`;
         const hit = cached(cacheKey);
         if (hit) return jsonRes({ success: true, source: 'cache', anime: hit });
-
         const anime = await findAnimeBySlug(slug);
         if (anime) {
           setCache(cacheKey, anime);
@@ -282,11 +302,44 @@ export const GET: APIRoute = async ({ url }) => {
     }
 
     if (action === 'episodes' && id) {
-      const cacheKey = `eps:${id}:${page}`;
+      const cacheKey = `eps:${id}:${page}:${animeTitle}`;
       const hit = cached(cacheKey);
       if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
-
+      
+      // Try AniList first if title provided (better thumbnails)
+      if (animeTitle && page === 1) {
+        try {
+          const anilistEps = await anilistEpisodes(animeTitle);
+          if (anilistEps && anilistEps.length > 0) {
+            const data = { episodes: anilistEps, hasNext: false, total: anilistEps.length };
+            setCache(cacheKey, data);
+            return jsonRes({ success: true, source: 'anilist', ...data });
+          }
+        } catch (e) {
+          console.warn('AniList fallback to Kitsu:', e);
+        }
+      }
+      
+      // Fallback: Kitsu
       const data = await kitsuEpisodes(id, page);
+      
+      // Try to enrich Kitsu episodes with AniList thumbnails if any are missing
+      if (animeTitle && data.episodes.length > 0 && data.episodes.some((e: any) => !e.thumbnail)) {
+        try {
+          const anilistEps = await anilistEpisodes(animeTitle);
+          if (anilistEps) {
+            data.episodes = data.episodes.map((kEp: any) => {
+              if (kEp.thumbnail) return kEp;
+              const match = anilistEps.find((aEp: any) => aEp.number === kEp.number);
+              if (match && match.thumbnail) {
+                return { ...kEp, thumbnail: match.thumbnail };
+              }
+              return kEp;
+            });
+          }
+        } catch {}
+      }
+      
       setCache(cacheKey, data);
       return jsonRes({ success: true, source: 'kitsu', ...data });
     }
