@@ -18,7 +18,6 @@ const { slug } = Astro.params;
     <div id="apLoader" class="ap-loader">
       <div class="lo-orb"><div class="lo-ring"></div><div class="lo-core"></div></div>
       <p id="apLoaderText">Loading anime details...</p>
-      <p id="apLoaderSub" style="font-size:0.7rem;opacity:0.5;margin-top:0.5rem;"></p>
     </div>
     
     <div id="apNotFound" class="ap-nf" style="display:none;">
@@ -154,739 +153,520 @@ const { slug } = Astro.params;
 </BaseLayout>
 
 <script is:inline define:vars={{ slug }}>
-console.log('[AniTube] Page script starting for slug:', slug);
-
 (async function(){
-  function esc(s) {
-    try { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
-    catch(e) { return ''; }
-  }
-  
-  function fmt(d) {
-    try {
-      if (!d) return 'N/A';
-      var x = new Date(d);
-      if (isNaN(x.getTime())) return 'N/A';
-      return x.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
-    } catch(e) { return 'N/A'; }
-  }
-  
-  function capitalize(s) {
-    try {
-      if (!s) return '';
-      var str = String(s).replace(/_/g, ' ');
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    } catch(e) { return String(s || ''); }
+  function esc(s){try{return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}catch(e){return'';}}
+  function fmt(d){try{if(!d)return'N/A';var x=new Date(d);if(isNaN(x.getTime()))return'N/A';return x.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});}catch(e){return'N/A';}}
+  function cap(s){try{if(!s)return'';var str=String(s).replace(/_/g,' ');return str.charAt(0).toUpperCase()+str.slice(1);}catch(e){return String(s||'');}}
+
+  async function fetchJSON(url,timeoutMs){
+    timeoutMs=timeoutMs||10000;
+    try{
+      var c=new AbortController();var t=setTimeout(function(){c.abort();},timeoutMs);
+      var r=await fetch(url,{signal:c.signal});clearTimeout(t);
+      if(!r.ok)return null;return await r.json();
+    }catch(e){return null;}
   }
 
-  async function fetchJSON(url, timeoutMs) {
-    timeoutMs = timeoutMs || 10000;
-    console.log('[AniTube] Fetching:', url);
-    try {
-      var controller = new AbortController();
-      var timer = setTimeout(function(){ controller.abort(); }, timeoutMs);
-      var r = await fetch(url, { signal: controller.signal });
-      clearTimeout(timer);
-      if (!r.ok) {
-        console.warn('[AniTube] HTTP error:', r.status, 'for', url);
-        return null;
-      }
-      var j = await r.json();
-      console.log('[AniTube] Response OK for:', url);
-      return j;
-    } catch(e) {
-      console.error('[AniTube] fetchJSON failed:', url, e.message);
-      return null;
-    }
-  }
-
-  async function loadAnimeData(loaderText, loaderSub) {
-    if (loaderText) loaderText.textContent = 'Loading anime details...';
-    if (loaderSub) loaderSub.textContent = 'Direct lookup...';
-    
-    var j = await fetchJSON('/api/anime?action=detail&slug=' + encodeURIComponent(slug), 10000);
-    if (j && j.success && j.anime) {
-      console.log('[AniTube] Detail success:', j.anime.title);
-      return j.anime;
-    }
-
-    if (loaderText) loaderText.textContent = 'Searching for anime...';
-    if (loaderSub) loaderSub.textContent = 'Fallback search...';
-    var searchTerm = slug.replace(/-/g, ' ');
-    var s = await fetchJSON('/api/anime?action=search&q=' + encodeURIComponent(searchTerm), 10000);
-    if (s && s.success && s.anime && s.anime.length > 0) {
-      var exact = s.anime.find(function(a){ return a.slug === slug; });
-      var pick = exact || s.anime[0];
-      var full = await fetchJSON('/api/anime?action=detail&id=' + pick.id, 8000);
-      if (full && full.success && full.anime) return full.anime;
+  async function loadAnimeData(loaderText){
+    if(loaderText)loaderText.textContent='Loading anime details...';
+    var j=await fetchJSON('/api/anime?action=detail&slug='+encodeURIComponent(slug),10000);
+    if(j&&j.success&&j.anime)return j.anime;
+    if(loaderText)loaderText.textContent='Searching for anime...';
+    var searchTerm=slug.replace(/-/g,' ');
+    var s=await fetchJSON('/api/anime?action=search&q='+encodeURIComponent(searchTerm),10000);
+    if(s&&s.success&&s.anime&&s.anime.length>0){
+      var exact=s.anime.find(function(a){return a.slug===slug;});
+      var pick=exact||s.anime[0];
+      var full=await fetchJSON('/api/anime?action=detail&id='+pick.id,8000);
+      if(full&&full.success&&full.anime)return full.anime;
       return pick;
     }
-
     return null;
   }
 
-  async function playVideo(query, title, playerBlock, playerFrame, playerTitle) {
-    try {
-      if (!playerBlock || !playerFrame) return;
-      playerBlock.style.display = 'block';
-      if (playerTitle) playerTitle.innerHTML = '<span class="grad-text">' + esc(title || 'Now Playing') + '</span>';
-      playerFrame.innerHTML = '<div class="pl-load">Loading video...</div>';
-      setTimeout(function(){ playerBlock.scrollIntoView({ behavior:'smooth', block:'start' }); }, 50);
+  async function playVideo(query,title,els){
+    try{
+      if(!els.playerBlock||!els.playerFrame)return;
+      els.playerBlock.style.display='block';
+      if(els.playerTitle)els.playerTitle.innerHTML='<span class="grad-text">'+esc(title||'Now Playing')+'</span>';
+      els.playerFrame.innerHTML='<div class="pl-load"><div class="lo-orb sm"><div class="lo-ring"></div><div class="lo-core"></div></div><span style="margin-left:8px;">Finding best video...</span></div>';
+      setTimeout(function(){els.playerBlock.scrollIntoView({behavior:'smooth',block:'start'});},50);
       
-      var j = await fetchJSON('/api/youtube?q=' + encodeURIComponent(query));
-      var vid = (j && j.success && j.primary && j.primary.videoId) ? j.primary.videoId : null;
+      var j=await fetchJSON('/api/youtube?q='+encodeURIComponent(query));
+      var vid=(j&&j.success&&j.primary&&j.primary.videoId)?j.primary.videoId:null;
       
-      if (vid) {
-        playerFrame.innerHTML =
-          '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · HD</span></div>' +
-          '<iframe src="https://www.youtube.com/embed/' + vid + '?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3" ' +
+      if(vid){
+        els.playerFrame.innerHTML=
+          '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · HD</span></div>'+
+          '<iframe src="https://www.youtube.com/embed/'+vid+'?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3" '+
           'frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>';
-      } else {
-        playerFrame.innerHTML =
-          '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · HD</span></div>' +
-          '<iframe src="https://www.youtube.com/embed?listType=search&list=' + encodeURIComponent(query) + '" ' +
+      }else{
+        els.playerFrame.innerHTML=
+          '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · HD</span></div>'+
+          '<iframe src="https://www.youtube.com/embed?listType=search&list='+encodeURIComponent(query)+'" '+
           'frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>';
       }
-    } catch(e) {
-      console.error('[AniTube] playVideo error:', e);
-    }
+    }catch(e){console.error('playVideo error:',e);}
   }
 
-  function safeRender(a, els) {
-    console.log('[AniTube] Starting render for:', a.title);
-    
-    try { document.title = (a.title || 'Anime') + ' - AniTube Buzz'; } catch(e){}
-    
-    try {
-      if (a.image) {
-        if (els.bg) els.bg.style.backgroundImage = 'url(' + a.image + ')';
-        if (els.poster) { els.poster.src = a.image; els.poster.alt = a.title || ''; }
-      }
-    } catch(e) { console.warn('bg/poster fail:', e); }
-    
-    try { if (els.title) els.title.textContent = a.title || 'Untitled'; } catch(e){}
-    
-    try {
-      var b = [];
-      if (a.status === 'current') b.push('<span class="ap-b ap-b-new"><span class="ap-dot"></span>AIRING NOW</span>');
-      if (a.score != null) b.push('<span class="ap-b ap-b-sc"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + Number(a.score).toFixed(1) + '</span>');
+  function safeRender(a,els){
+    try{document.title=(a.title||'Anime')+' - AniTube Buzz';}catch(e){}
+    try{if(a.image){if(els.bg)els.bg.style.backgroundImage='url('+a.image+')';if(els.poster){els.poster.src=a.image;els.poster.alt=a.title||'';}}}catch(e){}
+    try{if(els.title)els.title.textContent=a.title||'Untitled';}catch(e){}
+    try{
+      var b=[];
+      if(a.status==='current')b.push('<span class="ap-b ap-b-new"><span class="ap-dot"></span>AIRING NOW</span>');
+      if(a.score!=null)b.push('<span class="ap-b ap-b-sc"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'+Number(a.score).toFixed(1)+'</span>');
       b.push('<span class="ap-b ap-b-hd">HD</span>');
-      if (a.ageRating) b.push('<span class="ap-b ap-b-age">' + esc(a.ageRating) + '</span>');
-      if (els.badges) els.badges.innerHTML = b.join('');
-    } catch(e) { console.warn('badges fail:', e); }
-    
-    try {
-      var m = [];
-      if (a.year) m.push(String(a.year));
-      if (a.episodes && a.episodes > 0) m.push(a.episodes + ' Episodes');
-      if (a.subtype) m.push(String(a.subtype));
-      if (a.status) m.push(capitalize(a.status));
-      if (els.meta) els.meta.innerHTML = m.map(function(x){ return '<span>' + esc(x) + '</span>'; }).join('<span class="mp-sep">·</span>');
-    } catch(e) { console.warn('meta fail:', e); }
-    
-    try {
-      if (a.genres && Array.isArray(a.genres) && a.genres.length > 0 && els.genres) {
-        els.genres.innerHTML = a.genres.slice(0, 6).map(function(g){ return '<span class="ap-gp">' + esc(g) + '</span>'; }).join('');
-      }
-    } catch(e) { console.warn('genres fail:', e); }
-    
-    try {
-      var syn = a.description || a.synopsis || 'No synopsis available.';
-      if (els.syno) els.syno.textContent = syn.length > 250 ? syn.slice(0, 250) + '...' : syn;
-      if (els.fullSyno) els.fullSyno.textContent = syn;
-    } catch(e) { console.warn('synopsis fail:', e); }
-    
-    try {
-      var rows = [
-        ['Type', a.subtype || 'TV'],
-        ['Episodes', (a.episodes && a.episodes > 0) ? a.episodes : 'Unknown'],
-        ['Status', a.status ? capitalize(a.status) : 'Unknown'],
-        ['Aired', a.startDate ? (fmt(a.startDate) + (a.endDate ? ' to ' + fmt(a.endDate) : ' to ?')) : 'Unknown'],
-        ['Score', a.score != null ? ('⭐ ' + Number(a.score).toFixed(1) + ' / 10') : 'N/A'],
-        ['Rating', a.ageRating || 'Not Rated'],
-        ['Genres', (a.genres && a.genres.length) ? a.genres.join(', ') : 'N/A']
+      if(a.ageRating)b.push('<span class="ap-b ap-b-age">'+esc(a.ageRating)+'</span>');
+      if(els.badges)els.badges.innerHTML=b.join('');
+    }catch(e){}
+    try{
+      var m=[];
+      if(a.year)m.push(String(a.year));
+      if(a.episodes&&a.episodes>0)m.push(a.episodes+' Episodes');
+      if(a.subtype)m.push(String(a.subtype));
+      if(a.status)m.push(cap(a.status));
+      if(els.meta)els.meta.innerHTML=m.map(function(x){return '<span>'+esc(x)+'</span>';}).join('<span class="mp-sep">·</span>');
+    }catch(e){}
+    try{if(a.genres&&Array.isArray(a.genres)&&a.genres.length>0&&els.genres){els.genres.innerHTML=a.genres.slice(0,6).map(function(g){return '<span class="ap-gp">'+esc(g)+'</span>';}).join('');}}catch(e){}
+    try{
+      var syn=a.description||a.synopsis||'No synopsis available.';
+      if(els.syno)els.syno.textContent=syn.length>250?syn.slice(0,250)+'...':syn;
+      if(els.fullSyno)els.fullSyno.textContent=syn;
+    }catch(e){}
+    try{
+      var rows=[
+        ['Type',a.subtype||'TV'],
+        ['Episodes',(a.episodes&&a.episodes>0)?a.episodes:'Unknown'],
+        ['Status',a.status?cap(a.status):'Unknown'],
+        ['Aired',a.startDate?(fmt(a.startDate)+(a.endDate?' to '+fmt(a.endDate):' to ?')):'Unknown'],
+        ['Score',a.score!=null?('⭐ '+Number(a.score).toFixed(1)+' / 10'):'N/A'],
+        ['Rating',a.ageRating||'Not Rated'],
+        ['Genres',(a.genres&&a.genres.length)?a.genres.join(', '):'N/A']
       ];
-      if (els.infoList) {
-        els.infoList.innerHTML = rows.map(function(r){
-          return '<div class="ir"><span class="ir-l">' + esc(r[0]) + '</span><span class="ir-v">' + esc(String(r[1])) + '</span></div>';
-        }).join('');
-      }
-    } catch(e) { console.warn('info list fail:', e); }
-    
-    try {
-      var qEnc = encodeURIComponent(a.title || '');
+      if(els.infoList)els.infoList.innerHTML=rows.map(function(r){return '<div class="ir"><span class="ir-l">'+esc(r[0])+'</span><span class="ir-v">'+esc(String(r[1]))+'</span></div>';}).join('');
+    }catch(e){}
+    try{
+      var qEnc=encodeURIComponent(a.title||'');
       document.querySelectorAll('.ap-stream').forEach(function(el){
-        var p = el.dataset.platform, u = '#';
-        if (p === 'crunchyroll') u = 'https://www.crunchyroll.com/search?q=' + qEnc;
-        else if (p === 'netflix') u = 'https://www.netflix.com/search?q=' + qEnc;
-        else if (p === 'hulu') u = 'https://www.hulu.com/search?q=' + qEnc;
-        el.href = u; el.target = '_blank'; el.rel = 'noopener';
+        var p=el.dataset.platform,u='#';
+        if(p==='crunchyroll')u='https://www.crunchyroll.com/search?q='+qEnc;
+        else if(p==='netflix')u='https://www.netflix.com/search?q='+qEnc;
+        else if(p==='hulu')u='https://www.hulu.com/search?q='+qEnc;
+        el.href=u;el.target='_blank';el.rel='noopener';
       });
-    } catch(e) { console.warn('streams fail:', e); }
-    
-    console.log('[AniTube] Render complete');
+    }catch(e){}
   }
 
-  function renderEpisodes(eps, title, els) {
-    try {
-      if (!els.episodesList) return;
-      if (!eps || !eps.length) {
-        els.episodesList.innerHTML = '<div class="ep-empty">Episodes not available yet. Click Watch Now for the trailer!</div>';
-        if (els.seasonsTabs) els.seasonsTabs.style.display = 'none';
+  function renderEpisodes(eps,title,posterFallback,els){
+    try{
+      if(!els.episodesList)return;
+      if(!eps||!eps.length){
+        els.episodesList.innerHTML='<div class="ep-empty">Episodes not available yet. Click Watch Now for the trailer!</div>';
+        if(els.seasonsTabs)els.seasonsTabs.style.display='none';
         return;
       }
-      var seasons = {};
-      eps.forEach(function(e){ var s = e.seasonNumber || 1; if (!seasons[s]) seasons[s] = []; seasons[s].push(e); });
-      var nums = Object.keys(seasons).map(Number).sort(function(a,b){ return a-b; });
+      var seasons={};
+      eps.forEach(function(e){var s=e.seasonNumber||1;if(!seasons[s])seasons[s]=[];seasons[s].push(e);});
+      var nums=Object.keys(seasons).map(Number).sort(function(a,b){return a-b;});
       
-      if (els.seasonsTabs) {
-        els.seasonsTabs.innerHTML = nums.map(function(s, i){
-          return '<button class="ap-st' + (i===0?' active':'') + '" data-s="' + s + '">Season ' + s + ' <span class="st-c">' + seasons[s].length + ' EP</span></button>';
+      if(els.seasonsTabs){
+        els.seasonsTabs.innerHTML=nums.map(function(s,i){
+          return '<button class="ap-st'+(i===0?' active':'')+'" data-s="'+s+'">Season '+s+' <span class="st-c">'+seasons[s].length+' EP</span></button>';
         }).join('');
       }
       
-      function show(s) {
-        var list = seasons[s];
-        els.episodesList.innerHTML = list.map(function(e){
-          var t = e.thumbnail ? '<img src="' + esc(e.thumbnail) + '" alt="" loading="lazy" />' : '<div class="ep-nt"></div>';
-          return '<div class="ep-i" data-n="' + e.number + '" data-t="' + esc(e.title) + '">' +
-            '<div class="ep-th">' + t + '<div class="ep-pl"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="ep-nm">EP ' + e.number + '</div></div>' +
-            '<div class="ep-in"><h4 class="ep-t">' + esc(e.title) + '</h4>' +
-            (e.synopsis ? '<p class="ep-d">' + esc(e.synopsis.slice(0, 120)) + (e.synopsis.length > 120 ? '...' : '') + '</p>' : '') +
-            (e.airdate ? '<div class="ep-m">Aired: ' + fmt(e.airdate) + (e.length ? ' · ' + e.length + ' min' : '') + '</div>' : '') +
+      function show(s){
+        var list=seasons[s];
+        els.episodesList.innerHTML=list.map(function(e){
+          var thumb=e.thumbnail||posterFallback||'';
+          var t=thumb?'<img src="'+esc(thumb)+'" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/><div class="ep-nt" style="display:none"></div>':'<div class="ep-nt"></div>';
+          return '<div class="ep-i" data-n="'+e.number+'" data-t="'+esc(e.title)+'">'+
+            '<div class="ep-th">'+t+
+              '<div class="ep-ov"></div>'+
+              '<div class="ep-pl-wrap"><div class="ep-pl-ring"></div><div class="ep-pl"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>'+
+              '<div class="ep-nm">EP '+e.number+'</div>'+
+              (e.length?'<div class="ep-dur">'+e.length+' min</div>':'')+
+            '</div>'+
+            '<div class="ep-in"><h4 class="ep-t">'+esc(e.title)+'</h4>'+
+            (e.synopsis?'<p class="ep-d">'+esc(e.synopsis.slice(0,150))+(e.synopsis.length>150?'...':'')+'</p>':'')+
+            (e.airdate?'<div class="ep-m">Aired: '+fmt(e.airdate)+'</div>':'')+
             '</div></div>';
         }).join('');
         els.episodesList.querySelectorAll('.ep-i').forEach(function(el){
-          el.addEventListener('click', function(){
-            playVideo(title + ' episode ' + el.dataset.n, 'Episode ' + el.dataset.n + ': ' + el.dataset.t,
-              els.playerBlock, els.playerFrame, els.playerTitle);
+          el.addEventListener('click',function(){
+            var epNum=el.dataset.n;
+            var epTitle=el.dataset.t;
+            playVideo(title+' episode '+epNum+' full english sub','Episode '+epNum+': '+epTitle,els);
           });
         });
       }
       
-      if (els.seasonsTabs) {
+      if(els.seasonsTabs){
         els.seasonsTabs.querySelectorAll('.ap-st').forEach(function(t){
-          t.addEventListener('click', function(){
-            els.seasonsTabs.querySelectorAll('.ap-st').forEach(function(x){ x.classList.remove('active'); });
+          t.addEventListener('click',function(){
+            els.seasonsTabs.querySelectorAll('.ap-st').forEach(function(x){x.classList.remove('active');});
             t.classList.add('active');
             show(Number(t.dataset.s));
           });
         });
       }
       show(nums[0]);
-    } catch(e) { console.error('[AniTube] renderEpisodes error:', e); }
+    }catch(e){console.error('renderEpisodes:',e);}
   }
 
-  function renderRelated(list, els) {
-    try {
-      if (!els.relatedGrid) return;
-      if (!list || !list.length) {
-        els.relatedGrid.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem;grid-column:1/-1;">No related anime found.</p>';
-        return;
-      }
-      els.relatedGrid.innerHTML = list.map(function(a){
-        var img = a.image ? '<img src="' + esc(a.image) + '" alt="" loading="lazy" />' : '<div class="rc-no"></div>';
-        return '<a href="/anime/' + esc(a.slug) + '" class="rel-c">' +
-          '<div class="rc-p">' + img + '<div class="rc-pl"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>' +
-          '<div class="rc-t">' + esc(a.title) + '</div></a>';
+  function renderRelated(list,els){
+    try{
+      if(!els.relatedGrid)return;
+      if(!list||!list.length){els.relatedGrid.innerHTML='<p style="color:var(--text-muted);text-align:center;padding:2rem;grid-column:1/-1;">No related anime found.</p>';return;}
+      els.relatedGrid.innerHTML=list.map(function(a){
+        var img=a.image?'<img src="'+esc(a.image)+'" alt="" loading="lazy" />':'<div class="rc-no"></div>';
+        return '<a href="/anime/'+esc(a.slug)+'" class="rel-c">'+
+          '<div class="rc-p">'+img+'<div class="rc-pl"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>'+
+          '<div class="rc-t">'+esc(a.title)+'</div></a>';
       }).join('');
-    } catch(e) { console.error('[AniTube] renderRelated error:', e); }
+    }catch(e){}
   }
 
-  function domReady(cb) {
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', cb);
-    else cb();
-  }
+  function domReady(cb){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',cb);else cb();}
 
   domReady(async function(){
-    console.log('[AniTube] DOM ready, initializing');
-    
-    // Get ALL elements using unique ap- prefixed IDs
-    var els = {
-      loader:       document.getElementById('apLoader'),
-      loaderText:   document.getElementById('apLoaderText'),
-      loaderSub:    document.getElementById('apLoaderSub'),
-      notFound:     document.getElementById('apNotFound'),
-      nfMsg:        document.getElementById('apNfMsg'),
-      content:      document.getElementById('apContent'),
-      bg:           document.getElementById('apBg'),
-      poster:       document.getElementById('apPosterImg'),
-      title:        document.getElementById('apTitle'),
-      meta:         document.getElementById('apMeta'),
-      genres:       document.getElementById('apGenres'),
-      syno:         document.getElementById('apSyno'),
-      badges:       document.getElementById('apBadges'),
-      fullSyno:     document.getElementById('apFullSyno'),
-      infoList:     document.getElementById('apInfoList'),
-      seasonsTabs:  document.getElementById('apSeasonsTabs'),
-      episodesList: document.getElementById('apEpisodesList'),
-      relatedGrid:  document.getElementById('apRelatedGrid'),
-      playerBlock:  document.getElementById('apPlayerBlock'),
-      playerFrame:  document.getElementById('apPlayerFrame'),
-      playerTitle:  document.getElementById('apPlayerTitle'),
-      closePlayer:  document.getElementById('apClosePlayer'),
-      watchBtn:     document.getElementById('apWatchBtn'),
-      infoBtn:      document.getElementById('apInfoBtn'),
-      detailsBlock: document.getElementById('apDetailsBlock')
+    var els={
+      loader:document.getElementById('apLoader'),
+      loaderText:document.getElementById('apLoaderText'),
+      notFound:document.getElementById('apNotFound'),
+      nfMsg:document.getElementById('apNfMsg'),
+      content:document.getElementById('apContent'),
+      bg:document.getElementById('apBg'),
+      poster:document.getElementById('apPosterImg'),
+      title:document.getElementById('apTitle'),
+      meta:document.getElementById('apMeta'),
+      genres:document.getElementById('apGenres'),
+      syno:document.getElementById('apSyno'),
+      badges:document.getElementById('apBadges'),
+      fullSyno:document.getElementById('apFullSyno'),
+      infoList:document.getElementById('apInfoList'),
+      seasonsTabs:document.getElementById('apSeasonsTabs'),
+      episodesList:document.getElementById('apEpisodesList'),
+      relatedGrid:document.getElementById('apRelatedGrid'),
+      playerBlock:document.getElementById('apPlayerBlock'),
+      playerFrame:document.getElementById('apPlayerFrame'),
+      playerTitle:document.getElementById('apPlayerTitle'),
+      closePlayer:document.getElementById('apClosePlayer'),
+      watchBtn:document.getElementById('apWatchBtn'),
+      infoBtn:document.getElementById('apInfoBtn'),
+      detailsBlock:document.getElementById('apDetailsBlock')
     };
     
-    console.log('[AniTube] Elements found:', {
-      loader: !!els.loader,
-      content: !!els.content,
-      notFound: !!els.notFound,
-      title: !!els.title
-    });
+    if(!els.loader||!els.content)return;
     
-    if (!els.loader || !els.content) {
-      console.error('[AniTube] Critical: apLoader or apContent element missing');
-      return;
-    }
-    
-    var hardTimeout = setTimeout(function(){
-      if (els.loader.style.display !== 'none') {
-        console.error('[AniTube] Hard timeout hit');
-        els.loader.style.display = 'none';
-        if (els.nfMsg) els.nfMsg.textContent = 'Loading timeout. Please try again.';
-        if (els.notFound) els.notFound.style.display = 'flex';
+    var hardTimeout=setTimeout(function(){
+      if(els.loader.style.display!=='none'){
+        els.loader.style.display='none';
+        if(els.nfMsg)els.nfMsg.textContent='Loading timeout. Please try again.';
+        if(els.notFound)els.notFound.style.display='flex';
       }
-    }, 25000);
+    },25000);
 
-    try {
-      var anime = await loadAnimeData(els.loaderText, els.loaderSub);
-      
-      if (!anime) {
-        console.warn('[AniTube] No anime data found');
+    try{
+      var anime=await loadAnimeData(els.loaderText);
+      if(!anime){
         clearTimeout(hardTimeout);
-        els.loader.style.display = 'none';
-        if (els.nfMsg) els.nfMsg.textContent = 'This anime could not be found in our database.';
-        if (els.notFound) els.notFound.style.display = 'flex';
+        els.loader.style.display='none';
+        if(els.nfMsg)els.nfMsg.textContent='This anime could not be found in our database.';
+        if(els.notFound)els.notFound.style.display='flex';
         return;
       }
       
-      console.log('[AniTube] Anime data received:', anime.title);
-      
-      safeRender(anime, els);
-      
-      // FORCE hide loader with display:none AND remove from view
+      safeRender(anime,els);
       clearTimeout(hardTimeout);
-      els.loader.style.display = 'none';
-      els.loader.style.visibility = 'hidden';
-      els.content.style.display = 'block';
-      els.content.style.visibility = 'visible';
-      console.log('[AniTube] ✅ Content should now be VISIBLE');
+      els.loader.style.display='none';
+      els.loader.style.visibility='hidden';
+      els.content.style.display='block';
       
-      if (anime.id) {
-        fetchJSON('/api/anime?action=episodes&id=' + anime.id + '&page=1', 10000).then(function(epsData){
-          if (epsData && epsData.success) renderEpisodes(epsData.episodes || [], anime.title || '', els);
-          else renderEpisodes([], anime.title || '', els);
-        }).catch(function(){ renderEpisodes([], anime.title || '', els); });
+      if(anime.id){
+        fetchJSON('/api/anime?action=episodes&id='+anime.id+'&page=1',10000).then(function(epsData){
+          if(epsData&&epsData.success)renderEpisodes(epsData.episodes||[],anime.title||'',anime.image||'',els);
+          else renderEpisodes([],anime.title||'',anime.image||'',els);
+        }).catch(function(){renderEpisodes([],anime.title||'',anime.image||'',els);});
         
-        fetchJSON('/api/anime?action=list&category=popular&page=1', 10000).then(function(relData){
-          if (relData && relData.success) {
-            var rel = (relData.anime || []).filter(function(x){ return x.slug !== slug; }).slice(0, 12);
-            renderRelated(rel, els);
-          } else renderRelated([], els);
-        }).catch(function(){ renderRelated([], els); });
+        fetchJSON('/api/anime?action=list&category=popular&page=1',10000).then(function(relData){
+          if(relData&&relData.success){
+            var rel=(relData.anime||[]).filter(function(x){return x.slug!==slug;}).slice(0,12);
+            renderRelated(rel,els);
+          }else renderRelated([],els);
+        }).catch(function(){renderRelated([],els);});
       }
       
-      if (els.watchBtn) {
-        els.watchBtn.addEventListener('click', function(){
-          playVideo((anime.title || 'anime') + ' anime official trailer', (anime.title || 'Anime') + ' - Trailer',
-            els.playerBlock, els.playerFrame, els.playerTitle);
-        });
-      }
-      if (els.infoBtn && els.detailsBlock) {
-        els.infoBtn.addEventListener('click', function(){
-          els.detailsBlock.scrollIntoView({ behavior:'smooth', block:'start' });
-        });
-      }
-      if (els.closePlayer) {
-        els.closePlayer.addEventListener('click', function(){
-          if (els.playerBlock) els.playerBlock.style.display = 'none';
-          if (els.playerFrame) els.playerFrame.innerHTML = '';
-        });
-      }
+      if(els.watchBtn)els.watchBtn.addEventListener('click',function(){
+        playVideo((anime.title||'anime')+' anime official trailer',(anime.title||'Anime')+' - Trailer',els);
+      });
+      if(els.infoBtn&&els.detailsBlock)els.infoBtn.addEventListener('click',function(){
+        els.detailsBlock.scrollIntoView({behavior:'smooth',block:'start'});
+      });
+      if(els.closePlayer)els.closePlayer.addEventListener('click',function(){
+        if(els.playerBlock)els.playerBlock.style.display='none';
+        if(els.playerFrame)els.playerFrame.innerHTML='';
+      });
       
       document.querySelectorAll('.sh-btn').forEach(function(b){
-        b.addEventListener('click', function(){
-          var t = b.dataset.share, u = window.location.href, x = (anime.title || 'Anime') + ' on AniTube Buzz';
-          if (t === 'twitter') window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(x) + '&url=' + encodeURIComponent(u), '_blank');
-          else if (t === 'facebook') window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(u), '_blank');
-          else if (t === 'copy') { navigator.clipboard.writeText(u); b.classList.add('cp'); setTimeout(function(){ b.classList.remove('cp'); }, 1500); }
+        b.addEventListener('click',function(){
+          var t=b.dataset.share,u=window.location.href,x=(anime.title||'Anime')+' on AniTube Buzz';
+          if(t==='twitter')window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(x)+'&url='+encodeURIComponent(u),'_blank');
+          else if(t==='facebook')window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(u),'_blank');
+          else if(t==='copy'){navigator.clipboard.writeText(u);b.classList.add('cp');setTimeout(function(){b.classList.remove('cp');},1500);}
         });
       });
       
-    } catch(e) {
+    }catch(e){
       clearTimeout(hardTimeout);
-      console.error('[AniTube] Fatal error:', e, e.stack);
-      els.loader.style.display = 'none';
-      if (els.nfMsg) els.nfMsg.textContent = 'Error: ' + (e.message || 'Unknown');
-      if (els.notFound) els.notFound.style.display = 'flex';
+      els.loader.style.display='none';
+      if(els.nfMsg)els.nfMsg.textContent='Error: '+(e.message||'Unknown');
+      if(els.notFound)els.notFound.style.display='flex';
     }
   });
 })();
 </script>
 
 <style>
-  .ap-wrap { min-height: 100vh; color: var(--text-primary); }
+  .ap-wrap{min-height:100vh;color:var(--text-primary)}
+  .ap-loader,.ap-nf{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6rem 1rem;text-align:center;min-height:60vh}
+  .lo-orb{position:relative;width:50px;height:50px;margin-bottom:1rem}
+  .lo-orb.sm{width:32px;height:32px;margin-bottom:0}
+  .lo-core{position:absolute;inset:15%;border-radius:50%;background:linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);box-shadow:0 0 20px rgba(192,132,252,.6);animation:loPu 1s ease infinite}
+  .lo-ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(192,132,252,.6);animation:loEx 1.2s ease-out infinite}
+  @keyframes loEx{0%{transform:scale(.5);opacity:1}100%{transform:scale(1.5);opacity:0}}
+  @keyframes loPu{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+  .ap-loader p{color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:.85rem}
+  .nf-ic{color:#c084fc;margin-bottom:1rem}
+  .ap-nf h1{font-family:'Bricolage Grotesque',sans-serif;font-size:2rem;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.5rem}
+  .ap-nf p{color:var(--text-secondary);margin-bottom:1.5rem;max-width:400px}
+  .nf-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .nf-bk,.nf-rt{display:inline-flex;align-items:center;gap:6px;padding:12px 24px;text-decoration:none;border:none;cursor:pointer;border-radius:999px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;font-size:.9rem;transition:transform .2s ease}
+  .nf-bk{background:var(--grad);color:#fff;box-shadow:0 8px 24px rgba(192,132,252,.4)}
+  .nf-rt{background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.3);color:var(--text-primary)}
+  .nf-bk:hover,.nf-rt:hover{transform:translateY(-2px)}
   
-  .ap-loader, .ap-nf {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 6rem 1rem; text-align: center; min-height: 60vh;
-  }
-  .lo-orb { position: relative; width: 50px; height: 50px; margin-bottom: 1rem; }
-  .lo-orb.sm { width: 32px; height: 32px; margin-bottom: 0.6rem; }
-  .lo-core {
-    position: absolute; inset: 15%; border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    box-shadow: 0 0 20px rgba(192, 132, 252, 0.6);
-    animation: lo-pulse 1s ease infinite;
-  }
-  .lo-ring {
-    position: absolute; inset: 0; border-radius: 50%;
-    border: 2px solid rgba(192, 132, 252, 0.6);
-    animation: lo-exp 1.2s ease-out infinite;
-  }
-  @keyframes lo-exp { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
-  @keyframes lo-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-  .ap-loader p, .ep-ld span { color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+  .ap-hero{position:relative;padding:3rem 0;overflow:hidden;min-height:480px}
+  .ap-bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:blur(35px) brightness(.3) saturate(1.3);transform:scale(1.15);opacity:.7;z-index:0}
+  .ap-fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,5,23,.55) 0%,rgba(10,5,23,.7) 60%,var(--bg-base,#0a0517) 100%);z-index:1}
+  .ap-hero-in{position:relative;z-index:2;display:grid;grid-template-columns:280px 1fr;gap:3rem;align-items:center}
+  .ap-poster{aspect-ratio:3/4.4;border-radius:18px;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,.6),0 0 0 1px rgba(192,132,252,.3)}
+  .ap-poster img{width:100%;height:100%;object-fit:cover;display:block}
   
-  .nf-ic { color: #c084fc; margin-bottom: 1rem; }
-  .ap-nf h1 {
-    font-family: var(--font-heading); font-size: 2rem;
-    background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    margin-bottom: 0.5rem;
-  }
-  .ap-nf p { color: var(--text-secondary); margin-bottom: 1.5rem; max-width: 400px; }
-  .nf-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-  .nf-bk, .nf-rt {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 12px 24px;
-    text-decoration: none; border: none; cursor: pointer;
-    border-radius: 999px; font-weight: 700; font-family: inherit; font-size: 0.9rem;
-    transition: transform 0.2s ease;
-  }
-  .nf-bk { background: var(--grad); color: #fff; box-shadow: 0 8px 24px rgba(192, 132, 252, 0.4); }
-  .nf-rt { background: rgba(192, 132, 252, 0.1); border: 1px solid rgba(192, 132, 252, 0.3); color: var(--text-primary); }
-  .nf-bk:hover, .nf-rt:hover { transform: translateY(-2px); }
+  .ap-info{min-width:0;color:#fff}
+  .ap-badges{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+  .ap-b{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:800;letter-spacing:.08em}
+  .ap-b-new{background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;box-shadow:0 4px 15px rgba(239,68,68,.4)}
+  .ap-dot{width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 6px #fff;animation:apd 1.5s ease infinite}
+  @keyframes apd{0%,100%{opacity:1}50%{opacity:.4}}
+  .ap-b-sc{background:rgba(10,5,23,.75);border:1px solid rgba(251,191,36,.5);color:#fbbf24;backdrop-filter:blur(10px)}
+  .ap-b-hd{background:rgba(125,211,252,.9);color:#0a0517}
+  .ap-b-age{background:rgba(192,132,252,.9);color:#0a0517}
   
-  .ap-hero { position: relative; padding: 3rem 0; overflow: hidden; min-height: 480px; }
-  .ap-bg {
-    position: absolute; inset: 0;
-    background-size: cover; background-position: center;
-    filter: blur(35px) brightness(0.3) saturate(1.3);
-    transform: scale(1.15); opacity: 0.7; z-index: 0;
-  }
-  .ap-fade {
-    position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(10, 5, 23, 0.55) 0%, rgba(10, 5, 23, 0.7) 60%, var(--bg-base, #0a0517) 100%);
-    z-index: 1;
-  }
-  .ap-hero-in {
-    position: relative; z-index: 2;
-    display: grid; grid-template-columns: 280px 1fr;
-    gap: 3rem; align-items: center;
-  }
-  .ap-poster {
-    aspect-ratio: 3/4.4; border-radius: 18px; overflow: hidden;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(192, 132, 252, 0.3);
-  }
-  .ap-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ap-title{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:800;line-height:1.1;letter-spacing:-.03em;margin:0 0 .75rem;color:#fff;text-shadow:0 4px 20px rgba(0,0,0,.8)}
+  .ap-meta{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.75);font-size:.9rem;font-family:'JetBrains Mono',monospace;margin-bottom:1rem;flex-wrap:wrap}
+  .mp-sep{color:rgba(192,132,252,.5)}
+  .ap-genres{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem}
+  .ap-gp{display:inline-block;padding:5px 12px;background:rgba(192,132,252,.15);border:1px solid rgba(192,132,252,.35);color:#e0b8ff;border-radius:999px;font-size:.72rem;font-weight:700;backdrop-filter:blur(10px)}
+  .ap-syno{color:rgba(255,255,255,.82);font-size:.95rem;line-height:1.65;margin:0 0 1.75rem;max-width:700px;text-shadow:0 2px 10px rgba(0,0,0,.5)}
+  .ap-actions{display:flex;gap:12px;flex-wrap:wrap}
+  .ap-btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:999px;font-family:'Bricolage Grotesque',sans-serif;font-size:.92rem;font-weight:700;cursor:pointer;transition:all .25s ease;border:none}
+  .ap-btn-p{background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);color:#fff;box-shadow:0 10px 30px rgba(192,132,252,.5)}
+  .ap-btn-p:hover{transform:translateY(-3px);box-shadow:0 14px 40px rgba(192,132,252,.65)}
+  .ap-btn-s{background:rgba(28,15,61,.7);color:#fff;border:1px solid rgba(192,132,252,.4);backdrop-filter:blur(10px)}
+  .ap-btn-s:hover{background:rgba(192,132,252,.2);transform:translateY(-3px)}
   
-  .ap-info { min-width: 0; color: #fff; }
-  .ap-badges { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
-  .ap-b {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 5px 11px; border-radius: 6px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em;
-  }
-  .ap-b-new { background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
-  .ap-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: #fff; box-shadow: 0 0 6px #fff;
-    animation: apd 1.5s ease infinite;
-  }
-  @keyframes apd { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-  .ap-b-sc { background: rgba(10, 5, 23, 0.75); border: 1px solid rgba(251, 191, 36, 0.5); color: #fbbf24; backdrop-filter: blur(10px); }
-  .ap-b-hd { background: rgba(125, 211, 252, 0.9); color: #0a0517; }
-  .ap-b-age { background: rgba(192, 132, 252, 0.9); color: #0a0517; }
+  /* ═══ FULL WIDTH VIDEO PLAYER ═══ */
+  .ap-player{padding:2rem 0}
+  .pl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+  .pl-close{background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.3);color:var(--text-primary);width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s ease}
+  .pl-close:hover{background:rgba(239,68,68,.2);color:#ef4444;transform:rotate(90deg)}
   
-  .ap-title {
-    font-family: var(--font-heading);
-    font-size: clamp(1.8rem, 4vw, 3rem);
-    font-weight: 800; line-height: 1.1;
-    letter-spacing: -0.03em;
-    margin: 0 0 0.75rem; color: #fff;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+  .pl-wrap{
+    width:100%;
+    border-radius:20px;
+    overflow:hidden;
+    box-shadow:0 20px 50px rgba(0,0,0,.5),0 0 0 1px rgba(192,132,252,.2);
+    background:#000;
   }
-  .ap-meta {
-    display: flex; align-items: center; gap: 12px;
-    color: rgba(255, 255, 255, 0.75);
-    font-size: 0.9rem; font-family: 'JetBrains Mono', monospace;
-    margin-bottom: 1rem; flex-wrap: wrap;
-  }
-  .mp-sep { color: rgba(192, 132, 252, 0.5); }
-  .ap-genres { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.25rem; }
-  .ap-gp {
-    display: inline-block; padding: 5px 12px;
-    background: rgba(192, 132, 252, 0.15);
-    border: 1px solid rgba(192, 132, 252, 0.35);
-    color: #e0b8ff; border-radius: 999px;
-    font-size: 0.72rem; font-weight: 700; backdrop-filter: blur(10px);
-  }
-  .ap-syno {
-    color: rgba(255, 255, 255, 0.82);
-    font-size: 0.95rem; line-height: 1.65;
-    margin: 0 0 1.75rem; max-width: 700px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-  }
-  .ap-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-  .ap-btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 13px 26px; border-radius: 999px;
-    font-family: var(--font-heading); font-size: 0.92rem; font-weight: 700;
-    cursor: pointer; transition: all 0.25s ease; border: none;
-  }
-  .ap-btn-p {
-    background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
-    color: #fff; box-shadow: 0 10px 30px rgba(192, 132, 252, 0.5);
-  }
-  .ap-btn-p:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(192, 132, 252, 0.65); }
-  .ap-btn-s {
-    background: rgba(28, 15, 61, 0.7); color: #fff;
-    border: 1px solid rgba(192, 132, 252, 0.4); backdrop-filter: blur(10px);
-  }
-  .ap-btn-s:hover { background: rgba(192, 132, 252, 0.2); transform: translateY(-3px); }
   
-  .ap-player { padding: 2rem 0; }
-  .pl-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
-  .pl-close {
-    background: rgba(192, 132, 252, 0.1); border: 1px solid rgba(192, 132, 252, 0.3);
-    color: var(--text-primary); width: 38px; height: 38px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: all 0.2s ease;
+  .pl-frame{
+    position:relative;
+    width:100% !important;
+    aspect-ratio:16/9;
+    background:#000;
+    overflow:hidden;
   }
-  .pl-close:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; transform: rotate(90deg); }
-  .pl-wrap { border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); background: #000; }
-  .pl-frame { position: relative; aspect-ratio: 16/9; background: #000; }
-  .pl-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
-  .pl-load {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;
-  }
-  .pl-brand {
-    position: absolute; top: 12px; left: 12px;
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 5px 11px; background: rgba(10, 5, 23, 0.85);
-    backdrop-filter: blur(12px); border: 1px solid rgba(192, 132, 252, 0.3);
-    border-radius: 999px; color: #e879f9;
-    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 700;
-    z-index: 10; pointer-events: none; opacity: 0.9;
-  }
-  .pl-brand span { color: #fff; }
   
-  .ap-details { padding: 3rem 0; }
-  .ap-grid { display: grid; grid-template-columns: 1fr 320px; gap: 2.5rem; }
-  .ap-sec { margin-bottom: 2.5rem; }
-  .ap-sh {
-    font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800;
-    margin: 0 0 1rem; color: var(--text-primary);
-    padding-bottom: 0.6rem; border-bottom: 2px solid rgba(192, 132, 252, 0.15);
-    display: inline-block; position: relative;
+  .pl-frame iframe{
+    position:absolute !important;
+    top:0 !important;
+    left:0 !important;
+    width:100% !important;
+    height:100% !important;
+    border:0 !important;
+    display:block !important;
   }
-  .ap-sh::after {
-    content: ''; position: absolute; left: 0; bottom: -2px;
-    width: 40px; height: 2px; background: var(--grad); border-radius: 2px;
-  }
-  .ap-desc { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.75; white-space: pre-wrap; }
   
-  .ap-seasons { display: flex; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap; }
-  .ap-st {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 10px 18px;
-    background: rgba(28, 15, 61, 0.5);
-    border: 1px solid var(--border-color, rgba(192, 132, 252, 0.2));
-    border-radius: 12px;
-    color: var(--text-secondary);
-    font-family: inherit; font-size: 0.85rem; font-weight: 600;
-    cursor: pointer; transition: all 0.25s ease;
-  }
-  .ap-st:hover { background: rgba(192, 132, 252, 0.12); color: var(--text-primary); }
-  .ap-st.active {
-    background: var(--grad); color: #fff; border-color: transparent;
-    box-shadow: 0 6px 20px rgba(192, 132, 252, 0.35);
-  }
-  .st-c {
-    font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; opacity: 0.8;
-    background: rgba(0, 0, 0, 0.2); padding: 2px 8px; border-radius: 6px;
-  }
-  .ap-st.active .st-c { background: rgba(255, 255, 255, 0.2); }
+  .pl-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'JetBrains Mono',monospace;font-size:.85rem;background:#000}
+  .pl-brand{position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:6px;padding:5px 11px;background:rgba(10,5,23,.85);backdrop-filter:blur(12px);border:1px solid rgba(192,132,252,.3);border-radius:999px;color:#e879f9;font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:700;z-index:10;pointer-events:none;opacity:.9}
+  .pl-brand span{color:#fff}
   
-  .ap-eps { display: grid; grid-template-columns: 1fr; gap: 12px; }
-  .ep-i {
-    display: flex; gap: 14px; padding: 12px;
-    background: rgba(28, 15, 61, 0.4);
-    border: 1px solid rgba(192, 132, 252, 0.12);
-    border-radius: 14px; cursor: pointer; transition: all 0.25s ease;
-  }
-  .ep-i:hover {
-    background: rgba(192, 132, 252, 0.1);
-    border-color: rgba(192, 132, 252, 0.4);
-    transform: translateX(4px);
-  }
-  .ep-th {
-    position: relative; width: 160px; min-width: 160px;
-    aspect-ratio: 16/9; border-radius: 10px; overflow: hidden;
-    background: rgba(0, 0, 0, 0.3);
-  }
-  .ep-th img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.35s ease; }
-  .ep-i:hover .ep-th img { transform: scale(1.08); }
-  .ep-nt { width: 100%; height: 100%; background: linear-gradient(135deg, rgba(192, 132, 252, 0.2), rgba(125, 211, 252, 0.15)); }
-  .ep-pl {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%) scale(0.7);
-    width: 44px; height: 44px; border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; padding-left: 3px;
-    box-shadow: 0 6px 18px rgba(192, 132, 252, 0.5);
-    opacity: 0; transition: all 0.3s ease;
-  }
-  .ep-i:hover .ep-pl { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  .ep-nm {
-    position: absolute; top: 6px; left: 6px;
-    background: rgba(10, 5, 23, 0.85); color: #fff;
-    padding: 3px 8px; border-radius: 5px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem; font-weight: 800; letter-spacing: 0.05em;
-    backdrop-filter: blur(8px);
-  }
-  .ep-in { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
-  .ep-t {
-    font-family: var(--font-heading); font-size: 0.95rem; font-weight: 700;
-    color: var(--text-primary); margin: 0 0 4px; line-height: 1.3;
-  }
-  .ep-d { color: var(--text-muted); font-size: 0.78rem; line-height: 1.5; margin: 0 0 6px; }
-  .ep-m { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-muted); opacity: 0.75; }
-  .ep-ld { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 2rem; color: var(--text-muted); }
-  .ep-empty { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.9rem; background: rgba(192, 132, 252, 0.05); border-radius: 12px; }
+  .ap-details{padding:3rem 0}
+  .ap-grid{display:grid;grid-template-columns:1fr 320px;gap:2.5rem}
+  .ap-sec{margin-bottom:2.5rem}
+  .ap-sh{font-family:'Bricolage Grotesque',sans-serif;font-size:1.4rem;font-weight:800;margin:0 0 1rem;color:var(--text-primary);padding-bottom:.6rem;border-bottom:2px solid rgba(192,132,252,.15);display:inline-block;position:relative}
+  .ap-sh::after{content:'';position:absolute;left:0;bottom:-2px;width:40px;height:2px;background:var(--grad);border-radius:2px}
+  .ap-desc{color:var(--text-secondary);font-size:.95rem;line-height:1.75;white-space:pre-wrap}
   
-  .ap-side { display: flex; flex-direction: column; gap: 1.25rem; }
-  .ap-card {
-    background: rgba(28, 15, 61, 0.5);
-    border: 1px solid rgba(192, 132, 252, 0.15);
-    border-radius: 16px; padding: 1.25rem;
-    backdrop-filter: blur(10px);
-  }
-  .ac-t {
-    font-family: var(--font-heading); font-size: 1rem; font-weight: 800;
-    margin: 0 0 1rem; color: var(--text-primary);
-    padding-bottom: 0.5rem; border-bottom: 1px solid rgba(192, 132, 252, 0.15);
-  }
-  .ac-list { display: flex; flex-direction: column; gap: 10px; }
-  .ir { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; font-size: 0.82rem; }
-  .ir-l {
-    color: var(--text-muted); font-weight: 600;
-    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
-    letter-spacing: 0.05em; text-transform: uppercase; min-width: 70px;
-  }
-  .ir-v { color: var(--text-primary); text-align: right; font-weight: 500; }
+  .ap-seasons{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap}
+  .ap-st{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:rgba(28,15,61,.5);border:1px solid var(--border-color,rgba(192,132,252,.2));border-radius:12px;color:var(--text-secondary);font-family:'Bricolage Grotesque',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .25s ease}
+  .ap-st:hover{background:rgba(192,132,252,.12);color:var(--text-primary)}
+  .ap-st.active{background:var(--grad);color:#fff;border-color:transparent;box-shadow:0 6px 20px rgba(192,132,252,.35)}
+  .st-c{font-family:'JetBrains Mono',monospace;font-size:.7rem;opacity:.8;background:rgba(0,0,0,.2);padding:2px 8px;border-radius:6px}
+  .ap-st.active .st-c{background:rgba(255,255,255,.2)}
   
-  .ap-stream {
-    display: flex; align-items: center; gap: 10px;
-    padding: 8px 10px;
-    background: rgba(192, 132, 252, 0.06);
-    border: 1px solid rgba(192, 132, 252, 0.15);
-    border-radius: 10px; text-decoration: none;
-    color: var(--text-primary);
-    font-size: 0.82rem; font-weight: 600;
-    transition: all 0.2s ease;
-  }
-  .ap-stream:hover { background: rgba(192, 132, 252, 0.15); transform: translateX(3px); }
-  .st-lg {
-    width: 32px; height: 32px; border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--font-heading); font-weight: 800; font-size: 0.72rem;
-    flex-shrink: 0;
-  }
-  .st-lg.cr { background: linear-gradient(135deg, #ff6600, #ff8800); color: #fff; }
-  .st-lg.nf { background: #e50914; color: #fff; }
-  .st-lg.hu { background: #1ce783; color: #000; font-size: 0.6rem; }
+  /* ═══ PREMIUM EPISODE CARDS ═══ */
+  .ap-eps{display:grid;grid-template-columns:1fr;gap:12px}
   
-  .ap-share { display: flex; gap: 8px; }
-  .sh-btn {
-    flex: 1; padding: 10px;
-    background: rgba(192, 132, 252, 0.08);
-    border: 1px solid rgba(192, 132, 252, 0.2);
-    border-radius: 10px; color: var(--text-secondary);
-    cursor: pointer; transition: all 0.2s ease;
-    display: flex; align-items: center; justify-content: center;
+  .ep-i{
+    display:flex;gap:14px;padding:12px;
+    background:rgba(28,15,61,.4);
+    border:1px solid rgba(192,132,252,.15);
+    border-radius:16px;
+    cursor:pointer;transition:all .3s ease;
   }
-  .sh-btn:hover { background: var(--grad); color: #fff; border-color: transparent; }
-  .sh-btn.cp { background: #10b981; color: #fff; border-color: transparent; }
+  .ep-i:hover{
+    background:rgba(192,132,252,.08);
+    border-color:rgba(232,121,249,.5);
+    transform:translateX(6px);
+    box-shadow:0 8px 25px rgba(192,132,252,.15),0 0 0 1px rgba(232,121,249,.3);
+  }
   
-  .ap-related { padding: 2rem 0 4rem; }
-  .rel-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; }
-  .rel-c { text-decoration: none; color: inherit; transition: transform 0.3s ease; }
-  .rel-c:hover { transform: translateY(-6px); }
-  .rc-p {
-    position: relative; aspect-ratio: 3/4.4;
-    border-radius: 12px; overflow: hidden;
-    background: rgba(28, 15, 61, 0.5);
-    margin-bottom: 8px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(192, 132, 252, 0.1);
-    transition: all 0.3s ease;
+  .ep-th{
+    position:relative;width:180px;min-width:180px;
+    aspect-ratio:16/9;border-radius:12px;overflow:hidden;
+    background:rgba(0,0,0,.4);
+    border:1px solid rgba(192,132,252,.2);
   }
-  .rel-c:hover .rc-p { box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5), 0 0 0 1.5px rgba(232, 121, 249, 0.6); }
-  .rc-p img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
-  .rel-c:hover .rc-p img { transform: scale(1.08); }
-  .rc-pl {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%) scale(0.6);
-    width: 44px; height: 44px; border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; padding-left: 3px;
-    box-shadow: 0 6px 20px rgba(192, 132, 252, 0.5);
-    opacity: 0; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  .rel-c:hover .rc-pl { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  .rc-t {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.82rem; font-weight: 600;
-    color: var(--text-primary); line-height: 1.3;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    padding: 0 2px;
-  }
-  .rc-no { width: 100%; height: 100%; background: linear-gradient(135deg, rgba(192, 132, 252, 0.15), rgba(125, 211, 252, 0.1)); }
-  .rel-sk {
-    aspect-ratio: 3/4.4; border-radius: 12px;
-    background: linear-gradient(90deg, rgba(192, 132, 252, 0.05) 25%, rgba(192, 132, 252, 0.12) 50%, rgba(192, 132, 252, 0.05) 75%);
-    background-size: 200% 100%;
-    animation: rk 1.5s infinite;
-  }
-  @keyframes rk { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+  .ep-th img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+  .ep-i:hover .ep-th img{transform:scale(1.1)}
+  .ep-nt{width:100%;height:100%;background:linear-gradient(135deg,rgba(192,132,252,.2),rgba(125,211,252,.15));display:flex;align-items:center;justify-content:center}
   
-  @media (max-width: 1024px) {
-    .ap-hero-in { grid-template-columns: 220px 1fr; gap: 2rem; }
-    .ap-grid { grid-template-columns: 1fr; gap: 1.5rem; }
-    .rel-grid { grid-template-columns: repeat(4, 1fr); }
+  .ep-ov{position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,5,23,.7) 100%);opacity:0;transition:opacity .3s ease;pointer-events:none;z-index:1}
+  .ep-i:hover .ep-ov{opacity:1}
+  
+  .ep-pl-wrap{
+    position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%) scale(.6);
+    width:52px;height:52px;
+    z-index:3;
+    opacity:0;
+    transition:all .3s cubic-bezier(.34,1.56,.64,1);
   }
-  @media (max-width: 768px) {
-    .ap-hero { padding: 2rem 0; min-height: auto; }
-    .ap-hero-in { grid-template-columns: 1fr; gap: 1.5rem; text-align: center; }
-    .ap-poster { max-width: 200px; margin: 0 auto; }
-    .ap-badges, .ap-meta, .ap-genres, .ap-actions { justify-content: center; }
-    .rel-grid { grid-template-columns: repeat(3, 1fr); }
-    .ep-th { width: 120px; min-width: 120px; }
+  .ep-i:hover .ep-pl-wrap{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  
+  .ep-pl{
+    position:absolute;inset:0;
+    border-radius:50%;
+    background:linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;padding-left:3px;
+    box-shadow:0 8px 25px rgba(192,132,252,.6),0 0 30px rgba(232,121,249,.4);
+    z-index:2;
   }
-  @media (max-width: 640px) {
-    .rel-grid { grid-template-columns: repeat(2, 1fr); }
-    .ap-btn { padding: 11px 20px; font-size: 0.85rem; }
-    .ep-i { flex-direction: column; }
-    .ep-th { width: 100%; min-width: 0; }
-    .ap-sh { font-size: 1.2rem; }
+  .ep-pl-ring{
+    position:absolute;inset:0;
+    border-radius:50%;
+    border:2px solid rgba(192,132,252,.7);
+    animation:epRing 2s ease-out infinite;
+  }
+  @keyframes epRing{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.6);opacity:0}}
+  
+  .ep-nm{
+    position:absolute;top:8px;left:8px;
+    background:rgba(10,5,23,.9);color:#fff;
+    padding:4px 9px;border-radius:6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.64rem;font-weight:800;letter-spacing:.06em;
+    backdrop-filter:blur(8px);z-index:3;
+    border:1px solid rgba(192,132,252,.3);
+  }
+  .ep-dur{
+    position:absolute;bottom:8px;right:8px;
+    background:rgba(10,5,23,.85);color:#fff;
+    padding:3px 8px;border-radius:5px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:.6rem;font-weight:700;
+    backdrop-filter:blur(8px);z-index:3;
+  }
+  
+  .ep-in{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;padding:4px 0}
+  .ep-t{font-family:'Bricolage Grotesque',sans-serif;font-size:1rem;font-weight:700;color:var(--text-primary);margin:0 0 6px;line-height:1.3;transition:color .25s ease}
+  .ep-i:hover .ep-t{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .ep-d{color:var(--text-muted);font-size:.82rem;line-height:1.55;margin:0 0 8px}
+  .ep-m{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text-muted);opacity:.75}
+  
+  .ep-ld{display:flex;align-items:center;justify-content:center;gap:12px;padding:2rem;color:var(--text-muted)}
+  .ep-ld span{font-family:'JetBrains Mono',monospace;font-size:.85rem}
+  .ep-empty{text-align:center;padding:2rem;color:var(--text-muted);font-size:.9rem;background:rgba(192,132,252,.05);border:1px dashed rgba(192,132,252,.2);border-radius:12px}
+  
+  .ap-side{display:flex;flex-direction:column;gap:1.25rem}
+  .ap-card{background:rgba(28,15,61,.5);border:1px solid rgba(192,132,252,.15);border-radius:16px;padding:1.25rem;backdrop-filter:blur(10px)}
+  .ac-t{font-family:'Bricolage Grotesque',sans-serif;font-size:1rem;font-weight:800;margin:0 0 1rem;color:var(--text-primary);padding-bottom:.5rem;border-bottom:1px solid rgba(192,132,252,.15)}
+  .ac-list{display:flex;flex-direction:column;gap:10px}
+  .ir{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;font-size:.82rem}
+  .ir-l{color:var(--text-muted);font-weight:600;font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;min-width:70px}
+  .ir-v{color:var(--text-primary);text-align:right;font-weight:500}
+  
+  .ap-stream{display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(192,132,252,.06);border:1px solid rgba(192,132,252,.15);border-radius:10px;text-decoration:none;color:var(--text-primary);font-size:.82rem;font-weight:600;transition:all .2s ease}
+  .ap-stream:hover{background:rgba(192,132,252,.15);transform:translateX(3px)}
+  .st-lg{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:.72rem;flex-shrink:0}
+  .st-lg.cr{background:linear-gradient(135deg,#ff6600,#ff8800);color:#fff}
+  .st-lg.nf{background:#e50914;color:#fff}
+  .st-lg.hu{background:#1ce783;color:#000;font-size:.6rem}
+  
+  .ap-share{display:flex;gap:8px}
+  .sh-btn{flex:1;padding:10px;background:rgba(192,132,252,.08);border:1px solid rgba(192,132,252,.2);border-radius:10px;color:var(--text-secondary);cursor:pointer;transition:all .2s ease;display:flex;align-items:center;justify-content:center}
+  .sh-btn:hover{background:var(--grad);color:#fff;border-color:transparent}
+  .sh-btn.cp{background:#10b981;color:#fff;border-color:transparent}
+  
+  .ap-related{padding:2rem 0 4rem}
+  .rel-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:1rem}
+  .rel-c{text-decoration:none;color:inherit;transition:transform .3s ease}
+  .rel-c:hover{transform:translateY(-6px)}
+  .rc-p{position:relative;aspect-ratio:3/4.4;border-radius:14px;overflow:hidden;background:rgba(28,15,61,.5);margin-bottom:8px;box-shadow:0 8px 20px rgba(0,0,0,.4);border:1px solid rgba(192,132,252,.15);transition:all .3s ease}
+  .rel-c:hover .rc-p{border-color:rgba(232,121,249,.6);box-shadow:0 15px 30px rgba(0,0,0,.5),0 0 20px rgba(192,132,252,.3)}
+  .rc-p img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+  .rel-c:hover .rc-p img{transform:scale(1.08)}
+  .rc-pl{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.6);width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#c084fc,#e879f9);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:3px;box-shadow:0 6px 20px rgba(192,132,252,.5);opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+  .rel-c:hover .rc-pl{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  .rc-t{font-family:'Bricolage Grotesque',sans-serif;font-size:.82rem;font-weight:600;color:var(--text-primary);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding:0 2px}
+  .rc-no{width:100%;height:100%;background:linear-gradient(135deg,rgba(192,132,252,.15),rgba(125,211,252,.1))}
+  .rel-sk{aspect-ratio:3/4.4;border-radius:14px;background:linear-gradient(90deg,rgba(192,132,252,.05) 25%,rgba(192,132,252,.12) 50%,rgba(192,132,252,.05) 75%);background-size:200% 100%;animation:rkS 1.5s infinite}
+  @keyframes rkS{from{background-position:-200% 0}to{background-position:200% 0}}
+  
+  @media(max-width:1024px){
+    .ap-hero-in{grid-template-columns:220px 1fr;gap:2rem}
+    .ap-grid{grid-template-columns:1fr;gap:1.5rem}
+    .rel-grid{grid-template-columns:repeat(4,1fr)}
+  }
+  @media(max-width:768px){
+    .ap-hero{padding:2rem 0;min-height:auto}
+    .ap-hero-in{grid-template-columns:1fr;gap:1.5rem;text-align:center}
+    .ap-poster{max-width:200px;margin:0 auto}
+    .ap-badges,.ap-meta,.ap-genres,.ap-actions{justify-content:center}
+    .rel-grid{grid-template-columns:repeat(3,1fr)}
+    .ep-th{width:140px;min-width:140px}
+  }
+  @media(max-width:640px){
+    .rel-grid{grid-template-columns:repeat(2,1fr)}
+    .ap-btn{padding:11px 20px;font-size:.85rem}
+    .ep-i{flex-direction:column;gap:10px}
+    .ep-th{width:100%;min-width:0}
+    .ap-sh{font-size:1.2rem}
+    .ep-pl-wrap{opacity:1;transform:translate(-50%,-50%) scale(.85);width:44px;height:44px}
   }
 </style>
