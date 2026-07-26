@@ -18,6 +18,7 @@ const { slug } = Astro.params;
     <div id="loader" class="ap-loader">
       <div class="lo-orb"><div class="lo-ring"></div><div class="lo-core"></div></div>
       <p id="loaderText">Loading anime details...</p>
+      <p id="loaderSubtext" style="font-size:0.7rem;opacity:0.5;margin-top:0.5rem;"></p>
     </div>
     
     <div id="notFound" class="ap-nf" style="display:none;">
@@ -153,281 +154,383 @@ const { slug } = Astro.params;
 </BaseLayout>
 
 <script is:inline define:vars={{ slug }}>
+console.log('[AniTube] Page script starting for slug:', slug);
+
 (async function(){
-  var loader=document.getElementById('loader'),
-      loaderText=document.getElementById('loaderText'),
-      notFound=document.getElementById('notFound'),
-      nfMsg=document.getElementById('nfMsg'),
-      content=document.getElementById('content'),
-      apBg=document.getElementById('apBg'),
-      posterImg=document.getElementById('posterImg'),
-      apTitle=document.getElementById('apTitle'),
-      apMeta=document.getElementById('apMeta'),
-      apGenres=document.getElementById('apGenres'),
-      apSyno=document.getElementById('apSyno'),
-      apBadges=document.getElementById('apBadges'),
-      fullSyno=document.getElementById('fullSyno'),
-      infoList=document.getElementById('infoList'),
-      seasonsTabs=document.getElementById('seasonsTabs'),
-      episodesList=document.getElementById('episodesList'),
-      relatedGrid=document.getElementById('relatedGrid'),
-      playerBlock=document.getElementById('playerBlock'),
-      playerFrame=document.getElementById('playerFrame'),
-      playerTitle=document.getElementById('playerTitle'),
-      closePlayer=document.getElementById('closePlayer'),
-      watchBtn=document.getElementById('watchBtn'),
-      infoBtn=document.getElementById('infoBtn'),
-      detailsBlock=document.getElementById('detailsBlock');
+  var loader, notFound, content, apBg, posterImg, apTitle, apMeta, apGenres, apSyno, apBadges,
+      fullSyno, infoList, seasonsTabs, episodesList, relatedGrid, playerBlock, playerFrame,
+      playerTitle, closePlayer, watchBtn, infoBtn, detailsBlock, loaderText, loaderSubtext, nfMsg;
+  
+  function getEl(id) { return document.getElementById(id); }
+  
+  function initElements() {
+    loader = getEl('loader');
+    loaderText = getEl('loaderText');
+    loaderSubtext = getEl('loaderSubtext');
+    notFound = getEl('notFound');
+    nfMsg = getEl('nfMsg');
+    content = getEl('content');
+    apBg = getEl('apBg');
+    posterImg = getEl('posterImg');
+    apTitle = getEl('apTitle');
+    apMeta = getEl('apMeta');
+    apGenres = getEl('apGenres');
+    apSyno = getEl('apSyno');
+    apBadges = getEl('apBadges');
+    fullSyno = getEl('fullSyno');
+    infoList = getEl('infoList');
+    seasonsTabs = getEl('seasonsTabs');
+    episodesList = getEl('episodesList');
+    relatedGrid = getEl('relatedGrid');
+    playerBlock = getEl('playerBlock');
+    playerFrame = getEl('playerFrame');
+    playerTitle = getEl('playerTitle');
+    closePlayer = getEl('closePlayer');
+    watchBtn = getEl('watchBtn');
+    infoBtn = getEl('infoBtn');
+    detailsBlock = getEl('detailsBlock');
+  }
 
-  function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})}
-  function fmt(d){if(!d)return'N/A';var x=new Date(d);return x.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});}
+  function esc(s) {
+    try { return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+    catch(e) { return ''; }
+  }
+  
+  function fmt(d) {
+    try {
+      if (!d) return 'N/A';
+      var x = new Date(d);
+      if (isNaN(x.getTime())) return 'N/A';
+      return x.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+    } catch(e) { return 'N/A'; }
+  }
+  
+  function capitalize(s) {
+    try {
+      if (!s) return '';
+      var str = String(s).replace(/_/g, ' ');
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    } catch(e) { return String(s || ''); }
+  }
 
-  async function fetchJSON(url, timeoutMs){
+  async function fetchJSON(url, timeoutMs) {
     timeoutMs = timeoutMs || 10000;
-    try{
+    console.log('[AniTube] Fetching:', url);
+    try {
       var controller = new AbortController();
       var timer = setTimeout(function(){ controller.abort(); }, timeoutMs);
       var r = await fetch(url, { signal: controller.signal });
       clearTimeout(timer);
-      if(!r.ok) return null;
-      return await r.json();
-    }catch(e){
-      console.warn('fetchJSON failed:', url, e.message);
+      if (!r.ok) {
+        console.warn('[AniTube] HTTP error:', r.status, 'for', url);
+        return null;
+      }
+      var j = await r.json();
+      console.log('[AniTube] Response OK for:', url);
+      return j;
+    } catch(e) {
+      console.error('[AniTube] fetchJSON failed:', url, e.message);
       return null;
     }
   }
 
-  // ─── MULTI-STRATEGY ANIME FETCH ───
-  async function loadAnimeData(){
-    // Strategy 1: Direct detail lookup
-    loaderText.textContent = 'Loading anime details...';
-    var j = await fetchJSON('/api/anime?action=detail&slug=' + encodeURIComponent(slug), 8000);
-    if (j && j.success && j.anime) return j.anime;
-
-    // Strategy 2: Fallback to search
-    loaderText.textContent = 'Searching for anime...';
-    var searchTerm = slug.replace(/-/g, ' ');
-    var s = await fetchJSON('/api/anime?action=search&q=' + encodeURIComponent(searchTerm), 8000);
-    if (s && s.success && s.anime && s.anime.length > 0) {
-      // Try exact slug match first
-      var exact = s.anime.find(function(a){ return a.slug === slug; });
-      if (exact) {
-        // Get full detail using ID
-        var full = await fetchJSON('/api/anime?action=detail&id=' + exact.id, 5000);
-        if (full && full.success) return full.anime;
-        return exact; // fallback to basic info
-      }
-      // Otherwise use first result
-      var first = s.anime[0];
-      var fullFirst = await fetchJSON('/api/anime?action=detail&id=' + first.id, 5000);
-      if (fullFirst && fullFirst.success) return fullFirst.anime;
-      return first;
+  async function loadAnimeData() {
+    if (loaderText) loaderText.textContent = 'Loading anime details...';
+    if (loaderSubtext) loaderSubtext.textContent = 'Trying direct lookup...';
+    
+    var j = await fetchJSON('/api/anime?action=detail&slug=' + encodeURIComponent(slug), 10000);
+    if (j && j.success && j.anime) {
+      console.log('[AniTube] Detail success:', j.anime.title);
+      return j.anime;
     }
 
-    // Strategy 3: Try just the first significant word
-    loaderText.textContent = 'Searching with shorter query...';
-    var words = slug.split('-').filter(function(w){ return w.length > 2; });
-    if (words.length > 0) {
-      var s2 = await fetchJSON('/api/anime?action=search&q=' + encodeURIComponent(words[0]), 8000);
-      if (s2 && s2.success && s2.anime && s2.anime.length > 0) {
-        var pick = s2.anime.find(function(a){ return a.slug === slug; }) || s2.anime[0];
-        var fullPick = await fetchJSON('/api/anime?action=detail&id=' + pick.id, 5000);
-        if (fullPick && fullPick.success) return fullPick.anime;
-        return pick;
-      }
+    if (loaderText) loaderText.textContent = 'Searching for anime...';
+    if (loaderSubtext) loaderSubtext.textContent = 'Trying search...';
+    var searchTerm = slug.replace(/-/g, ' ');
+    var s = await fetchJSON('/api/anime?action=search&q=' + encodeURIComponent(searchTerm), 10000);
+    if (s && s.success && s.anime && s.anime.length > 0) {
+      var exact = s.anime.find(function(a){ return a.slug === slug; });
+      var pick = exact || s.anime[0];
+      var full = await fetchJSON('/api/anime?action=detail&id=' + pick.id, 8000);
+      if (full && full.success && full.anime) return full.anime;
+      return pick;
     }
 
     return null;
   }
 
-  async function playVideo(query, title){
-    playerBlock.style.display='block';
-    playerTitle.innerHTML='<span class="grad-text">'+esc(title||'Now Playing')+'</span>';
-    playerFrame.innerHTML='<div class="pl-load">Loading video...</div>';
-    setTimeout(function(){playerBlock.scrollIntoView({behavior:'smooth',block:'start'});},50);
+  async function playVideo(query, title) {
+    try {
+      if (!playerBlock || !playerFrame) return;
+      playerBlock.style.display = 'block';
+      if (playerTitle) playerTitle.innerHTML = '<span class="grad-text">' + esc(title || 'Now Playing') + '</span>';
+      playerFrame.innerHTML = '<div class="pl-load">Loading video...</div>';
+      setTimeout(function(){ playerBlock.scrollIntoView({ behavior:'smooth', block:'start' }); }, 50);
+      
+      var j = await fetchJSON('/api/youtube?q=' + encodeURIComponent(query));
+      var vid = (j && j.success && j.primary && j.primary.videoId) ? j.primary.videoId : null;
+      
+      if (vid) {
+        playerFrame.innerHTML =
+          '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · HD</span></div>' +
+          '<iframe src="https://www.youtube.com/embed/' + vid + '?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3" ' +
+          'frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>';
+      } else {
+        playerFrame.innerHTML =
+          '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · HD</span></div>' +
+          '<iframe src="https://www.youtube.com/embed?listType=search&list=' + encodeURIComponent(query) + '" ' +
+          'frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>';
+      }
+    } catch(e) {
+      console.error('[AniTube] playVideo error:', e);
+    }
+  }
+
+  function safeRender(a) {
+    console.log('[AniTube] Starting render for:', a.title);
     
-    var j=await fetchJSON('/api/youtube?q='+encodeURIComponent(query));
-    var vid=(j&&j.success&&j.primary&&j.primary.videoId)?j.primary.videoId:null;
+    try {
+      document.title = (a.title || 'Anime') + ' - AniTube Buzz';
+    } catch(e) { console.warn('title fail:', e); }
     
-    if(vid){
-      playerFrame.innerHTML=
-        '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · HD</span></div>'+
-        '<iframe src="https://www.youtube.com/embed/'+vid+'?autoplay=1&rel=0&modestbranding=1&iv_load_policy=3" '+
-        'frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>';
+    try {
+      if (a.image) {
+        if (apBg) apBg.style.backgroundImage = 'url(' + a.image + ')';
+        if (posterImg) { posterImg.src = a.image; posterImg.alt = a.title || ''; }
+      }
+    } catch(e) { console.warn('bg/poster fail:', e); }
+    
+    try {
+      if (apTitle) apTitle.textContent = a.title || 'Untitled';
+    } catch(e) { console.warn('title text fail:', e); }
+    
+    try {
+      var b = [];
+      if (a.status === 'current') b.push('<span class="ap-b ap-b-new"><span class="ap-dot"></span>AIRING NOW</span>');
+      if (a.score != null) b.push('<span class="ap-b ap-b-sc"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + Number(a.score).toFixed(1) + '</span>');
+      b.push('<span class="ap-b ap-b-hd">HD</span>');
+      if (a.ageRating) b.push('<span class="ap-b ap-b-age">' + esc(a.ageRating) + '</span>');
+      if (apBadges) apBadges.innerHTML = b.join('');
+    } catch(e) { console.warn('badges fail:', e); }
+    
+    try {
+      var m = [];
+      if (a.year) m.push(String(a.year));
+      if (a.episodes && a.episodes > 0) m.push(a.episodes + ' Episodes');
+      if (a.subtype) m.push(String(a.subtype));
+      if (a.status) m.push(capitalize(a.status));
+      if (apMeta) apMeta.innerHTML = m.map(function(x){ return '<span>' + esc(x) + '</span>'; }).join('<span class="mp-sep">·</span>');
+    } catch(e) { console.warn('meta fail:', e); }
+    
+    try {
+      if (a.genres && Array.isArray(a.genres) && a.genres.length > 0 && apGenres) {
+        apGenres.innerHTML = a.genres.slice(0, 6).map(function(g){ return '<span class="ap-gp">' + esc(g) + '</span>'; }).join('');
+      }
+    } catch(e) { console.warn('genres fail:', e); }
+    
+    try {
+      var syn = a.description || a.synopsis || 'No synopsis available.';
+      if (apSyno) apSyno.textContent = syn.length > 250 ? syn.slice(0, 250) + '...' : syn;
+      if (fullSyno) fullSyno.textContent = syn;
+    } catch(e) { console.warn('synopsis fail:', e); }
+    
+    try {
+      var rows = [
+        ['Type', a.subtype || 'TV'],
+        ['Episodes', (a.episodes && a.episodes > 0) ? a.episodes : 'Unknown'],
+        ['Status', a.status ? capitalize(a.status) : 'Unknown'],
+        ['Aired', a.startDate ? (fmt(a.startDate) + (a.endDate ? ' to ' + fmt(a.endDate) : ' to ?')) : 'Unknown'],
+        ['Score', a.score != null ? ('⭐ ' + Number(a.score).toFixed(1) + ' / 10') : 'N/A'],
+        ['Rating', a.ageRating || 'Not Rated'],
+        ['Genres', (a.genres && a.genres.length) ? a.genres.join(', ') : 'N/A']
+      ];
+      if (infoList) {
+        infoList.innerHTML = rows.map(function(r){
+          return '<div class="ir"><span class="ir-l">' + esc(r[0]) + '</span><span class="ir-v">' + esc(String(r[1])) + '</span></div>';
+        }).join('');
+      }
+    } catch(e) { console.warn('info list fail:', e); }
+    
+    try {
+      var qEnc = encodeURIComponent(a.title || '');
+      document.querySelectorAll('.ap-stream').forEach(function(el){
+        var p = el.dataset.platform, u = '#';
+        if (p === 'crunchyroll') u = 'https://www.crunchyroll.com/search?q=' + qEnc;
+        else if (p === 'netflix') u = 'https://www.netflix.com/search?q=' + qEnc;
+        else if (p === 'hulu') u = 'https://www.hulu.com/search?q=' + qEnc;
+        el.href = u; el.target = '_blank'; el.rel = 'noopener';
+      });
+    } catch(e) { console.warn('streams fail:', e); }
+    
+    console.log('[AniTube] Render complete');
+  }
+
+  function renderEpisodes(eps, title) {
+    try {
+      if (!episodesList) return;
+      if (!eps || !eps.length) {
+        episodesList.innerHTML = '<div class="ep-empty">Episodes not available yet. Click Watch Now for the trailer!</div>';
+        if (seasonsTabs) seasonsTabs.style.display = 'none';
+        return;
+      }
+      var seasons = {};
+      eps.forEach(function(e){ var s = e.seasonNumber || 1; if (!seasons[s]) seasons[s] = []; seasons[s].push(e); });
+      var nums = Object.keys(seasons).map(Number).sort(function(a,b){ return a-b; });
+      
+      if (seasonsTabs) {
+        seasonsTabs.innerHTML = nums.map(function(s, i){
+          return '<button class="ap-st' + (i===0?' active':'') + '" data-s="' + s + '">Season ' + s + ' <span class="st-c">' + seasons[s].length + ' EP</span></button>';
+        }).join('');
+      }
+      
+      function show(s) {
+        var list = seasons[s];
+        episodesList.innerHTML = list.map(function(e){
+          var t = e.thumbnail ? '<img src="' + esc(e.thumbnail) + '" alt="" loading="lazy" />' : '<div class="ep-nt"></div>';
+          return '<div class="ep-i" data-n="' + e.number + '" data-t="' + esc(e.title) + '">' +
+            '<div class="ep-th">' + t + '<div class="ep-pl"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="ep-nm">EP ' + e.number + '</div></div>' +
+            '<div class="ep-in"><h4 class="ep-t">' + esc(e.title) + '</h4>' +
+            (e.synopsis ? '<p class="ep-d">' + esc(e.synopsis.slice(0, 120)) + (e.synopsis.length > 120 ? '...' : '') + '</p>' : '') +
+            (e.airdate ? '<div class="ep-m">Aired: ' + fmt(e.airdate) + (e.length ? ' · ' + e.length + ' min' : '') + '</div>' : '') +
+            '</div></div>';
+        }).join('');
+        episodesList.querySelectorAll('.ep-i').forEach(function(el){
+          el.addEventListener('click', function(){
+            playVideo(title + ' episode ' + el.dataset.n, 'Episode ' + el.dataset.n + ': ' + el.dataset.t);
+          });
+        });
+      }
+      
+      if (seasonsTabs) {
+        seasonsTabs.querySelectorAll('.ap-st').forEach(function(t){
+          t.addEventListener('click', function(){
+            seasonsTabs.querySelectorAll('.ap-st').forEach(function(x){ x.classList.remove('active'); });
+            t.classList.add('active');
+            show(Number(t.dataset.s));
+          });
+        });
+      }
+      show(nums[0]);
+    } catch(e) { console.error('[AniTube] renderEpisodes error:', e); }
+  }
+
+  function renderRelated(list) {
+    try {
+      if (!relatedGrid) return;
+      if (!list || !list.length) {
+        relatedGrid.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:2rem;grid-column:1/-1;">No related anime found.</p>';
+        return;
+      }
+      relatedGrid.innerHTML = list.map(function(a){
+        var img = a.image ? '<img src="' + esc(a.image) + '" alt="" loading="lazy" />' : '<div class="rc-no"></div>';
+        return '<a href="/anime/' + esc(a.slug) + '" class="rel-c">' +
+          '<div class="rc-p">' + img + '<div class="rc-pl"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>' +
+          '<div class="rc-t">' + esc(a.title) + '</div></a>';
+      }).join('');
+    } catch(e) { console.error('[AniTube] renderRelated error:', e); }
+  }
+
+  // Wait for DOM ready
+  function domReady(cb) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', cb);
     } else {
-      playerFrame.innerHTML=
-        '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · HD</span></div>'+
-        '<iframe src="https://www.youtube.com/embed?listType=search&list='+encodeURIComponent(query)+'" '+
-        'frameborder="0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe>';
+      cb();
     }
   }
 
-  function renderInfo(a){
-    document.title=a.title+' - AniTube Buzz';
-    if(a.image){apBg.style.backgroundImage='url('+a.image+')';posterImg.src=a.image;posterImg.alt=a.title;}
-    apTitle.textContent=a.title;
+  domReady(async function(){
+    console.log('[AniTube] DOM ready, initializing');
+    initElements();
     
-    var b=[];
-    if(a.status==='current')b.push('<span class="ap-b ap-b-new"><span class="ap-dot"></span>AIRING NOW</span>');
-    if(a.score)b.push('<span class="ap-b ap-b-sc"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>'+Number(a.score).toFixed(1)+'</span>');
-    b.push('<span class="ap-b ap-b-hd">HD</span>');
-    if(a.ageRating)b.push('<span class="ap-b ap-b-age">'+esc(a.ageRating)+'</span>');
-    apBadges.innerHTML=b.join('');
-    
-    var m=[];
-    if(a.year)m.push(a.year);
-    if(a.episodes>0)m.push(a.episodes+' Episodes');
-    if(a.subtype)m.push(a.subtype);
-    if(a.status){var s=String(a.status).replace(/_/g,' ');m.push(s.charAt(0).toUpperCase()+s.slice(1));}
-    apMeta.innerHTML=m.map(function(x){return '<span>'+esc(x)+'</span>';}).join('<span class="mp-sep">·</span>');
-    
-    if(a.genres&&a.genres.length){
-      apGenres.innerHTML=a.genres.slice(0,6).map(function(g){return '<span class="ap-gp">'+esc(g)+'</span>';}).join('');
-    }
-    
-    var s=a.description||a.synopsis||'No synopsis available.';
-    apSyno.textContent=s.length>250?s.slice(0,250)+'...':s;
-    fullSyno.textContent=s;
-    
-    var rows=[
-      ['Type',a.subtype||'TV'],
-      ['Episodes',a.episodes>0?a.episodes:'Unknown'],
-      ['Status',a.status?String(a.status).replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();}):'Unknown'],
-      ['Aired',a.startDate?fmt(a.startDate)+(a.endDate?' to '+fmt(a.endDate):' to ?'):'Unknown'],
-      ['Score',a.score?'⭐ '+Number(a.score).toFixed(1)+' / 10':'N/A'],
-      ['Rating',a.ageRating||'Not Rated'],
-      ['Genres',(a.genres&&a.genres.length)?a.genres.join(', '):'N/A']
-    ];
-    infoList.innerHTML=rows.map(function(r){
-      return '<div class="ir"><span class="ir-l">'+esc(r[0])+'</span><span class="ir-v">'+esc(String(r[1]))+'</span></div>';
-    }).join('');
-    
-    var qEnc=encodeURIComponent(a.title);
-    document.querySelectorAll('.ap-stream').forEach(function(el){
-      var p=el.dataset.platform,u='#';
-      if(p==='crunchyroll')u='https://www.crunchyroll.com/search?q='+qEnc;
-      else if(p==='netflix')u='https://www.netflix.com/search?q='+qEnc;
-      else if(p==='hulu')u='https://www.hulu.com/search?q='+qEnc;
-      el.href=u;el.target='_blank';el.rel='noopener';
-    });
-  }
-
-  function renderEpisodes(eps,title){
-    if(!eps||!eps.length){
-      episodesList.innerHTML='<div class="ep-empty">Episodes not available yet. Click Watch Now for the trailer!</div>';
-      seasonsTabs.style.display='none';
+    if (!loader || !content) {
+      console.error('[AniTube] Critical elements missing');
       return;
     }
-    var seasons={};
-    eps.forEach(function(e){var s=e.seasonNumber||1;if(!seasons[s])seasons[s]=[];seasons[s].push(e);});
-    var nums=Object.keys(seasons).map(Number).sort(function(a,b){return a-b;});
     
-    seasonsTabs.innerHTML=nums.map(function(s,i){
-      return '<button class="ap-st'+(i===0?' active':'')+'" data-s="'+s+'">Season '+s+' <span class="st-c">'+seasons[s].length+' EP</span></button>';
-    }).join('');
-    
-    function show(s){
-      var list=seasons[s];
-      episodesList.innerHTML=list.map(function(e){
-        var t=e.thumbnail?'<img src="'+esc(e.thumbnail)+'" alt="" loading="lazy" />':'<div class="ep-nt"></div>';
-        return '<div class="ep-i" data-n="'+e.number+'" data-t="'+esc(e.title)+'">'+
-          '<div class="ep-th">'+t+'<div class="ep-pl"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div><div class="ep-nm">EP '+e.number+'</div></div>'+
-          '<div class="ep-in"><h4 class="ep-t">'+esc(e.title)+'</h4>'+
-          (e.synopsis?'<p class="ep-d">'+esc(e.synopsis.slice(0,120))+(e.synopsis.length>120?'...':'')+'</p>':'')+
-          (e.airdate?'<div class="ep-m">Aired: '+fmt(e.airdate)+(e.length?' · '+e.length+' min':'')+'</div>':'')+
-          '</div></div>';
-      }).join('');
-      episodesList.querySelectorAll('.ep-i').forEach(function(el){
-        el.addEventListener('click',function(){
-          playVideo(title+' episode '+el.dataset.n,'Episode '+el.dataset.n+': '+el.dataset.t);
+    // Hard timeout: never let loader spin > 25s
+    var hardTimeout = setTimeout(function(){
+      if (loader.style.display !== 'none') {
+        console.error('[AniTube] Hard timeout hit');
+        loader.style.display = 'none';
+        if (nfMsg) nfMsg.textContent = 'The anime data is taking too long to load. Please try again.';
+        if (notFound) notFound.style.display = 'flex';
+      }
+    }, 25000);
+
+    try {
+      var anime = await loadAnimeData();
+      
+      if (!anime) {
+        console.warn('[AniTube] No anime data found');
+        clearTimeout(hardTimeout);
+        loader.style.display = 'none';
+        if (nfMsg) nfMsg.textContent = 'This anime could not be found in our database.';
+        if (notFound) notFound.style.display = 'flex';
+        return;
+      }
+      
+      console.log('[AniTube] Anime data received:', anime);
+      
+      // Render main content FIRST
+      safeRender(anime);
+      
+      // Show content, hide loader
+      clearTimeout(hardTimeout);
+      loader.style.display = 'none';
+      content.style.display = 'block';
+      console.log('[AniTube] Content shown');
+      
+      // Load extras in background (non-blocking)
+      if (anime.id) {
+        fetchJSON('/api/anime?action=episodes&id=' + anime.id + '&page=1', 10000).then(function(epsData){
+          if (epsData && epsData.success) renderEpisodes(epsData.episodes || [], anime.title || '');
+          else renderEpisodes([], anime.title || '');
+        }).catch(function(e){ console.error('[AniTube] episodes fetch fail:', e); renderEpisodes([], anime.title || ''); });
+        
+        fetchJSON('/api/anime?action=list&category=popular&page=1', 10000).then(function(relData){
+          if (relData && relData.success) {
+            var rel = (relData.anime || []).filter(function(x){ return x.slug !== slug; }).slice(0, 12);
+            renderRelated(rel);
+          } else renderRelated([]);
+        }).catch(function(e){ console.error('[AniTube] related fetch fail:', e); renderRelated([]); });
+      }
+      
+      // Wire up buttons
+      if (watchBtn) {
+        watchBtn.addEventListener('click', function(){
+          playVideo((anime.title || 'anime') + ' anime official trailer', (anime.title || 'Anime') + ' - Trailer');
+        });
+      }
+      if (infoBtn && detailsBlock) {
+        infoBtn.addEventListener('click', function(){
+          detailsBlock.scrollIntoView({ behavior:'smooth', block:'start' });
+        });
+      }
+      if (closePlayer) {
+        closePlayer.addEventListener('click', function(){
+          if (playerBlock) playerBlock.style.display = 'none';
+          if (playerFrame) playerFrame.innerHTML = '';
+        });
+      }
+      
+      document.querySelectorAll('.sh-btn').forEach(function(b){
+        b.addEventListener('click', function(){
+          var t = b.dataset.share, u = window.location.href, x = (anime.title || 'Anime') + ' on AniTube Buzz';
+          if (t === 'twitter') window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(x) + '&url=' + encodeURIComponent(u), '_blank');
+          else if (t === 'facebook') window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(u), '_blank');
+          else if (t === 'copy') { navigator.clipboard.writeText(u); b.classList.add('cp'); setTimeout(function(){ b.classList.remove('cp'); }, 1500); }
         });
       });
-    }
-    
-    seasonsTabs.querySelectorAll('.ap-st').forEach(function(t){
-      t.addEventListener('click',function(){
-        seasonsTabs.querySelectorAll('.ap-st').forEach(function(x){x.classList.remove('active');});
-        t.classList.add('active');
-        show(Number(t.dataset.s));
-      });
-    });
-    show(nums[0]);
-  }
-
-  function renderRelated(list){
-    if(!list||!list.length){relatedGrid.innerHTML='<p style="color:var(--text-muted);text-align:center;padding:2rem;grid-column:1/-1;">No related anime found.</p>';return;}
-    relatedGrid.innerHTML=list.map(function(a){
-      var img=a.image?'<img src="'+esc(a.image)+'" alt="" loading="lazy" />':'<div class="rc-no"></div>';
-      return '<a href="/anime/'+esc(a.slug)+'" class="rel-c">'+
-        '<div class="rc-p">'+img+'<div class="rc-pl"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div></div>'+
-        '<div class="rc-t">'+esc(a.title)+'</div></a>';
-    }).join('');
-  }
-
-  // Hard timeout: never let loader spin > 20s
-  var hardTimeout = setTimeout(function(){
-    if (loader.style.display !== 'none') {
+      
+    } catch(e) {
+      clearTimeout(hardTimeout);
+      console.error('[AniTube] Fatal error:', e, e.stack);
       loader.style.display = 'none';
-      if (nfMsg) nfMsg.textContent = 'The anime data is taking too long to load. Please try again.';
-      notFound.style.display = 'flex';
+      if (nfMsg) nfMsg.textContent = 'Error loading anime: ' + (e.message || 'Unknown error');
+      if (notFound) notFound.style.display = 'flex';
     }
-  }, 20000);
-
-  try{
-    var anime = await loadAnimeData();
-    clearTimeout(hardTimeout);
-    
-    if(!anime){
-      loader.style.display='none';
-      if (nfMsg) nfMsg.textContent = 'This anime could not be found in our database.';
-      notFound.style.display='flex';
-      return;
-    }
-    
-    renderInfo(anime);
-    loader.style.display='none';
-    content.style.display='block';
-    
-    Promise.all([
-      fetchJSON('/api/anime?action=episodes&id='+anime.id+'&page=1', 8000),
-      fetchJSON('/api/anime?action=list&category=popular&page=1', 8000)
-    ]).then(function(res){
-      var epsData=res[0];
-      var relData=res[1];
-      if(epsData&&epsData.success)renderEpisodes(epsData.episodes||[],anime.title);
-      else renderEpisodes([],anime.title);
-      if(relData&&relData.success){
-        var rel=(relData.anime||[]).filter(function(x){return x.slug!==slug;}).slice(0,12);
-        renderRelated(rel);
-      } else renderRelated([]);
-    });
-    
-    watchBtn.addEventListener('click',function(){
-      playVideo(anime.title+' anime official trailer',anime.title+' - Trailer');
-    });
-    infoBtn.addEventListener('click',function(){
-      detailsBlock.scrollIntoView({behavior:'smooth',block:'start'});
-    });
-    if(closePlayer)closePlayer.addEventListener('click',function(){
-      playerBlock.style.display='none';playerFrame.innerHTML='';
-    });
-    
-    document.querySelectorAll('.sh-btn').forEach(function(b){
-      b.addEventListener('click',function(){
-        var t=b.dataset.share,u=window.location.href,x=anime.title+' on AniTube Buzz';
-        if(t==='twitter')window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(x)+'&url='+encodeURIComponent(u),'_blank');
-        else if(t==='facebook')window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(u),'_blank');
-        else if(t==='copy'){navigator.clipboard.writeText(u);b.classList.add('cp');setTimeout(function(){b.classList.remove('cp');},1500);}
-      });
-    });
-    
-  }catch(e){
-    clearTimeout(hardTimeout);
-    console.error('Load error:',e);
-    loader.style.display='none';
-    if (nfMsg) nfMsg.textContent = 'Something went wrong loading this anime.';
-    notFound.style.display='flex';
-  }
+  });
 })();
 </script>
 
