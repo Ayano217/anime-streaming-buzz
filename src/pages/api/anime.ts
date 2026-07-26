@@ -1,175 +1,275 @@
-import type { APIRoute } from 'astro';
-
 export const prerender = false;
 
-const cache = new Map<string, { data: any; expires: number }>();
-const CACHE_MS = 10 * 60 * 1000; // 10 minutes
+import type { APIRoute } from 'astro';
 
-async function anilistFetch(query: string, variables: any): Promise<any> {
-  const cacheKey = JSON.stringify({ query, variables });
-  const cached = cache.get(cacheKey);
-  if (cached && Date.now() < cached.expires) {
-    return cached.data;
-  }
-  
-  try {
-    const res = await fetch('https://graphql.anilist.co', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({ query, variables }),
-    });
-    
-    if (!res.ok) return null;
-    
-    const json = await res.json();
-    if (json.errors) return null;
-    
-    cache.set(cacheKey, { data: json, expires: Date.now() + CACHE_MS });
-    return json;
-  } catch (e) {
-    return null;
-  }
+// In-memory cache (Cloudflare Worker will keep this per instance)
+let cache: { data: any; time: number; category: string } = {
+  data: null,
+  time: 0,
+  category: ''
+};
+const CACHE_DURATION = 30 * 60 * 1000; // 30 min
+
+interface AnimeItem {
+  id: string;
+  title: string;
+  image: string;
+  score: number;
+  episodes: number;
+  status: string;
+  synopsis: string;
+  genres: string[];
+  year: number;
+  slug: string;
 }
 
-// Map source to AniList sort/status
-function getQueryConfig(source: string, page: number) {
-  const configs: Record<string, any> = {
-    airing: {
-      sort: ['POPULARITY_DESC'],
-      status: 'RELEASING',
-      type: 'ANIME',
-    },
-    top: {
-      sort: ['SCORE_DESC'],
-      status: 'RELEASING',
-      type: 'ANIME',
-    },
-    upcoming: {
-      sort: ['POPULARITY_DESC'],
-      status: 'NOT_YET_RELEASED',
-      type: 'ANIME',
-    },
-    popular: {
-      sort: ['POPULARITY_DESC'],
-      type: 'ANIME',
-    },
-    movie: {
-      sort: ['POPULARITY_DESC'],
-      format: 'MOVIE',
-      type: 'ANIME',
-    },
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+}
+
+// ─── Source 1: Kitsu API (most reliable) ──────────
+async function fetchFromKitsu(category: string): Promise<AnimeItem[]> {
+  const sortMap: Record<string, string> = {
+    airing: '-startDate',
+    top: '-averageRating',
+    upcoming: 'startDate',
+    popular: '-userCount',
+    movies: '-userCount'
   };
-  
-  return configs[source] || configs.airing;
+
+  const filterMap: Record<string, string> = {
+    airing: 'filter[status]=current',
+    top: 'filter[status]=finished',
+    upcoming: 'filter[status]=upcoming',
+    popular: '',
+    movies: 'filter[subtype]=movie'
+  };
+
+  const sort = sortMap[category] || '-userCount';
+  const filter = filterMap[category] || '';
+  const url = `https://kitsu.io/api/edge/anime?${filter}&sort=${sort}&page[limit]=20`;
+
+  const res = await fetch(url, {
+    headers: {
+      'Accept': 'application/vnd.api+json',
+      'Content-Type': 'application/vnd.api+json'
+    }
+  });
+
+  if (!res.ok) throw new Error(`Kitsu ${res.status}`);
+  const json: any = await res.json();
+
+  return json.data.map((item: any) => {
+    const attr = item.attributes;
+    const title = attr.canonicalTitle || attr.titles?.en || attr.titles?.en_jp || 'Unknown';
+    return {
+      id: item.id,
+      title,
+      image: attr.posterImage?.large || attr.posterImage?.medium || attr.posterImage?.original || '',
+      score: attr.averageRating ? parseFloat(attr.averageRating) / 10 : 0,
+      episodes: attr.episodeCount || 0,
+      status: attr.status || 'unknown',
+      synopsis: attr.synopsis || attr.description || '',
+      genres: [],
+      year: attr.startDate ? parseInt(attr.startDate.substring(0, 4)) : 2024,
+      slug: slugify(title)
+    };
+  });
 }
 
-export const GET: APIRoute = async ({ url }) => {
-  const params = new URL(url).searchParams;
-  const source = params.get('source') || 'airing';
-  const page = parseInt(params.get('page') || '1');
-  const perPage = 24;
-  
-  const config = getQueryConfig(source, page);
-  
-  // Build GraphQL query dynamically
-  let filters = `type: ANIME`;
-  if (config.status) filters += `, status: ${config.status}`;
-  if (config.format) filters += `, format: ${config.format}`;
-  
+// ─── Source 2: AniList GraphQL (backup) ──────────
+async function fetchFromAniList(category: string): Promise<AnimeItem[]> {
+  const statusMap: Record<string, string> = {
+    airing: 'RELEASING',
+    top: 'FINISHED',
+    upcoming: 'NOT_YET_RELEASED',
+    popular: '',
+    movies: ''
+  };
+  const sortMap: Record<string, string> = {
+    airing: 'POPULARITY_DESC',
+    top: 'SCORE_DESC',
+    upcoming: 'POPULARITY_DESC',
+    popular: 'POPULARITY_DESC',
+    movies: 'POPULARITY_DESC'
+  };
+
+  const filter: string[] = [];
+  if (statusMap[category]) filter.push(`status: ${statusMap[category]}`);
+  if (category === 'movies') filter.push('format: MOVIE');
+  const filterStr = filter.length ? filter.join(', ') + ', ' : '';
+
   const query = `
-    query ($page: Int, $perPage: Int) {
-      Page(page: $page, perPage: $perPage) {
-        pageInfo {
-          hasNextPage
-          currentPage
-          lastPage
-        }
-        media(${filters}, sort: [${config.sort.join(', ')}]) {
+    query {
+      Page(page: 1, perPage: 20) {
+        media(${filterStr}type: ANIME, sort: ${sortMap[category]}) {
           id
-          idMal
-          title {
-            english
-            romaji
-            native
-          }
-          coverImage {
-            large
-            extraLarge
-          }
-          bannerImage
-          description(asHtml: false)
+          title { romaji english }
+          coverImage { large extraLarge }
           averageScore
-          meanScore
-          seasonYear
           episodes
-          duration
-          format
           status
+          description
           genres
-          studios(isMain: true) {
-            nodes {
-              name
-            }
-          }
+          startDate { year }
         }
       }
     }
   `;
-  
-  const result = await anilistFetch(query, { page, perPage });
-  
-  if (!result || !result.data || !result.data.Page) {
+
+  const res = await fetch('https://graphql.anilist.co', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({ query })
+  });
+
+  if (!res.ok) throw new Error(`AniList ${res.status}`);
+  const json: any = await res.json();
+
+  return json.data.Page.media.map((item: any) => {
+    const title = item.title.english || item.title.romaji || 'Unknown';
+    return {
+      id: String(item.id),
+      title,
+      image: item.coverImage.extraLarge || item.coverImage.large || '',
+      score: item.averageScore ? item.averageScore / 10 : 0,
+      episodes: item.episodes || 0,
+      status: (item.status || 'unknown').toLowerCase(),
+      synopsis: (item.description || '').replace(/<[^>]+>/g, ''),
+      genres: item.genres || [],
+      year: item.startDate?.year || 2024,
+      slug: slugify(title)
+    };
+  });
+}
+
+// ─── Source 3: Static fallback ──────────
+async function fetchFromStatic(): Promise<AnimeItem[]> {
+  try {
+    const res = await fetch('https://anime-streaming-buzz.pages.dev/data/anime-static.json');
+    if (!res.ok) throw new Error('static failed');
+    const data: any = await res.json();
+    return data.anime || [];
+  } catch {
+    // Ultimate hard-coded fallback
+    return [
+      {
+        id: '1',
+        title: 'Attack on Titan',
+        image: 'https://media.kitsu.io/anime/poster_images/7442/large.jpg',
+        score: 8.5, episodes: 75, status: 'finished',
+        synopsis: 'Humanity fights for survival against giant humanoid creatures.',
+        genres: ['Action', 'Drama'], year: 2013, slug: 'attack-on-titan'
+      },
+      {
+        id: '2',
+        title: 'Demon Slayer',
+        image: 'https://media.kitsu.io/anime/poster_images/41370/large.jpg',
+        score: 8.7, episodes: 44, status: 'current',
+        synopsis: 'A young boy becomes a demon slayer to save his sister.',
+        genres: ['Action', 'Supernatural'], year: 2019, slug: 'demon-slayer'
+      },
+      {
+        id: '3',
+        title: 'Jujutsu Kaisen',
+        image: 'https://media.kitsu.io/anime/poster_images/42765/large.jpg',
+        score: 8.6, episodes: 47, status: 'current',
+        synopsis: 'A boy swallows a cursed talisman and enters the world of jujutsu sorcerers.',
+        genres: ['Action', 'Supernatural'], year: 2020, slug: 'jujutsu-kaisen'
+      },
+      {
+        id: '4',
+        title: 'One Piece',
+        image: 'https://media.kitsu.io/anime/poster_images/12/large.jpg',
+        score: 8.7, episodes: 1000, status: 'current',
+        synopsis: 'A pirate crew searches for the ultimate treasure, One Piece.',
+        genres: ['Adventure', 'Comedy'], year: 1999, slug: 'one-piece'
+      },
+      {
+        id: '5',
+        title: 'My Hero Academia',
+        image: 'https://media.kitsu.io/anime/poster_images/11469/large.jpg',
+        score: 8.0, episodes: 138, status: 'current',
+        synopsis: 'A boy without powers dreams of becoming a hero.',
+        genres: ['Action', 'Superhero'], year: 2016, slug: 'my-hero-academia'
+      },
+      {
+        id: '6',
+        title: 'Chainsaw Man',
+        image: 'https://media.kitsu.io/anime/poster_images/44081/large.jpg',
+        score: 8.4, episodes: 12, status: 'finished',
+        synopsis: 'A young man merges with a chainsaw devil to fight other devils.',
+        genres: ['Action', 'Horror'], year: 2022, slug: 'chainsaw-man'
+      }
+    ];
+  }
+}
+
+export const GET: APIRoute = async ({ url }) => {
+  const category = url.searchParams.get('category') || 'airing';
+  const now = Date.now();
+
+  // Cache hit
+  if (cache.data && cache.category === category && now - cache.time < CACHE_DURATION) {
     return new Response(JSON.stringify({
-      success: false,
-      error: 'Failed to fetch anime data',
-      data: [],
+      success: true,
+      source: 'cache',
+      count: cache.data.length,
+      anime: cache.data
     }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+        'Cache-Control': 'public, max-age=1800'
+      }
     });
   }
-  
-  const pageData = result.data.Page;
-  
-  // Simplify response for UI
-  const simplified = (pageData.media || []).map((a: any) => ({
-    id:       a.idMal || a.id,
-    anilistId: a.id,
-    title:    a.title?.english || a.title?.romaji || a.title?.native || 'Unknown',
-    image:    a.coverImage?.extraLarge || a.coverImage?.large || '',
-    banner:   a.bannerImage || '',
-    score:    a.averageScore ? (a.averageScore / 10).toFixed(1) : null,
-    year:     a.seasonYear,
-    episodes: a.episodes || '?',
-    genre:    a.genres?.[0] || '',
-    genres:   a.genres || [],
-    status:   a.status === 'RELEASING' ? 'Currently Airing' : (a.status || ''),
-    type:     a.format || 'TV',
-    studio:   a.studios?.nodes?.[0]?.name || '',
-    duration: a.duration,
-    description: (a.description || '').replace(/<[^>]*>/g, '').substring(0, 200),
-  }));
-  
+
+  // Try sources in order
+  const sources = [
+    { name: 'kitsu', fn: () => fetchFromKitsu(category) },
+    { name: 'anilist', fn: () => fetchFromAniList(category) },
+    { name: 'static', fn: () => fetchFromStatic() }
+  ];
+
+  for (const src of sources) {
+    try {
+      const data = await src.fn();
+      if (data && data.length > 0) {
+        cache = { data, time: now, category };
+        return new Response(JSON.stringify({
+          success: true,
+          source: src.name,
+          count: data.length,
+          anime: data
+        }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, max-age=1800'
+          }
+        });
+      }
+    } catch (err) {
+      console.error(`${src.name} failed:`, err);
+      continue;
+    }
+  }
+
   return new Response(JSON.stringify({
-    success: true,
-    data: simplified,
-    pagination: {
-      has_next_page: pageData.pageInfo?.hasNextPage || false,
-      current_page: pageData.pageInfo?.currentPage || page,
-      last_page: pageData.pageInfo?.lastPage || page,
-    },
+    success: false,
+    error: 'All sources failed',
+    anime: []
   }), {
-    status: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Cache-Control': 'public, max-age=600, s-maxage=600',
-    },
+    status: 503,
+    headers: { 'Content-Type': 'application/json' }
   });
 };
