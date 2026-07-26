@@ -1,193 +1,51 @@
 ---
-let heroAnime = [];
-
-try {
-  const res = await fetch('https://api.jikan.moe/v4/top/anime?filter=airing&limit=5');
-  if (res.ok) {
-    const data = await res.json();
-    heroAnime = (data.data || []).slice(0, 5).map(a => ({
-      title:    a.title_english || a.title,
-      titleJp:  a.title_japanese || '',
-      synopsis: (a.synopsis || '').substring(0, 200) + '...',
-      image:    a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || '',
-      score:    a.score,
-      year:     a.year || '',
-      episodes: a.episodes || '?',
-      type:     a.type || 'TV',
-      studio:   a.studios?.[0]?.name || 'Studio',
-      genres:   (a.genres || []).slice(0, 3).map(g => g.name),
-      malUrl:   a.url,
-      malId:    a.mal_id,
-      status:   a.status || '',
-      members:  a.members || 0,
-      rank:     a.rank || null,
-    }));
-  }
-} catch (e) {
-  console.warn('Jikan hero failed:', e);
-}
-
-if (heroAnime.length === 0) {
-  heroAnime = [{
-    title: 'Loading Trending Anime',
-    titleJp: '',
-    synopsis: 'Fetching the hottest anime right now.',
-    image: '',
-    score: null, year: '', episodes: '?', type: 'TV',
-    studio: 'AniTube', genres: [], malUrl: '#', members: 0,
-  }];
-}
-
 import { getCollection } from 'astro:content';
-const allPosts = await getCollection('posts', ({ data }) => !data.draft);
-const displayEpisodes = allPosts
-  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
-  .filter(post => {
-    const img = post.data.image || '';
-    return img && !img.includes('picsum.photos');
-  })
-  .slice(0, 4);
 ---
 
 <section class="hero-sec" id="heroSec">
   <div class="hero-bg-force"></div>
 
   <div class="hero-inner container">
-
     <div class="hero-slides" id="heroSlides">
-      {heroAnime.map((anime, idx) => (
-        <div class={`hero-slide ${idx === 0 ? 'active' : ''}`} data-index={idx}>
-
-          <div class="slide-content">
-
-            <div class="slide-left">
-
-              {idx === 0 && (
-                <div class="trending-pill">
-                  <span class="flame">🔥</span>
-                  <span>#1 Trending Now</span>
-                </div>
-              )}
-
-              <div class="badges">
-                {anime.studio && (
-                  <div class="badge badge-studio">
-                    <div class="badge-icon">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14H12L11 22L20 10H12L13 2Z"/></svg>
-                    </div>
-                    {anime.studio}
-                  </div>
-                )}
-                <div class="badge badge-hd">HD</div>
-                {anime.status === 'Currently Airing' && (
-                  <div class="badge badge-live">
-                    <span class="live-dot-mini"></span>
-                    AIRING
-                  </div>
-                )}
-              </div>
-
-              <h1 class="slide-title">{anime.title}</h1>
-              {anime.titleJp && <p class="slide-title-jp">{anime.titleJp}</p>}
-
-              <div class="slide-meta">
-                {anime.year && <span>{anime.year}</span>}
-                <span>{anime.type}</span>
-                <span>{anime.episodes} EP</span>
-                {anime.genres.length > 0 && (
-                  <span class="genre-tag">{anime.genres[0]}</span>
-                )}
-                {anime.score && (
-                  <span class="rating">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                    </svg>
-                    {anime.score}
-                  </span>
-                )}
-              </div>
-
-              <p class="slide-desc">{anime.synopsis}</p>
-
-              <div class="slide-actions">
-                <a href={anime.malUrl} target="_blank" rel="noopener" class="btn-watch">
-                  <div class="btn-watch-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M8 5v14l11-7z"/>
-                    </svg>
-                    <div class="pulse-ring"></div>
-                  </div>
-                  <span>Watch Now</span>
-                </a>
-
-                <a href={anime.malUrl} target="_blank" rel="noopener" class="btn-info">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 16v-4M12 8h.01"/>
-                  </svg>
-                  More Info
-                </a>
-              </div>
-
+      <!-- Skeleton slide for initial paint -->
+      <div class="hero-slide active" data-index="0">
+        <div class="slide-content">
+          <div class="slide-left">
+            <div class="badges">
+              <div class="badge badge-hd">HD</div>
             </div>
-
-            <div class="slide-right">
-              {anime.image && (
-                <div class="cover-frame">
-                  <div class="cover-container">
-                    <div class="cover-border-glow"></div>
-                    <div class="cover-glow"></div>
-
-                    <div class="cover-inner">
-                      <img
-                        src={anime.image}
-                        alt={anime.title}
-                        class="cover-img"
-                        loading={idx === 0 ? 'eager' : 'lazy'}
-                      />
-
-                      <div class="sparkle sparkle-1"></div>
-                      <div class="sparkle sparkle-2"></div>
-
-                      <div class="corner-acc corner-tl"></div>
-                      <div class="corner-acc corner-tr"></div>
-                      <div class="corner-acc corner-bl"></div>
-                      <div class="corner-acc corner-br"></div>
-
-                      {anime.score && (
-                        <div class="score-badge">
-                          <div class="score-inner">
-                            <div class="score-value">{anime.score}</div>
-                          </div>
-                        </div>
-                      )}
-
-                      {anime.rank && anime.rank <= 100 && (
-                        <div class="rank-badge">
-                          <span class="rank-hash">#</span>
-                          <span class="rank-num">{anime.rank}</span>
-                        </div>
-                      )}
-                    </div>
-
-                  </div>
+            <h1 class="slide-title" style="opacity:0.5;">Loading Trending Anime...</h1>
+            <p class="slide-desc" style="opacity:0.5;">Fetching the hottest anime right now from our servers.</p>
+            <div class="slide-actions">
+              <span class="btn-watch" style="opacity:0.5;">
+                <div class="btn-watch-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                 </div>
-              )}
+                <span>Loading...</span>
+              </span>
             </div>
-
           </div>
-
+          <div class="slide-right">
+            <div class="cover-frame">
+              <div class="cover-container">
+                <div class="cover-border-glow"></div>
+                <div class="cover-glow"></div>
+                <div class="cover-inner">
+                  <div class="cover-skeleton"></div>
+                  <div class="corner-acc corner-tl"></div>
+                  <div class="corner-acc corner-tr"></div>
+                  <div class="corner-acc corner-bl"></div>
+                  <div class="corner-acc corner-br"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      ))}
+      </div>
     </div>
 
     <div class="hero-controls">
-      <div class="slide-dots">
-        {heroAnime.map((_, idx) => (
-          <button class={`slide-dot ${idx === 0 ? 'active' : ''}`} data-index={idx} aria-label={`Slide ${idx + 1}`}></button>
-        ))}
-      </div>
-
+      <div class="slide-dots" id="slideDots"></div>
       <div class="slide-nav">
         <button class="nav-btn" id="prevBtn" aria-label="Previous">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -197,103 +55,154 @@ const displayEpisodes = allPosts
         </button>
       </div>
     </div>
-
-    {displayEpisodes.length > 0 && (
-      <div class="latest-updates">
-        <div class="latest-header">
-          <h2 class="latest-title">
-            <span class="latest-bar"></span>
-            <span class="grad-text">Latest</span> <span class="tube-txt-adaptive">Updates</span>
-          </h2>
-          <a href="/category/news" class="latest-more">View All →</a>
-        </div>
-
-        <div class="updates-grid">
-          {displayEpisodes.map((post) => {
-            const dateStr = new Date(post.data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            const cat = post.data.category || 'News';
-            return (
-              <a href={`/posts/${post.slug}`} class="update-card">
-                <div class="update-thumb">
-                  {post.data.image && !post.data.image.includes('picsum') ? (
-                    <img src={post.data.image} alt={post.data.title} loading="lazy" />
-                  ) : (
-                    <div class="update-fallback">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" opacity="0.3">
-                        <path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/>
-                      </svg>
-                    </div>
-                  )}
-                  <div class="update-play-overlay">
-                    <div class="update-play-btn">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                    </div>
-                  </div>
-                  <div class="update-date">{dateStr}</div>
-                </div>
-                <div class="update-info">
-                  <div class="update-cat">{cat}</div>
-                  <div class="update-title">{post.data.title}</div>
-                </div>
-              </a>
-            );
-          })}
-        </div>
-      </div>
-    )}
-
   </div>
 </section>
 
 <script is:inline>
-(function() {
-  var slides = document.querySelectorAll('.hero-slide');
-  var dots   = document.querySelectorAll('.slide-dot');
-  var current = 0;
-  var interval;
-
-  if(slides.length === 0) return;
-
-  function goto(idx){
-    slides[current].classList.remove('active');
-    dots[current] && dots[current].classList.remove('active');
-    current = (idx + slides.length) % slides.length;
-    slides[current].classList.add('active');
-    dots[current] && dots[current].classList.add('active');
-  }
-
-  function next(){ goto(current + 1); }
-  function prev(){ goto(current - 1); }
-
-  function startAuto(){
-    clearInterval(interval);
-    interval = setInterval(next, 10000);
-  }
-
-  dots.forEach(function(dot){
-    dot.addEventListener('click', function(){
-      goto(parseInt(dot.dataset.index));
-      startAuto();
-    });
-  });
-
+(async function(){
+  var slidesEl = document.getElementById('heroSlides');
+  var dotsEl = document.getElementById('slideDots');
   var prevBtn = document.getElementById('prevBtn');
   var nextBtn = document.getElementById('nextBtn');
-  if(prevBtn) prevBtn.addEventListener('click', function(){ prev(); startAuto(); });
-  if(nextBtn) nextBtn.addEventListener('click', function(){ next(); startAuto(); });
-
   var hero = document.getElementById('heroSec');
-  if(hero) {
-    hero.addEventListener('mouseenter', function(){ clearInterval(interval); });
-    hero.addEventListener('mouseleave', startAuto);
+  var current = 0, interval, slides = [], dots = [];
+
+  function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})}
+
+  function truncate(str,n){str=String(str||'');return str.length>n?str.slice(0,n).trim()+'...':str;}
+
+  function buildSlide(anime, idx) {
+    var isFirst = idx === 0;
+    var title = anime.title || 'Unknown';
+    var syno = truncate(anime.synopsis || 'No synopsis available.', 200);
+    var img = anime.image || '';
+    var slug = anime.slug || ('anime-' + anime.id);
+    var score = anime.score ? Number(anime.score).toFixed(1) : null;
+    var year = anime.year || '';
+    var eps = anime.episodes && anime.episodes > 0 ? anime.episodes : '?';
+    var type = anime.subtype || 'TV';
+    var isAiring = anime.status === 'current';
+    var genre = (anime.genres && anime.genres.length) ? anime.genres[0] : '';
+
+    var trendingHtml = isFirst 
+      ? '<div class="trending-pill"><span class="flame">🔥</span><span>#1 Trending Now</span></div>' 
+      : '';
+
+    var badges = '<div class="badges">' +
+      '<div class="badge badge-hd">HD</div>' +
+      (isAiring ? '<div class="badge badge-live"><span class="live-dot-mini"></span>AIRING</div>' : '') +
+      (type ? '<div class="badge badge-studio">' + esc(type) + '</div>' : '') +
+    '</div>';
+
+    var meta = '<div class="slide-meta">' +
+      (year ? '<span>' + esc(year) + '</span>' : '') +
+      '<span>' + esc(type) + '</span>' +
+      '<span>' + esc(eps) + ' EP</span>' +
+      (genre ? '<span class="genre-tag">' + esc(genre) + '</span>' : '') +
+      (score ? '<span class="rating"><svg width="12" height="12" viewBox="0 0 24 24" fill="#fbbf24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + score + '</span>' : '') +
+    '</div>';
+
+    var coverHtml = img ? (
+      '<div class="cover-frame">' +
+        '<div class="cover-container">' +
+          '<div class="cover-border-glow"></div>' +
+          '<div class="cover-glow"></div>' +
+          '<div class="cover-inner">' +
+            '<img src="' + esc(img) + '" alt="' + esc(title) + '" class="cover-img" loading="' + (isFirst ? 'eager' : 'lazy') + '" />' +
+            '<div class="sparkle sparkle-1"></div>' +
+            '<div class="sparkle sparkle-2"></div>' +
+            '<div class="corner-acc corner-tl"></div>' +
+            '<div class="corner-acc corner-tr"></div>' +
+            '<div class="corner-acc corner-bl"></div>' +
+            '<div class="corner-acc corner-br"></div>' +
+            (score ? '<div class="score-badge"><div class="score-inner"><div class="score-value">' + score + '</div></div></div>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    ) : '';
+
+    return '<div class="hero-slide' + (isFirst ? ' active' : '') + '" data-index="' + idx + '">' +
+      '<div class="slide-content">' +
+        '<div class="slide-left">' +
+          trendingHtml +
+          badges +
+          '<h1 class="slide-title">' + esc(title) + '</h1>' +
+          meta +
+          '<p class="slide-desc">' + esc(syno) + '</p>' +
+          '<div class="slide-actions">' +
+            '<a href="/anime/' + esc(slug) + '" class="btn-watch">' +
+              '<div class="btn-watch-icon">' +
+                '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+                '<div class="pulse-ring"></div>' +
+              '</div>' +
+              '<span>Watch Now</span>' +
+            '</a>' +
+            '<a href="/anime/' + esc(slug) + '" class="btn-info">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>' +
+              'More Info' +
+            '</a>' +
+          '</div>' +
+        '</div>' +
+        '<div class="slide-right">' + coverHtml + '</div>' +
+      '</div>' +
+    '</div>';
   }
 
-  if(slides.length > 1) startAuto();
+  function goto(idx) {
+    if (slides.length === 0) return;
+    slides[current].classList.remove('active');
+    if (dots[current]) dots[current].classList.remove('active');
+    current = (idx + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    if (dots[current]) dots[current].classList.add('active');
+  }
+
+  function startAuto() {
+    clearInterval(interval);
+    if (slides.length > 1) interval = setInterval(function(){goto(current+1);}, 8000);
+  }
+
+  try {
+    var res = await fetch('/api/anime?action=list&category=popular&page=1');
+    var json = await res.json();
+    if (!json.success || !json.anime || json.anime.length === 0) throw new Error('no data');
+
+    var picks = json.anime.slice(0, 5);
+    
+    // Build all slides
+    slidesEl.innerHTML = picks.map(buildSlide).join('');
+    
+    // Build dots
+    dotsEl.innerHTML = picks.map(function(_, i){
+      return '<button class="slide-dot' + (i===0?' active':'') + '" data-index="' + i + '" aria-label="Slide ' + (i+1) + '"></button>';
+    }).join('');
+
+    slides = document.querySelectorAll('.hero-slide');
+    dots = document.querySelectorAll('.slide-dot');
+
+    dots.forEach(function(dot){
+      dot.addEventListener('click', function(){
+        goto(parseInt(dot.dataset.index));
+        startAuto();
+      });
+    });
+
+    if (prevBtn) prevBtn.addEventListener('click', function(){goto(current-1);startAuto();});
+    if (nextBtn) nextBtn.addEventListener('click', function(){goto(current+1);startAuto();});
+    
+    if (hero) {
+      hero.addEventListener('mouseenter', function(){clearInterval(interval);});
+      hero.addEventListener('mouseleave', startAuto);
+    }
+
+    startAuto();
+  } catch (e) {
+    console.warn('Hero load failed:', e);
+  }
 })();
 </script>
 
 <style>
-  /* ═══ HERO WRAPPER ═══ */
   .hero-sec {
     padding: 2rem 0 3rem;
     position: relative;
@@ -332,7 +241,6 @@ const displayEpisodes = allPosts
     padding: 2rem 1.5rem;
   }
 
-  /* ═══ SLIDES — DESKTOP absolute ═══ */
   .hero-slides {
     position: relative;
     min-height: 560px;
@@ -359,7 +267,6 @@ const displayEpisodes = allPosts
     min-height: 560px;
   }
 
-  /* LEFT INFO */
   .slide-left {
     animation: slideInLeft 0.7s ease;
   }
@@ -387,10 +294,7 @@ const displayEpisodes = allPosts
     backdrop-filter: blur(10px);
   }
 
-  .flame {
-    display: inline-block;
-    font-size: 0.85rem;
-  }
+  .flame { display: inline-block; font-size: 0.85rem; }
 
   .badges {
     display: flex;
@@ -415,20 +319,10 @@ const displayEpisodes = allPosts
   .badge-studio {
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    padding-left: 0.35rem;
     text-transform: none;
     font-family: var(--font-body);
     font-size: 0.75rem;
     font-weight: 600;
-  }
-
-  .badge-icon {
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    background: var(--grad);
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .badge-hd {
@@ -471,14 +365,6 @@ const displayEpisodes = allPosts
     margin-bottom: 0.4rem;
     letter-spacing: -0.03em;
     text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  }
-
-  .slide-title-jp {
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    color: rgba(125, 211, 252, 0.9) !important;
-    margin-bottom: 1.25rem;
-    letter-spacing: 0.02em;
   }
 
   .slide-meta {
@@ -545,6 +431,7 @@ const displayEpisodes = allPosts
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     text-decoration: none;
     border: none;
+    cursor: pointer;
   }
 
   .btn-watch:hover {
@@ -600,7 +487,6 @@ const displayEpisodes = allPosts
     transform: translateY(-2px);
   }
 
-  /* RIGHT COVER */
   .slide-right {
     display: flex;
     justify-content: center;
@@ -614,10 +500,7 @@ const displayEpisodes = allPosts
     to   { opacity: 1; transform: translateX(0); }
   }
 
-  .cover-frame {
-    padding: 20px;
-    max-width: 100%;
-  }
+  .cover-frame { padding: 20px; max-width: 100%; }
 
   .cover-container {
     position: relative;
@@ -630,24 +513,14 @@ const displayEpisodes = allPosts
     position: absolute;
     inset: -2px;
     border-radius: 22px;
-    background: conic-gradient(
-      from 0deg,
-      #c084fc,
-      #e879f9,
-      #7dd3fc,
-      #a855f7,
-      #c084fc
-    );
+    background: conic-gradient(from 0deg, #c084fc, #e879f9, #7dd3fc, #a855f7, #c084fc);
     animation: border-spin 60s linear infinite;
     z-index: 0;
     opacity: 0.5;
     filter: blur(1px);
   }
 
-  @keyframes border-spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-  }
+  @keyframes border-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
   .cover-glow {
     position: absolute;
@@ -680,15 +553,30 @@ const displayEpisodes = allPosts
     transition: transform 0.4s ease;
   }
 
-  .cover-inner:hover {
-    transform: scale(1.02);
-  }
+  .cover-inner:hover { transform: scale(1.02); }
 
   .cover-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+  }
+
+  .cover-skeleton {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+      rgba(192, 132, 252, 0.08) 25%,
+      rgba(192, 132, 252, 0.18) 50%,
+      rgba(192, 132, 252, 0.08) 75%
+    );
+    background-size: 200% 100%;
+    animation: sk-shine 1.5s infinite;
+  }
+
+  @keyframes sk-shine {
+    from { background-position: -200% 0; }
+    to   { background-position: 200% 0; }
   }
 
   .sparkle {
@@ -760,36 +648,6 @@ const displayEpisodes = allPosts
     color: #fff !important;
   }
 
-  .rank-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    z-index: 3;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(10px);
-    color: #fff !important;
-    padding: 0.35rem 0.65rem;
-    border-radius: 8px;
-    display: flex;
-    align-items: baseline;
-    gap: 2px;
-    border: 1px solid var(--purple);
-    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.4);
-    font-family: var(--font-mono);
-  }
-
-  .rank-hash {
-    color: var(--purple) !important;
-    font-size: 0.7rem;
-    font-weight: 700;
-  }
-
-  .rank-num {
-    font-size: 0.9rem;
-    font-weight: 800;
-    color: #fff !important;
-  }
-
   .hero-controls {
     display: flex;
     align-items: center;
@@ -798,10 +656,7 @@ const displayEpisodes = allPosts
     padding: 0 0.5rem;
   }
 
-  .slide-dots {
-    display: flex;
-    gap: 0.5rem;
-  }
+  .slide-dots { display: flex; gap: 0.5rem; }
 
   .slide-dot {
     width: 28px;
@@ -822,10 +677,7 @@ const displayEpisodes = allPosts
     box-shadow: 0 0 10px rgba(192, 132, 252, 0.5);
   }
 
-  .slide-nav {
-    display: flex;
-    gap: 0.4rem;
-  }
+  .slide-nav { display: flex; gap: 0.4rem; }
 
   .nav-btn {
     width: 36px; height: 36px;
@@ -847,212 +699,13 @@ const displayEpisodes = allPosts
     transform: scale(1.1);
   }
 
-  .latest-updates {
-    margin-top: 3rem;
-    position: relative;
-    z-index: 2;
-  }
+  @media (max-width: 1024px) { .cover-container { max-width: 320px; } }
 
-  .latest-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-  }
-
-  .latest-title {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-family: var(--font-heading);
-    font-size: clamp(1.4rem, 2.5vw, 1.8rem);
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0;
-  }
-
-  .tube-txt-adaptive {
-    color: var(--text-primary);
-  }
-
-  .latest-bar {
-    width: 4px;
-    height: 26px;
-    background: var(--grad);
-    border-radius: 3px;
-    box-shadow: 0 0 12px rgba(192, 132, 252, 0.5);
-  }
-
-  .latest-more {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--purple);
-    transition: all 0.2s ease;
-  }
-
-  .latest-more:hover {
-    color: var(--cyan);
-    gap: 0.5rem;
-  }
-
-  .updates-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-  }
-
-  .update-card {
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    color: inherit;
-  }
-
-  .update-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(192, 132, 252, 0.5);
-    box-shadow: 0 12px 30px rgba(192, 132, 252, 0.15);
-  }
-
-  .update-thumb {
-    position: relative;
-    aspect-ratio: 16/9;
-    overflow: hidden;
-    background: var(--bg-elevated);
-  }
-
-  .update-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s ease;
-  }
-
-  .update-card:hover .update-thumb img {
-    transform: scale(1.1);
-  }
-
-  .update-fallback {
-    width: 100%; height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, rgba(192, 132, 252, 0.1), rgba(125, 211, 252, 0.1));
-    color: var(--purple);
-  }
-
-  .update-play-overlay {
-    position: absolute; inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0);
-    opacity: 0;
-    transition: all 0.3s ease;
-  }
-
-  .update-card:hover .update-play-overlay {
-    opacity: 1;
-    background: rgba(10, 5, 23, 0.5);
-  }
-
-  .update-play-btn {
-    width: 42px; height: 42px;
-    border-radius: 50%;
-    background: var(--grad);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-left: 2px;
-    box-shadow: 0 0 20px rgba(192, 132, 252, 0.6);
-    transform: scale(0.7);
-    transition: transform 0.3s ease;
-  }
-
-  .update-card:hover .update-play-btn {
-    transform: scale(1);
-  }
-
-  .update-date {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    background: rgba(0, 0, 0, 0.75);
-    color: #fff;
-    padding: 3px 8px;
-    border-radius: 6px;
-    font-family: var(--font-mono);
-    font-size: 0.62rem;
-    font-weight: 700;
-    backdrop-filter: blur(6px);
-  }
-
-  .update-info {
-    padding: 0.75rem 0.9rem;
-  }
-
-  .update-cat {
-    font-family: var(--font-heading);
-    font-size: 0.65rem;
-    font-weight: 700;
-    background: var(--grad);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    margin-bottom: 0.35rem;
-  }
-
-  .update-title {
-    font-family: var(--font-heading);
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    line-height: 1.35;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* ═══════════════════════════════════════════════
-     RESPONSIVE — KEY FIX FOR MOBILE OVERLAP
-     ═══════════════════════════════════════════════ */
-
-  @media (max-width: 1024px) {
-    .cover-container { max-width: 320px; }
-  }
-
-  /* ═══ MOBILE — CRITICAL FIX ═══ */
   @media (max-width: 900px) {
     .hero-sec { padding: 1.5rem 0 2.5rem; }
-
-    .hero-bg-force {
-      top: 1.5rem;
-      height: calc(100% - 4rem);
-    }
-
-    .hero-inner {
-      padding: 1.5rem 1rem;
-    }
-
-    /* KEY FIX: slides = relative, not absolute */
-    .hero-slides {
-      position: relative;
-      min-height: auto;
-    }
-
-    /* KEY FIX: Only show active slide on mobile */
+    .hero-bg-force { top: 1.5rem; height: calc(100% - 4rem); }
+    .hero-inner { padding: 1.5rem 1rem; }
+    .hero-slides { position: relative; min-height: auto; }
     .hero-slide {
       position: relative !important;
       inset: auto !important;
@@ -1060,78 +713,25 @@ const displayEpisodes = allPosts
       opacity: 1 !important;
       visibility: visible !important;
     }
-
-    .hero-slide.active {
-      display: block !important;
-    }
-
-    /* Stack layout */
+    .hero-slide.active { display: block !important; }
     .slide-content {
       grid-template-columns: 1fr !important;
       gap: 2rem;
       min-height: auto;
       text-align: center;
     }
-
-    .slide-right {
-      order: -1;
-      padding: 0;
-    }
-
-    .cover-frame {
-      padding: 15px;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-    }
-
-    .cover-container {
-      max-width: 240px;
-    }
-
-    .slide-left {
-      padding: 0 0.5rem;
-    }
-
+    .slide-right { order: -1; padding: 0; }
+    .cover-frame { padding: 15px; width: 100%; display: flex; justify-content: center; }
+    .cover-container { max-width: 240px; }
+    .slide-left { padding: 0 0.5rem; }
     .slide-meta { justify-content: center; }
     .slide-desc { margin: 0 auto 1.5rem; }
     .slide-actions { justify-content: center; }
-
-    .trending-pill,
-    .badges {
-      justify-content: center;
-    }
-
+    .trending-pill, .badges { justify-content: center; }
     .badges { display: inline-flex; }
-
-    .score-inner {
-      width: 46px;
-      height: 46px;
-    }
-
-    .score-value {
-      font-size: 0.9rem;
-    }
-
-    .rank-badge {
-      padding: 0.28rem 0.55rem;
-    }
-
-    .rank-num {
-      font-size: 0.8rem;
-    }
-
-    .rank-hash {
-      font-size: 0.65rem;
-    }
-
-    .cover-border-glow {
-      animation-duration: 90s;
-    }
-
-    .updates-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
+    .score-inner { width: 46px; height: 46px; }
+    .score-value { font-size: 0.9rem; }
+    .cover-border-glow { animation-duration: 90s; }
   }
 
   @media (max-width: 640px) {
@@ -1139,31 +739,10 @@ const displayEpisodes = allPosts
     .cover-container { max-width: 200px; }
     .slide-title { font-size: 1.7rem; }
     .slide-desc { font-size: 0.85rem; max-width: 100%; }
-
-    .slide-actions {
-      flex-direction: column;
-      width: 100%;
-      max-width: 280px;
-      margin: 0 auto;
-    }
-
-    .btn-watch, .btn-info {
-      width: 100%;
-      justify-content: center;
-    }
-
-    .score-inner {
-      width: 42px;
-      height: 42px;
-    }
-
-    .score-value {
-      font-size: 0.82rem;
-    }
-
-    .updates-grid {
-      grid-template-columns: 1fr;
-    }
+    .slide-actions { flex-direction: column; width: 100%; max-width: 280px; margin: 0 auto; }
+    .btn-watch, .btn-info { width: 100%; justify-content: center; }
+    .score-inner { width: 42px; height: 42px; }
+    .score-value { font-size: 0.82rem; }
   }
 
   @media (max-width: 400px) {
