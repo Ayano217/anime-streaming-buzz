@@ -207,24 +207,46 @@ const { slug } = Astro.params;
 
 <script is:inline define:vars={{ slug }}>
 (async function(){
+  // ═══════════════════════════════════════════════
+  // HELPER FUNCTIONS
+  // ═══════════════════════════════════════════════
+  
+  // Escape HTML to prevent XSS
   function esc(s){try{return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}catch(e){return'';}}
+  
+  // Format date nicely
   function fmt(d){try{if(!d)return'N/A';var x=new Date(d);if(isNaN(x.getTime()))return'N/A';return x.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});}catch(e){return'N/A';}}
+  
+  // Capitalize string
   function cap(s){try{if(!s)return'';var str=String(s).replace(/_/g,' ');return str.charAt(0).toUpperCase()+str.slice(1);}catch(e){return String(s||'');}}
+  
+  // Truncate long string
   function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n).trim()+'…':s;}
 
+  // Fetch JSON with timeout
   async function fetchJSON(url,timeoutMs){
     timeoutMs=timeoutMs||10000;
     try{
-      var c=new AbortController();var t=setTimeout(function(){c.abort();},timeoutMs);
-      var r=await fetch(url,{signal:c.signal});clearTimeout(t);
-      if(!r.ok)return null;return await r.json();
+      var c=new AbortController();
+      var t=setTimeout(function(){c.abort();},timeoutMs);
+      var r=await fetch(url,{signal:c.signal});
+      clearTimeout(t);
+      if(!r.ok)return null;
+      return await r.json();
     }catch(e){return null;}
   }
 
+  // ═══════════════════════════════════════════════
+  // LOAD ANIME DATA (with fallback chain)
+  // ═══════════════════════════════════════════════
   async function loadAnimeData(loaderText){
     if(loaderText)loaderText.textContent='Loading anime details...';
+    
+    // Try direct detail lookup first
     var j=await fetchJSON('/api/anime?action=detail&slug='+encodeURIComponent(slug),10000);
     if(j&&j.success&&j.anime)return j.anime;
+    
+    // Fallback: search by slug converted to words
     if(loaderText)loaderText.textContent='Searching for anime...';
     var searchTerm=slug.replace(/-/g,' ');
     var s=await fetchJSON('/api/anime?action=search&q='+encodeURIComponent(searchTerm),10000);
@@ -238,10 +260,16 @@ const { slug } = Astro.params;
     return null;
   }
 
-  // ═══ MULTI-SOURCE VIDEO EMBED ═══
+  // ═══════════════════════════════════════════════
+  // MULTI-SOURCE VIDEO EMBED
+  // ═══════════════════════════════════════════════
+  
+  // Embed a video from any source (YouTube, Dailymotion, Odysee)
   function embedMultiSource(video, els) {
     var brand = '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · ' + esc(video.sourceLabel) + '</span></div>';
     els.playerFrame.innerHTML = brand;
+    
+    // Create iframe with explicit width/height attributes
     var iframe = document.createElement('iframe');
     iframe.src = video.embedUrl;
     iframe.setAttribute('width', '100%');
@@ -253,6 +281,7 @@ const { slug } = Astro.params;
     els.playerFrame.appendChild(iframe);
   }
 
+  // Fallback: Direct YouTube search embed if API fails
   function embedFallback(query, els) {
     var brand = '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player · YouTube Search</span></div>';
     els.playerFrame.innerHTML = brand;
@@ -267,6 +296,7 @@ const { slug } = Astro.params;
     els.playerFrame.appendChild(iframe);
   }
 
+  // Render source picker below player (multi-platform selector)
   function renderMultiSourcePicker(videos, els) {
     if (!videos || videos.length <= 1) {
       if (els.videoPicker) els.videoPicker.style.display = 'none';
@@ -276,6 +306,7 @@ const { slug } = Astro.params;
     
     els.videoPicker.style.display = 'block';
     
+    // Color coding per source (visual identification)
     var sourceColors = {
       youtube: { bg: '#ff0000', label: 'YT' },
       dailymotion: { bg: '#0066dc', label: 'DM' },
@@ -304,6 +335,7 @@ const { slug } = Astro.params;
       '</div>';
     }).join('');
     
+    // Click handler: switch to selected video
     els.pickerList.querySelectorAll('.pl-pick-item').forEach(function(el) {
       el.addEventListener('click', function() {
         var idx = parseInt(el.dataset.videoIdx);
@@ -316,7 +348,8 @@ const { slug } = Astro.params;
     });
   }
 
-  async function playVideo(query, title, els, epNumber) {
+  // MAIN PLAY VIDEO — accepts episode title for accurate season matching
+  async function playVideo(query, title, els, epNumber, epTitle) {
     try {
       if (!els.playerBlock || !els.playerFrame) return;
       els.playerBlock.style.display = 'block';
@@ -325,9 +358,15 @@ const { slug } = Astro.params;
       if (els.videoPicker) els.videoPicker.style.display = 'none';
       setTimeout(function() { els.playerBlock.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 50);
       
+      // Build search URL with all context for best matching
       var searchUrl = '/api/video-search?q=' + encodeURIComponent(query);
       if (epNumber) searchUrl += '&ep=' + epNumber;
+      // Pass episode title (from TMDB) for precise season matching
+      if (epTitle && epTitle !== 'Episode ' + epNumber && epTitle.length > 3) {
+        searchUrl += '&epTitle=' + encodeURIComponent(epTitle);
+      }
       
+      console.log('[AniTube] Searching videos:', searchUrl);
       var j = await fetchJSON(searchUrl, 15000);
       
       if (j && j.success && j.videos && j.videos.length > 0) {
@@ -335,6 +374,7 @@ const { slug } = Astro.params;
         renderMultiSourcePicker(j.videos, els);
         console.log('[AniTube] Sources found:', j.sources || {});
       } else {
+        // Ultimate fallback: YouTube search embed
         embedFallback(query, els);
       }
     } catch(e) {
@@ -343,10 +383,19 @@ const { slug } = Astro.params;
     }
   }
 
+  // ═══════════════════════════════════════════════
+  // RENDER ANIME DETAILS (hero + info)
+  // ═══════════════════════════════════════════════
   function safeRender(a,els){
     try{document.title=(a.title||'Anime')+' - AniTube Buzz';}catch(e){}
+    
+    // Background + poster image
     try{if(a.image){if(els.bg)els.bg.style.backgroundImage='url('+a.image+')';if(els.poster){els.poster.src=a.image;els.poster.alt=a.title||'';}}}catch(e){}
+    
+    // Title
     try{if(els.title)els.title.textContent=a.title||'Untitled';}catch(e){}
+    
+    // Badges (AIRING, Score, HD, Age Rating)
     try{
       var b=[];
       if(a.status==='current')b.push('<span class="ap-b ap-b-new"><span class="ap-dot"></span>AIRING NOW</span>');
@@ -355,6 +404,8 @@ const { slug } = Astro.params;
       if(a.ageRating)b.push('<span class="ap-b ap-b-age">'+esc(a.ageRating)+'</span>');
       if(els.badges)els.badges.innerHTML=b.join('');
     }catch(e){}
+    
+    // Meta line (year, episodes, type, status)
     try{
       var m=[];
       if(a.year)m.push(String(a.year));
@@ -363,12 +414,18 @@ const { slug } = Astro.params;
       if(a.status)m.push(cap(a.status));
       if(els.meta)els.meta.innerHTML=m.map(function(x){return '<span>'+esc(x)+'</span>';}).join('<span class="mp-sep">·</span>');
     }catch(e){}
+    
+    // Genres
     try{if(a.genres&&Array.isArray(a.genres)&&a.genres.length>0&&els.genres){els.genres.innerHTML=a.genres.slice(0,6).map(function(g){return '<span class="ap-gp">'+esc(g)+'</span>';}).join('');}}catch(e){}
+    
+    // Synopsis (truncated + full)
     try{
       var syn=a.description||a.synopsis||'No synopsis available.';
       if(els.syno)els.syno.textContent=syn.length>250?syn.slice(0,250)+'...':syn;
       if(els.fullSyno)els.fullSyno.textContent=syn;
     }catch(e){}
+    
+    // Info sidebar table
     try{
       var rows=[
         ['Type',a.subtype||'TV'],
@@ -381,6 +438,8 @@ const { slug } = Astro.params;
       ];
       if(els.infoList)els.infoList.innerHTML=rows.map(function(r){return '<div class="ir"><span class="ir-l">'+esc(r[0])+'</span><span class="ir-v">'+esc(String(r[1]))+'</span></div>';}).join('');
     }catch(e){}
+    
+    // Streaming platform links (with affiliate tags where possible)
     try{
       var qEnc=encodeURIComponent(a.title||'');
       document.querySelectorAll('.ap-stream').forEach(function(el){
@@ -390,19 +449,26 @@ const { slug } = Astro.params;
         else if(p==='hulu')u='https://www.hulu.com/search?q='+qEnc;
         el.href=u;el.target='_blank';el.rel='noopener';
       });
+      // Affiliate CTAs below player
       var afCr=document.getElementById('afCrunchyroll');
       var afNf=document.getElementById('afNetflix');
       var afAm=document.getElementById('afAmazon');
       if(afCr)afCr.href='https://www.crunchyroll.com/search?q='+qEnc;
       if(afNf)afNf.href='https://www.netflix.com/search?q='+qEnc;
+      // Amazon Associates tag for merch commissions
       if(afAm)afAm.href='https://www.amazon.com/s?k='+encodeURIComponent(a.title+' anime')+'&tag=anitubebuzz-20';
     }catch(e){}
   }
 
+  // ═══════════════════════════════════════════════
+  // BUILD EPISODE CARD (16:9 with thumbnail, EP badge, hover play)
+  // ═══════════════════════════════════════════════
   function buildEpisodeCard(e, idx, title, posterFallback) {
     var hasRealThumb = !!e.thumbnail;
     var thumb = e.thumbnail || posterFallback || '';
     var animDelay = ((idx % 12) * 40) + 'ms';
+    
+    // Real thumb = clean image; Fallback poster = blurred + scaled
     var imgStyle = hasRealThumb
       ? 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.6s ease, filter 0.35s ease;'
       : 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:all 0.35s ease;filter:blur(8px) brightness(0.45) saturate(1.3);transform:scale(1.45);';
@@ -415,8 +481,11 @@ const { slug } = Astro.params;
       'style="position:relative;cursor:pointer;background:transparent;animation:atCardIn 0.5s ease backwards;animation-delay:' + animDelay + ';">' +
       '<div class="at-thumb-wrap" style="position:relative;width:100%;padding-top:56.25%;border-radius:14px;overflow:hidden;background:#0a0517;border:1px solid rgba(192,132,252,0.35);box-shadow:0 8px 20px rgba(0,0,0,0.4);transition:all 0.35s ease;">' +
         imgHtml +
+        // Shine sweep on hover
         '<div class="at-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.2),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
+        // Dark overlay on hover
         '<div class="at-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,5,23,0.85) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
+        // Play button (hidden until hover)
         '<div class="at-play-wrap" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.4);width:52px;height:52px;z-index:5;opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;">' +
           '<div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(192,132,252,0.8);animation:atPlayRing 2s ease-out infinite;"></div>' +
           '<div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(192,132,252,0.8);animation:atPlayRing 2s ease-out infinite;animation-delay:1s;"></div>' +
@@ -424,9 +493,12 @@ const { slug } = Astro.params;
             '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
           '</div>' +
         '</div>' +
+        // EP number badge (top-left)
         '<div style="position:absolute;top:8px;left:8px;padding:4px 9px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;font-weight:800;letter-spacing:0.08em;border-radius:6px;z-index:6;box-shadow:0 3px 10px rgba(192,132,252,0.5);">EP ' + e.number + '</div>' +
+        // Duration badge (bottom-right)
         (e.length ? '<div style="position:absolute;bottom:8px;right:8px;padding:3px 8px;background:rgba(10,5,23,0.9);border:1px solid rgba(192,132,252,0.3);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;font-weight:700;border-radius:5px;z-index:6;">' + e.length + 'm</div>' : '') +
       '</div>' +
+      // Episode title + air date below
       '<div style="padding:10px 4px 4px;position:relative;z-index:1;">' +
         '<h4 class="at-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text-primary);margin:0 0 4px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;">' + esc(e.title) + '</h4>' +
         (e.airdate ? '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.66rem;color:var(--text-muted);opacity:0.75;">' + fmt(e.airdate) + '</div>' : '') +
@@ -434,7 +506,10 @@ const { slug } = Astro.params;
     '</div>';
   }
 
-  function renderEpisodes(eps,title,posterFallback,els){
+  // ═══════════════════════════════════════════════
+  // RENDER EPISODES (grid layout, latest first)
+  // ═══════════════════════════════════════════════
+  function renderEpisodes(eps, title, posterFallback, els){
     try{
       if(!els.episodesList)return;
       if(!eps||!eps.length){
@@ -442,29 +517,44 @@ const { slug } = Astro.params;
         if(els.seasonsTabs)els.seasonsTabs.style.display='none';
         return;
       }
+      
+      // "Latest first" indicator
       var sortInfo=document.getElementById('apSortInfo');
       if(sortInfo)sortInfo.innerHTML='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg> Latest first';
+      
+      // Group by season
       var seasons={};
       eps.forEach(function(e){var s=e.seasonNumber||1;if(!seasons[s])seasons[s]=[];seasons[s].push(e);});
       var nums=Object.keys(seasons).map(Number).sort(function(a,b){return a-b;});
+      
+      // Sort each season's episodes in REVERSE (latest first)
       nums.forEach(function(s){seasons[s].sort(function(a,b){return (b.number||0)-(a.number||0);});});
+      
+      // Season tabs
       if(els.seasonsTabs){
         els.seasonsTabs.innerHTML=nums.map(function(s,i){
           return '<button class="ap-st'+(i===0?' active':'')+'" data-s="'+s+'">Season '+s+' <span class="st-c">'+seasons[s].length+' EP</span></button>';
         }).join('');
       }
+      
+      // Show episodes for selected season
       function show(s){
         var list=seasons[s];
         els.episodesList.innerHTML=list.map(function(e,idx){return buildEpisodeCard(e,idx,title,posterFallback);}).join('');
+        
+        // Attach click handler to each episode card
         els.episodesList.querySelectorAll('.at-ep-card').forEach(function(el){
           el.addEventListener('click',function(){
             var epNum = el.dataset.n;
             var epTitle = el.dataset.t;
-            // Multi-source search with episode number for strict matching
-            playVideo(title, 'Episode ' + epNum + ': ' + epTitle, els, epNum);
+            // CRITICAL: Pass BOTH episode number AND title for accurate season matching
+            // e.g. "Blood for My Bone" ep 3 → finds Season 4 Ep 3 (not Season 1 Ep 3)
+            playVideo(title, 'Episode ' + epNum + ': ' + epTitle, els, epNum, epTitle);
           });
         });
       }
+      
+      // Season tab click handler
       if(els.seasonsTabs){
         els.seasonsTabs.querySelectorAll('.ap-st').forEach(function(t){
           t.addEventListener('click',function(){
@@ -474,10 +564,15 @@ const { slug } = Astro.params;
           });
         });
       }
+      
+      // Show first season by default
       show(nums[0]);
     }catch(e){console.error('renderEpisodes:',e);}
   }
 
+  // ═══════════════════════════════════════════════
+  // RENDER RELATED ANIME (bottom section)
+  // ═══════════════════════════════════════════════
   function renderRelated(list,els){
     try{
       if(!els.relatedGrid)return;
@@ -491,9 +586,14 @@ const { slug } = Astro.params;
     }catch(e){}
   }
 
+  // Wait for DOM ready
   function domReady(cb){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',cb);else cb();}
 
+  // ═══════════════════════════════════════════════
+  // MAIN INIT
+  // ═══════════════════════════════════════════════
   domReady(async function(){
+    // Grab all elements (unique 'ap' prefix to avoid conflicts with BaseLayout)
     var els={
       loader:document.getElementById('apLoader'),
       loaderText:document.getElementById('apLoaderText'),
@@ -525,6 +625,7 @@ const { slug } = Astro.params;
     
     if(!els.loader||!els.content)return;
     
+    // Hard timeout: never let loader spin > 25s
     var hardTimeout=setTimeout(function(){
       if(els.loader.style.display!=='none'){
         els.loader.style.display='none';
@@ -534,6 +635,7 @@ const { slug } = Astro.params;
     },25000);
 
     try{
+      // Load anime detail data
       var anime=await loadAnimeData(els.loaderText);
       if(!anime){
         clearTimeout(hardTimeout);
@@ -542,19 +644,24 @@ const { slug } = Astro.params;
         if(els.notFound)els.notFound.style.display='flex';
         return;
       }
+      
+      // Render main content (fast)
       safeRender(anime,els);
       clearTimeout(hardTimeout);
       els.loader.style.display='none';
       els.loader.style.visibility='hidden';
       els.content.style.display='block';
       
+      // Load extras in background (non-blocking): episodes + related
       if(anime.id){
+        // Episodes with TMDB enrichment for real thumbnails + titles
         var epsUrl='/api/anime?action=episodes&id='+anime.id+'&page=1&title='+encodeURIComponent(anime.title||'');
         fetchJSON(epsUrl,15000).then(function(epsData){
           if(epsData&&epsData.success)renderEpisodes(epsData.episodes||[],anime.title||'',anime.image||'',els);
           else renderEpisodes([],anime.title||'',anime.image||'',els);
         }).catch(function(){renderEpisodes([],anime.title||'',anime.image||'',els);});
         
+        // Related anime (popular ones excluding current)
         fetchJSON('/api/anime?action=list&category=popular&page=1',10000).then(function(relData){
           if(relData&&relData.success){
             var rel=(relData.anime||[]).filter(function(x){return x.slug!==slug;}).slice(0,12);
@@ -563,18 +670,23 @@ const { slug } = Astro.params;
         }).catch(function(){renderRelated([],els);});
       }
       
+      // Watch Now button — plays trailer (no episode number)
       if(els.watchBtn)els.watchBtn.addEventListener('click',function(){
-        // Trailer search - no episode number
-        playVideo((anime.title || 'anime') + ' anime trailer', (anime.title || 'Anime') + ' - Trailer', els, null);
+        playVideo((anime.title || 'anime') + ' anime trailer', (anime.title || 'Anime') + ' - Trailer', els, null, null);
       });
+      
+      // More Info button — smooth scroll to details section
       if(els.infoBtn&&els.detailsBlock)els.infoBtn.addEventListener('click',function(){
         els.detailsBlock.scrollIntoView({behavior:'smooth',block:'start'});
       });
+      
+      // Close player button
       if(els.closePlayer)els.closePlayer.addEventListener('click',function(){
         if(els.playerBlock)els.playerBlock.style.display='none';
         if(els.playerFrame)els.playerFrame.innerHTML='';
       });
       
+      // Share buttons (Twitter, Facebook, Copy)
       document.querySelectorAll('.sh-btn').forEach(function(b){
         b.addEventListener('click',function(){
           var t=b.dataset.share,u=window.location.href,x=(anime.title||'Anime')+' on AniTube Buzz';
@@ -639,6 +751,7 @@ const { slug } = Astro.params;
   .ap-btn-s{background:rgba(28,15,61,.7);color:#fff;border:1px solid rgba(192,132,252,.4)}
   .ap-btn-s:hover{background:rgba(192,132,252,.2);transform:translateY(-3px)}
   
+  /* PLAYER */
   .ap-player{padding:2rem 0}
   .pl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
   .pl-close{background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.3);color:var(--text-primary);width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s ease}
@@ -659,41 +772,13 @@ const { slug } = Astro.params;
   .pl-pick-item.active{background:rgba(192,132,252,.15);border-color:#e879f9;box-shadow:0 0 15px rgba(192,132,252,.3)}
   .pl-pick-thumb{position:relative;width:100px;min-width:100px;aspect-ratio:16/9;border-radius:6px;overflow:hidden;background:#000}
   .pl-pick-thumb img{width:100%;height:100%;object-fit:cover}
-  
-  .pl-pick-source{
-    position:absolute;
-    top:4px;
-    right:4px;
-    padding:2px 6px;
-    color:#fff;
-    font-family:'JetBrains Mono',monospace;
-    font-size:.55rem;
-    font-weight:800;
-    border-radius:4px;
-    letter-spacing:.05em;
-    box-shadow:0 2px 6px rgba(0,0,0,.5);
-    z-index:2;
-  }
-  
-  .pl-pick-official{
-    position:absolute;
-    top:4px;
-    left:4px;
-    padding:2px 5px;
-    background:linear-gradient(135deg,#10b981,#059669);
-    color:#fff;
-    font-family:'JetBrains Mono',monospace;
-    font-size:.5rem;
-    font-weight:800;
-    border-radius:3px;
-    letter-spacing:.05em;
-    z-index:2;
-  }
-  
+  .pl-pick-source{position:absolute;top:4px;right:4px;padding:2px 6px;color:#fff;font-family:'JetBrains Mono',monospace;font-size:.55rem;font-weight:800;border-radius:4px;letter-spacing:.05em;box-shadow:0 2px 6px rgba(0,0,0,.5);z-index:2}
+  .pl-pick-official{position:absolute;top:4px;left:4px;padding:2px 5px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-family:'JetBrains Mono',monospace;font-size:.5rem;font-weight:800;border-radius:3px;letter-spacing:.05em;z-index:2}
   .pl-pick-info{flex:1;min-width:0}
   .pl-pick-title{font-family:'Bricolage Grotesque',sans-serif;font-size:.8rem;font-weight:600;color:var(--text-primary);line-height:1.3;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .pl-pick-channel{font-family:'JetBrains Mono',monospace;font-size:.65rem;color:var(--text-muted)}
   
+  /* AFFILIATE CTA */
   .pl-affiliate{margin-top:1.5rem;padding:20px;background:linear-gradient(135deg,rgba(192,132,252,.08),rgba(232,121,249,.05),rgba(125,211,252,.08));border:1px solid rgba(192,132,252,.25);border-radius:16px}
   .af-title{font-family:'Bricolage Grotesque',sans-serif;font-size:.95rem;font-weight:700;color:var(--text-primary);margin-bottom:12px}
   .af-btns{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
@@ -707,6 +792,7 @@ const { slug } = Astro.params;
   .af-btn-t{font-family:'Bricolage Grotesque',sans-serif;font-size:.9rem;font-weight:700;color:var(--text-primary);margin-bottom:2px}
   .af-btn-s{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text-muted);opacity:.8}
   
+  /* DETAILS SECTION */
   .ap-details{padding:3rem 0}
   .ap-grid{display:grid;grid-template-columns:1fr 320px;gap:2.5rem}
   .ap-sec{margin-bottom:2.5rem}
@@ -738,6 +824,8 @@ const { slug } = Astro.params;
   .sh-btn{flex:1;padding:10px;background:rgba(192,132,252,.08);border:1px solid rgba(192,132,252,.2);border-radius:10px;color:var(--text-secondary);cursor:pointer;transition:all .2s ease;display:flex;align-items:center;justify-content:center}
   .sh-btn:hover{background:var(--grad);color:#fff;border-color:transparent}
   .sh-btn.cp{background:#10b981;color:#fff;border-color:transparent}
+  
+  /* RELATED ANIME */
   .ap-related{padding:2rem 0 4rem}
   .rel-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:1rem}
   .rel-c{text-decoration:none;color:inherit;transition:transform .3s ease}
@@ -753,6 +841,7 @@ const { slug } = Astro.params;
   .rel-sk{aspect-ratio:3/4.4;border-radius:14px;background:linear-gradient(90deg,rgba(192,132,252,.05) 25%,rgba(192,132,252,.12) 50%,rgba(192,132,252,.05) 75%);background-size:200% 100%;animation:rkS 1.5s infinite}
   @keyframes rkS{from{background-position:-200% 0}to{background-position:200% 0}}
   
+  /* RESPONSIVE */
   @media(max-width:1024px){.ap-hero-in{grid-template-columns:220px 1fr;gap:2rem}.ap-grid{grid-template-columns:1fr;gap:1.5rem}.rel-grid{grid-template-columns:repeat(4,1fr)}}
   @media(max-width:768px){.ap-hero{padding:2rem 0;min-height:auto}.ap-hero-in{grid-template-columns:1fr;gap:1.5rem;text-align:center}.ap-poster{max-width:200px;margin:0 auto}.ap-badges,.ap-meta,.ap-genres,.ap-actions{justify-content:center}.rel-grid{grid-template-columns:repeat(3,1fr)}.pl-picker-list{grid-template-columns:1fr}.af-btns{grid-template-columns:1fr}}
   @media(max-width:640px){.rel-grid{grid-template-columns:repeat(2,1fr)}.ap-btn{padding:11px 20px;font-size:.85rem}.ap-sh{font-size:1.2rem}}
