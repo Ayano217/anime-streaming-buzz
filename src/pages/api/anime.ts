@@ -3,7 +3,8 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 
 const CACHE: Record<string, { data: any; time: number }> = {};
-const CACHE_TTL = 10 * 60 * 1000; // 10 min (was 30)
+const CACHE_TTL = 5 * 60 * 1000; // 5 min
+const CACHE_VERSION = 'v3'; // bump to invalidate old cache
 const CONSUMET_BASE = 'https://api.consumet.org';
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const TMDB_IMG = 'https://image.tmdb.org/t/p/original';
@@ -14,13 +15,15 @@ function slugify(text: string): string {
 }
 
 function cached(key: string): any | null {
-  const c = CACHE[key];
+  const k = `${CACHE_VERSION}:${key}`;
+  const c = CACHE[k];
   if (c && Date.now() - c.time < CACHE_TTL) return c.data;
   return null;
 }
 
 function setCache(key: string, data: any) {
-  CACHE[key] = { data, time: Date.now() };
+  const k = `${CACHE_VERSION}:${key}`;
+  CACHE[k] = { data, time: Date.now() };
   const keys = Object.keys(CACHE);
   if (keys.length > 100) delete CACHE[keys[0]];
 }
@@ -28,11 +31,10 @@ function setCache(key: string, data: any) {
 function jsonRes(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=600', 'Access-Control-Allow-Origin': '*' }
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300', 'Access-Control-Allow-Origin': '*' }
   });
 }
 
-// ─── JIKAN: normalize ───
 function normalizeJikan(item: any) {
   const title = item.title_english || item.title || item.title_japanese || 'Unknown';
   return {
@@ -56,110 +58,80 @@ function normalizeJikan(item: any) {
   };
 }
 
-// ─── JIKAN: Current season anime (TRULY NEW) ───
 async function jikanCurrentSeason(page: number = 1) {
-  try {
-    const url = `${JIKAN_BASE}/seasons/now?page=${page}&limit=25&filter=tv&sfw=true`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Jikan ${res.status}`);
-    const json: any = await res.json();
-    if (!json.data) throw new Error('No Jikan data');
-    
-    let anime = json.data.map(normalizeJikan);
-    
-    // Filter: only anime that started in last 1 year (truly current)
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-    anime = anime.filter((a: any) => {
-      if (!a.startDate) return true;
-      return new Date(a.startDate) > oneYearAgo;
-    });
-    
-    // Sort by most recent start date first
-    anime.sort((a: any, b: any) => {
-      const da = a.startDate ? new Date(a.startDate).getTime() : 0;
-      const db = b.startDate ? new Date(b.startDate).getTime() : 0;
-      return db - da;
-    });
-    
-    return {
-      anime,
-      hasNext: json.pagination?.has_next_page !== false,
-      total: json.pagination?.items?.total || 1000
-    };
-  } catch (e) {
-    console.warn('Jikan seasonal failed:', e);
-    throw e;
-  }
+  const url = `${JIKAN_BASE}/seasons/now?page=${page}&limit=25&sfw=true`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Jikan ${res.status}`);
+  const json: any = await res.json();
+  if (!json.data || json.data.length === 0) throw new Error('Empty Jikan response');
+  
+  let anime = json.data.map(normalizeJikan);
+  
+  // Sort by most recent start date first
+  anime.sort((a: any, b: any) => {
+    const da = a.startDate ? new Date(a.startDate).getTime() : 0;
+    const db = b.startDate ? new Date(b.startDate).getTime() : 0;
+    return db - da;
+  });
+  
+  return {
+    anime,
+    hasNext: json.pagination?.has_next_page !== false,
+    total: json.pagination?.items?.total || 1000
+  };
 }
 
-// ─── JIKAN: Top anime by category ───
 async function jikanTop(category: string, page: number = 1) {
   const filterMap: Record<string, string> = {
     top: 'bypopularity',
     upcoming: 'upcoming',
     popular: 'bypopularity',
-    movies: 'movie'
+    movies: ''
   };
   const filter = filterMap[category] || 'bypopularity';
   const isMovie = category === 'movies';
   
-  try {
-    const url = `${JIKAN_BASE}/top/anime?filter=${filter}&page=${page}&limit=25${isMovie ? '&type=movie' : ''}&sfw=true`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Jikan ${res.status}`);
-    const json: any = await res.json();
-    if (!json.data) throw new Error('No Jikan data');
-    return {
-      anime: json.data.map(normalizeJikan),
-      hasNext: json.pagination?.has_next_page !== false,
-      total: json.pagination?.items?.total || 1000
-    };
-  } catch (e) {
-    console.warn('Jikan top failed:', e);
-    throw e;
-  }
+  let url = `${JIKAN_BASE}/top/anime?page=${page}&limit=25&sfw=true`;
+  if (filter) url += `&filter=${filter}`;
+  if (isMovie) url += '&type=movie';
+  
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Jikan ${res.status}`);
+  const json: any = await res.json();
+  if (!json.data || json.data.length === 0) throw new Error('Empty Jikan response');
+  return {
+    anime: json.data.map(normalizeJikan),
+    hasNext: json.pagination?.has_next_page !== false,
+    total: json.pagination?.items?.total || 1000
+  };
 }
 
-// ─── JIKAN: Search ───
 async function jikanSearch(query: string) {
-  try {
-    const url = `${JIKAN_BASE}/anime?q=${encodeURIComponent(query)}&limit=20&sfw=true&order_by=score&sort=desc`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Jikan search ${res.status}`);
-    const json: any = await res.json();
-    return (json.data || []).map(normalizeJikan);
-  } catch (e) {
-    console.warn('Jikan search failed:', e);
-    return [];
-  }
+  const url = `${JIKAN_BASE}/anime?q=${encodeURIComponent(query)}&limit=20&sfw=true&order_by=score&sort=desc`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Jikan search ${res.status}`);
+  const json: any = await res.json();
+  return (json.data || []).map(normalizeJikan);
 }
 
-// ─── JIKAN: Detail by MAL ID ───
 async function jikanDetail(malId: string) {
-  try {
-    const url = `${JIKAN_BASE}/anime/${malId}/full`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Jikan detail ${res.status}`);
-    const json: any = await res.json();
-    if (!json.data) throw new Error('No Jikan data');
-    const item = json.data;
-    const base = normalizeJikan(item);
-    return {
-      ...base,
-      description: item.synopsis || '',
-      coverImage: item.images?.jpg?.large_image_url || base.image,
-      ageRating: item.rating || '',
-      ageRatingGuide: '',
-      studios: (item.studios || []).map((s: any) => s.name)
-    };
-  } catch (e) {
-    console.warn('Jikan detail failed:', e);
-    return null;
-  }
+  const url = `${JIKAN_BASE}/anime/${malId}/full`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Jikan detail ${res.status}`);
+  const json: any = await res.json();
+  if (!json.data) throw new Error('No Jikan data');
+  const item = json.data;
+  const base = normalizeJikan(item);
+  return {
+    ...base,
+    description: item.synopsis || '',
+    coverImage: item.images?.jpg?.large_image_url || base.image,
+    ageRating: item.rating || '',
+    ageRatingGuide: '',
+    studios: (item.studios || []).map((s: any) => s.name)
+  };
 }
 
-// ─── KITSU: Fallback normalize ───
 function normalizeKitsu(item: any) {
   const a = item.attributes;
   const title = a.canonicalTitle || a.titles?.en || a.titles?.en_jp || 'Unknown';
@@ -250,7 +222,6 @@ async function kitsuEpisodes(kitsuId: string, page: number = 1) {
   return { episodes, hasNext, total: totalCount };
 }
 
-// ─── TMDB, AniList, Consumet (unchanged from before) ───
 async function tmdbSearchAnime(animeTitle: string, apiKey: string) {
   try {
     const url = `${TMDB_BASE}/search/tv?query=${encodeURIComponent(animeTitle)}&language=en-US&page=1&include_adult=false`;
@@ -295,13 +266,7 @@ async function tmdbEpisodes(tvId: number, seasonNumber: number, apiKey: string) 
 }
 
 async function anilistEpisodes(animeTitle: string) {
-  const query = `
-    query ($search: String) {
-      Media(search: $search, type: ANIME) {
-        id title { romaji english } episodes
-        streamingEpisodes { title thumbnail url site }
-      }
-    }`;
+  const query = `query ($search: String) { Media(search: $search, type: ANIME) { id title { romaji english } episodes streamingEpisodes { title thumbnail url site } } }`;
   try {
     const res = await fetch('https://graphql.anilist.co', {
       method: 'POST',
@@ -316,11 +281,7 @@ async function anilistEpisodes(animeTitle: string) {
       const titleMatch = (ep.title || '').match(/(?:episode|ep\.?)\s*(\d+)/i);
       const num = titleMatch ? parseInt(titleMatch[1]) : (idx + 1);
       const cleanTitle = (ep.title || '').replace(/^(?:episode|ep\.?)\s*\d+\s*[-:–]\s*/i, '').replace(/^(?:episode|ep\.?)\s*\d+$/i, '').trim() || `Episode ${num}`;
-      return {
-        id: `anilist_${num}`, number: num, title: cleanTitle,
-        synopsis: '', thumbnail: ep.thumbnail || '',
-        airdate: '', seasonNumber: 1, length: null
-      };
+      return { id: `anilist_${num}`, number: num, title: cleanTitle, synopsis: '', thumbnail: ep.thumbnail || '', airdate: '', seasonNumber: 1, length: null };
     });
     episodes.sort((a: any, b: any) => a.number - b.number);
     return episodes;
@@ -356,7 +317,6 @@ async function consumetEpisodes(animeTitle: string) {
 async function getEnrichedEpisodes(kitsuId: string, animeTitle: string, page: number, tmdbKey: string) {
   const kitsuData = await kitsuEpisodes(kitsuId, page);
   let episodes = kitsuData.episodes;
-  
   let tmdbEps: any = null;
   if (page === 1 && animeTitle && tmdbKey) {
     const tvShow = await tmdbSearchAnime(animeTitle, tmdbKey);
@@ -372,27 +332,18 @@ async function getEnrichedEpisodes(kitsuId: string, animeTitle: string, page: nu
       }
     }
   }
-  
   if (tmdbEps && tmdbEps.length >= episodes.length && tmdbEps.length > 0) {
     return { episodes: tmdbEps, hasNext: false, total: tmdbEps.length };
   }
-  
   let consumetEps: any = null;
-  if (page === 1 && animeTitle && (!tmdbEps || tmdbEps.length === 0)) {
-    consumetEps = await consumetEpisodes(animeTitle);
-  }
-  
+  if (page === 1 && animeTitle && (!tmdbEps || tmdbEps.length === 0)) consumetEps = await consumetEpisodes(animeTitle);
   let anilistEps: any = null;
-  if (page === 1 && animeTitle && !consumetEps) {
-    anilistEps = await anilistEpisodes(animeTitle);
-  }
-  
+  if (page === 1 && animeTitle && !consumetEps) anilistEps = await anilistEpisodes(animeTitle);
   if (episodes.length === 0) {
     if (tmdbEps && tmdbEps.length > 0) return { episodes: tmdbEps, hasNext: false, total: tmdbEps.length };
     if (consumetEps && consumetEps.length > 0) return { episodes: consumetEps, hasNext: false, total: consumetEps.length };
     if (anilistEps && anilistEps.length > 0) return { episodes: anilistEps, hasNext: false, total: anilistEps.length };
   }
-  
   if (episodes.length > 0) {
     episodes = episodes.map((kEp: any) => {
       if (kEp.thumbnail) return kEp;
@@ -411,14 +362,11 @@ async function getEnrichedEpisodes(kitsuId: string, animeTitle: string, page: nu
       return kEp;
     });
   }
-  
   return { episodes, hasNext: kitsuData.hasNext, total: kitsuData.total };
 }
 
 async function findAnimeBySlug(slug: string) {
   const searchTerm = slug.replace(/-/g, ' ');
-  
-  // Try Jikan first (better data)
   try {
     const jikanResults = await jikanSearch(searchTerm);
     if (jikanResults.length > 0) {
@@ -429,8 +377,6 @@ async function findAnimeBySlug(slug: string) {
       return pick;
     }
   } catch {}
-  
-  // Fallback: Kitsu
   try {
     const results = await kitsuSearch(searchTerm);
     let match = results.find((a: any) => a.slug === slug);
@@ -440,7 +386,6 @@ async function findAnimeBySlug(slug: string) {
       catch { return match; }
     }
   } catch {}
-  
   return null;
 }
 
@@ -452,6 +397,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
   const id = url.searchParams.get('id') || '';
   const slug = url.searchParams.get('slug') || '';
   const animeTitle = url.searchParams.get('title') || '';
+  const noCache = url.searchParams.get('nocache') === '1';
 
   const env = (locals as any)?.runtime?.env || {};
   const TMDB_KEY = env.TMDB_API_KEY || (globalThis as any).TMDB_API_KEY || '';
@@ -459,44 +405,40 @@ export const GET: APIRoute = async ({ url, locals }) => {
   try {
     if (action === 'list') {
       const cacheKey = `list:${category}:${page}`;
-      const hit = cached(cacheKey);
-      if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
+      if (!noCache) {
+        const hit = cached(cacheKey);
+        if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
+      }
       
       let data;
-      // ═══ USE JIKAN FOR AIRING (truly new anime) ═══
-      if (category === 'airing') {
-        try {
+      let source = 'jikan';
+      
+      // ═══ ALWAYS JIKAN FIRST ═══
+      try {
+        if (category === 'airing') {
           data = await jikanCurrentSeason(page);
-        } catch {
-          // Fallback to Kitsu if Jikan fails
-          data = await kitsuList(category, page);
-        }
-      } else {
-        // Try Jikan for other categories
-        try {
+        } else {
           data = await jikanTop(category, page);
-        } catch {
-          data = await kitsuList(category, page);
         }
+      } catch (jikanErr) {
+        console.warn('Jikan failed, using Kitsu:', jikanErr);
+        source = 'kitsu';
+        data = await kitsuList(category, page);
       }
       
       setCache(cacheKey, data);
-      return jsonRes({ success: true, source: 'jikan-kitsu', ...data });
+      return jsonRes({ success: true, source, ...data });
     }
     
     if (action === 'search' && query) {
       const cacheKey = `search:${query}`;
       const hit = cached(cacheKey);
       if (hit) return jsonRes({ success: true, source: 'cache', anime: hit });
-      
-      // Try Jikan first (better search)
-      let results = await jikanSearch(query);
-      if (results.length === 0) {
-        results = await kitsuSearch(query);
-      }
-      
+      let results;
+      try { results = await jikanSearch(query); }
+      catch { results = await kitsuSearch(query); }
       setCache(cacheKey, results);
-      return jsonRes({ success: true, source: 'jikan-kitsu', anime: results });
+      return jsonRes({ success: true, source: 'jikan', anime: results });
     }
     
     if (action === 'detail') {
@@ -504,17 +446,12 @@ export const GET: APIRoute = async ({ url, locals }) => {
         const cacheKey = `detail:${id}`;
         const hit = cached(cacheKey);
         if (hit) return jsonRes({ success: true, source: 'cache', anime: hit });
-        
-        // Try Jikan detail if ID is numeric (MAL ID)
         if (/^\d+$/.test(id)) {
-          const detail = await jikanDetail(id);
-          if (detail) {
-            setCache(cacheKey, detail);
-            return jsonRes({ success: true, source: 'jikan', anime: detail });
-          }
+          try {
+            const detail = await jikanDetail(id);
+            if (detail) { setCache(cacheKey, detail); return jsonRes({ success: true, source: 'jikan', anime: detail }); }
+          } catch {}
         }
-        
-        // Fallback: Kitsu
         try {
           const detail = await kitsuDetail(id);
           setCache(cacheKey, detail);
@@ -528,10 +465,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
         const hit = cached(cacheKey);
         if (hit) return jsonRes({ success: true, source: 'cache', anime: hit });
         const anime = await findAnimeBySlug(slug);
-        if (anime) {
-          setCache(cacheKey, anime);
-          return jsonRes({ success: true, source: 'jikan-kitsu', anime });
-        }
+        if (anime) { setCache(cacheKey, anime); return jsonRes({ success: true, source: 'jikan-kitsu', anime }); }
         return jsonRes({ success: false, error: 'Anime not found', slug }, 404);
       }
       return jsonRes({ success: false, error: 'ID or slug required' }, 400);
@@ -541,24 +475,18 @@ export const GET: APIRoute = async ({ url, locals }) => {
       const cacheKey = `eps:${id}:${page}:${animeTitle}`;
       const hit = cached(cacheKey);
       if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
-      
-      // For episodes, still use Kitsu (has episode data + TMDB enrichment)
-      // If MAL ID, need to search Kitsu first
       let kitsuId = id;
       if (/^\d+$/.test(id) && animeTitle) {
-        // MAL ID — search Kitsu by title for episodes
         try {
           const kitsuResults = await kitsuSearch(animeTitle);
           if (kitsuResults.length > 0) kitsuId = kitsuResults[0].id;
         } catch {}
       }
-      
       const data = await getEnrichedEpisodes(kitsuId, animeTitle, page, TMDB_KEY);
       setCache(cacheKey, data);
       return jsonRes({ success: true, source: 'enriched', ...data });
     }
     
-    // Default
     const data = await jikanCurrentSeason(page).catch(() => kitsuList(category, page));
     return jsonRes({ success: true, source: 'default', ...data });
     
