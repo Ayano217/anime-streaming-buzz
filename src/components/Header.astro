@@ -665,12 +665,14 @@ const navLinks = [
           html += '<div class="hsr-hint">💡 Did you mean...</div>';
         }
         
-        html += scored.map(function(m) {
+         html += scored.map(function(m) {
           var a = m.anime;
-          var im = a.image ? '<img src="' + esc(a.image) + '" alt="" loading="lazy" />' : '<div class="hsr-th-no"></div>';
+          var im = a.image 
+            ? '<img src="' + esc(a.image) + '" alt="" loading="lazy" style="position:absolute;top:0;left:0;width:44px;height:58px;max-width:44px;max-height:58px;object-fit:cover;display:block;" />' 
+            : '<div class="hsr-th-no"></div>';
           var badge = a.status === 'current' ? '<span class="hsr-badge">AIRING</span>' : '';
-          return '<a href="/anime/' + esc(a.slug) + '" class="hsr-item">' +
-            '<div class="hsr-th">' + im + '</div>' +
+                    return '<a href="/anime/' + esc(a.slug) + '" class="hsr-item">' +
+            '<div class="hsr-th" style="width:44px !important;height:58px !important;min-width:44px !important;max-width:44px !important;max-height:58px !important;border-radius:6px;overflow:hidden;background:rgba(192,132,252,0.1);flex-shrink:0;display:block;position:relative;">' + im + '</div>' +
             '<div class="hsr-inf">' +
               '<div class="hsr-t">' + esc(a.title) + '</div>' +
               '<div class="hsr-m">' + esc(a.year || 'Unknown') + (a.score ? ' · ⭐ ' + a.score : '') + (a.episodes ? ' · ' + a.episodes + ' EP' : '') + '</div>' +
