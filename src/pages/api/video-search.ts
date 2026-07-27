@@ -16,6 +16,7 @@ function jsonRes(data: any, status = 200) {
   });
 }
 
+// Extract episode number from title
 function extractEpNumber(title: string): number | null {
   const patterns = [
     /episode[\s.-]*(\d+)/i,
@@ -32,13 +33,49 @@ function extractEpNumber(title: string): number | null {
   return null;
 }
 
-// ─── YOUTUBE SEARCH ───
-async function searchYouTube(query: string, targetEp: number | null, apiKey: string): Promise<any[]> {
+// Check if title contains keywords from episode title
+function matchesEpTitle(videoTitle: string, epTitle: string): boolean {
+  if (!epTitle) return false;
+  const vt = videoTitle.toLowerCase();
+  const et = epTitle.toLowerCase();
+  
+  // Direct match
+  if (vt.includes(et)) return true;
+  
+  // Check if 60%+ words from ep title are in video title
+  const epWords = et.split(/\s+/).filter(w => w.length > 3);
+  if (epWords.length === 0) return false;
+  const matchCount = epWords.filter(w => vt.includes(w)).length;
+  return matchCount / epWords.length >= 0.6;
+}
+
+// ═══ YOUTUBE SEARCH ═══
+async function searchYouTube(
+  query: string, 
+  targetEp: number | null, 
+  apiKey: string, 
+  epTitle?: string, 
+  seasonHint?: string
+): Promise<any[]> {
   if (!apiKey) return [];
   
-  const searchQuery = targetEp 
-    ? `"${query}" "episode ${targetEp}" english sub full`
-    : `${query} anime`;
+  // Build smarter query with episode title if available
+  let searchQuery: string;
+  
+  if (targetEp) {
+    if (epTitle && epTitle !== `Episode ${targetEp}` && epTitle.length > 3) {
+      // Use episode title for precise match
+      searchQuery = `${query} "${epTitle}" episode ${targetEp} english`;
+    } else {
+      searchQuery = `"${query}" "episode ${targetEp}" english sub full`;
+    }
+    // Add season hint if provided
+    if (seasonHint) {
+      searchQuery = seasonHint + ' ' + searchQuery;
+    }
+  } else {
+    searchQuery = `${query} anime`;
+  }
   
   try {
     const params = new URLSearchParams({
@@ -59,25 +96,38 @@ async function searchYouTube(query: string, targetEp: number | null, apiKey: str
     
     return (json.items || []).map((item: any) => {
       const title = item.snippet.title || '';
+      const description = item.snippet.description || '';
       const detectedEp = extractEpNumber(title);
       let score = 10;
       
       // Boost official channels
       const channel = (item.snippet.channelTitle || '').toLowerCase();
-      if (/muse asia|ani-one|aniplex|crunchyroll|bandai namco|medialink/i.test(channel)) score += 20;
+      const isOfficial = /muse asia|ani-one|aniplex|crunchyroll|bandai namco|medialink|toei/i.test(channel);
+      if (isOfficial) score += 20;
       
-      // Episode match
+      // Episode number match (critical)
       if (targetEp !== null) {
         if (detectedEp === targetEp) score += 30;
-        else if (detectedEp !== null) score -= 20;
+        else if (detectedEp !== null) score -= 25; // Wrong episode number penalty
         
+        // Episode title match (HUGE boost — most important for correct season)
+        if (epTitle && matchesEpTitle(title, epTitle)) {
+          score += 50; // Massive boost for correct episode title
+        }
+        if (epTitle && matchesEpTitle(description, epTitle)) {
+          score += 20; // Also check description
+        }
+        
+        // Content indicators
         if (/full episode|full ep/i.test(title)) score += 10;
-        if (/english sub|subbed|dubbed/i.test(title)) score += 5;
+        if (/english sub|subbed/i.test(title)) score += 5;
+        if (/english dub|dubbed/i.test(title)) score += 5;
       }
       
-      // Penalize junk
-      if (/reaction|review|analysis|amv|edit|compilation|shorts/i.test(title)) score -= 25;
-      if (/trailer/i.test(title) && targetEp) score -= 10;
+      // Penalize junk content
+      if (/reaction|review|analysis|amv|edit|compilation|shorts|explained/i.test(title)) score -= 25;
+      if (/trailer|preview/i.test(title) && targetEp) score -= 10;
+      if (/top 10|ranked|best of/i.test(title)) score -= 15;
       
       return {
         source: 'youtube',
@@ -90,7 +140,7 @@ async function searchYouTube(query: string, targetEp: number | null, apiKey: str
         publishedAt: item.snippet.publishedAt,
         detectedEp,
         score,
-        isOfficial: /muse asia|ani-one|aniplex|crunchyroll|bandai namco|medialink|toei/i.test(channel)
+        isOfficial
       };
     }).filter((v: any) => v.score > 0);
   } catch (e) {
@@ -99,11 +149,23 @@ async function searchYouTube(query: string, targetEp: number | null, apiKey: str
   }
 }
 
-// ─── DAILYMOTION SEARCH ───
-async function searchDailymotion(query: string, targetEp: number | null): Promise<any[]> {
-  const searchQuery = targetEp 
-    ? `${query} episode ${targetEp} english sub`
-    : query;
+// ═══ DAILYMOTION SEARCH ═══
+async function searchDailymotion(
+  query: string, 
+  targetEp: number | null, 
+  epTitle?: string
+): Promise<any[]> {
+  let searchQuery: string;
+  
+  if (targetEp) {
+    if (epTitle && epTitle !== `Episode ${targetEp}` && epTitle.length > 3) {
+      searchQuery = `${query} ${epTitle} episode ${targetEp}`;
+    } else {
+      searchQuery = `${query} episode ${targetEp} english sub`;
+    }
+  } else {
+    searchQuery = query;
+  }
   
   try {
     const url = `https://api.dailymotion.com/videos?search=${encodeURIComponent(searchQuery)}&fields=id,title,thumbnail_720_url,duration,owner.screenname,views_total,created_time,allow_embed&limit=10`;
@@ -114,11 +176,17 @@ async function searchDailymotion(query: string, targetEp: number | null): Promis
     return (json.list || []).filter((v: any) => v.allow_embed !== false).map((v: any) => {
       const title = v.title || '';
       const detectedEp = extractEpNumber(title);
-      let score = 8; // slightly lower base than YouTube
+      let score = 8;
       
       if (targetEp !== null) {
         if (detectedEp === targetEp) score += 30;
         else if (detectedEp !== null) score -= 20;
+        
+        // Episode title match boost
+        if (epTitle && matchesEpTitle(title, epTitle)) {
+          score += 40;
+        }
+        
         if (/full episode|full ep/i.test(title)) score += 8;
         if (/english sub|subbed|dubbed|eng dub/i.test(title)) score += 5;
       }
@@ -126,9 +194,9 @@ async function searchDailymotion(query: string, targetEp: number | null): Promis
       if (/reaction|review|amv|edit/i.test(title)) score -= 15;
       if (/trailer/i.test(title) && targetEp) score -= 8;
       
-      // Duration check (long-form = real ep)
-      if (targetEp && v.duration >= 900) score += 10; // 15+ min
-      if (targetEp && v.duration < 300) score -= 15; // < 5 min = probably trailer
+      // Duration check
+      if (targetEp && v.duration >= 900) score += 10;
+      if (targetEp && v.duration < 300) score -= 15;
       
       return {
         source: 'dailymotion',
@@ -151,18 +219,19 @@ async function searchDailymotion(query: string, targetEp: number | null): Promis
   }
 }
 
-// ─── VIMEO SEARCH (No API needed for public search) ───
-async function searchVimeo(query: string, targetEp: number | null): Promise<any[]> {
-  // Vimeo public API requires auth token, skipping for now
-  // Could add later with OAuth
-  return [];
-}
-
-// ─── ODYSEE SEARCH ───
-async function searchOdysee(query: string, targetEp: number | null): Promise<any[]> {
-  const searchQuery = targetEp 
-    ? `${query} episode ${targetEp}`
-    : query;
+// ═══ ODYSEE SEARCH ═══
+async function searchOdysee(query: string, targetEp: number | null, epTitle?: string): Promise<any[]> {
+  let searchQuery: string;
+  
+  if (targetEp) {
+    if (epTitle && epTitle.length > 3) {
+      searchQuery = `${query} ${epTitle} episode ${targetEp}`;
+    } else {
+      searchQuery = `${query} episode ${targetEp}`;
+    }
+  } else {
+    searchQuery = query;
+  }
   
   try {
     const url = `https://lighthouse.odysee.com/search?s=${encodeURIComponent(searchQuery)}&size=10&from=0&mediaType=video`;
@@ -179,6 +248,11 @@ async function searchOdysee(query: string, targetEp: number | null): Promise<any
       if (targetEp !== null) {
         if (detectedEp === targetEp) score += 30;
         else if (detectedEp !== null) score -= 15;
+        
+        // Episode title match boost
+        if (epTitle && matchesEpTitle(title, epTitle)) {
+          score += 35;
+        }
       }
       
       if (/reaction|review|amv/i.test(title)) score -= 10;
@@ -206,11 +280,13 @@ async function searchOdysee(query: string, targetEp: number | null): Promise<any
   }
 }
 
-// ─── MAIN HANDLER ───
+// ═══ MAIN HANDLER ═══
 export const GET: APIRoute = async ({ url, locals }) => {
   const query = (url.searchParams.get('q') || '').trim();
   const epParam = url.searchParams.get('ep');
   const targetEp = epParam ? parseInt(epParam) : null;
+  const epTitle = url.searchParams.get('epTitle') || '';
+  const seasonHint = url.searchParams.get('season') || '';
   const sourcesParam = url.searchParams.get('sources') || 'all';
 
   if (!query) {
@@ -220,7 +296,8 @@ export const GET: APIRoute = async ({ url, locals }) => {
   const env = (locals as any)?.runtime?.env || {};
   const YT_KEY = env.YOUTUBE_API_KEY || (globalThis as any).YOUTUBE_API_KEY || '';
 
-  const cacheKey = `multi:${query}:${targetEp}:${sourcesParam}`;
+  // Cache key includes epTitle for accurate cache hits
+  const cacheKey = `multi:${query}:${targetEp}:${epTitle}:${sourcesParam}`;
   const hit = CACHE[cacheKey];
   if (hit && Date.now() - hit.time < CACHE_TTL) {
     return jsonRes({ success: true, source: 'cache', ...hit.data });
@@ -231,11 +308,17 @@ export const GET: APIRoute = async ({ url, locals }) => {
     : sourcesParam.split(',');
 
   try {
-    // Parallel search all sources
+    // Parallel search all sources — MUCH faster than sequential
     const promises: Promise<any[]>[] = [];
-    if (sources.includes('youtube')) promises.push(searchYouTube(query, targetEp, YT_KEY));
-    if (sources.includes('dailymotion')) promises.push(searchDailymotion(query, targetEp));
-    if (sources.includes('odysee')) promises.push(searchOdysee(query, targetEp));
+    if (sources.includes('youtube')) {
+      promises.push(searchYouTube(query, targetEp, YT_KEY, epTitle, seasonHint));
+    }
+    if (sources.includes('dailymotion')) {
+      promises.push(searchDailymotion(query, targetEp, epTitle));
+    }
+    if (sources.includes('odysee')) {
+      promises.push(searchOdysee(query, targetEp, epTitle));
+    }
 
     const results = await Promise.all(promises);
     const allVideos = results.flat();
@@ -243,11 +326,14 @@ export const GET: APIRoute = async ({ url, locals }) => {
     // Sort by score descending
     allVideos.sort((a, b) => b.score - a.score);
 
-    // Filter strict episode matches if targetEp provided
+    // Filter for strict episode matches when targetEp provided
     let filtered = allVideos;
     if (targetEp !== null) {
+      // Prioritize videos with correct ep number OR high score matching
       const strictMatches = allVideos.filter(v => 
-        v.detectedEp === targetEp || (v.detectedEp === null && v.score > 15)
+        v.detectedEp === targetEp || 
+        (v.detectedEp === null && v.score > 20) ||
+        v.score > 40  // Very high score = probably correct
       );
       if (strictMatches.length > 0) filtered = strictMatches;
     }
@@ -265,7 +351,8 @@ export const GET: APIRoute = async ({ url, locals }) => {
       totalFound: allVideos.length,
       sources: bySource,
       query,
-      targetEp
+      targetEp,
+      epTitle: epTitle || null
     };
 
     CACHE[cacheKey] = { data: result, time: Date.now() };
