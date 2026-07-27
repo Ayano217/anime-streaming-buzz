@@ -334,10 +334,31 @@ const navLinks = [
   }
   
   /* ═══ FIXED SMALL THUMBNAIL ═══ */
-    .hsr-th {
+      .hsr-th {
     width: 44px !important;
     height: 58px !important;
     min-width: 44px !important;
+    max-width: 44px !important;
+    max-height: 58px !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+    background: rgba(192, 132, 252, 0.1) !important;
+    flex-shrink: 0 !important;
+    display: block !important;
+    position: relative !important;
+  }
+  .hsr-th img {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 44px !important;
+    height: 58px !important;
+    max-width: 44px !important;
+    max-height: 58px !important;
+    object-fit: cover !important;
+    display: block !important;
+    aspect-ratio: auto !important;
+  }
     max-width: 44px !important;
     max-height: 58px !important;
     border-radius: 6px !important;
