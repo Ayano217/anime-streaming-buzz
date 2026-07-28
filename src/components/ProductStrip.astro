@@ -1,0 +1,568 @@
+---
+// ═══════════════════════════════════════════════════════════════
+// AniTube Buzz — Product Strip Component
+// Path: src/components/ProductStrip.astro
+// Commit: feat: add ProductStrip component - horizontal scrollable product strip
+// ═══════════════════════════════════════════════════════════════
+//
+// PURPOSE: Netflix-style horizontal scrolling product strip.
+//          Can be dropped into ANY page — homepage, anime detail, 
+//          category pages, everywhere. Fetches products from /api/products
+//          based on the props you pass.
+//
+// USAGE EXAMPLES:
+//   <!-- Trending products (homepage top) -->
+//   <ProductStrip 
+//     title="🔥 Trending in the Otaku Store" 
+//     subtitle="Fan favorites this week"
+//     type="trending"
+//     limit={12}
+//   />
+//   
+//   <!-- Related to specific anime (on anime detail page) -->
+//   <ProductStrip 
+//     title="Related Merch"
+//     type="anime"
+//     anime="chainsaw-man"
+//     limit={8}
+//   />
+//   
+//   <!-- Category-specific -->
+//   <ProductStrip 
+//     title="🎮 Gaming Corner" 
+//     type="category"
+//     category="games"
+//     limit={10}
+//   />
+//   
+//   <!-- Featured picks -->
+//   <ProductStrip 
+//     title="💜 Editor's Picks"
+//     type="featured"
+//     limit={10}
+//   />
+// ═══════════════════════════════════════════════════════════════
+
+interface Props {
+  title: string;              // Section title (required)
+  subtitle?: string;          // Small tagline above title
+  type?: 'trending' | 'featured' | 'category' | 'anime' | 'all';
+  category?: string;          // if type='category'
+  anime?: string;             // if type='anime' (anime slug)
+  limit?: number;             // How many products to show (default 12)
+  size?: 'small' | 'medium' | 'large';  // Card size
+  showViewAll?: boolean;      // Show "See All" link at end
+  accentColor?: string;       // Bar color (defaults to gradient)
+}
+
+const {
+  title,
+  subtitle = '',
+  type = 'trending',
+  category = '',
+  anime = '',
+  limit = 12,
+  size = 'medium',
+  showViewAll = true,
+  accentColor = '',
+} = Astro.props;
+
+// Build API URL based on props
+let apiUrl = `/api/products?limit=${limit}`;
+if (type === 'trending') apiUrl += '&trending=true';
+else if (type === 'featured') apiUrl += '&featured=true';
+else if (type === 'category' && category) apiUrl += `&category=${encodeURIComponent(category)}`;
+else if (type === 'anime' && anime) apiUrl += `&anime=${encodeURIComponent(anime)}`;
+
+// Unique ID for this strip instance (multiple strips on same page)
+const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
+---
+
+<section class="ps-section" data-strip-id={stripId} data-api-url={apiUrl}>
+  <div class="container">
+    
+    <!-- Strip Header -->
+    <div class="ps-header">
+      <div class="ps-title-wrap">
+        <div 
+          class="ps-bar" 
+          style={accentColor ? `background: ${accentColor};` : ''}
+        ></div>
+        <div>
+          {subtitle && <div class="ps-subtitle">{subtitle}</div>}
+          <h2 class="ps-title">{title}</h2>
+        </div>
+      </div>
+      
+      <!-- Navigation Arrows (desktop) -->
+      <div class="ps-nav">
+        <button class="ps-arrow ps-arrow-left" data-dir="left" aria-label="Scroll left">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <button class="ps-arrow ps-arrow-right" data-dir="right" aria-label="Scroll right">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Scrollable Strip Container -->
+    <div class="ps-scroll-wrap">
+      <!-- Gradient fades on edges -->
+      <div class="ps-fade ps-fade-left"></div>
+      <div class="ps-fade ps-fade-right"></div>
+      
+      <div class="ps-scroll" id={stripId + '-scroll'}>
+        <!-- Skeleton loaders (shown until API responds) -->
+        <div class="ps-skeleton"></div>
+        <div class="ps-skeleton"></div>
+        <div class="ps-skeleton"></div>
+        <div class="ps-skeleton"></div>
+        <div class="ps-skeleton"></div>
+        <div class="ps-skeleton"></div>
+      </div>
+    </div>
+    
+  </div>
+</section>
+
+<script is:inline>
+// ═══════════════════════════════════════════════
+// Product Strip Loader & Controller
+// ═══════════════════════════════════════════════
+// Each strip fetches its own products based on API URL from data attribute.
+// Multiple strips on the same page work independently.
+// ═══════════════════════════════════════════════
+(function() {
+  
+  // ─── HTML Escape helper ───
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  
+  // ─── Truncate string ───
+  function trunc(s, n) {
+    s = String(s || '');
+    return s.length > n ? s.slice(0, n).trim() + '…' : s;
+  }
+  
+  // ─── Build product card HTML ───
+  // Matches ProductCard.astro design (inline for performance)
+  function buildProductCard(product) {
+    var categoryEmojis = {
+      figures: '🗿', manga: '📚', posters: '🎨',
+      apparel: '👕', accessories: '🔑', games: '🎮',
+      bluray: '💿', cosplay: '🎭', collectibles: '⭐', snacks: '🍜'
+    };
+    var catIcon = categoryEmojis[product.category] || '🛍️';
+    
+    // Star rating
+    var fullStars = Math.floor(product.rating || 0);
+    var hasHalf = (product.rating || 0) - fullStars >= 0.5;
+    var starsHtml = '';
+    for (var i = 0; i < 5; i++) {
+      var cls = 'empty';
+      if (i < fullStars) cls = 'full';
+      else if (i === fullStars && hasHalf) cls = 'half';
+      starsHtml += '<span class="pc-star ' + cls + '">★</span>';
+    }
+    
+    var badgeHtml = product.badge 
+      ? '<div class="pc-badge">' + esc(product.badge) + '</div>' 
+      : '';
+    
+    var videoBadge = product.video 
+      ? '<div class="pc-video-badge" title="Video preview"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' 
+      : '';
+    
+    var videoWrap = product.video 
+      ? '<div class="pc-video-wrap" data-video-src="' + esc(product.video) + '"></div>' 
+      : '';
+    
+    return '' +
+    '<div class="pc-card pc-medium ps-item" data-product-id="' + esc(product.id) + '">' +
+      '<div class="pc-media">' +
+        '<img src="' + esc(product.image) + '" alt="' + esc(product.title) + '" loading="lazy" class="pc-image" onerror="this.style.opacity=\'0.3\';this.src=\'/favicon.svg\';" />' +
+        videoWrap +
+        '<div class="pc-shine"></div>' +
+        '<div class="pc-overlay"></div>' +
+        badgeHtml +
+        '<div class="pc-cat-icon" title="' + esc(product.category) + '">' + catIcon + '</div>' +
+        videoBadge +
+        '<div class="pc-hover-cta">' +
+          '<div class="pc-hover-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' +
+          '<span>Preview</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="pc-info">' +
+        '<div class="pc-subtitle">' + esc(trunc(product.subtitle || '', 40)) + '</div>' +
+        '<h3 class="pc-title">' + esc(product.title) + '</h3>' +
+        '<div class="pc-rating">' +
+          '<div class="pc-stars">' + starsHtml + '</div>' +
+          '<span class="pc-reviews">(' + (product.reviews || 0).toLocaleString() + ')</span>' +
+        '</div>' +
+        '<div class="pc-footer">' +
+          '<div class="pc-price">' + esc(product.price) + '</div>' +
+          '<a href="' + esc(product.affiliateUrl) + '" target="_blank" rel="noopener sponsored" class="pc-cta" data-product-id="' + esc(product.id) + '">' +
+            '<span>Get It</span>' +
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
+          '</a>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  
+  // ─── Setup video hover for a card ───
+  function setupVideoHover(card) {
+    var videoWrap = card.querySelector('.pc-video-wrap');
+    if (!videoWrap) return;
+    var videoSrc = videoWrap.dataset.videoSrc;
+    if (!videoSrc) return;
+    
+    var hoverTimeout;
+    var iframeInjected = false;
+    
+    card.addEventListener('mouseenter', function() {
+      hoverTimeout = setTimeout(function() {
+        if (iframeInjected) return;
+        var autoplayUrl = videoSrc;
+        var sep = videoSrc.includes('?') ? '&' : '?';
+        autoplayUrl += sep + 'autoplay=1&mute=1&controls=0&loop=1&modestbranding=1&showinfo=0';
+        var iframe = document.createElement('iframe');
+        iframe.src = autoplayUrl;
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allow', 'autoplay; encrypted-media');
+        iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;pointer-events:none;';
+        videoWrap.appendChild(iframe);
+        videoWrap.classList.add('active');
+        iframeInjected = true;
+      }, 400);
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      clearTimeout(hoverTimeout);
+      if (iframeInjected) {
+        videoWrap.classList.remove('active');
+        setTimeout(function() {
+          if (!card.matches(':hover')) {
+            videoWrap.innerHTML = '';
+            iframeInjected = false;
+          }
+        }, 300);
+      }
+    });
+  }
+  
+  // ─── Setup click tracking (for Safiya future learning) ───
+  function setupClickTracking(card) {
+    var cta = card.querySelector('.pc-cta');
+    if (!cta) return;
+    cta.addEventListener('click', function() {
+      var productId = cta.dataset.productId;
+      try {
+        var clicks = JSON.parse(localStorage.getItem('anitube_product_clicks') || '{}');
+        clicks[productId] = (clicks[productId] || 0) + 1;
+        clicks._lastClick = { id: productId, time: Date.now() };
+        localStorage.setItem('anitube_product_clicks', JSON.stringify(clicks));
+      } catch(e) {}
+    });
+  }
+  
+  // ─── Setup scroll arrow controls ───
+  function setupArrows(section) {
+    var scrollEl = section.querySelector('.ps-scroll');
+    var leftArrow = section.querySelector('.ps-arrow-left');
+    var rightArrow = section.querySelector('.ps-arrow-right');
+    if (!scrollEl || !leftArrow || !rightArrow) return;
+    
+    // Update arrow states based on scroll position
+    function updateArrows() {
+      var atStart = scrollEl.scrollLeft <= 5;
+      var atEnd = scrollEl.scrollLeft >= scrollEl.scrollWidth - scrollEl.clientWidth - 5;
+      leftArrow.classList.toggle('disabled', atStart);
+      rightArrow.classList.toggle('disabled', atEnd);
+    }
+    
+    // Scroll by 1 card width + gap (~280px)
+    leftArrow.addEventListener('click', function() {
+      scrollEl.scrollBy({ left: -600, behavior: 'smooth' });
+    });
+    rightArrow.addEventListener('click', function() {
+      scrollEl.scrollBy({ left: 600, behavior: 'smooth' });
+    });
+    
+    scrollEl.addEventListener('scroll', updateArrows, { passive: true });
+    updateArrows();
+    
+    // Also update after content loads
+    setTimeout(updateArrows, 500);
+  }
+  
+  // ─── Load products for a strip ───
+  async function loadStrip(section) {
+    var apiUrl = section.dataset.apiUrl;
+    var stripId = section.dataset.stripId;
+    var scrollEl = document.getElementById(stripId + '-scroll');
+    
+    if (!apiUrl || !scrollEl) return;
+    
+    try {
+      var res = await fetch(apiUrl);
+      if (!res.ok) throw new Error('API ' + res.status);
+      var data = await res.json();
+      
+      if (!data.success || !data.products || data.products.length === 0) {
+        // Empty state — hide the whole strip cleanly
+        section.style.display = 'none';
+        return;
+      }
+      
+      // Build all cards
+      var html = data.products.map(buildProductCard).join('');
+      scrollEl.innerHTML = html;
+      
+      // Setup interactions for each card
+      scrollEl.querySelectorAll('.pc-card').forEach(function(card) {
+        setupVideoHover(card);
+        setupClickTracking(card);
+      });
+      
+      // Setup arrows
+      setupArrows(section);
+      
+    } catch (e) {
+      console.warn('[ProductStrip] Load failed:', e.message);
+      // Hide strip on error — better UX than showing broken state
+      section.style.display = 'none';
+    }
+  }
+  
+  // ─── Init all strips on the page ───
+  function initAllStrips() {
+    document.querySelectorAll('.ps-section').forEach(function(section) {
+      // Only init strips that haven't been loaded
+      if (section.dataset.loaded === 'true') return;
+      section.dataset.loaded = 'true';
+      loadStrip(section);
+    });
+  }
+  
+  // Init on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAllStrips);
+  } else {
+    initAllStrips();
+  }
+})();
+</script>
+
+<style>
+  /* ═══════════════════════════════════════════════
+     PRODUCT STRIP STYLES
+     Netflix-style horizontal scroll with premium design
+     ═══════════════════════════════════════════════ */
+  
+  .ps-section {
+    padding: 2.5rem 0 1.5rem;
+    position: relative;
+  }
+  
+  /* Header */
+  .ps-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+  }
+  
+  .ps-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+  }
+  
+  .ps-bar {
+    width: 4px;
+    height: 40px;
+    background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
+    border-radius: 3px;
+    box-shadow: 0 0 15px rgba(192, 132, 252, 0.6);
+    animation: psBarPulse 3s ease infinite;
+    flex-shrink: 0;
+  }
+  
+  @keyframes psBarPulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(192, 132, 252, 0.6); }
+    50% { box-shadow: 0 0 25px rgba(232, 121, 249, 0.8); }
+  }
+  
+  .ps-subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: #c084fc;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+  }
+  
+  .ps-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(1.25rem, 2.5vw, 1.8rem);
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.025em;
+    line-height: 1;
+  }
+  
+  /* Navigation arrows */
+  .ps-nav {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  
+  .ps-arrow {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(192, 132, 252, 0.15);
+    border: 1px solid rgba(192, 132, 252, 0.3);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(10px);
+  }
+  
+  .ps-arrow:hover:not(.disabled) {
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    border-color: transparent;
+    color: #fff;
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(192, 132, 252, 0.4);
+  }
+  
+  .ps-arrow.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  
+  /* Scroll container */
+  .ps-scroll-wrap {
+    position: relative;
+    margin: 0 -0.5rem;
+  }
+  
+  /* Gradient fades on edges */
+  .ps-fade {
+    position: absolute;
+    top: 0;
+    bottom: 12px;
+    width: 60px;
+    z-index: 5;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .ps-fade-left {
+    left: 0;
+    background: linear-gradient(90deg, var(--bg-base, #0a0517), transparent);
+  }
+  .ps-fade-right {
+    right: 0;
+    background: linear-gradient(-90deg, var(--bg-base, #0a0517), transparent);
+  }
+  
+  [data-theme="light"] .ps-fade-left {
+    background: linear-gradient(90deg, #faf5ff, transparent);
+  }
+  [data-theme="light"] .ps-fade-right {
+    background: linear-gradient(-90deg, #faf5ff, transparent);
+  }
+  
+  /* Horizontal scroll strip */
+  .ps-scroll {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 4px 0.5rem 12px;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .ps-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Each product card inside strip */
+  .ps-scroll .ps-item {
+    flex: 0 0 auto;
+    width: 220px;
+    scroll-snap-align: start;
+  }
+  
+  /* Skeleton loading state */
+  .ps-skeleton {
+    flex: 0 0 auto;
+    width: 220px;
+    aspect-ratio: 1/1.55;
+    border-radius: 16px;
+    background: linear-gradient(
+      90deg,
+      rgba(192, 132, 252, 0.05) 25%,
+      rgba(192, 132, 252, 0.12) 50%,
+      rgba(192, 132, 252, 0.05) 75%
+    );
+    background-size: 200% 100%;
+    animation: psShimmer 1.5s infinite;
+    scroll-snap-align: start;
+  }
+  
+  @keyframes psShimmer {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+  
+  /* ═══ RESPONSIVE ═══ */
+  @media (max-width: 1024px) {
+    .ps-scroll .ps-item,
+    .ps-skeleton {
+      width: 200px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .ps-section { padding: 2rem 0 1rem; }
+    .ps-nav { display: none; } /* Hide arrows on mobile — touch swipe works */
+    .ps-scroll .ps-item,
+    .ps-skeleton {
+      width: 180px;
+    }
+    .ps-bar { height: 32px; }
+    .ps-title { font-size: 1.2rem; }
+    .ps-fade { width: 30px; }
+  }
+  
+  @media (max-width: 480px) {
+    .ps-scroll .ps-item,
+    .ps-skeleton {
+      width: 160px;
+    }
+    .ps-header { margin-bottom: 1rem; }
+    .ps-scroll { gap: 10px; }
+  }
+</style>
