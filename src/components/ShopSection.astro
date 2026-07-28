@@ -1,0 +1,936 @@
+---
+// ═══════════════════════════════════════════════════════════════
+// AniTube Buzz — Shop Section Component (Full Grid)
+// Path: src/components/ShopSection.astro
+// Commit: feat: add ShopSection component - full grid shop section with category tabs and load more
+// ═══════════════════════════════════════════════════════════════
+//
+// PURPOSE: Full-featured shop display with grid layout, category tabs,
+//          search, and pagination. Different from ProductStrip which is
+//          horizontal scroll — this is for immersive browsing.
+//
+// USAGE:
+//   <!-- Homepage full shop section -->
+//   <ShopSection 
+//     title="🛍️ The Otaku Store"
+//     subtitle="Curated merch for real fans"
+//     showSearch={true}
+//     showCategories={true}
+//     defaultCategory="all"
+//     initialLimit={12}
+//   />
+//   
+//   <!-- Compact version (no search) -->
+//   <ShopSection 
+//     title="Featured Store"
+//     showSearch={false}
+//     initialLimit={8}
+//   />
+// ═══════════════════════════════════════════════════════════════
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  showSearch?: boolean;
+  showCategories?: boolean;
+  defaultCategory?: string;
+  initialLimit?: number;
+  showViewAll?: boolean;
+}
+
+const {
+  title,
+  subtitle = '',
+  showSearch = true,
+  showCategories = true,
+  defaultCategory = 'all',
+  initialLimit = 12,
+  showViewAll = false,
+} = Astro.props;
+
+// Unique ID for this shop instance
+const shopId = 'shop-' + Math.random().toString(36).substring(2, 10);
+---
+
+<section class="shop-section" data-shop-id={shopId} data-initial-limit={initialLimit}>
+  <div class="container">
+    
+    <!-- Shop Header -->
+    <div class="shop-header">
+      <div class="shop-title-wrap">
+        <div class="shop-bar"></div>
+        <div>
+          {subtitle && (
+            <div class="shop-tag">
+              <span class="shop-dot"></span>
+              <span>{subtitle}</span>
+            </div>
+          )}
+          <h2 class="shop-title">{title}</h2>
+        </div>
+      </div>
+      
+      <!-- Product counter -->
+      <div class="shop-count">
+        <span class="shop-count-num" id={shopId + '-count'}>0</span>
+        <span class="shop-count-lbl">items</span>
+      </div>
+    </div>
+    
+    <!-- Search Bar (optional) -->
+    {showSearch && (
+      <div class="shop-search-wrap">
+        <div class="shop-search">
+          <svg class="ss-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input 
+            type="text" 
+            id={shopId + '-search'}
+            class="ss-input"
+            placeholder="Search figures, manga, games..."
+            autocomplete="off"
+          />
+          <button class="ss-clear" id={shopId + '-clear'} aria-label="Clear">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    )}
+    
+    <!-- Category Tabs (optional) -->
+    {showCategories && (
+      <div class="shop-tabs" id={shopId + '-tabs'}>
+        <button class="shop-tab active" data-category="all">
+          <span class="shop-tab-icon">🌟</span>
+          <span>All</span>
+        </button>
+        <!-- More tabs injected by JS from API -->
+      </div>
+    )}
+    
+    <!-- Products Grid -->
+    <div class="shop-grid" id={shopId + '-grid'}>
+      <!-- Skeleton loaders -->
+      <div class="shop-skeleton"></div>
+      <div class="shop-skeleton"></div>
+      <div class="shop-skeleton"></div>
+      <div class="shop-skeleton"></div>
+      <div class="shop-skeleton"></div>
+      <div class="shop-skeleton"></div>
+      <div class="shop-skeleton"></div>
+      <div class="shop-skeleton"></div>
+    </div>
+    
+    <!-- Loading More Indicator -->
+    <div class="shop-loading" id={shopId + '-loading'} style="display:none;">
+      <div class="shop-spinner"></div>
+      <span>Loading more products...</span>
+    </div>
+    
+    <!-- Load More Button -->
+    <div class="shop-load-more-wrap">
+      <button class="shop-load-more" id={shopId + '-load-more'} style="display:none;">
+        <span>Show More Products</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Empty State -->
+    <div class="shop-empty" id={shopId + '-empty'} style="display:none;">
+      <div class="shop-empty-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>
+        </svg>
+      </div>
+      <h3 class="shop-empty-title">No products found</h3>
+      <p class="shop-empty-desc">Try a different category or search term</p>
+    </div>
+    
+    <!-- End of results -->
+    <div class="shop-end" id={shopId + '-end'} style="display:none;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      <span>You've seen everything!</span>
+    </div>
+    
+  </div>
+</section>
+
+<script is:inline>
+// ═══════════════════════════════════════════════
+// Shop Section Controller
+// ═══════════════════════════════════════════════
+// Handles: category switching, search, pagination, product loading
+// Multiple shop sections on same page = fully independent
+// ═══════════════════════════════════════════════
+(function() {
+  
+  // ─── Helpers ───
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  
+  function trunc(s, n) {
+    s = String(s || '');
+    return s.length > n ? s.slice(0, n).trim() + '…' : s;
+  }
+  
+  // ─── Build product card HTML (same design as ProductCard.astro) ───
+  function buildCard(product) {
+    var categoryEmojis = {
+      figures: '🗿', manga: '📚', posters: '🎨',
+      apparel: '👕', accessories: '🔑', games: '🎮',
+      bluray: '💿', cosplay: '🎭', collectibles: '⭐', snacks: '🍜'
+    };
+    var catIcon = categoryEmojis[product.category] || '🛍️';
+    
+    var fullStars = Math.floor(product.rating || 0);
+    var hasHalf = (product.rating || 0) - fullStars >= 0.5;
+    var starsHtml = '';
+    for (var i = 0; i < 5; i++) {
+      var cls = 'empty';
+      if (i < fullStars) cls = 'full';
+      else if (i === fullStars && hasHalf) cls = 'half';
+      starsHtml += '<span class="pc-star ' + cls + '">★</span>';
+    }
+    
+    var badgeHtml = product.badge 
+      ? '<div class="pc-badge">' + esc(product.badge) + '</div>' 
+      : '';
+    var videoBadge = product.video 
+      ? '<div class="pc-video-badge" title="Video preview"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' 
+      : '';
+    var videoWrap = product.video 
+      ? '<div class="pc-video-wrap" data-video-src="' + esc(product.video) + '"></div>' 
+      : '';
+    
+    return '' +
+    '<div class="pc-card pc-medium shop-item" data-product-id="' + esc(product.id) + '">' +
+      '<div class="pc-media">' +
+        '<img src="' + esc(product.image) + '" alt="' + esc(product.title) + '" loading="lazy" class="pc-image" onerror="this.style.opacity=\'0.3\';this.src=\'/favicon.svg\';" />' +
+        videoWrap +
+        '<div class="pc-shine"></div>' +
+        '<div class="pc-overlay"></div>' +
+        badgeHtml +
+        '<div class="pc-cat-icon" title="' + esc(product.category) + '">' + catIcon + '</div>' +
+        videoBadge +
+        '<div class="pc-hover-cta">' +
+          '<div class="pc-hover-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' +
+          '<span>Preview</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="pc-info">' +
+        '<div class="pc-subtitle">' + esc(trunc(product.subtitle || '', 40)) + '</div>' +
+        '<h3 class="pc-title">' + esc(product.title) + '</h3>' +
+        '<div class="pc-rating">' +
+          '<div class="pc-stars">' + starsHtml + '</div>' +
+          '<span class="pc-reviews">(' + (product.reviews || 0).toLocaleString() + ')</span>' +
+        '</div>' +
+        '<div class="pc-footer">' +
+          '<div class="pc-price">' + esc(product.price) + '</div>' +
+          '<a href="' + esc(product.affiliateUrl) + '" target="_blank" rel="noopener sponsored" class="pc-cta" data-product-id="' + esc(product.id) + '">' +
+            '<span>Get It</span>' +
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
+          '</a>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  
+  // ─── Video hover setup ───
+  function setupVideoHover(card) {
+    var videoWrap = card.querySelector('.pc-video-wrap');
+    if (!videoWrap) return;
+    var videoSrc = videoWrap.dataset.videoSrc;
+    if (!videoSrc) return;
+    
+    var hoverTimeout;
+    var iframeInjected = false;
+    
+    card.addEventListener('mouseenter', function() {
+      hoverTimeout = setTimeout(function() {
+        if (iframeInjected) return;
+        var autoplayUrl = videoSrc;
+        var sep = videoSrc.includes('?') ? '&' : '?';
+        autoplayUrl += sep + 'autoplay=1&mute=1&controls=0&loop=1&modestbranding=1&showinfo=0';
+        var iframe = document.createElement('iframe');
+        iframe.src = autoplayUrl;
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allow', 'autoplay; encrypted-media');
+        iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;pointer-events:none;';
+        videoWrap.appendChild(iframe);
+        videoWrap.classList.add('active');
+        iframeInjected = true;
+      }, 400);
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      clearTimeout(hoverTimeout);
+      if (iframeInjected) {
+        videoWrap.classList.remove('active');
+        setTimeout(function() {
+          if (!card.matches(':hover')) {
+            videoWrap.innerHTML = '';
+            iframeInjected = false;
+          }
+        }, 300);
+      }
+    });
+  }
+  
+  function setupClickTracking(card) {
+    var cta = card.querySelector('.pc-cta');
+    if (!cta) return;
+    cta.addEventListener('click', function() {
+      var productId = cta.dataset.productId;
+      try {
+        var clicks = JSON.parse(localStorage.getItem('anitube_product_clicks') || '{}');
+        clicks[productId] = (clicks[productId] || 0) + 1;
+        clicks._lastClick = { id: productId, time: Date.now() };
+        localStorage.setItem('anitube_product_clicks', JSON.stringify(clicks));
+      } catch(e) {}
+    });
+  }
+  
+  // ─── Init one shop section ───
+  function initShopSection(section) {
+    var shopId = section.dataset.shopId;
+    var initialLimit = parseInt(section.dataset.initialLimit) || 12;
+    
+    var grid = document.getElementById(shopId + '-grid');
+    var loading = document.getElementById(shopId + '-loading');
+    var loadMoreBtn = document.getElementById(shopId + '-load-more');
+    var emptyState = document.getElementById(shopId + '-empty');
+    var endState = document.getElementById(shopId + '-end');
+    var countEl = document.getElementById(shopId + '-count');
+    var tabsContainer = document.getElementById(shopId + '-tabs');
+    var searchInput = document.getElementById(shopId + '-search');
+    var searchClear = document.getElementById(shopId + '-clear');
+    
+    if (!grid) return;
+    
+    // State
+    var state = {
+      category: 'all',
+      query: '',
+      offset: 0,
+      limit: initialLimit,
+      loading: false,
+      hasMore: true,
+      totalLoaded: 0,
+      categories: {},
+    };
+    
+    // ─── Update product counter with animation ───
+    function updateCount(newTotal) {
+      if (!countEl) return;
+      var current = parseInt(countEl.textContent) || 0;
+      var target = newTotal;
+      if (current === target) return;
+      var step = Math.max(1, Math.ceil((target - current) / 15));
+      function animate() {
+        current = Math.min(current + step, target);
+        countEl.textContent = current;
+        if (current < target) requestAnimationFrame(animate);
+      }
+      animate();
+    }
+    
+    // ─── Build API URL ───
+    function buildApiUrl() {
+      var url = '/api/products?limit=' + state.limit + '&offset=' + state.offset;
+      if (state.category !== 'all') url += '&category=' + encodeURIComponent(state.category);
+      if (state.query) url += '&q=' + encodeURIComponent(state.query);
+      return url;
+    }
+    
+    // ─── Load products ───
+    async function loadProducts(reset) {
+      if (state.loading) return;
+      if (!reset && !state.hasMore) return;
+      
+      state.loading = true;
+      
+      if (reset) {
+        state.offset = 0;
+        state.totalLoaded = 0;
+        state.hasMore = true;
+        grid.innerHTML = 
+          '<div class="shop-skeleton"></div>'.repeat(6);
+        if (emptyState) emptyState.style.display = 'none';
+        if (endState) endState.style.display = 'none';
+        if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+        if (countEl) countEl.textContent = '0';
+      } else {
+        if (loading) loading.style.display = 'flex';
+        if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+      }
+      
+      try {
+        var res = await fetch(buildApiUrl());
+        if (!res.ok) throw new Error('API ' + res.status);
+        var data = await res.json();
+        
+        if (!data.success) throw new Error(data.error || 'API failed');
+        
+        // Store categories from first load
+        if (data.categories && Object.keys(state.categories).length === 0) {
+          state.categories = data.categories;
+          if (tabsContainer) buildTabs();
+        }
+        
+        var products = data.products || [];
+        
+        // Reset: clear grid; else: append
+        if (reset) grid.innerHTML = '';
+        
+        if (products.length === 0 && reset) {
+          if (emptyState) emptyState.style.display = 'flex';
+        } else {
+          // Build cards and append
+          products.forEach(function(product) {
+            var wrapper = document.createElement('div');
+            wrapper.innerHTML = buildCard(product);
+            var card = wrapper.firstElementChild;
+            if (card) {
+              grid.appendChild(card);
+              setupVideoHover(card);
+              setupClickTracking(card);
+            }
+          });
+          
+          state.totalLoaded += products.length;
+          state.offset += state.limit;
+          state.hasMore = data.hasMore === true;
+          
+          updateCount(state.totalLoaded);
+        }
+        
+        if (loading) loading.style.display = 'none';
+        
+        // Show load more if has more, else show end message
+        if (state.hasMore) {
+          if (loadMoreBtn) loadMoreBtn.style.display = 'inline-flex';
+        } else {
+          if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+          if (state.totalLoaded > 6 && endState) endState.style.display = 'flex';
+        }
+        
+      } catch (e) {
+        console.warn('[Shop] Load failed:', e.message);
+        if (loading) loading.style.display = 'none';
+        if (state.totalLoaded === 0) {
+          grid.innerHTML = 
+            '<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted);">' +
+              'Unable to load products. <button onclick="location.reload()" style="background:none;border:none;color:#c084fc;cursor:pointer;text-decoration:underline;">Retry</button>' +
+            '</div>';
+        }
+      }
+      
+      state.loading = false;
+    }
+    
+    // ─── Build category tabs ───
+    function buildTabs() {
+      if (!tabsContainer || !state.categories) return;
+      // Clear existing (except "All")
+      var allTab = tabsContainer.querySelector('[data-category="all"]');
+      tabsContainer.innerHTML = '';
+      if (allTab) tabsContainer.appendChild(allTab);
+      
+      // Add each category
+      Object.keys(state.categories).forEach(function(catKey) {
+        var cat = state.categories[catKey];
+        var tab = document.createElement('button');
+        tab.className = 'shop-tab';
+        tab.dataset.category = catKey;
+        tab.innerHTML = 
+          '<span class="shop-tab-icon">' + cat.icon + '</span>' +
+          '<span>' + cat.label + '</span>';
+        tabsContainer.appendChild(tab);
+      });
+      
+      // Attach click handlers
+      tabsContainer.querySelectorAll('.shop-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          var newCat = tab.dataset.category;
+          if (newCat === state.category) return;
+          state.category = newCat;
+          tabsContainer.querySelectorAll('.shop-tab').forEach(function(t) {
+            t.classList.remove('active');
+          });
+          tab.classList.add('active');
+          loadProducts(true);
+        });
+      });
+    }
+    
+    // ─── Search handler ───
+    if (searchInput) {
+      var searchTimer;
+      searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        var val = searchInput.value.trim();
+        if (val) {
+          if (searchClear) searchClear.style.display = 'flex';
+        } else {
+          if (searchClear) searchClear.style.display = 'none';
+        }
+        searchTimer = setTimeout(function() {
+          state.query = val;
+          loadProducts(true);
+        }, 350);
+      });
+    }
+    
+    if (searchClear) {
+      searchClear.addEventListener('click', function() {
+        if (searchInput) {
+          searchInput.value = '';
+          state.query = '';
+          searchClear.style.display = 'none';
+          loadProducts(true);
+        }
+      });
+    }
+    
+    // ─── Load more handler ───
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', function() {
+        loadProducts(false);
+      });
+    }
+    
+    // Initial load
+    loadProducts(true);
+  }
+  
+  // ─── Init all shop sections on page ───
+  function initAll() {
+    document.querySelectorAll('.shop-section').forEach(function(section) {
+      if (section.dataset.initialized === 'true') return;
+      section.dataset.initialized = 'true';
+      initShopSection(section);
+    });
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAll);
+  } else {
+    initAll();
+  }
+})();
+</script>
+
+<style>
+  /* ═══════════════════════════════════════════════
+     SHOP SECTION STYLES
+     Full grid shop with tabs, search, pagination
+     ═══════════════════════════════════════════════ */
+  
+  .shop-section {
+    padding: 3rem 0;
+    position: relative;
+  }
+  
+  /* ═══ HEADER ═══ */
+  .shop-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  .shop-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .shop-bar {
+    width: 4px;
+    height: 48px;
+    background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
+    border-radius: 3px;
+    box-shadow: 0 0 15px rgba(192, 132, 252, 0.6);
+    animation: shopBarPulse 3s ease infinite;
+  }
+  
+  @keyframes shopBarPulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(192, 132, 252, 0.6); }
+    50% { box-shadow: 0 0 25px rgba(232, 121, 249, 0.8); }
+  }
+  
+  .shop-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: #c084fc;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+  
+  .shop-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 8px #ef4444;
+    animation: shopDotBlink 1.5s ease infinite;
+  }
+  
+  @keyframes shopDotBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  
+  .shop-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  
+  .shop-count {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(192, 132, 252, 0.1);
+    border: 1px solid rgba(192, 132, 252, 0.25);
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
+  }
+  
+  .shop-count-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    min-width: 24px;
+    display: inline-block;
+    text-align: center;
+  }
+  
+  .shop-count-lbl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  
+  /* ═══ SEARCH BAR ═══ */
+  .shop-search-wrap {
+    margin-bottom: 1.25rem;
+  }
+  
+  .shop-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(28, 15, 61, 0.5);
+    border: 1px solid rgba(192, 132, 252, 0.25);
+    border-radius: 14px;
+    padding: 0 16px;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(10px);
+    max-width: 500px;
+  }
+  
+  [data-theme="light"] .shop-search {
+    background: rgba(255, 255, 255, 0.8);
+  }
+  
+  .shop-search:focus-within {
+    border-color: rgba(232, 121, 249, 0.7);
+    box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.15);
+    background: rgba(28, 15, 61, 0.8);
+  }
+  
+  .ss-icon {
+    color: #c084fc;
+    flex-shrink: 0;
+    margin-right: 10px;
+  }
+  
+  .ss-input {
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 13px 0;
+    width: 100%;
+  }
+  
+  .ss-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.7;
+  }
+  
+  .ss-clear {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(192, 132, 252, 0.15);
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-left: 8px;
+    padding: 0;
+  }
+  
+  .ss-clear:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+  }
+  
+  /* ═══ CATEGORY TABS ═══ */
+  .shop-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  
+  .shop-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .shop-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(28, 15, 61, 0.5);
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+    backdrop-filter: blur(10px);
+  }
+  
+  [data-theme="light"] .shop-tab {
+    background: rgba(255, 255, 255, 0.7);
+  }
+  
+  .shop-tab:hover {
+    background: rgba(192, 132, 252, 0.15);
+    border-color: rgba(192, 132, 252, 0.4);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+  }
+  
+  .shop-tab.active {
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(192, 132, 252, 0.4);
+  }
+  
+  .shop-tab-icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+  
+  /* ═══ PRODUCTS GRID ═══ */
+  .shop-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Skeleton */
+  .shop-skeleton {
+    aspect-ratio: 1/1.55;
+    border-radius: 16px;
+    background: linear-gradient(
+      90deg,
+      rgba(192, 132, 252, 0.05) 25%,
+      rgba(192, 132, 252, 0.12) 50%,
+      rgba(192, 132, 252, 0.05) 75%
+    );
+    background-size: 200% 100%;
+    animation: shopShimmer 1.5s infinite;
+  }
+  
+  @keyframes shopShimmer {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+  
+  /* ═══ LOADING ═══ */
+  .shop-loading {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 2rem 0;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+  }
+  
+  .shop-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(192, 132, 252, 0.2);
+    border-top-color: #c084fc;
+    border-radius: 50%;
+    animation: shopSpin 0.8s linear infinite;
+  }
+  
+  @keyframes shopSpin {
+    to { transform: rotate(360deg); }
+  }
+  
+  /* ═══ LOAD MORE BUTTON ═══ */
+  .shop-load-more-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+  }
+  
+  .shop-load-more {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 28px;
+    background: rgba(192, 132, 252, 0.12);
+    border: 1px solid rgba(192, 132, 252, 0.3);
+    border-radius: 999px;
+    color: var(--text-primary);
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(10px);
+  }
+  
+  .shop-load-more:hover {
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    border-color: transparent;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.4);
+  }
+  
+  /* ═══ EMPTY STATE ═══ */
+  .shop-empty {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    background: rgba(192, 132, 252, 0.04);
+    border: 1px dashed rgba(192, 132, 252, 0.3);
+    border-radius: 20px;
+    grid-column: 1 / -1;
+  }
+  
+  .shop-empty-icon {
+    color: #c084fc;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+  }
+  
+  .shop-empty-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem;
+  }
+  
+  .shop-empty-desc {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+  
+  /* ═══ END MESSAGE ═══ */
+  .shop-end {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 2rem;
+    margin-top: 2rem;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    background: rgba(192, 132, 252, 0.04);
+    border: 1px dashed rgba(192, 132, 252, 0.2);
+    border-radius: 14px;
+  }
+  
+  .shop-end svg {
+    color: #10b981;
+  }
+  
+  /* ═══ RESPONSIVE ═══ */
+  @media (max-width: 1200px) {
+    .shop-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .shop-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .shop-title { font-size: 1.4rem; }
+    .shop-bar { height: 36px; }
+    .shop-header { flex-direction: column; align-items: flex-start; }
+    .shop-count { align-self: flex-end; }
+  }
+  
+  @media (max-width: 480px) {
+    .shop-grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .shop-tab { font-size: 0.75rem; padding: 7px 12px; }
+  }
+</style>
