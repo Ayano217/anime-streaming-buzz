@@ -106,7 +106,7 @@ const news    = sortedPosts.slice(4, 8);
   @keyframes atNaCardIn { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
   @keyframes atNaPlayRing { 0%{transform:scale(1);opacity:.9} 100%{transform:scale(1.7);opacity:0} }
   
-  /* ═══ NEON GLOW breathing animation (like Episode 5 card) ═══ */
+  /* ═══ NEON — Desktop only, mobile gets static glow ═══ */
   @keyframes atNeonPulse {
     0%, 100% { 
       box-shadow: 
@@ -142,7 +142,7 @@ const news    = sortedPosts.slice(4, 8);
     .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   }
   
-  /* ═══ ANIME CARD — with permanent neon glow ═══ */
+  /* ═══ ANIME CARD ═══ */
   .at-na-card { 
     transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1); 
     cursor: pointer;
@@ -150,8 +150,35 @@ const news    = sortedPosts.slice(4, 8);
     color: inherit;
     display: block;
     animation: atNaCardIn 0.5s ease backwards;
+    /* GPU acceleration hint — smoother scroll */
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
-  .at-na-card:hover { transform: translateY(-6px); }
+  
+  /* Neon thumb — default static glow, animation added by JS only when visible */
+  .at-na-thumb {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #0a0517;
+    border: 1px solid rgba(232, 121, 249, 0.45);
+    box-shadow: 
+      0 0 15px rgba(232, 121, 249, 0.4),
+      0 0 25px rgba(192, 132, 252, 0.3),
+      0 0 0 1px rgba(232, 121, 249, 0.5),
+      0 6px 18px rgba(0, 0, 0, 0.45);
+    transition: transform 0.35s ease, border-color 0.35s ease;
+  }
+  
+  /* Only animate when JS adds .neon-live class (visible cards on desktop) */
+  .at-na-thumb.neon-live {
+    animation: atNeonPulse 3s ease-in-out infinite;
+  }
+  
+  .at-na-card:hover { transform: translateY(-6px) translateZ(0); }
   .at-na-card:hover .at-na-thumb {
     animation: none;
     box-shadow: 
@@ -172,7 +199,39 @@ const news    = sortedPosts.slice(4, 8);
     background-clip: text;
   }
   
-  /* ═══ INLINE BIG PRODUCT (NO neon — just clean border) ═══ */
+  /* ═══ MOBILE: kill all animations, keep static glow only ═══ */
+  @media (max-width: 768px) {
+    .at-na-thumb.neon-live {
+      animation: none !important; /* NO breathing on mobile */
+    }
+    .at-na-thumb {
+      /* Slightly softer static glow to save GPU */
+      box-shadow: 
+        0 0 10px rgba(232, 121, 249, 0.35),
+        0 0 18px rgba(192, 132, 252, 0.22),
+        0 0 0 1px rgba(232, 121, 249, 0.4),
+        0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    }
+    /* Play icon always slightly visible on mobile (no hover) */
+    .at-na-card .at-na-play { 
+      opacity: 0.85 !important; 
+      transform: translate(-50%,-50%) scale(0.75) !important; 
+    }
+    /* Remove play icon ring animation on mobile too */
+    .at-na-play > div:first-child,
+    .at-na-play > div:nth-child(2) {
+      animation: none !important;
+      display: none !important;
+    }
+  }
+  
+  /* Reduce motion for accessibility + battery */
+  @media (prefers-reduced-motion: reduce) {
+    .at-na-thumb.neon-live { animation: none !important; }
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+  
+  /* ═══ INLINE BIG PRODUCT (NO neon) ═══ */
   .at-inline-product {
     position: relative;
     display: block;
@@ -181,8 +240,9 @@ const news    = sortedPosts.slice(4, 8);
     cursor: pointer;
     animation: atNaCardIn 0.5s ease backwards;
     transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    transform: translateZ(0);
   }
-  .at-inline-product:hover { transform: translateY(-6px); }
+  .at-inline-product:hover { transform: translateY(-6px) translateZ(0); }
   .at-inline-product:hover .at-ip-thumb {
     border-color: rgba(232,121,249,0.7);
     box-shadow: 0 15px 35px rgba(0,0,0,0.55), 0 0 20px rgba(192,132,252,0.35);
@@ -236,7 +296,6 @@ const news    = sortedPosts.slice(4, 8);
     box-shadow: 0 0 10px rgba(232, 121, 249, 0.7);
   }
   
-  /* ═══ Scroll Hint — "Swipe to explore" with pulsing arrow ═══ */
   .mini-scroll-hint {
     display: inline-flex;
     align-items: center;
@@ -283,8 +342,9 @@ const news    = sortedPosts.slice(4, 8);
     display: block;
     cursor: pointer;
     transition: transform 0.3s ease;
+    transform: translateZ(0);
   }
-  .mini-card:hover { transform: translateY(-5px); }
+  .mini-card:hover { transform: translateY(-5px) translateZ(0); }
   .mini-card:hover .mini-thumb {
     border-color: rgba(232,121,249,0.85);
     box-shadow: 0 12px 25px rgba(0,0,0,0.5), 0 0 20px rgba(192,132,252,0.45);
@@ -298,7 +358,6 @@ const news    = sortedPosts.slice(4, 8);
     background-clip: text;
   }
   
-  /* ═══ Fade edges (visual scroll hint) ═══ */
   .mini-strip-scroll-wrap {
     position: relative;
   }
@@ -315,8 +374,6 @@ const news    = sortedPosts.slice(4, 8);
   }
   
   @media (max-width: 768px) {
-    /* On mobile: play icon always visible (no hover) */
-    .at-na-card .at-na-play { opacity: 0.85 !important; transform: translate(-50%,-50%) scale(0.75) !important; }
     .at-ip-cta { opacity: 0.85 !important; transform: translate(-50%,-50%) scale(0.85) !important; }
     .mini-card { width: 175px; }
   }
@@ -344,6 +401,25 @@ const news    = sortedPosts.slice(4, 8);
       searchIn = document.getElementById('quickSearch'),
       sdd = document.getElementById('searchDD'),
       siClear = document.getElementById('siClear');
+
+  // ═══ SMART NEON: only animate visible cards on desktop ═══
+  // Mobile detection — no animation at all on mobile
+  var IS_MOBILE = window.matchMedia('(max-width: 768px)').matches;
+  
+  var neonObserver = null;
+  if (!IS_MOBILE && 'IntersectionObserver' in window) {
+    neonObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        var thumb = entry.target.querySelector('.at-na-thumb');
+        if (!thumb) return;
+        if (entry.isIntersecting) {
+          thumb.classList.add('neon-live');
+        } else {
+          thumb.classList.remove('neon-live');
+        }
+      });
+    }, { rootMargin: '100px', threshold: 0.1 });
+  }
 
   function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})}
   function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n).trim()+'…':s;}
@@ -383,7 +459,7 @@ const news    = sortedPosts.slice(4, 8);
     return matches >= query.length * 0.7 ? 50 : 0;
   }
 
-  // ─── Anime card with PERMANENT neon glow border ───
+  // ─── Anime card (thumb gets static glow; JS adds .neon-live on desktop when visible) ───
   function animeCard(a, i) {
     var t = a.title || 'Unknown', img = a.image || '', sl = a.slug || 'anime-' + a.id,
         sc = a.score ? Number(a.score).toFixed(1) : '',
@@ -403,14 +479,11 @@ const news    = sortedPosts.slice(4, 8);
     el.className = 'at-na-card';
     el.style.cssText = 'animation-delay:' + animDelay + ';';
     
-    // KEY CHANGE: thumb has animation:atNeonPulse (permanent breathing neon)
-    // Play icon: opacity:0 by default (hover only reveals it)
     el.innerHTML =
-      '<div class="at-na-thumb" style="position:relative;width:100%;padding-top:56.25%;border-radius:14px;overflow:hidden;background:#0a0517;border:1px solid rgba(232,121,249,0.45);animation:atNeonPulse 2.5s ease-in-out infinite;transition:all 0.35s ease;">' +
+      '<div class="at-na-thumb">' +
         imgHtml +
         '<div class="at-na-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.2),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
         '<div class="at-na-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,5,23,0.85) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
-        // Play icon — HIDDEN by default (opacity:0), only visible on hover
         '<div class="at-na-play" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.4);width:48px;height:48px;z-index:5;opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;">' +
           '<div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(192,132,252,0.8);animation:atNaPlayRing 2s ease-out infinite;"></div>' +
           '<div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:2px;box-shadow:0 8px 25px rgba(192,132,252,0.7),0 0 30px rgba(232,121,249,0.5);z-index:2;">' +
@@ -418,7 +491,7 @@ const news    = sortedPosts.slice(4, 8);
           '</div>' +
         '</div>' +
         (nw ? '<div style="position:absolute;top:7px;left:7px;padding:3px 8px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:800;letter-spacing:0.1em;border-radius:5px;z-index:6;box-shadow:0 2px 10px rgba(239,68,68,0.6);">NEW</div>' : '') +
-        (sc ? '<div style="position:absolute;top:7px;right:7px;display:inline-flex;align-items:center;gap:3px;padding:3px 7px;background:rgba(10,5,23,0.9);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;font-weight:800;border-radius:5px;z-index:6;backdrop-filter:blur(10px);"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + sc + '</div>' : '') +
+        (sc ? '<div style="position:absolute;top:7px;right:7px;display:inline-flex;align-items:center;gap:3px;padding:3px 7px;background:rgba(10,5,23,0.9);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;font-weight:800;border-radius:5px;z-index:6;"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + sc + '</div>' : '') +
         '<div style="position:absolute;bottom:7px;left:7px;padding:2px 7px;background:rgba(125,211,252,0.9);color:#0a0517;font-family:\'JetBrains Mono\',monospace;font-size:0.52rem;font-weight:800;letter-spacing:0.1em;border-radius:4px;z-index:6;">HD</div>' +
       '</div>' +
       '<div style="padding:9px 3px 4px;position:relative;z-index:1;">' +
@@ -431,10 +504,15 @@ const news    = sortedPosts.slice(4, 8);
         (g ? '<div style="display:inline-block;margin-top:3px;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:700;color:#c084fc;letter-spacing:0.05em;text-transform:uppercase;">' + esc(g) + '</div>' : '') +
       '</div>';
     
+    // Attach IntersectionObserver only on desktop
+    if (neonObserver) {
+      neonObserver.observe(el);
+    }
+    
     return el;
   }
 
-  // ─── Big product card (NO neon glow, just clean border) ───
+  // ─── Big product card ───
   function bigProductCard(p, i) {
     var animDelay = ((i % 12) * 25) + 'ms';
     var badge = p.badge || 'SPONSORED';
@@ -454,14 +532,14 @@ const news    = sortedPosts.slice(4, 8);
         '<div class="at-ip-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.22),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
         '<div class="at-ip-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(10,5,23,0.9) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
         '<div style="position:absolute;top:7px;left:7px;padding:3px 8px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:800;letter-spacing:0.08em;border-radius:5px;z-index:6;box-shadow:0 2px 10px rgba(192,132,252,0.5);">' + esc(badge) + '</div>' +
-        '<div style="position:absolute;top:7px;right:7px;padding:3px 8px;background:rgba(10,5,23,0.9);border:1px solid rgba(125,211,252,0.4);color:#7dd3fc;font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;font-weight:800;border-radius:5px;z-index:6;backdrop-filter:blur(10px);">' + esc(p.price) + '</div>' +
+        '<div style="position:absolute;top:7px;right:7px;padding:3px 8px;background:rgba(10,5,23,0.9);border:1px solid rgba(125,211,252,0.4);color:#7dd3fc;font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;font-weight:800;border-radius:5px;z-index:6;">' + esc(p.price) + '</div>' +
         '<div class="at-ip-cta" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.6);z-index:5;opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;">' +
           '<div style="display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);color:#fff;font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.72rem;font-weight:800;border-radius:999px;box-shadow:0 8px 25px rgba(192,132,252,0.6),0 0 30px rgba(232,121,249,0.4);white-space:nowrap;">' +
             '<span>View Details</span>' +
             '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
           '</div>' +
         '</div>' +
-        (p.rating ? '<div style="position:absolute;bottom:7px;left:7px;display:inline-flex;align-items:center;gap:3px;padding:2px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;font-weight:800;border-radius:4px;z-index:6;backdrop-filter:blur(10px);"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + p.rating + '</div>' : '') +
+        (p.rating ? '<div style="position:absolute;bottom:7px;left:7px;display:inline-flex;align-items:center;gap:3px;padding:2px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;font-weight:800;border-radius:4px;z-index:6;"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + p.rating + '</div>' : '') +
       '</div>' +
       '<div style="padding:9px 3px 4px;position:relative;z-index:1;">' +
         '<h3 class="at-ip-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2.1em;">' + esc(trunc(p.title, 55)) + '</h3>' +
@@ -493,7 +571,6 @@ const news    = sortedPosts.slice(4, 8);
     '</a>';
   }
 
-  // ─── Build mini strip with scroll hint ───
   function buildMiniStrip() {
     if (productPool.length < 6) return null;
     
@@ -617,7 +694,7 @@ const news    = sortedPosts.slice(4, 8);
     },100);
   },{passive:true});
 
-  // ─── Search (unchanged) ───
+  // ─── Search ───
   var sT;
   function showClear() { if (siClear) siClear.style.display = 'flex'; }
   function hideClear() { if (siClear) siClear.style.display = 'none'; }
