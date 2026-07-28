@@ -4,7 +4,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import HeroSection from '../components/HeroSection.astro';
-import ProductStrip from '../components/ProductStrip.astro';
 
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
 const sortedPosts = allPosts.sort((a, b) =>
@@ -19,7 +18,7 @@ const news    = sortedPosts.slice(4, 8);
   <Header slot="header" />
   <HeroSection />
 
-  <!-- ═══ NEW ARRIVALS (existing anime section) ═══ -->
+  <!-- ═══ NEW ARRIVALS — anime + inline products ═══ -->
   <section class="section-block arrivals-block">
     <div class="container">
       <div class="arrivals-header">
@@ -52,7 +51,7 @@ const news    = sortedPosts.slice(4, 8);
       <div id="arrivalsGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;"></div>
 
       <div class="loading-more" id="loadingMore" style="display:none;">
-        <div class="ld-spinner"></div><span>Loading more anime...</span>
+        <div class="ld-spinner"></div><span>Loading more...</span>
       </div>
 
       <div class="end-message" id="endMessage" style="display:none;">
@@ -68,19 +67,6 @@ const news    = sortedPosts.slice(4, 8);
       </div>
     </div>
   </section>
-
-  <!-- ═══════════════════════════════════════════════ -->
-  <!-- 🔥 STRIP 1: TRENDING PRODUCTS                  -->
-  <!-- Position: After anime, before articles         -->
-  <!-- Why here: High visibility, users are engaged   -->
-  <!-- ═══════════════════════════════════════════════ -->
-  <ProductStrip 
-    title="🔥 Trending in the Otaku Store"
-    subtitle="What fans are buying right now"
-    type="trending"
-    limit={12}
-    size="medium"
-  />
 
   {novelty.length > 0 && (
     <section class="section-block novelty-block">
@@ -98,19 +84,6 @@ const news    = sortedPosts.slice(4, 8);
     </section>
   )}
 
-  <!-- ═══════════════════════════════════════════════ -->
-  <!-- 💜 STRIP 2: FEATURED / FAN FAVORITES           -->
-  <!-- Position: Middle of page                        -->
-  <!-- Why here: Break between article sections       -->
-  <!-- ═══════════════════════════════════════════════ -->
-  <ProductStrip 
-    title="💜 Fan Favorites"
-    subtitle="Editor's premium picks"
-    type="featured"
-    limit={10}
-    size="medium"
-  />
-
   {news.length > 0 && (
     <section class="section-block news-block">
       <div class="container">
@@ -127,20 +100,6 @@ const news    = sortedPosts.slice(4, 8);
     </section>
   )}
 
-  <!-- ═══════════════════════════════════════════════ -->
-  <!-- 🎮 STRIP 3: GAMING CORNER                       -->
-  <!-- Position: Bottom of page                        -->
-  <!-- Why here: Different category, keeps engagement -->
-  <!-- ═══════════════════════════════════════════════ -->
-  <ProductStrip 
-    title="🎮 Gaming Corner"
-    subtitle="Play your favorite anime"
-    type="category"
-    category="games"
-    limit={8}
-    size="medium"
-  />
-
   <Footer slot="footer" />
 </BaseLayout>
 
@@ -148,7 +107,7 @@ const news    = sortedPosts.slice(4, 8);
   @keyframes atNaCardIn { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
   @keyframes atNaPlayRing { 0%{transform:scale(1);opacity:.9} 100%{transform:scale(1.7);opacity:0} }
   
-  .at-na-card { transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1) !important; }
+  .at-na-card { transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1) !important; cursor: pointer; }
   .at-na-card:hover { transform: translateY(-8px) !important; }
   .at-na-card:hover .at-na-thumb {
     border-color: rgba(232,121,249,0.9) !important;
@@ -164,6 +123,38 @@ const news    = sortedPosts.slice(4, 8);
     -webkit-text-fill-color: transparent !important;
     background-clip: text !important;
   }
+
+  /* ═══ INLINE PRODUCT CARD (matches anime card size exactly) ═══ */
+  .at-inline-product {
+    position: relative;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    animation: atNaCardIn 0.5s ease backwards;
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .at-inline-product:hover { transform: translateY(-8px); }
+  .at-inline-product:hover .at-ip-thumb {
+    border-color: rgba(232,121,249,0.9) !important;
+    box-shadow: 0 20px 45px rgba(0,0,0,0.6), 0 0 30px rgba(192,132,252,0.6), 0 0 0 1px rgba(232,121,249,0.8);
+  }
+  .at-inline-product:hover .at-ip-img {
+    transform: scale(1.08);
+    filter: brightness(0.65);
+  }
+  .at-inline-product:hover .at-ip-shine { left: 120%; }
+  .at-inline-product:hover .at-ip-overlay { opacity: 1; }
+  .at-inline-product:hover .at-ip-cta {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .at-inline-product:hover .at-ip-title {
+    background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
   
   @media (max-width: 1024px) {
     #arrivalsGrid { grid-template-columns: repeat(3, 1fr) !important; gap: 12px !important; }
@@ -171,6 +162,7 @@ const news    = sortedPosts.slice(4, 8);
   @media (max-width: 768px) {
     .at-na-play { opacity: 1 !important; transform: translate(-50%,-50%) scale(0.85) !important; }
     #arrivalsGrid { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
+    .at-ip-cta { opacity: 1 !important; transform: translate(-50%,-50%) scale(0.9) !important; }
   }
   @media (max-width: 480px) {
     #arrivalsGrid { grid-template-columns: repeat(1, 1fr) !important; gap: 12px !important; }
@@ -180,7 +172,10 @@ const news    = sortedPosts.slice(4, 8);
 <script is:inline>
 (function(){
   var cat='airing', pg=1, loading=false, hasMore=true, total=0, ids={};
-  var allAnime = []; // cache all loaded anime for search
+  var animeCount = 0; // track anime added to grid (for product injection)
+  var productPool = []; // cached products
+  var productIdx = 0;
+  var allAnime = [];
   
   var grid=document.getElementById('arrivalsGrid'),
       loadingEl=document.getElementById('loadingMore'),
@@ -196,7 +191,6 @@ const news    = sortedPosts.slice(4, 8);
   function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})}
   function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n).trim()+'…':s;}
 
-  // Levenshtein distance for fuzzy matching
   function levenshtein(a, b) {
     a = a.toLowerCase(); b = b.toLowerCase();
     if (a.length === 0) return b.length;
@@ -233,7 +227,8 @@ const news    = sortedPosts.slice(4, 8);
     return matches >= query.length * 0.7 ? 50 : 0;
   }
 
-  function card(a, i) {
+  // ─── Anime card (unchanged design) ───
+  function animeCard(a, i) {
     var t = a.title || 'Unknown', img = a.image || '', sl = a.slug || 'anime-' + a.id,
         sc = a.score ? Number(a.score).toFixed(1) : '',
         yr = a.year || '',
@@ -281,6 +276,69 @@ const news    = sortedPosts.slice(4, 8);
     return el;
   }
 
+  // ─── Inline product card (same 16:9 size as anime card) ───
+  function productCard(p, i) {
+    var animDelay = ((i % 12) * 30) + 'ms';
+    var badge = p.badge || 'SPONSORED';
+    
+    var el = document.createElement('a');
+    // Route to internal product page (built in STEP 2)
+    el.href = '/product/' + encodeURIComponent(p.id);
+    el.className = 'at-inline-product';
+    el.style.cssText = 'display:block;text-decoration:none;color:inherit;animation-delay:' + animDelay + ';';
+    
+    var imgHtml = p.image
+      ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="at-ip-img" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.6s ease, filter 0.35s ease;" onerror="this.style.opacity=\'0.3\';" />'
+      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:3rem;">🛍️</div>';
+    
+    el.innerHTML =
+      '<div class="at-ip-thumb" style="position:relative;width:100%;padding-top:56.25%;border-radius:14px;overflow:hidden;background:#0a0517;border:1px solid rgba(232,121,249,0.4);box-shadow:0 8px 20px rgba(0,0,0,0.4);transition:all 0.35s ease;">' +
+        imgHtml +
+        '<div class="at-ip-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.2),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
+        '<div class="at-ip-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(10,5,23,0.9) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
+        // "Shop" tag top-left (subtle, native-looking)
+        '<div style="position:absolute;top:8px;left:8px;padding:4px 9px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;font-weight:800;letter-spacing:0.1em;border-radius:6px;z-index:6;box-shadow:0 3px 12px rgba(192,132,252,0.5);">' + esc(badge) + '</div>' +
+        // Price top-right (like anime rating)
+        '<div style="position:absolute;top:8px;right:8px;padding:4px 9px;background:rgba(10,5,23,0.85);border:1px solid rgba(125,211,252,0.4);color:#7dd3fc;font-family:\'JetBrains Mono\',monospace;font-size:0.68rem;font-weight:800;border-radius:5px;z-index:6;backdrop-filter:blur(10px);">' + esc(p.price) + '</div>' +
+        // "View" CTA in center (shows on hover)
+        '<div class="at-ip-cta" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.6);z-index:5;opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;">' +
+          '<div style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);color:#fff;font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:800;border-radius:999px;box-shadow:0 10px 30px rgba(192,132,252,0.6),0 0 40px rgba(232,121,249,0.4);white-space:nowrap;">' +
+            '<span>View Details</span>' +
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
+          '</div>' +
+        '</div>' +
+        // Rating bottom-left
+        (p.rating ? '<div style="position:absolute;bottom:8px;left:8px;display:inline-flex;align-items:center;gap:3px;padding:3px 8px;background:rgba(10,5,23,0.85);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.6rem;font-weight:800;border-radius:5px;z-index:6;backdrop-filter:blur(10px);"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + p.rating + '</div>' : '') +
+      '</div>' +
+      '<div style="padding:10px 4px 4px;position:relative;z-index:1;">' +
+        '<h3 class="at-ip-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.9rem;font-weight:700;color:var(--text-primary);margin:0 0 4px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;">' + esc(trunc(p.title, 55)) + '</h3>' +
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.66rem;color:var(--text-muted);opacity:0.75;">' + esc(trunc(p.subtitle || '', 45)) + '</div>' +
+        '<div style="display:inline-block;margin-top:5px;font-family:\'JetBrains Mono\',monospace;font-size:0.6rem;font-weight:700;color:#e879f9;letter-spacing:0.05em;text-transform:uppercase;">FROM OUR STORE</div>' +
+      '</div>';
+    
+    return el;
+  }
+
+  // ─── Fetch products in background, cache them ───
+  async function loadProducts() {
+    try {
+      var res = await fetch('/api/products?limit=50');
+      var j = await res.json();
+      if (j.success && j.products) {
+        productPool = j.products;
+      }
+    } catch(e) {
+      console.warn('Product pool load failed:', e.message);
+    }
+  }
+  
+  function getNextProduct() {
+    if (!productPool.length) return null;
+    var p = productPool[productIdx % productPool.length];
+    productIdx++;
+    return p;
+  }
+
   function updateCount(){
     if(!countEl)return;
     var c=parseInt(countEl.textContent)||0,t=total;
@@ -302,11 +360,23 @@ const news    = sortedPosts.slice(4, 8);
       if(!j.success)throw new Error(j.error||'fail');
       var items=(j.anime||[]).filter(function(a){if(!a.id||ids[a.id])return false;ids[a.id]=true;return true;});
       if(pg===1)grid.innerHTML='';
+      
       items.forEach(function(a,i){
         total++;
         allAnime.push(a);
-        grid.appendChild(card(a,total-1));
+        grid.appendChild(animeCard(a, total-1));
+        animeCount++;
+        
+        // ═══ INJECT PRODUCT every 6 anime cards ═══
+        // This gives Facebook-ads-style feel — natural, not disruptive
+        if (animeCount % 6 === 0 && productPool.length > 0) {
+          var prod = getNextProduct();
+          if (prod) {
+            grid.appendChild(productCard(prod, total));
+          }
+        }
       });
+      
       updateCount();
       hasMore=j.hasNext!==false&&items.length>0;
       if(loadingEl)loadingEl.style.display='none';
@@ -323,7 +393,7 @@ const news    = sortedPosts.slice(4, 8);
     tab.addEventListener('click',function(){
       var c2=tab.dataset.cat;if(c2===cat)return;
       tabs.forEach(function(t){t.classList.remove('active');});tab.classList.add('active');
-      cat=c2;pg=1;hasMore=true;total=0;ids={};allAnime=[];
+      cat=c2;pg=1;hasMore=true;total=0;ids={};allAnime=[];animeCount=0;productIdx=0;
       if(countEl)countEl.textContent='0';
       if(errMsg)errMsg.style.display='none';
       if(endMsg)endMsg.style.display='none';
@@ -331,7 +401,6 @@ const news    = sortedPosts.slice(4, 8);
     });
   });
 
-  // Infinite scroll
   var scrollT;
   window.addEventListener('scroll',function(){
     if(loading||!hasMore)return;
@@ -346,9 +415,8 @@ const news    = sortedPosts.slice(4, 8);
     },100);
   },{passive:true});
 
-  // Smart search
+  // ─── Smart search (unchanged) ───
   var sT;
-  
   function showClear() { if (siClear) siClear.style.display = 'flex'; }
   function hideClear() { if (siClear) siClear.style.display = 'none'; }
   
@@ -366,84 +434,49 @@ const news    = sortedPosts.slice(4, 8);
       if (sdd) { sdd.innerHTML = ''; sdd.classList.remove('open'); }
       return;
     }
-    
     if (sdd) {
       sdd.innerHTML = '<div class="sdd-loading"><div class="ld-spinner"></div><span>Searching...</span></div>';
       sdd.classList.add('open');
     }
-    
     var localMatches = allAnime.map(function(a) {
       return { anime: a, score: fuzzyScore(q, a.title) };
     }).filter(function(x) { return x.score > 0; })
       .sort(function(a, b) { return b.score - a.score; })
       .slice(0, 5);
-    
     var apiResults = [];
     try {
       var r = await fetch('/api/anime?action=search&q=' + encodeURIComponent(q));
       var j = await r.json();
       if (j.success && j.anime) apiResults = j.anime;
     } catch(e) {}
-    
     var seen = {};
     var combined = [];
-    
     localMatches.forEach(function(m) {
-      if (!seen[m.anime.id]) {
-        seen[m.anime.id] = true;
-        combined.push(m.anime);
-      }
+      if (!seen[m.anime.id]) { seen[m.anime.id] = true; combined.push(m.anime); }
     });
-    
     apiResults.forEach(function(a) {
-      if (!seen[a.id]) {
-        seen[a.id] = true;
-        combined.push(a);
-      }
+      if (!seen[a.id]) { seen[a.id] = true; combined.push(a); }
     });
-    
     var scored = combined.map(function(a) {
       return { anime: a, score: fuzzyScore(q, a.title) };
     }).sort(function(a, b) { return b.score - a.score; });
-    
     var top = scored.slice(0, 8);
-    
     if (sdd) {
       if (top.length === 0) {
-        sdd.innerHTML = 
-          '<div class="sdd-empty">' +
-            '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>' +
-            '<div><div class="sdd-empty-t">No anime found for "' + esc(q) + '"</div>' +
-            '<div class="sdd-empty-s">Try a different spelling</div></div>' +
-          '</div>';
+        sdd.innerHTML = '<div class="sdd-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg><div><div class="sdd-empty-t">No anime found for "' + esc(q) + '"</div><div class="sdd-empty-s">Try a different spelling</div></div></div>';
       } else {
         var isTypo = top[0].score < 200 && top[0].score > 0;
         var html = '';
-        
         if (isTypo) {
           html += '<div class="sdd-hint"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Did you mean...</div>';
         }
-        
         html += top.map(function(m) {
           var a = m.anime;
           var im = a.image ? '<img src="' + esc(a.image) + '" alt="" loading="lazy" />' : '<div class="sd-no"></div>';
           var badge = a.status === 'current' ? '<span class="sd-badge">AIRING</span>' : '';
-          return '<a href="/anime/' + esc(a.slug) + '" class="sd-i">' +
-            '<div class="sd-th">' + im + '</div>' +
-            '<div class="sd-inf">' +
-              '<div class="sd-t">' + esc(a.title) + '</div>' +
-              '<div class="sd-m">' + esc(a.year || 'Unknown') + (a.score ? ' · ⭐ ' + a.score : '') + (a.episodes ? ' · ' + a.episodes + ' EP' : '') + '</div>' +
-              (a.genres && a.genres.length ? '<div class="sd-g">' + a.genres.slice(0,2).map(esc).join(' · ') + '</div>' : '') +
-            '</div>' +
-            badge +
-          '</a>';
+          return '<a href="/anime/' + esc(a.slug) + '" class="sd-i"><div class="sd-th">' + im + '</div><div class="sd-inf"><div class="sd-t">' + esc(a.title) + '</div><div class="sd-m">' + esc(a.year || 'Unknown') + (a.score ? ' · ⭐ ' + a.score : '') + (a.episodes ? ' · ' + a.episodes + ' EP' : '') + '</div>' + (a.genres && a.genres.length ? '<div class="sd-g">' + a.genres.slice(0,2).map(esc).join(' · ') + '</div>' : '') + '</div>' + badge + '</a>';
         }).join('');
-        
-        html += '<a href="/search?q=' + encodeURIComponent(q) + '" class="sd-i sd-more">' +
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>' +
-          '<span>See all results for "' + esc(q) + '"</span>' +
-        '</a>';
-        
+        html += '<a href="/search?q=' + encodeURIComponent(q) + '" class="sd-i sd-more"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>See all results for "' + esc(q) + '"</span></a>';
         sdd.innerHTML = html;
       }
       sdd.classList.add('open');
@@ -461,37 +494,27 @@ const news    = sortedPosts.slice(4, 8);
       }
       sT = setTimeout(function() { performSearch(q); }, 200);
     });
-    
     searchIn.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
         var q = searchIn.value.trim();
         if (q) {
           var firstResult = sdd && sdd.querySelector('.sd-i:not(.sd-more):not(.sdd-empty):not(.sdd-loading)');
-          if (firstResult) {
-            window.location.href = firstResult.href;
-          } else {
-            window.location.href = '/search?q=' + encodeURIComponent(q);
-          }
+          if (firstResult) window.location.href = firstResult.href;
+          else window.location.href = '/search?q=' + encodeURIComponent(q);
         }
       }
-      if (e.key === 'Escape' && sdd) {
-        sdd.classList.remove('open');
-        searchIn.blur();
-      }
+      if (e.key === 'Escape' && sdd) { sdd.classList.remove('open'); searchIn.blur(); }
     });
-    
     document.addEventListener('click', function(e) {
       if (sdd && !e.target.closest('.search-inline')) sdd.classList.remove('open');
     });
-    
     searchIn.addEventListener('focus', function() {
-      if (searchIn.value.trim() && sdd && sdd.innerHTML) {
-        sdd.classList.add('open');
-      }
+      if (searchIn.value.trim() && sdd && sdd.innerHTML) sdd.classList.add('open');
     });
   }
 
-  load();
+  // ─── Init: load products first (fast), then start anime feed ───
+  loadProducts().then(load);
 })();
 </script>
 
@@ -507,24 +530,8 @@ const news    = sortedPosts.slice(4, 8);
   .arrivals-title{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(1.6rem,3vw,2.4rem);font-weight:800;margin:0;letter-spacing:-.03em;line-height:1}
   .arrivals-actions{display:flex;align-items:center;gap:12px}
   
-  .sdd{
-    position:absolute;
-    top:calc(100% + 10px);left:0;right:0;
-    background:rgba(15,8,35,.98);
-    border:1px solid rgba(192,132,252,.3);
-    border-radius:16px;
-    padding:8px;
-    max-height:500px;
-    overflow-y:auto;
-    box-shadow:0 25px 60px rgba(0,0,0,.6),0 0 30px rgba(192,132,252,.15);
-    backdrop-filter:blur(20px);
-    z-index:100;
-    opacity:0;visibility:hidden;
-    transform:translateY(-8px);
-    transition:all .25s ease;
-  }
+  .sdd{position:absolute;top:calc(100% + 10px);left:0;right:0;background:rgba(15,8,35,.98);border:1px solid rgba(192,132,252,.3);border-radius:16px;padding:8px;max-height:500px;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.6),0 0 30px rgba(192,132,252,.15);backdrop-filter:blur(20px);z-index:100;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .25s ease}
   .sdd.open{opacity:1;visibility:visible;transform:translateY(0)}
-  
   .sdd-loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:2rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:.75rem}
   .sdd-empty{display:flex;align-items:center;gap:12px;padding:20px;color:var(--text-muted)}
   .sdd-empty svg{color:#c084fc;flex-shrink:0}
@@ -548,15 +555,7 @@ const news    = sortedPosts.slice(4, 8);
   .ld-spinner{width:22px;height:22px;border:2px solid rgba(192,132,252,.2);border-top-color:#c084fc;border-radius:50%;animation:sp .8s linear infinite}
   @keyframes sp{to{transform:rotate(360deg)}}
   
-  .end-message{
-    display:none;align-items:center;justify-content:center;gap:10px;
-    padding:2rem;margin-top:2rem;
-    color:var(--text-muted);
-    font-family:'JetBrains Mono',monospace;font-size:.82rem;
-    background:rgba(192,132,252,.04);
-    border:1px dashed rgba(192,132,252,.2);
-    border-radius:14px;
-  }
+  .end-message{display:none;align-items:center;justify-content:center;gap:10px;padding:2rem;margin-top:2rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:.82rem;background:rgba(192,132,252,.04);border:1px dashed rgba(192,132,252,.2);border-radius:14px}
   .end-message svg{color:#10b981}
   
   .error-msg{text-align:center;padding:3rem 1rem;color:var(--text-secondary);background:rgba(239,68,68,.06);border:1px dashed rgba(239,68,68,.3);border-radius:16px;margin-top:2rem}
