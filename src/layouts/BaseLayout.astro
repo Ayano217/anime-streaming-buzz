@@ -1,5 +1,5 @@
 ---
-import SafiyaRoom from '../components/SafiyaRoom.astro';
+import SafiyaCore from '../components/SafiyaCore.astro';
 interface Props {
   title?: string;
   description?: string;
@@ -74,7 +74,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     <main><slot /></main>
     <slot name="footer" />
   </div>
-  <SafiyaRoom />
+  <SafiyaCore />
   <button id="btt" aria-label="Scroll to top">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>
   </button>
