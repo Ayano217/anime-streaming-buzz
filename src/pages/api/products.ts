@@ -1,21 +1,12 @@
 // ═══════════════════════════════════════════════════════════════
 // AniTube Buzz — Dynamic Products API
-// ═══════════════════════════════════════════════════════════════
 // Path: src/pages/api/products.ts
-// Commit: fix: replace broken Amazon image URLs with reliable CDN images
-//
-// WHY: Amazon direct image URLs frequently 404 or hotlink-block.
-//      Using reliable CDN sources ensures products always display.
-//      Actual affiliate links still go to Amazon/Play-Asia correctly.
 // ═══════════════════════════════════════════════════════════════
 
 import type { APIRoute } from 'astro';
 
-// CRITICAL: Site runs in hybrid mode — must opt out of prerendering
-// so query params (?trending, ?category) work at runtime
 export const prerender = false;
 
-// ─── Types ───────────────────────────────────────────────────
 interface Product {
   id: string;
   title: string;
@@ -46,7 +37,6 @@ type ProductCategory =
   | 'accessories' | 'games' | 'bluray' | 'cosplay'
   | 'collectibles' | 'snacks';
 
-// ─── Affiliate URL Builders ──────────────────────────────────
 const AMAZON_TAG = 'anitubebuzz-20';
 const PLAYASIA_REF = '6797065';
 const CDJAPAN_AFF = 'YOUR_AFFILIATE_ID';
@@ -86,16 +76,6 @@ function calculateTrendScore(product: {
   return Math.round(baseScore + recencyBonus + ratingBonus + featuredBonus);
 }
 
-// ─── Product Database ────────────────────────────────────────
-// IMAGE STRATEGY: Using reliable image sources
-// - Unsplash (unsplash.com) for high-quality themed photography
-// - Anime News Network CDN for anime-related visuals
-// - Wikimedia Commons for verified public domain images
-// - PlaceIMG/Picsum for generic product photography
-//
-// These load reliably and look premium. Users still get redirected 
-// to actual Amazon/Play-Asia via affiliate URLs when they click.
-
 const PRODUCTS: Product[] = [
 
   // ═══════════════════════════════════════════
@@ -107,9 +87,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Banpresto — Chain Spirits Vol.3',
     description: 'High-quality Power figure from Chainsaw Man. Stunning detail with her signature horns and blood fiend design.',
     image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'figures',
     price: '$29.99',
@@ -133,9 +111,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Bandai Spirits — Jujutsu Kaisen',
     description: 'The strongest sorcerer in his most iconic pose. Hollow Purple effect parts included.',
     image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80'],
     video: 'https://www.youtube.com/embed/8fGFjoeyc6I',
     category: 'figures',
     price: '$42.99',
@@ -159,9 +135,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Solo Leveling — Premium Statue',
     description: 'The Shadow Monarch in full glory. Incredibly detailed sculpt with purple shadow effect base.',
     image: 'https://images.unsplash.com/photo-1605106702734-205df224ecce?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1605106702734-205df224ecce?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1605106702734-205df224ecce?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'figures',
     price: '$54.99',
@@ -185,9 +159,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Bandai — One Piece DXF',
     description: 'Gear 5 Luffy in his legendary Sun God Nika form. White hair, joyful expression, dynamic pose.',
     image: 'https://images.unsplash.com/photo-1608889825205-eebdb9fc5806?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1608889825205-eebdb9fc5806?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1608889825205-eebdb9fc5806?w=800&auto=format&fit=crop&q=80'],
     video: 'https://www.youtube.com/embed/eNxO9MKmtZA',
     category: 'figures',
     price: '$36.99',
@@ -211,9 +183,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Demon Slayer — Vibration Stars',
     description: 'Nezuko in her Blood Demon Art form with pink flame effects.',
     image: 'https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'figures',
     price: '$32.99',
@@ -237,9 +207,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Attack on Titan — Special Edition',
     description: 'Captain Levi in his Final Season design. Dual blade pose with incredible cape detail.',
     image: 'https://images.unsplash.com/photo-1568378378-1b0f9e0f11f4?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1568378378-1b0f9e0f11f4?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1568378378-1b0f9e0f11f4?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'figures',
     price: '$39.99',
@@ -263,9 +231,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'SPY x FAMILY — Puchieete Series',
     description: 'Anya in her iconic excited "Waku Waku" pose! Adorable sculpt perfect for any desk.',
     image: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1590736969955-71cc94901144?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'figures',
     price: '$24.99',
@@ -289,9 +255,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Dragon Ball Super — Maximatic',
     description: 'Vegeta in his fearsome Ultra Ego form. Incredible muscle detail and purple aura effect.',
     image: 'https://images.unsplash.com/photo-1613336026275-d6d473084e85?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1613336026275-d6d473084e85?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1613336026275-d6d473084e85?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'figures',
     price: '$44.99',
@@ -319,9 +283,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Tatsuki Fujimoto — Complete Part 1',
     description: 'The complete first part of Chainsaw Man. All 11 volumes in a premium collector\'s box.',
     image: 'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'manga',
     price: '$69.99',
@@ -345,9 +307,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Gege Akutami — Full Series',
     description: 'Catch up on the entire Jujutsu Kaisen saga from prequel Volume 0 through the Culling Game arc.',
     image: 'https://images.unsplash.com/photo-1560807707-8cc77767d783?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1560807707-8cc77767d783?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1560807707-8cc77767d783?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'manga',
     price: '$9.99',
@@ -371,9 +331,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Dubu (REDICE Studio) — Full Color',
     description: 'The #1 manhwa worldwide in stunning full-color print. Follow Sung Jin-Woo\'s rise.',
     image: 'https://images.unsplash.com/photo-1621784563330-caee0b138a00?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1621784563330-caee0b138a00?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1621784563330-caee0b138a00?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'manga',
     price: '$14.99',
@@ -397,9 +355,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Eiichiro Oda — Dressrosa to Reverie',
     description: 'Volumes 71-90 covering the Dressrosa and Whole Cake Island arcs.',
     image: 'https://images.unsplash.com/photo-1607604760190-ec9dc1e2b26e?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1607604760190-ec9dc1e2b26e?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1607604760190-ec9dc1e2b26e?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'manga',
     price: '$149.99',
@@ -427,9 +383,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'PS5 — Bandai Namco',
     description: 'The long-awaited return of Budokai Tenkaichi! 180+ playable characters, explosive combat.',
     image: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800&auto=format&fit=crop&q=80'],
     video: 'https://www.youtube.com/embed/o1UrKfUMYyQ',
     category: 'games',
     price: '$59.99',
@@ -453,9 +407,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'PS5/PS4 — Bandai Namco',
     description: 'Over 130 playable ninja! Relive the entire Naruto saga plus Boruto.',
     image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80'],
     video: 'https://www.youtube.com/embed/9XlPa2yOJeo',
     category: 'games',
     price: '$49.99',
@@ -479,9 +431,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'PS5 — Bandai Namco',
     description: '2v2 anime fighting at its finest. Play as Gojo, Yuji, Megumi, and more.',
     image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80'],
     video: 'https://www.youtube.com/embed/tKFlW3c5Nxs',
     category: 'games',
     price: '$39.99',
@@ -501,7 +451,7 @@ const PRODUCTS: Product[] = [
   },
 
   // ═══════════════════════════════════════════
-  // 🎨 POSTERS & WALL ART
+  // 🎨 POSTERS
   // ═══════════════════════════════════════════
   {
     id: 'poster-anime-pack',
@@ -509,9 +459,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Demon Slayer, JJK, AOT, MHA & More',
     description: 'Premium quality anime poster set. 8 different popular series. High-resolution prints.',
     image: 'https://images.unsplash.com/photo-1600107832879-de0ecc84c07d?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1600107832879-de0ecc84c07d?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1600107832879-de0ecc84c07d?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'posters',
     price: '$12.99',
@@ -539,9 +487,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Attack on Titan — Wings of Freedom',
     description: 'Premium Attack on Titan hoodie with embroidered Survey Corps logo. Fleece-lined.',
     image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'apparel',
     price: '$34.99',
@@ -565,9 +511,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Naruto Shippuden — Cosplay Grade',
     description: 'The iconic Akatsuki red cloud design on a high-quality zip-up jacket.',
     image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'apparel',
     price: '$39.99',
@@ -595,9 +539,7 @@ const PRODUCTS: Product[] = [
     subtitle: '16 Colors — Remote Control',
     description: 'Stunning 3D anime illusion lamp with 16 color modes. USB powered with remote.',
     image: 'https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'accessories',
     price: '$19.99',
@@ -621,9 +563,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Gojo, Yuji, Megumi, Nobara & More',
     description: 'High-quality metal keychains featuring 6 different JJK characters.',
     image: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'accessories',
     price: '$14.99',
@@ -643,7 +583,7 @@ const PRODUCTS: Product[] = [
   },
 
   // ═══════════════════════════════════════════
-  // 💿 BLU-RAY / DVD
+  // 💿 BLU-RAY
   // ═══════════════════════════════════════════
   {
     id: 'br-demon-slayer-s3',
@@ -651,9 +591,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Limited Edition — Japanese Import',
     description: 'Season 3 complete Blu-ray with exclusive art booklet. Japanese audio with English subs.',
     image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&auto=format&fit=crop&q=80'],
     video: null,
     category: 'bluray',
     price: '$64.99',
@@ -681,9 +619,7 @@ const PRODUCTS: Product[] = [
     subtitle: 'Includes Gold Etched Cards',
     description: 'The ultimate Pokémon card collection box. Gold-etched promos, booster packs included.',
     image: 'https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=800&auto=format&fit=crop&q=80',
-    images: [
-      'https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=800&auto=format&fit=crop&q=80',
-    ],
+    images: ['https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=800&auto=format&fit=crop&q=80'],
     video: 'https://www.youtube.com/embed/QJnT9pMYjJY',
     category: 'collectibles',
     price: '$89.99',
@@ -701,9 +637,204 @@ const PRODUCTS: Product[] = [
     inStock: true,
     featured: true,
   },
+
+  // ═══════════════════════════════════════════
+  // 🍜 JAPANESE SNACKS & FOOD (NEW — USA MARKET)
+  // ═══════════════════════════════════════════
+  {
+    id: 'food-ramen-variety',
+    title: 'Japanese Ramen Variety Pack (10 Bowls)',
+    subtitle: 'Nissin, Maruchan & Sapporo Ichiban',
+    description: 'Authentic Japanese ramen from top brands. Miso, tonkotsu, shoyu, spicy — all in one pack.',
+    image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&auto=format&fit=crop&q=80',
+    images: ['https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&auto=format&fit=crop&q=80'],
+    video: null,
+    category: 'snacks',
+    price: '$24.99',
+    priceNum: 24.99,
+    currency: 'USD',
+    store: 'amazon',
+    rawUrl: 'https://www.amazon.com/s?k=japanese+ramen+variety+pack',
+    animeTag: ['naruto', 'one-piece'],
+    tags: ['ramen', 'noodles', 'japanese food', 'nissin', 'snack'],
+    badge: '🍜 BESTSELLER',
+    rating: 4.7,
+    reviews: 8934,
+    releaseDate: '2024-10-01',
+    trendScore: 89,
+    inStock: true,
+    featured: true,
+  },
+  {
+    id: 'food-pocky-mega',
+    title: 'Pocky Mega Variety Pack (12 Flavors)',
+    subtitle: 'Chocolate, Strawberry, Matcha & More',
+    description: 'The iconic Japanese chocolate stick snack in 12 different flavors. Perfect anime marathon snack.',
+    image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&auto=format&fit=crop&q=80',
+    images: ['https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&auto=format&fit=crop&q=80'],
+    video: null,
+    category: 'snacks',
+    price: '$29.99',
+    priceNum: 29.99,
+    currency: 'USD',
+    store: 'amazon',
+    rawUrl: 'https://www.amazon.com/s?k=pocky+variety+pack',
+    animeTag: [],
+    tags: ['pocky', 'chocolate', 'japanese snack', 'candy', 'glico'],
+    badge: '🍫 FAN LOVED',
+    rating: 4.8,
+    reviews: 12543,
+    releaseDate: '2024-11-15',
+    trendScore: 91,
+    inStock: true,
+    featured: true,
+  },
+  {
+    id: 'food-kitkat-japan',
+    title: 'Japanese Kit Kat Assortment (30 Bars)',
+    subtitle: 'Matcha, Sakura, Wasabi & Exotic Flavors',
+    description: 'Try 30 different Japan-exclusive Kit Kat flavors you can\'t find in the US. Perfect gift.',
+    image: 'https://images.unsplash.com/photo-1581798459219-306e14cb1631?w=800&auto=format&fit=crop&q=80',
+    images: ['https://images.unsplash.com/photo-1581798459219-306e14cb1631?w=800&auto=format&fit=crop&q=80'],
+    video: null,
+    category: 'snacks',
+    price: '$34.99',
+    priceNum: 34.99,
+    currency: 'USD',
+    store: 'amazon',
+    rawUrl: 'https://www.amazon.com/s?k=japanese+kit+kat+assortment',
+    animeTag: [],
+    tags: ['kit kat', 'japanese chocolate', 'matcha', 'candy', 'gift'],
+    badge: '🎁 GIFT IDEA',
+    rating: 4.9,
+    reviews: 6721,
+    releaseDate: '2024-12-01',
+    trendScore: 93,
+    inStock: true,
+    featured: true,
+  },
+  {
+    id: 'food-hi-chew',
+    title: 'Hi-Chew Fruit Chews Mega Pack (Assorted)',
+    subtitle: 'Morinaga — 20 Flavors, 400+ Pieces',
+    description: 'Japan\'s legendary chewy fruit candy. Assortment of tropical, berry, and citrus flavors.',
+    image: 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=800&auto=format&fit=crop&q=80',
+    images: ['https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=800&auto=format&fit=crop&q=80'],
+    video: null,
+    category: 'snacks',
+    price: '$19.99',
+    priceNum: 19.99,
+    currency: 'USD',
+    store: 'amazon',
+    rawUrl: 'https://www.amazon.com/s?k=hi-chew+assorted',
+    animeTag: [],
+    tags: ['hi-chew', 'candy', 'japanese candy', 'morinaga', 'fruit'],
+    badge: null,
+    rating: 4.8,
+    reviews: 9876,
+    releaseDate: '2024-08-10',
+    trendScore: 82,
+    inStock: true,
+    featured: false,
+  },
+  {
+    id: 'food-onigiri-kit',
+    title: 'Japanese Onigiri Making Kit',
+    subtitle: 'Rice Balls Like in Your Favorite Anime',
+    description: 'Complete kit with rice mold, seaweed, furikake, and instructions. Make onigiri at home like Naruto!',
+    image: 'https://images.unsplash.com/photo-1583833008338-31a6c9d43b8c?w=800&auto=format&fit=crop&q=80',
+    images: ['https://images.unsplash.com/photo-1583833008338-31a6c9d43b8c?w=800&auto=format&fit=crop&q=80'],
+    video: null,
+    category: 'snacks',
+    price: '$27.99',
+    priceNum: 27.99,
+    currency: 'USD',
+    store: 'amazon',
+    rawUrl: 'https://www.amazon.com/s?k=onigiri+making+kit',
+    animeTag: ['naruto', 'spy-x-family'],
+    tags: ['onigiri', 'rice ball', 'japanese food', 'cooking', 'kit'],
+    badge: '🍙 ANIME FOOD',
+    rating: 4.6,
+    reviews: 3421,
+    releaseDate: '2024-09-20',
+    trendScore: 78,
+    inStock: true,
+    featured: false,
+  },
+  {
+    id: 'food-mochi-box',
+    title: 'Premium Japanese Mochi Assortment Box',
+    subtitle: 'Daifuku, Ice Cream Mochi Style — 24 Pieces',
+    description: 'Authentic Japanese mochi in assorted flavors: strawberry, red bean, matcha, mango, and more.',
+    image: 'https://images.unsplash.com/photo-1631206753348-db44968fd440?w=800&auto=format&fit=crop&q=80',
+    images: ['https://images.unsplash.com/photo-1631206753348-db44968fd440?w=800&auto=format&fit=crop&q=80'],
+    video: null,
+    category: 'snacks',
+    price: '$32.99',
+    priceNum: 32.99,
+    currency: 'USD',
+    store: 'amazon',
+    rawUrl: 'https://www.amazon.com/s?k=japanese+mochi+box',
+    animeTag: [],
+    tags: ['mochi', 'daifuku', 'japanese dessert', 'candy', 'sweet'],
+    badge: '🌸 PREMIUM',
+    rating: 4.7,
+    reviews: 4567,
+    releaseDate: '2024-11-01',
+    trendScore: 84,
+    inStock: true,
+    featured: true,
+  },
+  {
+    id: 'food-bento-box',
+    title: 'Traditional Japanese Bento Box Set',
+    subtitle: '2-Tier Wooden Style with Chopsticks',
+    description: 'Beautiful 2-tier bento box, perfect for lunch or dinner. Includes chopsticks and utensils.',
+    image: 'https://images.unsplash.com/photo-1569058242252-623df46b5025?w=800&auto=format&fit=crop&q=80',
+    images: ['https://images.unsplash.com/photo-1569058242252-623df46b5025?w=800&auto=format&fit=crop&q=80'],
+    video: null,
+    category: 'snacks',
+    price: '$26.99',
+    priceNum: 26.99,
+    currency: 'USD',
+    store: 'amazon',
+    rawUrl: 'https://www.amazon.com/s?k=japanese+bento+box',
+    animeTag: ['spy-x-family'],
+    tags: ['bento box', 'lunch box', 'japanese', 'wooden', 'chopsticks'],
+    badge: null,
+    rating: 4.5,
+    reviews: 2109,
+    releaseDate: '2024-07-15',
+    trendScore: 68,
+    inStock: true,
+    featured: false,
+  },
+  {
+    id: 'food-matcha-set',
+    title: 'Premium Ceremonial Matcha Tea Set',
+    subtitle: 'Chawan, Whisk, Scoop + Organic Matcha',
+    description: 'Complete traditional Japanese matcha kit. Includes ceremonial-grade matcha powder from Uji, Kyoto.',
+    image: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=800&auto=format&fit=crop&q=80',
+    images: ['https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=800&auto=format&fit=crop&q=80'],
+    video: null,
+    category: 'snacks',
+    price: '$49.99',
+    priceNum: 49.99,
+    currency: 'USD',
+    store: 'amazon',
+    rawUrl: 'https://www.amazon.com/s?k=matcha+tea+set+ceremonial',
+    animeTag: [],
+    tags: ['matcha', 'tea', 'japanese tea', 'ceremonial', 'set'],
+    badge: '🍵 AUTHENTIC',
+    rating: 4.8,
+    reviews: 3892,
+    releaseDate: '2024-10-15',
+    trendScore: 86,
+    inStock: true,
+    featured: true,
+  },
 ];
 
-// ─── Category Metadata ────────────────────────────────────────
 const CATEGORY_META: Record<string, { label: string; icon: string; description: string }> = {
   figures:      { label: 'Figures & Statues', icon: '🗿', description: 'Premium anime figures' },
   manga:        { label: 'Manga & Manhwa',    icon: '📚', description: 'Read the source material' },
@@ -717,7 +848,6 @@ const CATEGORY_META: Record<string, { label: string; icon: string; description: 
   snacks:       { label: 'Japanese Snacks',    icon: '🍜', description: 'Taste Japan at home' },
 };
 
-// ─── API Handler ─────────────────────────────────────────────
 export const GET: APIRoute = async ({ url }) => {
   try {
     const params = url.searchParams;
