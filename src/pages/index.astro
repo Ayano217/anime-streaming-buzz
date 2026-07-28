@@ -47,7 +47,6 @@ const news    = sortedPosts.slice(4, 8);
         <button class="cat-tab" data-cat="movies">Movies</button>
       </div>
 
-      <!-- feed container: mixed anime cards + product cards + horizontal strips -->
       <div id="arrivalsFeed" class="feed-wrap"></div>
 
       <div class="loading-more" id="loadingMore" style="display:none;">
@@ -107,27 +106,43 @@ const news    = sortedPosts.slice(4, 8);
   @keyframes atNaCardIn { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
   @keyframes atNaPlayRing { 0%{transform:scale(1);opacity:.9} 100%{transform:scale(1.7);opacity:0} }
   
-  /* ═══ FEED CONTAINER — grid of anime cards + full-row strips ═══ */
+  /* ═══ NEON GLOW breathing animation (like Episode 5 card) ═══ */
+  @keyframes atNeonPulse {
+    0%, 100% { 
+      box-shadow: 
+        0 0 12px rgba(232, 121, 249, 0.35),
+        0 0 20px rgba(192, 132, 252, 0.25),
+        0 0 0 1px rgba(232, 121, 249, 0.4),
+        0 6px 15px rgba(0, 0, 0, 0.4);
+    }
+    50% { 
+      box-shadow: 
+        0 0 20px rgba(232, 121, 249, 0.55),
+        0 0 35px rgba(192, 132, 252, 0.4),
+        0 0 0 1px rgba(232, 121, 249, 0.7),
+        0 6px 20px rgba(0, 0, 0, 0.5);
+    }
+  }
+  
+  /* ═══ FEED CONTAINER ═══ */
   .feed-wrap {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
+    gap: 16px;
   }
-  .feed-wrap .full-row {
-    grid-column: 1 / -1;
-  }
+  .feed-wrap .full-row { grid-column: 1 / -1; }
   
   @media (max-width: 1200px) {
     .feed-wrap { grid-template-columns: repeat(3, 1fr); }
   }
   @media (max-width: 768px) {
-    .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   }
   @media (max-width: 480px) {
-    .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   }
   
-  /* ═══ ANIME CARD (compact) ═══ */
+  /* ═══ ANIME CARD — with permanent neon glow ═══ */
   .at-na-card { 
     transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1); 
     cursor: pointer;
@@ -138,11 +153,16 @@ const news    = sortedPosts.slice(4, 8);
   }
   .at-na-card:hover { transform: translateY(-6px); }
   .at-na-card:hover .at-na-thumb {
-    border-color: rgba(232,121,249,0.9);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.55), 0 0 25px rgba(192,132,252,0.5), 0 0 0 1px rgba(232,121,249,0.7);
+    animation: none;
+    box-shadow: 
+      0 0 25px rgba(232, 121, 249, 0.75),
+      0 0 50px rgba(192, 132, 252, 0.5),
+      0 0 0 2px rgba(232, 121, 249, 0.9),
+      0 15px 35px rgba(0, 0, 0, 0.55) !important;
+    border-color: rgba(232,121,249,1) !important;
   }
   .at-na-card:hover .at-na-play { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-  .at-na-card:hover .at-na-img { transform: scale(1.08); filter: brightness(0.65); }
+  .at-na-card:hover .at-na-img { transform: scale(1.08); filter: brightness(0.6); }
   .at-na-card:hover .at-na-shine { left: 120%; }
   .at-na-card:hover .at-na-overlay { opacity: 1; }
   .at-na-card:hover .at-na-title {
@@ -152,7 +172,7 @@ const news    = sortedPosts.slice(4, 8);
     background-clip: text;
   }
   
-  /* ═══ INLINE BIG PRODUCT (same size as anime card) ═══ */
+  /* ═══ INLINE BIG PRODUCT (NO neon — just clean border) ═══ */
   .at-inline-product {
     position: relative;
     display: block;
@@ -164,8 +184,8 @@ const news    = sortedPosts.slice(4, 8);
   }
   .at-inline-product:hover { transform: translateY(-6px); }
   .at-inline-product:hover .at-ip-thumb {
-    border-color: rgba(232,121,249,0.9);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.55), 0 0 25px rgba(192,132,252,0.5), 0 0 0 1px rgba(232,121,249,0.7);
+    border-color: rgba(232,121,249,0.7);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.55), 0 0 20px rgba(192,132,252,0.35);
   }
   .at-inline-product:hover .at-ip-img { transform: scale(1.08); filter: brightness(0.65); }
   .at-inline-product:hover .at-ip-shine { left: 120%; }
@@ -184,22 +204,24 @@ const news    = sortedPosts.slice(4, 8);
   /* ═══ HORIZONTAL SMALL PRODUCT STRIP ═══ */
   .mini-strip {
     grid-column: 1 / -1;
-    padding: 8px 0;
+    padding: 10px 0;
     animation: atNaCardIn 0.5s ease backwards;
+    position: relative;
   }
   .mini-strip-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     gap: 10px;
+    flex-wrap: wrap;
   }
   .mini-strip-title {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     font-weight: 800;
     letter-spacing: 0.12em;
     color: #e879f9;
@@ -208,28 +230,53 @@ const news    = sortedPosts.slice(4, 8);
   .mini-strip-title::before {
     content: '';
     width: 4px;
-    height: 14px;
+    height: 16px;
     background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
     border-radius: 2px;
-    box-shadow: 0 0 8px rgba(232, 121, 249, 0.6);
+    box-shadow: 0 0 10px rgba(232, 121, 249, 0.7);
   }
+  
+  /* ═══ Scroll Hint — "Swipe to explore" with pulsing arrow ═══ */
+  .mini-scroll-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: rgba(192, 132, 252, 0.75);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    background: rgba(192, 132, 252, 0.08);
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    border-radius: 999px;
+  }
+  .mini-scroll-hint svg {
+    animation: hintSwipe 1.8s ease-in-out infinite;
+  }
+  @keyframes hintSwipe {
+    0%, 100% { transform: translateX(0); opacity: 0.7; }
+    50%      { transform: translateX(5px); opacity: 1; }
+  }
+  
   .mini-strip-scroll {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     overflow-x: auto;
     overflow-y: hidden;
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding: 4px 0 10px;
+    padding: 4px 0 12px;
     -webkit-overflow-scrolling: touch;
   }
   .mini-strip-scroll::-webkit-scrollbar { display: none; }
   
   .mini-card {
     flex: 0 0 auto;
-    width: 200px;
+    width: 210px;
     scroll-snap-align: start;
     text-decoration: none;
     color: inherit;
@@ -237,9 +284,9 @@ const news    = sortedPosts.slice(4, 8);
     cursor: pointer;
     transition: transform 0.3s ease;
   }
-  .mini-card:hover { transform: translateY(-4px); }
+  .mini-card:hover { transform: translateY(-5px); }
   .mini-card:hover .mini-thumb {
-    border-color: rgba(232,121,249,0.9);
+    border-color: rgba(232,121,249,0.85);
     box-shadow: 0 12px 25px rgba(0,0,0,0.5), 0 0 20px rgba(192,132,252,0.45);
   }
   .mini-card:hover .mini-img { transform: scale(1.08); filter: brightness(0.7); }
@@ -251,20 +298,37 @@ const news    = sortedPosts.slice(4, 8);
     background-clip: text;
   }
   
+  /* ═══ Fade edges (visual scroll hint) ═══ */
+  .mini-strip-scroll-wrap {
+    position: relative;
+  }
+  .mini-strip-scroll-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 12px;
+    width: 40px;
+    background: linear-gradient(-90deg, var(--bg-base, #0a0517) 20%, transparent);
+    pointer-events: none;
+    z-index: 3;
+  }
+  
   @media (max-width: 768px) {
-    .at-na-play { opacity: 1; transform: translate(-50%,-50%) scale(0.8); }
-    .at-ip-cta { opacity: 1; transform: translate(-50%,-50%) scale(0.85); }
-    .mini-card { width: 165px; }
+    /* On mobile: play icon always visible (no hover) */
+    .at-na-card .at-na-play { opacity: 0.85 !important; transform: translate(-50%,-50%) scale(0.75) !important; }
+    .at-ip-cta { opacity: 0.85 !important; transform: translate(-50%,-50%) scale(0.85) !important; }
+    .mini-card { width: 175px; }
   }
   @media (max-width: 480px) {
-    .mini-card { width: 145px; }
+    .mini-card { width: 155px; }
   }
 </style>
 
 <script is:inline>
 (function(){
   var cat='airing', pg=1, loading=false, hasMore=true, total=0, ids={};
-  var animeInBlock = 0; // count anime added since last strip
+  var animeInBlock = 0;
   var productPool = [];
   var productBigIdx = 0;
   var productMiniIdx = 0;
@@ -319,7 +383,7 @@ const news    = sortedPosts.slice(4, 8);
     return matches >= query.length * 0.7 ? 50 : 0;
   }
 
-  // ─── COMPACT anime card ───
+  // ─── Anime card with PERMANENT neon glow border ───
   function animeCard(a, i) {
     var t = a.title || 'Unknown', img = a.image || '', sl = a.slug || 'anime-' + a.id,
         sc = a.score ? Number(a.score).toFixed(1) : '',
@@ -339,35 +403,38 @@ const news    = sortedPosts.slice(4, 8);
     el.className = 'at-na-card';
     el.style.cssText = 'animation-delay:' + animDelay + ';';
     
+    // KEY CHANGE: thumb has animation:atNeonPulse (permanent breathing neon)
+    // Play icon: opacity:0 by default (hover only reveals it)
     el.innerHTML =
-      '<div class="at-na-thumb" style="position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#0a0517;border:1px solid rgba(192,132,252,0.3);box-shadow:0 6px 15px rgba(0,0,0,0.35);transition:all 0.3s ease;">' +
+      '<div class="at-na-thumb" style="position:relative;width:100%;padding-top:56.25%;border-radius:14px;overflow:hidden;background:#0a0517;border:1px solid rgba(232,121,249,0.45);animation:atNeonPulse 2.5s ease-in-out infinite;transition:all 0.35s ease;">' +
         imgHtml +
         '<div class="at-na-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.2),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
         '<div class="at-na-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,5,23,0.85) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
-        '<div class="at-na-play" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.4);width:42px;height:42px;z-index:5;opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;">' +
+        // Play icon — HIDDEN by default (opacity:0), only visible on hover
+        '<div class="at-na-play" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.4);width:48px;height:48px;z-index:5;opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;">' +
           '<div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(192,132,252,0.8);animation:atNaPlayRing 2s ease-out infinite;"></div>' +
           '<div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:2px;box-shadow:0 8px 25px rgba(192,132,252,0.7),0 0 30px rgba(232,121,249,0.5);z-index:2;">' +
-            '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
           '</div>' +
         '</div>' +
-        (nw ? '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.52rem;font-weight:800;letter-spacing:0.08em;border-radius:5px;z-index:6;box-shadow:0 2px 8px rgba(239,68,68,0.5);">NEW</div>' : '') +
-        (sc ? '<div style="position:absolute;top:6px;right:6px;display:inline-flex;align-items:center;gap:3px;padding:3px 6px;background:rgba(10,5,23,0.85);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;font-weight:800;border-radius:4px;z-index:6;backdrop-filter:blur(10px);"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + sc + '</div>' : '') +
-        '<div style="position:absolute;bottom:6px;left:6px;padding:2px 6px;background:rgba(125,211,252,0.9);color:#0a0517;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">HD</div>' +
+        (nw ? '<div style="position:absolute;top:7px;left:7px;padding:3px 8px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:800;letter-spacing:0.1em;border-radius:5px;z-index:6;box-shadow:0 2px 10px rgba(239,68,68,0.6);">NEW</div>' : '') +
+        (sc ? '<div style="position:absolute;top:7px;right:7px;display:inline-flex;align-items:center;gap:3px;padding:3px 7px;background:rgba(10,5,23,0.9);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;font-weight:800;border-radius:5px;z-index:6;backdrop-filter:blur(10px);"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + sc + '</div>' : '') +
+        '<div style="position:absolute;bottom:7px;left:7px;padding:2px 7px;background:rgba(125,211,252,0.9);color:#0a0517;font-family:\'JetBrains Mono\',monospace;font-size:0.52rem;font-weight:800;letter-spacing:0.1em;border-radius:4px;z-index:6;">HD</div>' +
       '</div>' +
-      '<div style="padding:8px 2px 4px;position:relative;z-index:1;">' +
-        '<h3 class="at-na-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.82rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(t, 55)) + '</h3>' +
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.6rem;color:var(--text-muted);opacity:0.75;">' + 
+      '<div style="padding:9px 3px 4px;position:relative;z-index:1;">' +
+        '<h3 class="at-na-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2.1em;">' + esc(trunc(t, 55)) + '</h3>' +
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;color:var(--text-muted);opacity:0.75;">' + 
           (yr ? esc(yr) : '') +
           (yr && ep ? ' · ' : '') +
           (ep ? esc(ep) + ' EP' : '') +
         '</div>' +
-        (g ? '<div style="display:inline-block;margin-top:3px;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:700;color:#c084fc;letter-spacing:0.04em;text-transform:uppercase;">' + esc(g) + '</div>' : '') +
+        (g ? '<div style="display:inline-block;margin-top:3px;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:700;color:#c084fc;letter-spacing:0.05em;text-transform:uppercase;">' + esc(g) + '</div>' : '') +
       '</div>';
     
     return el;
   }
 
-  // ─── BIG inline product card (matches anime card size) ───
+  // ─── Big product card (NO neon glow, just clean border) ───
   function bigProductCard(p, i) {
     var animDelay = ((i % 12) * 25) + 'ms';
     var badge = p.badge || 'SPONSORED';
@@ -382,30 +449,30 @@ const news    = sortedPosts.slice(4, 8);
       : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2.5rem;">🛍️</div>';
     
     el.innerHTML =
-      '<div class="at-ip-thumb" style="position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#0a0517;border:1px solid rgba(232,121,249,0.4);box-shadow:0 6px 15px rgba(0,0,0,0.35),0 0 20px rgba(232,121,249,0.15);transition:all 0.3s ease;">' +
+      '<div class="at-ip-thumb" style="position:relative;width:100%;padding-top:56.25%;border-radius:14px;overflow:hidden;background:#0a0517;border:1px solid rgba(232,121,249,0.3);box-shadow:0 6px 15px rgba(0,0,0,0.35);transition:all 0.35s ease;">' +
         imgHtml +
         '<div class="at-ip-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.22),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
         '<div class="at-ip-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(10,5,23,0.9) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
-        '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.52rem;font-weight:800;letter-spacing:0.08em;border-radius:5px;z-index:6;box-shadow:0 2px 8px rgba(192,132,252,0.5);">' + esc(badge) + '</div>' +
-        '<div style="position:absolute;top:6px;right:6px;padding:3px 7px;background:rgba(10,5,23,0.85);border:1px solid rgba(125,211,252,0.4);color:#7dd3fc;font-family:\'JetBrains Mono\',monospace;font-size:0.6rem;font-weight:800;border-radius:4px;z-index:6;backdrop-filter:blur(10px);">' + esc(p.price) + '</div>' +
+        '<div style="position:absolute;top:7px;left:7px;padding:3px 8px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:800;letter-spacing:0.08em;border-radius:5px;z-index:6;box-shadow:0 2px 10px rgba(192,132,252,0.5);">' + esc(badge) + '</div>' +
+        '<div style="position:absolute;top:7px;right:7px;padding:3px 8px;background:rgba(10,5,23,0.9);border:1px solid rgba(125,211,252,0.4);color:#7dd3fc;font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;font-weight:800;border-radius:5px;z-index:6;backdrop-filter:blur(10px);">' + esc(p.price) + '</div>' +
         '<div class="at-ip-cta" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.6);z-index:5;opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;">' +
-          '<div style="display:inline-flex;align-items:center;gap:5px;padding:7px 13px;background:linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);color:#fff;font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.7rem;font-weight:800;border-radius:999px;box-shadow:0 8px 25px rgba(192,132,252,0.6),0 0 30px rgba(232,121,249,0.4);white-space:nowrap;">' +
+          '<div style="display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);color:#fff;font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.72rem;font-weight:800;border-radius:999px;box-shadow:0 8px 25px rgba(192,132,252,0.6),0 0 30px rgba(232,121,249,0.4);white-space:nowrap;">' +
             '<span>View Details</span>' +
             '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
           '</div>' +
         '</div>' +
-        (p.rating ? '<div style="position:absolute;bottom:6px;left:6px;display:inline-flex;align-items:center;gap:3px;padding:2px 6px;background:rgba(10,5,23,0.85);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:800;border-radius:4px;z-index:6;backdrop-filter:blur(10px);"><svg width="7" height="7" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + p.rating + '</div>' : '') +
+        (p.rating ? '<div style="position:absolute;bottom:7px;left:7px;display:inline-flex;align-items:center;gap:3px;padding:2px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;font-weight:800;border-radius:4px;z-index:6;backdrop-filter:blur(10px);"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + p.rating + '</div>' : '') +
       '</div>' +
-      '<div style="padding:8px 2px 4px;position:relative;z-index:1;">' +
-        '<h3 class="at-ip-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.82rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(p.title, 55)) + '</h3>' +
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.6rem;color:var(--text-muted);opacity:0.75;">' + esc(trunc(p.subtitle || '', 45)) + '</div>' +
-        '<div style="display:inline-block;margin-top:3px;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:700;color:#e879f9;letter-spacing:0.04em;text-transform:uppercase;">FROM OUR STORE</div>' +
+      '<div style="padding:9px 3px 4px;position:relative;z-index:1;">' +
+        '<h3 class="at-ip-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2.1em;">' + esc(trunc(p.title, 55)) + '</h3>' +
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;color:var(--text-muted);opacity:0.75;">' + esc(trunc(p.subtitle || '', 45)) + '</div>' +
+        '<div style="display:inline-block;margin-top:3px;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:700;color:#e879f9;letter-spacing:0.05em;text-transform:uppercase;">FROM OUR STORE</div>' +
       '</div>';
     
     return el;
   }
 
-  // ─── Small product card (horizontal strip, 16:9) ───
+  // ─── Mini product card ───
   function miniProductHtml(p) {
     var badge = p.badge || 'HOT PICK';
     var imgHtml = p.image
@@ -413,20 +480,20 @@ const news    = sortedPosts.slice(4, 8);
       : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2rem;">🛍️</div>';
     
     return '<a href="/product/' + esc(p.id) + '" class="mini-card">' +
-      '<div class="mini-thumb" style="position:relative;width:100%;padding-top:56.25%;border-radius:10px;overflow:hidden;background:#0a0517;border:1px solid rgba(192,132,252,0.3);box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:all 0.3s ease;">' +
+      '<div class="mini-thumb" style="position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#0a0517;border:1px solid rgba(192,132,252,0.3);box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:all 0.3s ease;">' +
         imgHtml +
         '<div class="mini-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.2),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
-        '<div style="position:absolute;top:5px;left:5px;padding:2px 6px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.48rem;font-weight:800;letter-spacing:0.06em;border-radius:4px;z-index:6;">' + esc(badge) + '</div>' +
-        '<div style="position:absolute;top:5px;right:5px;padding:2px 6px;background:rgba(10,5,23,0.9);border:1px solid rgba(125,211,252,0.4);color:#7dd3fc;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:800;border-radius:4px;z-index:6;">' + esc(p.price) + '</div>' +
+        '<div style="position:absolute;top:5px;left:5px;padding:2px 7px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.06em;border-radius:4px;z-index:6;">' + esc(badge) + '</div>' +
+        '<div style="position:absolute;top:5px;right:5px;padding:2px 7px;background:rgba(10,5,23,0.9);border:1px solid rgba(125,211,252,0.4);color:#7dd3fc;font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;font-weight:800;border-radius:4px;z-index:6;">' + esc(p.price) + '</div>' +
       '</div>' +
-      '<div style="padding:6px 2px 2px;">' +
-        '<h4 class="mini-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.72rem;font-weight:700;color:var(--text-primary);margin:0 0 2px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;">' + esc(trunc(p.title, 40)) + '</h4>' +
+      '<div style="padding:6px 3px 2px;">' +
+        '<h4 class="mini-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.75rem;font-weight:700;color:var(--text-primary);margin:0 0 2px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;">' + esc(trunc(p.title, 40)) + '</h4>' +
         '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;color:#e879f9;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;opacity:0.85;">Explore</div>' +
       '</div>' +
     '</a>';
   }
 
-  // ─── Build a horizontal mini strip (grid-column: 1/-1) ───
+  // ─── Build mini strip with scroll hint ───
   function buildMiniStrip() {
     if (productPool.length < 6) return null;
     
@@ -445,8 +512,14 @@ const news    = sortedPosts.slice(4, 8);
     stripDiv.innerHTML =
       '<div class="mini-strip-header">' +
         '<div class="mini-strip-title">You Might Also Like</div>' +
+        '<div class="mini-scroll-hint">' +
+          '<span>Swipe</span>' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
+        '</div>' +
       '</div>' +
-      '<div class="mini-strip-scroll">' + itemsHtml + '</div>';
+      '<div class="mini-strip-scroll-wrap">' +
+        '<div class="mini-strip-scroll">' + itemsHtml + '</div>' +
+      '</div>';
     
     return stripDiv;
   }
@@ -463,7 +536,6 @@ const news    = sortedPosts.slice(4, 8);
   
   function getNextBigProduct() {
     if (!productPool.length) return null;
-    // Big products from START of pool, mini from END — different rotation
     var p = productPool[productBigIdx % productPool.length];
     productBigIdx++;
     return p;
@@ -497,17 +569,15 @@ const news    = sortedPosts.slice(4, 8);
         feed.appendChild(animeCard(a, total-1));
         animeInBlock++;
         
-        // After every 6 anime → insert 1 BIG product card
         if (animeInBlock === 6 && productPool.length > 0) {
           var big = getNextBigProduct();
           if (big) feed.appendChild(bigProductCard(big, total));
         }
         
-        // After 6 anime + 1 big product → insert mini strip → reset
         if (animeInBlock === 6 && productPool.length >= 6) {
           var strip = buildMiniStrip();
           if (strip) feed.appendChild(strip);
-          animeInBlock = 0; // reset the block counter
+          animeInBlock = 0;
         }
       });
       
