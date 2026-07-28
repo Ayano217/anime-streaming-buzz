@@ -1,58 +1,24 @@
 ---
 // ═══════════════════════════════════════════════════════════════
-// AniTube Buzz — Product Strip Component
+// AniTube Buzz — Product Strip Component (Self-Contained Fix)
 // Path: src/components/ProductStrip.astro
-// Commit: feat: add ProductStrip component - horizontal scrollable product strip
 // ═══════════════════════════════════════════════════════════════
-//
-// PURPOSE: Netflix-style horizontal scrolling product strip.
-//          Can be dropped into ANY page — homepage, anime detail, 
-//          category pages, everywhere. Fetches products from /api/products
-//          based on the props you pass.
-//
-// USAGE EXAMPLES:
-//   <!-- Trending products (homepage top) -->
-//   <ProductStrip 
-//     title="🔥 Trending in the Otaku Store" 
-//     subtitle="Fan favorites this week"
-//     type="trending"
-//     limit={12}
-//   />
-//   
-//   <!-- Related to specific anime (on anime detail page) -->
-//   <ProductStrip 
-//     title="Related Merch"
-//     type="anime"
-//     anime="chainsaw-man"
-//     limit={8}
-//   />
-//   
-//   <!-- Category-specific -->
-//   <ProductStrip 
-//     title="🎮 Gaming Corner" 
-//     type="category"
-//     category="games"
-//     limit={10}
-//   />
-//   
-//   <!-- Featured picks -->
-//   <ProductStrip 
-//     title="💜 Editor's Picks"
-//     type="featured"
-//     limit={10}
-//   />
+// FIX: Added all pc-card styles as :global because Astro scopes
+//      component styles — dynamically injected HTML via JS doesn't
+//      get scoped class attributes, so styles never applied.
+//      Making them global fixes this permanently.
 // ═══════════════════════════════════════════════════════════════
 
 interface Props {
-  title: string;              // Section title (required)
-  subtitle?: string;          // Small tagline above title
+  title: string;
+  subtitle?: string;
   type?: 'trending' | 'featured' | 'category' | 'anime' | 'all';
-  category?: string;          // if type='category'
-  anime?: string;             // if type='anime' (anime slug)
-  limit?: number;             // How many products to show (default 12)
-  size?: 'small' | 'medium' | 'large';  // Card size
-  showViewAll?: boolean;      // Show "See All" link at end
-  accentColor?: string;       // Bar color (defaults to gradient)
+  category?: string;
+  anime?: string;
+  limit?: number;
+  size?: 'small' | 'medium' | 'large';
+  showViewAll?: boolean;
+  accentColor?: string;
 }
 
 const {
@@ -67,21 +33,18 @@ const {
   accentColor = '',
 } = Astro.props;
 
-// Build API URL based on props
 let apiUrl = `/api/products?limit=${limit}`;
 if (type === 'trending') apiUrl += '&trending=true';
 else if (type === 'featured') apiUrl += '&featured=true';
 else if (type === 'category' && category) apiUrl += `&category=${encodeURIComponent(category)}`;
 else if (type === 'anime' && anime) apiUrl += `&anime=${encodeURIComponent(anime)}`;
 
-// Unique ID for this strip instance (multiple strips on same page)
 const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
 ---
 
 <section class="ps-section" data-strip-id={stripId} data-api-url={apiUrl}>
   <div class="container">
     
-    <!-- Strip Header -->
     <div class="ps-header">
       <div class="ps-title-wrap">
         <div 
@@ -94,7 +57,6 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
         </div>
       </div>
       
-      <!-- Navigation Arrows (desktop) -->
       <div class="ps-nav">
         <button class="ps-arrow ps-arrow-left" data-dir="left" aria-label="Scroll left">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -109,14 +71,10 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
       </div>
     </div>
     
-    <!-- Scrollable Strip Container -->
     <div class="ps-scroll-wrap">
-      <!-- Gradient fades on edges -->
       <div class="ps-fade ps-fade-left"></div>
       <div class="ps-fade ps-fade-right"></div>
-      
       <div class="ps-scroll" id={stripId + '-scroll'}>
-        <!-- Skeleton loaders (shown until API responds) -->
         <div class="ps-skeleton"></div>
         <div class="ps-skeleton"></div>
         <div class="ps-skeleton"></div>
@@ -130,29 +88,19 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
 </section>
 
 <script is:inline>
-// ═══════════════════════════════════════════════
-// Product Strip Loader & Controller
-// ═══════════════════════════════════════════════
-// Each strip fetches its own products based on API URL from data attribute.
-// Multiple strips on the same page work independently.
-// ═══════════════════════════════════════════════
 (function() {
-  
-  // ─── HTML Escape helper ───
+
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
   
-  // ─── Truncate string ───
   function trunc(s, n) {
     s = String(s || '');
     return s.length > n ? s.slice(0, n).trim() + '…' : s;
   }
   
-  // ─── Build product card HTML ───
-  // Matches ProductCard.astro design (inline for performance)
   function buildProductCard(product) {
     var categoryEmojis = {
       figures: '🗿', manga: '📚', posters: '🎨',
@@ -161,15 +109,15 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
     };
     var catIcon = categoryEmojis[product.category] || '🛍️';
     
-    // Star rating
     var fullStars = Math.floor(product.rating || 0);
     var hasHalf = (product.rating || 0) - fullStars >= 0.5;
     var starsHtml = '';
     for (var i = 0; i < 5; i++) {
-      var cls = 'empty';
-      if (i < fullStars) cls = 'full';
-      else if (i === fullStars && hasHalf) cls = 'half';
-      starsHtml += '<span class="pc-star ' + cls + '">★</span>';
+      var cls = 'pc-star';
+      if (i < fullStars) cls += ' full';
+      else if (i === fullStars && hasHalf) cls += ' half';
+      else cls += ' empty';
+      starsHtml += '<span class="' + cls + '">★</span>';
     }
     
     var badgeHtml = product.badge 
@@ -177,47 +125,59 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
       : '';
     
     var videoBadge = product.video 
-      ? '<div class="pc-video-badge" title="Video preview"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' 
+      ? '<div class="pc-video-badge"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>'
       : '';
     
     var videoWrap = product.video 
-      ? '<div class="pc-video-wrap" data-video-src="' + esc(product.video) + '"></div>' 
+      ? '<div class="pc-video-wrap" data-video-src="' + esc(product.video) + '"></div>'
       : '';
     
-    return '' +
-    '<div class="pc-card pc-medium ps-item" data-product-id="' + esc(product.id) + '">' +
-      '<div class="pc-media">' +
-        '<img src="' + esc(product.image) + '" alt="' + esc(product.title) + '" loading="lazy" class="pc-image" onerror="this.style.opacity=\'0.3\';this.src=\'/favicon.svg\';" />' +
-        videoWrap +
-        '<div class="pc-shine"></div>' +
-        '<div class="pc-overlay"></div>' +
-        badgeHtml +
-        '<div class="pc-cat-icon" title="' + esc(product.category) + '">' + catIcon + '</div>' +
-        videoBadge +
-        '<div class="pc-hover-cta">' +
-          '<div class="pc-hover-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' +
-          '<span>Preview</span>' +
+    var reviewCount = (product.reviews || 0).toLocaleString();
+    
+    return (
+      '<div class="pc-card pc-medium ps-item" data-product-id="' + esc(product.id) + '">' +
+        '<div class="pc-media">' +
+          '<img src="' + esc(product.image) + '" ' +
+               'alt="' + esc(product.title) + '" ' +
+               'loading="lazy" ' +
+               'class="pc-image" ' +
+               'onerror="this.style.opacity=\'0.3\'" />' +
+          videoWrap +
+          '<div class="pc-shine"></div>' +
+          '<div class="pc-overlay"></div>' +
+          badgeHtml +
+          '<div class="pc-cat-icon">' + catIcon + '</div>' +
+          videoBadge +
+          '<div class="pc-hover-cta">' +
+            '<div class="pc-hover-play">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+            '</div>' +
+            '<span>View Deal</span>' +
+          '</div>' +
         '</div>' +
-      '</div>' +
-      '<div class="pc-info">' +
-        '<div class="pc-subtitle">' + esc(trunc(product.subtitle || '', 40)) + '</div>' +
-        '<h3 class="pc-title">' + esc(product.title) + '</h3>' +
-        '<div class="pc-rating">' +
-          '<div class="pc-stars">' + starsHtml + '</div>' +
-          '<span class="pc-reviews">(' + (product.reviews || 0).toLocaleString() + ')</span>' +
+        '<div class="pc-info">' +
+          '<div class="pc-subtitle">' + esc(trunc(product.subtitle || '', 45)) + '</div>' +
+          '<h3 class="pc-title">' + esc(trunc(product.title, 55)) + '</h3>' +
+          '<div class="pc-rating">' +
+            '<div class="pc-stars">' + starsHtml + '</div>' +
+            '<span class="pc-reviews">(' + reviewCount + ')</span>' +
+          '</div>' +
+          '<div class="pc-footer">' +
+            '<div class="pc-price">' + esc(product.price) + '</div>' +
+            '<a href="' + esc(product.affiliateUrl) + '" ' +
+               'target="_blank" ' +
+               'rel="noopener sponsored" ' +
+               'class="pc-cta" ' +
+               'data-product-id="' + esc(product.id) + '">' +
+              '<span>Get It</span>' +
+              '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
+            '</a>' +
+          '</div>' +
         '</div>' +
-        '<div class="pc-footer">' +
-          '<div class="pc-price">' + esc(product.price) + '</div>' +
-          '<a href="' + esc(product.affiliateUrl) + '" target="_blank" rel="noopener sponsored" class="pc-cta" data-product-id="' + esc(product.id) + '">' +
-            '<span>Get It</span>' +
-            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
-          '</a>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
+      '</div>'
+    );
   }
   
-  // ─── Setup video hover for a card ───
   function setupVideoHover(card) {
     var videoWrap = card.querySelector('.pc-video-wrap');
     if (!videoWrap) return;
@@ -230,11 +190,10 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
     card.addEventListener('mouseenter', function() {
       hoverTimeout = setTimeout(function() {
         if (iframeInjected) return;
-        var autoplayUrl = videoSrc;
         var sep = videoSrc.includes('?') ? '&' : '?';
-        autoplayUrl += sep + 'autoplay=1&mute=1&controls=0&loop=1&modestbranding=1&showinfo=0';
+        var autoUrl = videoSrc + sep + 'autoplay=1&mute=1&controls=0&loop=1&modestbranding=1';
         var iframe = document.createElement('iframe');
-        iframe.src = autoplayUrl;
+        iframe.src = autoUrl;
         iframe.setAttribute('frameborder', '0');
         iframe.setAttribute('allow', 'autoplay; encrypted-media');
         iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;pointer-events:none;';
@@ -258,10 +217,7 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
     });
   }
   
-  // ─── Setup click tracking (for Safiya future learning) ───
-  function setupClickTracking(card) {
-    var cta = card.querySelector('.pc-cta');
-    if (!cta) return;
+  function setupClickTracking(cta) {
     cta.addEventListener('click', function() {
       var productId = cta.dataset.productId;
       try {
@@ -273,22 +229,19 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
     });
   }
   
-  // ─── Setup scroll arrow controls ───
   function setupArrows(section) {
     var scrollEl = section.querySelector('.ps-scroll');
     var leftArrow = section.querySelector('.ps-arrow-left');
     var rightArrow = section.querySelector('.ps-arrow-right');
     if (!scrollEl || !leftArrow || !rightArrow) return;
     
-    // Update arrow states based on scroll position
     function updateArrows() {
-      var atStart = scrollEl.scrollLeft <= 5;
-      var atEnd = scrollEl.scrollLeft >= scrollEl.scrollWidth - scrollEl.clientWidth - 5;
-      leftArrow.classList.toggle('disabled', atStart);
-      rightArrow.classList.toggle('disabled', atEnd);
+      leftArrow.classList.toggle('disabled', scrollEl.scrollLeft <= 5);
+      rightArrow.classList.toggle('disabled', 
+        scrollEl.scrollLeft >= scrollEl.scrollWidth - scrollEl.clientWidth - 5
+      );
     }
     
-    // Scroll by 1 card width + gap (~280px)
     leftArrow.addEventListener('click', function() {
       scrollEl.scrollBy({ left: -600, behavior: 'smooth' });
     });
@@ -298,73 +251,61 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
     
     scrollEl.addEventListener('scroll', updateArrows, { passive: true });
     updateArrows();
-    
-    // Also update after content loads
-    setTimeout(updateArrows, 500);
+    setTimeout(updateArrows, 600);
   }
   
-  // ─── Load products for a strip ───
   async function loadStrip(section) {
     var apiUrl = section.dataset.apiUrl;
     var stripId = section.dataset.stripId;
     var scrollEl = document.getElementById(stripId + '-scroll');
-    
     if (!apiUrl || !scrollEl) return;
     
     try {
       var res = await fetch(apiUrl);
-      if (!res.ok) throw new Error('API ' + res.status);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       var data = await res.json();
       
       if (!data.success || !data.products || data.products.length === 0) {
-        // Empty state — hide the whole strip cleanly
         section.style.display = 'none';
         return;
       }
       
-      // Build all cards
-      var html = data.products.map(buildProductCard).join('');
-      scrollEl.innerHTML = html;
+      scrollEl.innerHTML = data.products.map(buildProductCard).join('');
       
-      // Setup interactions for each card
       scrollEl.querySelectorAll('.pc-card').forEach(function(card) {
         setupVideoHover(card);
-        setupClickTracking(card);
+        var cta = card.querySelector('.pc-cta');
+        if (cta) setupClickTracking(cta);
       });
       
-      // Setup arrows
       setupArrows(section);
       
-    } catch (e) {
-      console.warn('[ProductStrip] Load failed:', e.message);
-      // Hide strip on error — better UX than showing broken state
+    } catch(e) {
+      console.warn('[ProductStrip] Failed:', e.message);
       section.style.display = 'none';
     }
   }
   
-  // ─── Init all strips on the page ───
-  function initAllStrips() {
+  function initStrips() {
     document.querySelectorAll('.ps-section').forEach(function(section) {
-      // Only init strips that haven't been loaded
       if (section.dataset.loaded === 'true') return;
       section.dataset.loaded = 'true';
       loadStrip(section);
     });
   }
   
-  // Init on DOM ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initAllStrips);
+    document.addEventListener('DOMContentLoaded', initStrips);
   } else {
-    initAllStrips();
+    initStrips();
   }
+
 })();
 </script>
 
-<style>
+<style is:global>
   /* ═══════════════════════════════════════════════
-     PRODUCT STRIP STYLES
-     Netflix-style horizontal scroll with premium design
+     PRODUCT STRIP — Strip Layout Styles
      ═══════════════════════════════════════════════ */
   
   .ps-section {
@@ -372,7 +313,6 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
     position: relative;
   }
   
-  /* Header */
   .ps-header {
     display: flex;
     align-items: center;
@@ -400,7 +340,7 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
   
   @keyframes psBarPulse {
     0%, 100% { box-shadow: 0 0 15px rgba(192, 132, 252, 0.6); }
-    50% { box-shadow: 0 0 25px rgba(232, 121, 249, 0.8); }
+    50%       { box-shadow: 0 0 25px rgba(232, 121, 249, 0.8); }
   }
   
   .ps-subtitle {
@@ -417,13 +357,12 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
     font-family: 'Bricolage Grotesque', sans-serif;
     font-size: clamp(1.25rem, 2.5vw, 1.8rem);
     font-weight: 800;
-    color: var(--text-primary);
+    color: var(--text-primary, #f3e8ff);
     margin: 0;
     letter-spacing: -0.025em;
     line-height: 1;
   }
   
-  /* Navigation arrows */
   .ps-nav {
     display: flex;
     gap: 6px;
@@ -436,7 +375,7 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
     border-radius: 50%;
     background: rgba(192, 132, 252, 0.15);
     border: 1px solid rgba(192, 132, 252, 0.3);
-    color: var(--text-primary);
+    color: var(--text-primary, #f3e8ff);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -458,13 +397,11 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
     cursor: not-allowed;
   }
   
-  /* Scroll container */
   .ps-scroll-wrap {
     position: relative;
     margin: 0 -0.5rem;
   }
   
-  /* Gradient fades on edges */
   .ps-fade {
     position: absolute;
     top: 0;
@@ -472,15 +409,14 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
     width: 60px;
     z-index: 5;
     pointer-events: none;
-    transition: opacity 0.3s ease;
   }
   .ps-fade-left {
     left: 0;
-    background: linear-gradient(90deg, var(--bg-base, #0a0517), transparent);
+    background: linear-gradient(90deg, #0a0517, transparent);
   }
   .ps-fade-right {
     right: 0;
-    background: linear-gradient(-90deg, var(--bg-base, #0a0517), transparent);
+    background: linear-gradient(-90deg, #0a0517, transparent);
   }
   
   [data-theme="light"] .ps-fade-left {
@@ -490,36 +426,32 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
     background: linear-gradient(-90deg, #faf5ff, transparent);
   }
   
-  /* Horizontal scroll strip */
   .ps-scroll {
     display: flex;
     gap: 14px;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 4px 0.5rem 12px;
+    padding: 4px 0.5rem 16px;
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
+  .ps-scroll::-webkit-scrollbar { display: none; }
   
-  .ps-scroll::-webkit-scrollbar {
-    display: none;
-  }
-  
-  /* Each product card inside strip */
+  /* Each product card inside the strip */
   .ps-scroll .ps-item {
     flex: 0 0 auto;
     width: 220px;
     scroll-snap-align: start;
   }
   
-  /* Skeleton loading state */
+  /* Skeleton loaders */
   .ps-skeleton {
     flex: 0 0 auto;
     width: 220px;
-    aspect-ratio: 1/1.55;
+    height: 340px;
     border-radius: 16px;
     background: linear-gradient(
       90deg,
@@ -534,35 +466,373 @@ const stripId = 'ps-' + Math.random().toString(36).substring(2, 10);
   
   @keyframes psShimmer {
     from { background-position: -200% 0; }
-    to { background-position: 200% 0; }
+    to   { background-position:  200% 0; }
+  }
+
+  /* ═══════════════════════════════════════════════
+     PRODUCT CARD STYLES — Global (needed because
+     cards are injected via JS innerHTML, not Astro)
+     ═══════════════════════════════════════════════ */
+  
+  .pc-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: rgba(28, 15, 61, 0.55);
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    color: inherit;
+    height: 100%;
+    backdrop-filter: blur(10px);
+    cursor: pointer;
   }
   
-  /* ═══ RESPONSIVE ═══ */
+  [data-theme="light"] .pc-card {
+    background: rgba(255, 255, 255, 0.75);
+    border-color: rgba(192, 132, 252, 0.25);
+  }
+  
+  .pc-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(232, 121, 249, 0.6);
+    box-shadow:
+      0 20px 45px rgba(0, 0, 0, 0.5),
+      0 0 30px rgba(192, 132, 252, 0.3),
+      0 0 0 1px rgba(232, 121, 249, 0.35);
+  }
+  
+  [data-theme="light"] .pc-card:hover {
+    box-shadow:
+      0 20px 45px rgba(192, 132, 252, 0.2),
+      0 0 30px rgba(232, 121, 249, 0.15);
+  }
+  
+  /* ─── Media (image area) ─── */
+  .pc-media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #0a0517;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  
+  [data-theme="light"] .pc-media {
+    background: #f3e8ff;
+  }
+  
+  .pc-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease, filter 0.35s ease;
+    z-index: 1;
+    display: block;
+  }
+  
+  .pc-card:hover .pc-image {
+    transform: scale(1.08);
+    filter: brightness(0.72);
+  }
+  
+  /* Video overlay */
+  .pc-video-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+    background: #000;
+  }
+  .pc-video-wrap.active { opacity: 1; }
+  
+  /* Shine sweep */
+  .pc-shine {
+    position: absolute;
+    top: 0;
+    left: -80%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    z-index: 4;
+    transition: left 0.8s ease;
+    pointer-events: none;
+  }
+  .pc-card:hover .pc-shine { left: 120%; }
+  
+  /* Dark gradient overlay on hover */
+  .pc-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(10, 5, 23, 0.7) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .pc-card:hover .pc-overlay { opacity: 1; }
+  
+  /* Badge (top-left) */
+  .pc-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    border-radius: 6px;
+    z-index: 6;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+    text-transform: uppercase;
+    white-space: nowrap;
+    max-width: calc(100% - 50px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Category icon (top-right) */
+  .pc-cat-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    background: rgba(10, 5, 23, 0.85);
+    border: 1px solid rgba(192, 132, 252, 0.3);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    z-index: 6;
+    backdrop-filter: blur(10px);
+    line-height: 1;
+  }
+  
+  /* Video indicator dot (bottom-right) */
+  .pc-video-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    z-index: 6;
+    box-shadow: 0 3px 10px rgba(192, 132, 252, 0.5);
+    animation: pcVideoPulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes pcVideoPulse {
+    0%, 100% { transform: scale(1);    box-shadow: 0 3px 10px rgba(192, 132, 252, 0.5); }
+    50%       { transform: scale(1.1); box-shadow: 0 3px 15px rgba(232, 121, 249, 0.7); }
+  }
+  
+  /* Hover CTA pill (bottom-left) */
+  .pc-hover-cta {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 5px 5px;
+    background: rgba(10, 5, 23, 0.92);
+    border: 1px solid rgba(192, 132, 252, 0.4);
+    border-radius: 999px;
+    color: #fff;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    z-index: 6;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    pointer-events: none;
+  }
+  .pc-card:hover .pc-hover-cta {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .pc-hover-play {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    flex-shrink: 0;
+    padding-left: 2px;
+  }
+  
+  /* ─── Info section ─── */
+  .pc-info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .pc-subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    color: #c084fc;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.9;
+  }
+  
+  .pc-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.87rem;
+    font-weight: 700;
+    color: var(--text-primary, #f3e8ff);
+    margin: 0;
+    line-height: 1.28;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.2em;
+    transition: color 0.25s ease;
+  }
+  
+  .pc-card:hover .pc-title {
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Stars */
+  .pc-rating {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .pc-stars {
+    display: inline-flex;
+    gap: 1px;
+    font-size: 0.75rem;
+    line-height: 1;
+  }
+  
+  .pc-star        { color: rgba(255, 255, 255, 0.15); }
+  .pc-star.full   { color: #fbbf24; text-shadow: 0 0 6px rgba(251, 191, 36, 0.4); }
+  .pc-star.half   {
+    background: linear-gradient(90deg, #fbbf24 50%, rgba(255, 255, 255, 0.15) 50%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .pc-star.empty  { color: rgba(255, 255, 255, 0.15); }
+  
+  [data-theme="light"] .pc-star        { color: rgba(30, 15, 54, 0.15); }
+  [data-theme="light"] .pc-star.empty  { color: rgba(30, 15, 54, 0.15); }
+  
+  .pc-reviews {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--text-muted, #94a3b8);
+    opacity: 0.8;
+  }
+  
+  /* Footer: price + CTA */
+  .pc-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid rgba(192, 132, 252, 0.15);
+  }
+  
+  .pc-price {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  
+  .pc-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 7px 12px;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    color: #fff !important;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  
+  .pc-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(192, 132, 252, 0.6);
+    color: #fff !important;
+  }
+  
+  /* ─── Responsive ─── */
   @media (max-width: 1024px) {
     .ps-scroll .ps-item,
-    .ps-skeleton {
-      width: 200px;
-    }
+    .ps-skeleton { width: 200px; }
   }
   
   @media (max-width: 768px) {
     .ps-section { padding: 2rem 0 1rem; }
-    .ps-nav { display: none; } /* Hide arrows on mobile — touch swipe works */
+    .ps-nav { display: none; }
     .ps-scroll .ps-item,
-    .ps-skeleton {
-      width: 180px;
-    }
+    .ps-skeleton { width: 175px; }
+    .ps-skeleton { height: 300px; }
     .ps-bar { height: 32px; }
     .ps-title { font-size: 1.2rem; }
     .ps-fade { width: 30px; }
+    .pc-hover-cta { display: none; }
+    .pc-info { padding: 10px; gap: 5px; }
+    .pc-title { font-size: 0.82rem; }
   }
   
   @media (max-width: 480px) {
     .ps-scroll .ps-item,
-    .ps-skeleton {
-      width: 160px;
-    }
-    .ps-header { margin-bottom: 1rem; }
+    .ps-skeleton { width: 155px; }
+    .ps-skeleton { height: 280px; }
     .ps-scroll { gap: 10px; }
+    .pc-cta { padding: 6px 10px; font-size: 0.65rem; }
+    .pc-price { font-size: 0.9rem; }
   }
 </style>
