@@ -19,6 +19,12 @@
 
 import type { APIRoute } from 'astro';
 
+
+// Site runs in `output: 'hybrid'` mode — API routes must opt out of 
+// prerendering to read query params at runtime. Without this, the route
+// gets baked as static at build time and ignores ?trending=true etc.
+export const prerender = false;
+
 // ─── Types ───────────────────────────────────────────────────
 interface Product {
   id: string;
