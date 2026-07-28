@@ -1,0 +1,605 @@
+---
+// ═══════════════════════════════════════════════════════════════
+// AniTube Buzz — Premium Product Card Component
+// Path: src/components/ProductCard.astro
+// Commit: feat: add premium ProductCard component with video hover preview
+// ═══════════════════════════════════════════════════════════════
+// 
+// PURPOSE: Reusable product card that looks like native site content.
+//          Used across homepage, anime pages, everywhere.
+//          Hover reveals video preview (attention grabber).
+//          Click "Get It Now" → affiliate link (invisible tracking).
+// 
+// USAGE:
+//   <ProductCard product={productObject} size="medium" />
+//   <ProductCard product={productObject} size="small" showVideo={false} />
+// ═══════════════════════════════════════════════════════════════
+
+interface Product {
+  id: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  video?: string | null;
+  category: string;
+  price: string;
+  store: string;
+  affiliateUrl: string;
+  badge?: string | null;
+  rating: number;
+  reviews: number;
+  animeTag?: string[];
+}
+
+interface Props {
+  product: Product;
+  size?: 'small' | 'medium' | 'large';
+  showVideo?: boolean;
+}
+
+const { product, size = 'medium', showVideo = true } = Astro.props;
+
+// Star rating display (visual only, out of 5)
+const fullStars = Math.floor(product.rating);
+const hasHalfStar = product.rating - fullStars >= 0.5;
+
+// Store display name (used in tiny label)
+const storeLabels: Record<string, string> = {
+  amazon: 'Amazon',
+  playasia: 'Play-Asia',
+  cdjapan: 'CDJapan',
+};
+const storeName = storeLabels[product.store] || 'Store';
+
+// Category emoji lookup
+const categoryEmojis: Record<string, string> = {
+  figures: '🗿',
+  manga: '📚',
+  posters: '🎨',
+  apparel: '👕',
+  accessories: '🔑',
+  games: '🎮',
+  bluray: '💿',
+  cosplay: '🎭',
+  collectibles: '⭐',
+  snacks: '🍜',
+};
+const categoryIcon = categoryEmojis[product.category] || '🛍️';
+---
+
+<div class={`pc-card pc-${size}`} data-product-id={product.id}>
+  
+  <!-- Image / Video Container -->
+  <div class="pc-media">
+    
+    <!-- Product Image (default view) -->
+    <img 
+      src={product.image} 
+      alt={product.title}
+      loading="lazy"
+      class="pc-image"
+      onerror="this.style.opacity='0.3';this.src='/favicon.svg';"
+    />
+    
+    <!-- Video Preview (auto-plays on hover if available) -->
+    {showVideo && product.video && (
+      <div class="pc-video-wrap" data-video-src={product.video}>
+        <!-- iframe injected on hover by JS to save bandwidth -->
+      </div>
+    )}
+    
+    <!-- Shine sweep effect on hover -->
+    <div class="pc-shine"></div>
+    
+    <!-- Dark overlay on hover -->
+    <div class="pc-overlay"></div>
+    
+    <!-- Badge (top-left) -->
+    {product.badge && (
+      <div class="pc-badge">{product.badge}</div>
+    )}
+    
+    <!-- Category Icon (top-right) -->
+    <div class="pc-cat-icon" title={product.category}>
+      {categoryIcon}
+    </div>
+    
+    <!-- Video indicator (bottom-right, only if has video) -->
+    {product.video && (
+      <div class="pc-video-badge" title="Video preview available">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </div>
+    )}
+    
+    <!-- Hover CTA - Quick view button -->
+    <div class="pc-hover-cta">
+      <div class="pc-hover-play">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M8 5v14l11-7z"/>
+        </svg>
+      </div>
+      <span>Preview</span>
+    </div>
+  </div>
+  
+  <!-- Product Info -->
+  <div class="pc-info">
+    
+    <!-- Subtitle (small text above title) -->
+    <div class="pc-subtitle">{product.subtitle}</div>
+    
+    <!-- Title -->
+    <h3 class="pc-title">{product.title}</h3>
+    
+    <!-- Rating + Reviews -->
+    <div class="pc-rating">
+      <div class="pc-stars">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <span class={`pc-star ${i < fullStars ? 'full' : (i === fullStars && hasHalfStar ? 'half' : 'empty')}`}>★</span>
+        ))}
+      </div>
+      <span class="pc-reviews">({product.reviews.toLocaleString()})</span>
+    </div>
+    
+    <!-- Price + CTA Button -->
+    <div class="pc-footer">
+      <div class="pc-price">{product.price}</div>
+      <a 
+        href={product.affiliateUrl} 
+        target="_blank" 
+        rel="noopener sponsored"
+        class="pc-cta"
+        data-product-id={product.id}
+      >
+        <span>Get It</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+// ═══════════════════════════════════════════════
+// Video Hover Auto-Play (bandwidth-friendly)
+// ═══════════════════════════════════════════════
+// WHY: Loading all videos upfront kills page speed.
+// STRATEGY: Only inject iframe on hover, remove on leave.
+//           This gives that "attention-grabbing" feel without
+//           destroying performance.
+// ═══════════════════════════════════════════════
+(function() {
+  var cards = document.querySelectorAll('.pc-card');
+  
+  cards.forEach(function(card) {
+    var videoWrap = card.querySelector('.pc-video-wrap');
+    if (!videoWrap) return;
+    
+    var videoSrc = videoWrap.dataset.videoSrc;
+    if (!videoSrc) return;
+    
+    var hoverTimeout;
+    var iframeInjected = false;
+    
+    card.addEventListener('mouseenter', function() {
+      // Delay 400ms — prevents accidental triggers on quick mouse movements
+      hoverTimeout = setTimeout(function() {
+        if (iframeInjected) return;
+        
+        // Build autoplay URL (mute is required for autoplay in modern browsers)
+        var autoplayUrl = videoSrc;
+        var separator = videoSrc.includes('?') ? '&' : '?';
+        autoplayUrl += separator + 'autoplay=1&mute=1&controls=0&loop=1&modestbranding=1&showinfo=0';
+        
+        // Inject iframe
+        var iframe = document.createElement('iframe');
+        iframe.src = autoplayUrl;
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allow', 'autoplay; encrypted-media');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;pointer-events:none;';
+        
+        videoWrap.appendChild(iframe);
+        videoWrap.classList.add('active');
+        iframeInjected = true;
+      }, 400);
+    });
+    
+    card.addEventListener('mouseleave', function() {
+      clearTimeout(hoverTimeout);
+      if (iframeInjected) {
+        videoWrap.classList.remove('active');
+        // Wait for CSS transition, then remove iframe to stop playback
+        setTimeout(function() {
+          if (!card.matches(':hover')) {
+            videoWrap.innerHTML = '';
+            iframeInjected = false;
+          }
+        }, 300);
+      }
+    });
+  });
+  
+  // ═══════════════════════════════════════════════
+  // Click Tracking (analytics-ready, future use)
+  // ═══════════════════════════════════════════════
+  // Log when users click "Get It" — helps identify best products.
+  // For future: send to analytics, feed to Safiya's memory
+  document.querySelectorAll('.pc-cta').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var productId = btn.dataset.productId;
+      // Store click in localStorage for Safiya to learn from later
+      try {
+        var clicks = JSON.parse(localStorage.getItem('anitube_product_clicks') || '{}');
+        clicks[productId] = (clicks[productId] || 0) + 1;
+        clicks._lastClick = { id: productId, time: Date.now() };
+        localStorage.setItem('anitube_product_clicks', JSON.stringify(clicks));
+      } catch(e) {}
+    });
+  });
+})();
+</script>
+
+<style>
+  /* ═══════════════════════════════════════════════
+     PREMIUM PRODUCT CARD STYLES
+     Matches site design system:
+     - Purple/Pink/Cyan gradient
+     - Glass morphism
+     - Smooth animations
+     ═══════════════════════════════════════════════ */
+  
+  .pc-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: rgba(28, 15, 61, 0.5);
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-decoration: none;
+    color: inherit;
+    height: 100%;
+    backdrop-filter: blur(10px);
+  }
+  
+  [data-theme="light"] .pc-card {
+    background: rgba(255, 255, 255, 0.7);
+    border-color: rgba(192, 132, 252, 0.25);
+  }
+  
+  .pc-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(232, 121, 249, 0.6);
+    box-shadow: 
+      0 20px 45px rgba(0, 0, 0, 0.5),
+      0 0 30px rgba(192, 132, 252, 0.35),
+      0 0 0 1px rgba(232, 121, 249, 0.4);
+  }
+  
+  [data-theme="light"] .pc-card:hover {
+    box-shadow: 
+      0 20px 45px rgba(192, 132, 252, 0.25),
+      0 0 30px rgba(232, 121, 249, 0.2);
+  }
+  
+  /* ═══ MEDIA CONTAINER ═══ */
+  .pc-media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1; /* Square for product photos */
+    background: #0a0517;
+    overflow: hidden;
+  }
+  
+  .pc-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease, filter 0.35s ease;
+    z-index: 1;
+  }
+  
+  .pc-card:hover .pc-image {
+    transform: scale(1.08);
+    filter: brightness(0.75);
+  }
+  
+  /* Video wrapper — only visible when active (hover) */
+  .pc-video-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    background: #000;
+  }
+  
+  .pc-video-wrap.active {
+    opacity: 1;
+  }
+  
+  /* Shine sweep on hover */
+  .pc-shine {
+    position: absolute;
+    top: 0;
+    left: -80%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    z-index: 4;
+    transition: left 0.8s ease;
+    pointer-events: none;
+  }
+  .pc-card:hover .pc-shine { left: 120%; }
+  
+  /* Dark overlay */
+  .pc-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(10, 5, 23, 0.7) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .pc-card:hover .pc-overlay { opacity: 1; }
+  
+  /* ═══ BADGES & INDICATORS ═══ */
+  .pc-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    border-radius: 6px;
+    z-index: 5;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  
+  .pc-cat-icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    background: rgba(10, 5, 23, 0.85);
+    border: 1px solid rgba(192, 132, 252, 0.3);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    z-index: 5;
+    backdrop-filter: blur(10px);
+  }
+  
+  .pc-video-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    z-index: 5;
+    box-shadow: 0 3px 10px rgba(192, 132, 252, 0.5);
+    animation: pcVideoPulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes pcVideoPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 3px 10px rgba(192, 132, 252, 0.5); }
+    50% { transform: scale(1.08); box-shadow: 0 3px 15px rgba(232, 121, 249, 0.7); }
+  }
+  
+  /* Hover CTA overlay */
+  .pc-hover-cta {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px 6px 6px;
+    background: rgba(10, 5, 23, 0.9);
+    border: 1px solid rgba(192, 132, 252, 0.4);
+    border-radius: 999px;
+    color: #fff;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    z-index: 5;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+  .pc-card:hover .pc-hover-cta {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .pc-hover-play {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding-left: 2px;
+  }
+  
+  /* ═══ INFO SECTION ═══ */
+  .pc-info {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    background: linear-gradient(180deg, transparent, rgba(28, 15, 61, 0.3));
+  }
+  
+  [data-theme="light"] .pc-info {
+    background: linear-gradient(180deg, transparent, rgba(243, 232, 255, 0.5));
+  }
+  
+  .pc-subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: #c084fc;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.9;
+  }
+  
+  .pc-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.25s ease;
+    min-height: 2.2em;
+  }
+  
+  .pc-card:hover .pc-title {
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Rating */
+  .pc-rating {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .pc-stars {
+    display: inline-flex;
+    gap: 1px;
+    font-size: 0.75rem;
+    line-height: 1;
+  }
+  .pc-star { color: rgba(255, 255, 255, 0.15); }
+  .pc-star.full { color: #fbbf24; text-shadow: 0 0 6px rgba(251, 191, 36, 0.4); }
+  .pc-star.half {
+    background: linear-gradient(90deg, #fbbf24 50%, rgba(255, 255, 255, 0.15) 50%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  [data-theme="light"] .pc-star { color: rgba(30, 15, 54, 0.15); }
+  
+  .pc-reviews {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    opacity: 0.8;
+  }
+  
+  /* Footer with price + CTA */
+  .pc-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(192, 132, 252, 0.15);
+  }
+  
+  .pc-price {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  
+  .pc-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 7px 12px;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    color: #fff;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 999px;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
+    white-space: nowrap;
+  }
+  
+  .pc-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(192, 132, 252, 0.6);
+  }
+  
+  .pc-cta:active {
+    transform: translateY(0);
+  }
+  
+  /* ═══ SIZE VARIANTS ═══ */
+  
+  /* Small — for tight sidebars */
+  .pc-small .pc-media { aspect-ratio: 1/1; }
+  .pc-small .pc-title { font-size: 0.78rem; min-height: 2em; }
+  .pc-small .pc-price { font-size: 0.9rem; }
+  .pc-small .pc-cta { padding: 5px 10px; font-size: 0.65rem; }
+  .pc-small .pc-badge { font-size: 0.55rem; padding: 3px 8px; }
+  
+  /* Large — for featured spots */
+  .pc-large .pc-media { aspect-ratio: 4/5; }
+  .pc-large .pc-title { font-size: 1rem; min-height: 2.4em; }
+  .pc-large .pc-price { font-size: 1.2rem; }
+  .pc-large .pc-cta { padding: 9px 16px; font-size: 0.82rem; }
+  .pc-large .pc-info { padding: 16px; gap: 8px; }
+  
+  /* ═══ RESPONSIVE ═══ */
+  @media (max-width: 640px) {
+    .pc-info { padding: 10px; gap: 5px; }
+    .pc-title { font-size: 0.82rem; }
+    .pc-price { font-size: 0.95rem; }
+    .pc-cta { padding: 6px 10px; font-size: 0.68rem; }
+    .pc-badge { font-size: 0.55rem; padding: 3px 7px; }
+    /* Hide hover CTA on mobile — no hover anyway */
+    .pc-hover-cta { display: none; }
+  }
+</style>
