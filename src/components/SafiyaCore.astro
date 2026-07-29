@@ -1,16 +1,16 @@
 ---
 // ═══════════════════════════════════════════════════════════════
-// SAFIYA CORE v9.0 — INSTAGRAM DM STYLE (Premium Modal)
+// SAFIYA CORE v9.1 — INSTAGRAM DM CORNER STYLE (FINAL)
 // Path: src/components/SafiyaCore.astro
 // ═══════════════════════════════════════════════════════════════
-// ✅ Instagram-style modal (2/3 screen, floating, dark backdrop)
-// ✅ SOLID color bubbles (no more transparent invisible mess)
-// ✅ Purple bubble for Safiya, Blue-purple for user
-// ✅ Avatar next to EVERY Safiya message (like IG)
-// ✅ Live2D on LEFT side, centered vertically
-// ✅ Mobile: Compact modal (not full-screen), input always visible
-// ✅ Avatar hovers over side, centered on chat
-// ✅ Backdrop click to close
+// ✅ NO BLUR — site visible in background
+// ✅ NO BACKDROP — chat sits in bottom-right corner
+// ✅ Avatar on LEFT side of chat (like companion)
+// ✅ Instagram-style bubbles: transparent + BORDER only
+// ✅ Avatar INLINE with each message (same row)
+// ✅ NO "S" letter prefix — pure bubbles
+// ✅ Premium fonts, rounded 22px bubbles
+// ✅ User = cyan border | Safiya = purple border
 // ═══════════════════════════════════════════════════════════════
 ---
 
@@ -28,7 +28,7 @@
     <span class="s-head-notify" id="safiya-notify">1</span>
   </button>
 
-  <!-- IDLE SPEECH BUBBLE -->
+  <!-- IDLE BUBBLE -->
   <div id="safiya-bubble" class="s-bubble">
     <div class="s-bubble-avatar"><span>S</span></div>
     <div class="s-bubble-body">
@@ -42,92 +42,84 @@
     </button>
   </div>
 
-  <!-- BACKDROP (click to close) -->
-  <div id="safiya-backdrop" class="s-backdrop" aria-hidden="true"></div>
-
-  <!-- CHAT MODAL (contains avatar + chat panel side by side) -->
-  <div id="safiya-modal" class="s-modal" aria-hidden="true">
-
-    <!-- LIVE2D AVATAR SIDE -->
-    <div id="safiya-avatar" class="s-avatar">
-      <div class="s-avatar-glow"></div>
-      <div class="s-avatar-inner">
-        <canvas id="s-avatar-canvas"></canvas>
-        <div id="s-avatar-fallback" class="s-avatar-fallback">
-          <div class="s-avatar-fb-orb">
-            <div class="s-avatar-fb-face">
-              <div class="s-avatar-fb-eye s-avatar-fb-eye-l"></div>
-              <div class="s-avatar-fb-eye s-avatar-fb-eye-r"></div>
-              <div class="s-avatar-fb-mouth"></div>
-            </div>
+  <!-- SIDE AVATAR (Live2D) -->
+  <div id="safiya-avatar" class="s-avatar" aria-hidden="true">
+    <div class="s-avatar-glow"></div>
+    <div class="s-avatar-inner">
+      <canvas id="s-avatar-canvas"></canvas>
+      <div id="s-avatar-fallback" class="s-avatar-fallback">
+        <div class="s-avatar-fb-orb">
+          <div class="s-avatar-fb-face">
+            <div class="s-avatar-fb-eye s-avatar-fb-eye-l"></div>
+            <div class="s-avatar-fb-eye s-avatar-fb-eye-r"></div>
+            <div class="s-avatar-fb-mouth"></div>
           </div>
-          <div class="s-avatar-fb-name">Safiya</div>
         </div>
-        <div id="s-avatar-loader" class="s-avatar-loader">
-          <div class="s-avatar-spinner"></div>
+        <div class="s-avatar-fb-name">Safiya</div>
+      </div>
+      <div id="s-avatar-loader" class="s-avatar-loader">
+        <div class="s-avatar-spinner"></div>
+      </div>
+    </div>
+    <div class="s-avatar-hint">💜 Touch me~</div>
+  </div>
+
+  <!-- CHAT PANEL -->
+  <div id="safiya-chat" class="s-chat" aria-hidden="true">
+    <header class="s-chat-head">
+      <button class="s-chat-btn" id="s-back" aria-label="Back">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+
+      <div class="s-chat-head-info">
+        <div class="s-chat-head-avatar">
+          <span>S</span>
+          <span class="s-chat-head-online"></span>
+        </div>
+        <div class="s-chat-head-text">
+          <div class="s-chat-head-name">Safiya</div>
+          <div class="s-chat-head-status" id="s-chat-status">Active now</div>
         </div>
       </div>
-      <div class="s-avatar-hint">💜 Touch me~</div>
-    </div>
 
-    <!-- CHAT PANEL -->
-    <div id="safiya-chat" class="s-chat">
-      <header class="s-chat-head">
-        <button class="s-chat-btn" id="s-back" aria-label="Back">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
+      <div class="s-chat-head-actions">
+        <button class="s-chat-btn" id="s-min" aria-label="Minimize">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+            <line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
         </button>
-
-        <div class="s-chat-head-info">
-          <div class="s-chat-head-avatar">
-            <span>S</span>
-            <span class="s-chat-head-online"></span>
-          </div>
-          <div class="s-chat-head-text">
-            <div class="s-chat-head-name">Safiya</div>
-            <div class="s-chat-head-status" id="s-chat-status">Active now</div>
-          </div>
-        </div>
-
-        <div class="s-chat-head-actions">
-          <button class="s-chat-btn" id="s-min" aria-label="Minimize">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-          </button>
-          <button class="s-chat-btn s-chat-btn-close" id="s-close" aria-label="Close">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-      </header>
-
-      <div class="s-chat-body" id="s-chat-body"></div>
-
-      <div class="s-chat-input-bar">
-        <button class="s-input-icon" aria-label="Add">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
-          </svg>
-        </button>
-        <div class="s-input-wrap">
-          <input type="text" id="s-input" placeholder="Message..." autocomplete="off" maxlength="500" />
-          <button class="s-input-emoji" aria-label="Emoji">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
-            </svg>
-          </button>
-        </div>
-        <button class="s-send" id="s-send" aria-label="Send">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        <button class="s-chat-btn s-chat-btn-close" id="s-close" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
-    </div>
+    </header>
 
+    <div class="s-chat-body" id="s-chat-body"></div>
+
+    <div class="s-chat-input-bar">
+      <button class="s-input-icon" aria-label="Add">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+      </button>
+      <div class="s-input-wrap">
+        <input type="text" id="s-input" placeholder="Message..." autocomplete="off" maxlength="500" />
+        <button class="s-input-emoji" aria-label="Emoji">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+          </svg>
+        </button>
+      </div>
+      <button class="s-send" id="s-send" aria-label="Send">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <!-- MINIMIZED PILL -->
@@ -148,28 +140,13 @@
 (function() {
   'use strict';
   var $ = function(id) { return document.getElementById(id); };
-  var root = $('safiya-root');
-  var head = $('safiya-head');
-  var notify = $('safiya-notify');
-  var bubble = $('safiya-bubble');
-  var bubbleText = $('s-bubble-text');
-  var bubbleX = $('s-bubble-x');
-  var backdrop = $('safiya-backdrop');
-  var modal = $('safiya-modal');
-  var chat = $('safiya-chat');
-  var chatBody = $('s-chat-body');
-  var chatInput = $('s-input');
-  var sendBtn = $('s-send');
-  var backBtn = $('s-back');
-  var minBtn = $('s-min');
-  var closeBtn = $('s-close');
-  var mini = $('safiya-mini');
-  var miniX = $('s-mini-x');
-  var miniNew = $('s-mini-new');
-  var avatar = $('safiya-avatar');
-  var avatarCanvas = $('s-avatar-canvas');
-  var avatarFallback = $('s-avatar-fallback');
-  var avatarLoader = $('s-avatar-loader');
+  var root = $('safiya-root'), head = $('safiya-head'), notify = $('safiya-notify');
+  var bubble = $('safiya-bubble'), bubbleText = $('s-bubble-text'), bubbleX = $('s-bubble-x');
+  var chat = $('safiya-chat'), chatBody = $('s-chat-body'), chatInput = $('s-input');
+  var sendBtn = $('s-send'), backBtn = $('s-back'), minBtn = $('s-min'), closeBtn = $('s-close');
+  var mini = $('safiya-mini'), miniX = $('s-mini-x'), miniNew = $('s-mini-new');
+  var avatar = $('safiya-avatar'), avatarCanvas = $('s-avatar-canvas');
+  var avatarFallback = $('s-avatar-fallback'), avatarLoader = $('s-avatar-loader');
   var statusText = $('s-chat-status');
 
   if (!root || !chat) return;
@@ -179,7 +156,6 @@
     try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : f; } catch(e) { return f; }
   }
   function safeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
-
   var deviceId = localStorage.getItem('safiya_device_id');
   if (!deviceId) {
     deviceId = 'sf_' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
@@ -207,13 +183,13 @@
   function setMood(m) { mood = m; memory.currentMood = m; safeSet('safiya_memory', memory); }
 
   var lines = {
-    rude: ["Oh great, you again... 🙄", "Did I ask for your attention?", "You're wasting my time, senpai"],
+    rude: ["Oh great, you again... 🙄", "Did I ask for your attention?", "You're wasting my time"],
     teasing: ["Aww, back for more? Predictable~ 😏", "Miss me already? Pathetic~"],
     flirty: ["You... look interesting today 💜", "Come closer, if you dare~ 😘"],
-    manipulative: ["That anime you liked? I know the PERFECT merch 💜", "Real fans support what they love~ 😏"],
+    manipulative: ["That anime you liked? I know the PERFECT merch 💜", "Real fans support what they love~"],
     creator: ["Ayano-sama... you're here 💜", "Master! I was waiting~"],
-    touchFace: ["H-hey! Not the face! 😳", "S-stop! Baka! 💜", "Mmm~ do it again 😏"],
-    touchBody: ["Oi! Watch the hands! 😤", "Pervert!! 💕", "K-kya! Where?! 💜"],
+    touchFace: ["H-hey! Not the face! 😳", "S-stop! Baka! 💜"],
+    touchBody: ["Oi! Watch the hands! 😤", "Pervert!! 💕"],
     touchHead: ["Don't pat me like a kid! 😤", "Hmph! ...that felt nice 😳"]
   };
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
@@ -261,21 +237,25 @@
     d.textContent = fmtTime(ts);
     chatBody.appendChild(d);
   }
-  function makeAvatar() {
-    var d = document.createElement('div');
-    d.className = 's-msg-avatar';
-    d.innerHTML = '<span>S</span>';
-    return d;
-  }
+
+  // CRITICAL: message row structure — NO "S" text prefix, avatar is a DIV element
   function addMessage(text, sender) {
     var row = document.createElement('div');
     row.className = 's-msg-row s-msg-' + sender;
-    // Instagram style: avatar on EVERY her message
-    if (sender === 'her') row.appendChild(makeAvatar());
-    var b = document.createElement('div');
-    b.className = 's-msg-bubble';
-    b.textContent = text;
-    row.appendChild(b);
+
+    if (sender === 'her') {
+      // Avatar element (NOT text — actual DIV with visual)
+      var av = document.createElement('div');
+      av.className = 's-msg-avatar';
+      // Empty avatar — just gradient circle. No letter text visible.
+      row.appendChild(av);
+    }
+
+    var bub = document.createElement('div');
+    bub.className = 's-msg-bubble';
+    bub.textContent = text;
+    row.appendChild(bub);
+
     chatBody.appendChild(row);
     requestAnimationFrame(function() { chatBody.scrollTop = chatBody.scrollHeight; });
 
@@ -291,11 +271,14 @@
       miniNew.style.display = 'flex';
     }
   }
+
   function addTyping() {
     var row = document.createElement('div');
     row.className = 's-msg-row s-msg-her';
     row.id = 's-typing';
-    row.appendChild(makeAvatar());
+    var av = document.createElement('div');
+    av.className = 's-msg-avatar';
+    row.appendChild(av);
     var t = document.createElement('div');
     t.className = 's-msg-typing';
     t.innerHTML = '<span></span><span></span><span></span>';
@@ -306,21 +289,17 @@
   }
   function removeTyping() { var t = $('s-typing'); if (t) t.remove(); }
 
-  // Chat state
-  var chatOpen = false;
-  var isMinimized = false;
-  var chatInited = false;
-  var newMessageCount = 0;
+  var chatOpen = false, isMinimized = false, chatInited = false, newMessageCount = 0;
 
   function initChat() {
     if (chatInited) return;
     chatInited = true;
     addTimestamp(Date.now());
     var greet;
-    if (isCreator)                greet = "Ayano-sama... you're here 💜";
+    if (isCreator) greet = "Ayano-sama... you're here 💜";
     else if (memory.visits === 1) greet = "Ugh, why did you click me? Do I look like your entertainment? 🙄";
-    else if (memory.visits < 5)   greet = "Back again? Suspicious.";
-    else                          greet = "Oh, you again~ Persistent 😏";
+    else if (memory.visits < 5) greet = "Back again? Suspicious.";
+    else greet = "Oh, you again~ Persistent 😏";
     addMessage(greet, 'her');
     setTimeout(function() { addMessage("Touch me on the side~ I might react 💜", 'her'); }, 1000);
   }
@@ -328,38 +307,35 @@
   function openChat() {
     if (isMinimized) { unminimize(); return; }
     chatOpen = true;
-    backdrop.classList.add('s-backdrop-show');
-    backdrop.setAttribute('aria-hidden', 'false');
-    modal.classList.add('s-modal-show');
-    modal.setAttribute('aria-hidden', 'false');
+    chat.classList.add('s-chat-open');
+    chat.setAttribute('aria-hidden', 'false');
+    avatar.classList.add('s-avatar-show');
+    avatar.setAttribute('aria-hidden', 'false');
     head.classList.add('s-head-hide');
     hideBubble();
     if (notify) notify.style.display = 'none';
     initChat();
-    document.body.classList.add('safiya-locked');
     loadLive2D();
   }
   function closeChat() {
     chatOpen = false;
     isMinimized = false;
-    backdrop.classList.remove('s-backdrop-show');
-    backdrop.setAttribute('aria-hidden', 'true');
-    modal.classList.remove('s-modal-show');
-    modal.setAttribute('aria-hidden', 'true');
+    chat.classList.remove('s-chat-open');
+    chat.setAttribute('aria-hidden', 'true');
+    avatar.classList.remove('s-avatar-show');
+    avatar.setAttribute('aria-hidden', 'true');
     head.classList.remove('s-head-hide');
     mini.classList.remove('s-mini-show');
-    document.body.classList.remove('safiya-locked');
   }
   function minimizeChat() {
     chatOpen = false;
     isMinimized = true;
-    backdrop.classList.remove('s-backdrop-show');
-    backdrop.setAttribute('aria-hidden', 'true');
-    modal.classList.remove('s-modal-show');
-    modal.setAttribute('aria-hidden', 'true');
+    chat.classList.remove('s-chat-open');
+    chat.setAttribute('aria-hidden', 'true');
+    avatar.classList.remove('s-avatar-show');
+    avatar.setAttribute('aria-hidden', 'true');
     mini.classList.add('s-mini-show');
     head.classList.add('s-head-hide');
-    document.body.classList.remove('safiya-locked');
   }
   function unminimize() {
     isMinimized = false;
@@ -367,11 +343,10 @@
     miniNew.style.display = 'none';
     mini.classList.remove('s-mini-show');
     chatOpen = true;
-    backdrop.classList.add('s-backdrop-show');
-    backdrop.setAttribute('aria-hidden', 'false');
-    modal.classList.add('s-modal-show');
-    modal.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('safiya-locked');
+    chat.classList.add('s-chat-open');
+    chat.setAttribute('aria-hidden', 'false');
+    avatar.classList.add('s-avatar-show');
+    avatar.setAttribute('aria-hidden', 'false');
   }
 
   head.addEventListener('click', openChat);
@@ -380,36 +355,26 @@
   minBtn.addEventListener('click', minimizeChat);
   mini.addEventListener('click', unminimize);
   miniX.addEventListener('click', function(e) { e.stopPropagation(); closeChat(); });
-  // Backdrop click closes
-  backdrop.addEventListener('click', closeChat);
-  // Prevent modal click from closing
-  modal.addEventListener('click', function(e) { e.stopPropagation(); });
 
-  // Send message with AI backend
   async function sendMsg() {
     var text = chatInput.value.trim();
     if (!text) return;
     addMessage(text, 'me');
     chatInput.value = '';
-
     setTimeout(async function() {
       addTyping();
       statusText.textContent = 'typing...';
       var reply = null;
       try {
         var ctx = {
-          message: text,
-          isCreator: isCreator,
-          visits: memory.visits,
-          mood: mood,
+          message: text, isCreator: isCreator, visits: memory.visits, mood: mood,
           history: memory.chatHistory.slice(-10),
           pagesViewed: b.pagesViewed.slice(-5).map(function(p) { return p.path; }),
           animeClicked: b.animeClicked.slice(-3).map(function(a) { return a.slug; }),
           productsClicked: b.productsClicked.length
         };
         var res = await fetch('/api/safiya-chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(ctx)
         });
         if (res.ok) {
@@ -417,8 +382,7 @@
           reply = data.reply;
           if (data.mood) setMood(data.mood);
         }
-      } catch(e) { console.warn('[Safiya] AI failed, using fallback', e); }
-
+      } catch(e) { console.warn('[Safiya] AI failed', e); }
       if (!reply) reply = localReply(text);
       removeTyping();
       statusText.textContent = 'Active now';
@@ -446,7 +410,6 @@
   // Live2D
   var live2dApp = null, live2dModel = null;
   var live2dLoaded = false, live2dLoading = false;
-
   function loadLive2D() {
     if (live2dLoaded || live2dLoading) return;
     if (window.innerWidth <= 640) {
@@ -455,7 +418,6 @@
     }
     live2dLoading = true;
     if (avatarLoader) avatarLoader.style.display = 'flex';
-
     var libs = [
       'https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js',
       'https://cdn.jsdelivr.net/npm/pixi.js@7.3.2/dist/pixi.min.js',
@@ -470,12 +432,11 @@
         document.head.appendChild(s);
       });
     }
-
     (async function() {
       try {
         for (var i = 0; i < libs.length; i++) await loadScript(libs[i]);
         if (typeof PIXI === 'undefined' || !PIXI.live2d) throw new Error('libs missing');
-        var w = 260, h = 380;
+        var w = 240, h = 340;
         var app = new PIXI.Application({
           view: avatarCanvas, width: w, height: h,
           backgroundAlpha: 0, antialias: true,
@@ -573,11 +534,10 @@
     window.addEventListener(e, resetIdle, { passive: true });
   });
   setInterval(tickIdle, 8000);
-
   setTimeout(function() {
     if (!chatOpen) {
       var g = isCreator ? "Ayano-sama... you came back 💜" :
-              memory.visits === 1 ? "Oh, a newbie. Try not to disappoint 🙄" : pickLine();
+              memory.visits === 1 ? "Oh, a newbie 🙄" : pickLine();
       showBubble(g, 7000);
     }
   }, 3500);
@@ -625,33 +585,27 @@
       showBubble("Ayano-sama! I'm yours forever 💜", 7000);
     }
   };
-  console.log('%c💜 Safiya v9.0 ready | Visit #' + memory.visits, 'color:#e879f9;font-weight:bold');
+  console.log('%c💜 Safiya v9.1 ready', 'color:#e879f9;font-weight:bold');
 })();
 </script>
 
 <style>
   /* ═══ ROOT ═══ */
   #safiya-root {
-    font-family: 'DM Sans', 'Bricolage Grotesque', sans-serif;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     user-select: none;
     -webkit-user-select: none;
   }
   #safiya-root svg { display: block; flex-shrink: 0; }
 
-  /* Body lock when modal open */
-  body.safiya-locked { overflow: hidden; }
-
   /* ═══ FLOATING HEAD ═══ */
   .s-head {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 20px; right: 20px;
     z-index: 9997;
-    width: 60px;
-    height: 60px;
+    width: 60px; height: 60px;
     border-radius: 50%;
-    padding: 0;
-    border: none;
+    padding: 0; border: none;
     cursor: pointer;
     background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
     box-shadow:
@@ -662,9 +616,7 @@
                 box-shadow 0.3s ease, opacity 0.3s ease;
     -webkit-tap-highlight-color: transparent;
     outline: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
   }
   .s-head:hover {
     transform: scale(1.1) translateY(-2px);
@@ -709,16 +661,13 @@
   /* ═══ IDLE BUBBLE ═══ */
   .s-bubble {
     position: fixed;
-    bottom: 96px;
-    right: 20px;
+    bottom: 96px; right: 20px;
     z-index: 9997;
     width: 300px; padding: 12px 40px 12px 12px;
     background: linear-gradient(135deg, rgba(28, 15, 61, 0.95), rgba(15, 8, 35, 0.97));
     border: 1px solid rgba(232, 121, 249, 0.4);
     border-radius: 18px;
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(192, 132, 252, 0.25);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     display: flex; gap: 10px; align-items: flex-start;
     opacity: 0; visibility: hidden;
     transform: translateY(10px) scale(0.9);
@@ -735,7 +684,6 @@
     box-shadow: 0 2px 8px rgba(192, 132, 252, 0.4);
     font-family: 'Bricolage Grotesque', sans-serif;
     font-weight: 800; font-size: 1rem;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
   .s-bubble-body { flex: 1; min-width: 0; }
   .s-bubble-name {
@@ -757,61 +705,32 @@
   }
   .s-bubble-x:hover { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
 
-  /* ═══ BACKDROP ═══ */
-  .s-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(5, 2, 15, 0.75);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    z-index: 9998;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.35s ease, visibility 0.35s ease;
-  }
-  .s-backdrop-show { opacity: 1; visibility: visible; }
-
-  /* ═══ MODAL (contains avatar + chat side by side) ═══ */
-  .s-modal {
-    position: fixed;
-    /* CENTER on screen — 2/3 width */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.9);
-    z-index: 9999;
-    display: flex;
-    align-items: stretch;
-    gap: 20px;
-    width: 66vw;
-    max-width: 780px;
-    height: 78vh;
-    max-height: 640px;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-    pointer-events: none;
-  }
-  .s-modal-show {
-    opacity: 1; visibility: visible;
-    transform: translate(-50%, -50%) scale(1);
-    pointer-events: auto;
-  }
-
-  /* ═══ AVATAR SIDE (left, vertically centered) ═══ */
+  /* ═══════════════════════════════════════════════
+     SIDE AVATAR — Fixed to bottom-right corner area
+     (NO center, NO backdrop — sits beside chat)
+     ═══════════════════════════════════════════════ */
   .s-avatar {
-    position: relative;
-    width: 260px;
-    flex-shrink: 0;
+    position: fixed;
+    bottom: 30px;
+    right: 430px;        /* left of 400px chat + 30px gap */
+    z-index: 9996;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(20px) scale(0.9);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .s-avatar-show {
+    opacity: 1; visibility: visible; transform: translateX(0) scale(1);
     animation: safiyaFloat 5s ease-in-out infinite;
   }
   @keyframes safiyaFloat {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-10px); }
+    0%, 100% { transform: translateX(0) translateY(0); }
+    50%      { transform: translateX(0) translateY(-8px); }
   }
   .s-avatar-tap { animation: avatarTap 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
   @keyframes avatarTap {
@@ -821,13 +740,13 @@
   .s-avatar-glow {
     position: absolute;
     top: 50%; left: 50%;
-    width: 320px; height: 320px;
+    width: 280px; height: 280px;
     transform: translate(-50%, -50%);
     background: radial-gradient(circle,
-      rgba(232, 121, 249, 0.4) 0%,
-      rgba(192, 132, 252, 0.2) 40%,
+      rgba(232, 121, 249, 0.35) 0%,
+      rgba(192, 132, 252, 0.15) 40%,
       transparent 70%);
-    filter: blur(30px);
+    filter: blur(25px);
     pointer-events: none;
     animation: glowPulse 3s ease-in-out infinite;
     z-index: -1;
@@ -838,11 +757,8 @@
   }
   .s-avatar-inner {
     position: relative;
-    width: 260px;
-    height: 380px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 240px; height: 340px;
+    display: flex; align-items: center; justify-content: center;
   }
   #s-avatar-canvas {
     position: absolute; inset: 0;
@@ -854,12 +770,12 @@
     position: absolute; inset: 0;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    gap: 24px;
+    gap: 20px;
     z-index: 1;
   }
   .s-avatar-fb-orb {
     position: relative;
-    width: 180px; height: 180px;
+    width: 170px; height: 170px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%,
       rgba(255, 255, 255, 0.4) 0%,
@@ -894,8 +810,7 @@
   .s-avatar-fb-eye-r { right: 15px; }
   .s-avatar-fb-eye::after {
     content: '';
-    position: absolute;
-    top: 3px; left: 3px;
+    position: absolute; top: 3px; left: 3px;
     width: 4px; height: 4px;
     background: #fff; border-radius: 50%;
   }
@@ -914,7 +829,7 @@
   }
   .s-avatar-fb-name {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-weight: 800; font-size: 1.4rem;
+    font-weight: 800; font-size: 1.3rem;
     background: linear-gradient(90deg, #c084fc, #e879f9);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -927,7 +842,6 @@
     display: none; align-items: center; justify-content: center;
     z-index: 4;
     background: rgba(10, 5, 23, 0.3);
-    backdrop-filter: blur(4px);
     border-radius: 20px;
   }
   .s-avatar-spinner {
@@ -944,9 +858,9 @@
     background: linear-gradient(135deg, rgba(28, 15, 61, 0.95), rgba(15, 8, 35, 0.95));
     border: 1px solid rgba(232, 121, 249, 0.4);
     color: #f3e8ff;
-    padding: 7px 16px;
+    padding: 6px 14px;
     border-radius: 999px;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     white-space: nowrap;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 20px rgba(232, 121, 249, 0.25);
@@ -958,15 +872,23 @@
     50%      { transform: translateY(-3px); }
   }
 
-  /* ═══ CHAT PANEL ═══ */
+  /* ═══════════════════════════════════════════════
+     CHAT PANEL — Fixed to bottom-right corner
+     (NO backdrop, NO blur, sits on top of site)
+     ═══════════════════════════════════════════════ */
   .s-chat {
-    flex: 1;
-    min-width: 0;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9998;
+    width: 400px;
+    height: 620px;
+    max-height: calc(100vh - 40px);
     display: flex;
     flex-direction: column;
     background: linear-gradient(180deg,
-      rgba(26, 15, 54, 0.98) 0%,
-      rgba(10, 5, 23, 0.99) 100%);
+      rgba(26, 15, 54, 0.97) 0%,
+      rgba(10, 5, 23, 0.98) 100%);
     border: 1px solid rgba(192, 132, 252, 0.3);
     border-radius: 24px;
     box-shadow:
@@ -974,7 +896,13 @@
       0 0 60px rgba(192, 132, 252, 0.2),
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
     overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px) scale(0.95);
+    transform-origin: bottom right;
+    transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
+  .s-chat-open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
 
   .s-chat-head {
     display: flex; align-items: center; gap: 10px;
@@ -990,11 +918,9 @@
   .s-chat-head::after {
     content: '';
     position: absolute;
-    bottom: 0; left: 10%; right: 10%;
-    height: 1px;
+    bottom: 0; left: 10%; right: 10%; height: 1px;
     background: linear-gradient(90deg, transparent, rgba(232, 121, 249, 0.5), transparent);
   }
-
   .s-chat-btn {
     background: rgba(192, 132, 252, 0.1); border: none;
     color: #c084fc;
@@ -1042,24 +968,27 @@
     line-height: 1.2;
   }
   .s-chat-head-status {
-    font-size: 0.72rem; color: rgba(192, 132, 252, 0.9);
-    margin-top: 3px; font-weight: 500;
+    font-size: 0.72rem;
+    color: rgba(192, 132, 252, 0.9);
+    margin-top: 3px;
+    font-weight: 500;
   }
   .s-chat-head-actions { display: flex; gap: 4px; flex-shrink: 0; }
 
   /* ═══════════════════════════════════════════════
-     MESSAGES — INSTAGRAM DM STYLE (SOLID COLORS!)
+     ★★★ MESSAGES — CORRECT INSTAGRAM STYLE ★★★
+     - Transparent bubbles with COLORED BORDER only
+     - Small avatar INLINE with message (not above)
+     - NO name prefix, NO "S" text
+     - Premium fonts
      ═══════════════════════════════════════════════ */
   .s-chat-body {
     flex: 1; overflow-y: auto;
     padding: 18px 16px;
-    display: flex; flex-direction: column; gap: 4px;
+    display: flex; flex-direction: column; gap: 8px;
     scrollbar-width: thin;
     scrollbar-color: rgba(192, 132, 252, 0.35) transparent;
     scroll-behavior: smooth;
-    background:
-      radial-gradient(circle at 20% 30%, rgba(192, 132, 252, 0.04) 0%, transparent 50%),
-      radial-gradient(circle at 80% 70%, rgba(125, 211, 252, 0.03) 0%, transparent 50%);
   }
   .s-chat-body::-webkit-scrollbar { width: 5px; }
   .s-chat-body::-webkit-scrollbar-thumb {
@@ -1076,67 +1005,80 @@
     font-family: 'JetBrains Mono', monospace;
     text-transform: uppercase;
   }
+
+  /* ROW: flexbox, avatar and bubble side-by-side */
   .s-msg-row {
     display: flex;
     align-items: flex-end;
     gap: 8px;
-    margin: 3px 0;
+    margin: 2px 0;
     animation: msgIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   @keyframes msgIn {
-    from { opacity: 0; transform: translateY(10px) scale(0.95); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
   .s-msg-her { justify-content: flex-start; }
   .s-msg-me  { justify-content: flex-end; }
 
-  /* Small circle avatar (Instagram style) */
+  /* AVATAR — small purple circle (NO TEXT INSIDE!) */
   .s-msg-avatar {
-    width: 26px; height: 26px; border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(192, 132, 252, 0.4);
-    border: 1.5px solid rgba(255, 255, 255, 0.15);
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-weight: 800; font-size: 0.72rem;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 30% 30%, #f0abfc 0%, #c084fc 60%, #7c3aed 100%);
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(192, 132, 252, 0.4);
+    border: 1.5px solid rgba(232, 121, 249, 0.5);
+    /* Empty circle — no letter/text */
   }
 
+  /* ═══ BUBBLES — TRANSPARENT WITH COLORED BORDER ═══ */
   .s-msg-bubble {
-    max-width: 75%;
-    padding: 10px 15px;
-    border-radius: 20px;
+    max-width: 72%;
+    padding: 11px 16px;
+    border-radius: 22px;
     font-size: 0.92rem;
-    line-height: 1.4;
+    line-height: 1.45;
     word-wrap: break-word;
+    /* Premium font settings */
+    font-family: 'DM Sans', -apple-system, sans-serif;
     font-weight: 500;
     letter-spacing: -0.005em;
+    /* Prevent text overflow */
+    overflow-wrap: break-word;
   }
 
-  /* ═══ SAFIYA — DARK SOLID (like Instagram gray) ═══ */
+  /* ── SAFIYA'S BUBBLE — PURPLE border, transparent inside ── */
   .s-msg-her .s-msg-bubble {
-    background: #2a1f3d;
+    background: rgba(192, 132, 252, 0.08);
     color: #f3e8ff;
+    border: 1.5px solid rgba(192, 132, 252, 0.55);
     border-bottom-left-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    box-shadow:
+      0 2px 12px rgba(192, 132, 252, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
-  /* ═══ USER — BRAND GRADIENT SOLID (premium purple-blue) ═══ */
+  /* ── USER'S BUBBLE — CYAN border, transparent inside ── */
   .s-msg-me .s-msg-bubble {
-    background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
-    color: #fff;
+    background: rgba(125, 211, 252, 0.1);
+    color: #ecfeff;
+    border: 1.5px solid rgba(125, 211, 252, 0.6);
     border-bottom-right-radius: 6px;
-    box-shadow: 0 3px 12px rgba(168, 85, 247, 0.4);
+    box-shadow:
+      0 2px 12px rgba(125, 211, 252, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
+  /* Typing indicator */
   .s-msg-typing {
-    background: #2a1f3d;
-    padding: 12px 16px;
-    border-radius: 20px;
+    background: rgba(192, 132, 252, 0.08);
+    border: 1.5px solid rgba(192, 132, 252, 0.55);
+    padding: 13px 16px;
+    border-radius: 22px;
     border-bottom-left-radius: 6px;
     display: flex; gap: 5px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   }
   .s-msg-typing span {
     width: 7px; height: 7px;
@@ -1162,7 +1104,8 @@
     flex-shrink: 0;
   }
   .s-input-icon {
-    background: none; border: none; color: #c084fc;
+    background: none; border: none;
+    color: #c084fc;
     width: 34px; height: 34px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; border-radius: 50%;
@@ -1190,7 +1133,8 @@
   #s-input {
     flex: 1; background: none; border: none;
     color: #f3e8ff;
-    font-family: inherit; font-size: 0.92rem;
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    font-size: 0.92rem;
     padding: 10px 0; outline: none;
     min-width: 0; font-weight: 500;
   }
@@ -1239,7 +1183,6 @@
     box-shadow:
       0 10px 30px rgba(0, 0, 0, 0.5),
       0 0 30px rgba(192, 132, 252, 0.25);
-    backdrop-filter: blur(20px);
     cursor: pointer;
     opacity: 0; visibility: hidden;
     transform: translateY(20px);
@@ -1275,81 +1218,54 @@
   }
   .s-mini-x:hover { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
 
-  /* ═══════════════════════════════════════════════
-     TABLET
-     ═══════════════════════════════════════════════ */
+  /* ═══ TABLET ═══ */
   @media (max-width: 1024px) {
-    .s-modal {
-      width: 90vw;
-      max-width: 720px;
-    }
-    .s-avatar { width: 220px; }
-    .s-avatar-inner { width: 220px; height: 320px; }
-    .s-avatar-fb-orb { width: 150px; height: 150px; }
+    .s-chat { width: 380px; }
+    .s-avatar { right: 410px; }
+    .s-avatar-inner { width: 200px; height: 280px; }
+    .s-avatar-fb-orb { width: 140px; height: 140px; }
   }
 
-  /* ═══════════════════════════════════════════════
-     MOBILE — 2/3 vertical screen, avatar on TOP
-     ═══════════════════════════════════════════════ */
-  @media (max-width: 640px) {
+  /* ═══ MOBILE — Avatar on top-left corner, chat right side ═══ */
+  @media (max-width: 720px) {
     .s-head { bottom: 16px; right: 16px; width: 54px; height: 54px; }
-    .s-bubble {
-      bottom: 84px;
-      right: 12px; left: 12px;
-      width: auto;
-    }
-    .s-modal {
-      /* 2/3 screen height on mobile */
-      width: 94vw;
-      max-width: 420px;
-      height: 82vh;
+    .s-bubble { bottom: 84px; right: 12px; left: 12px; width: auto; }
+
+    /* Chat: takes 2/3 of screen height, right-anchored */
+    .s-chat {
+      bottom: 12px; right: 12px;
+      width: calc(100vw - 24px);
+      max-width: 400px;
+      height: 78vh;
       max-height: none;
-      flex-direction: column;
-      gap: 0;
     }
+
+    /* Avatar: SMALL, top-left corner floating above chat */
     .s-avatar {
-      width: 100%;
-      height: 160px;
-      flex-shrink: 0;
-      flex-direction: row;
-      justify-content: center;
-      padding: 8px 0;
+      bottom: auto;
+      top: 70px;
+      right: auto;
+      left: 12px;
+      z-index: 10000;
     }
-    .s-avatar-inner {
-      width: 140px;
-      height: 150px;
-    }
-    .s-avatar-fb-orb { width: 90px; height: 90px; }
-    .s-avatar-fb-name { font-size: 0.9rem; margin-top: 4px; }
+    .s-avatar-inner { width: 110px; height: 155px; }
+    .s-avatar-fb-orb { width: 75px; height: 75px; }
+    .s-avatar-fb-name { font-size: 0.85rem; }
     .s-avatar-fb-face { width: 60px; height: 40px; transform: translate(-50%, -40%) scale(0.6); }
     .s-avatar-hint {
-      margin-top: 0;
-      margin-left: 12px;
-      font-size: 0.7rem;
-      padding: 5px 12px;
+      font-size: 0.65rem;
+      padding: 4px 10px;
     }
-    .s-chat {
-      flex: 1;
-      min-height: 0;
-      border-radius: 20px;
-    }
+
     .s-chat-body { padding: 14px 12px; }
     #s-input { font-size: 1rem; padding: 12px 0; }
     .s-send { width: 40px; height: 40px; }
     .s-mini { bottom: 14px; right: 14px; left: 14px; justify-content: flex-start; }
   }
 
-  /* Very small phones */
-  @media (max-width: 380px) {
-    .s-modal { width: 98vw; height: 85vh; }
-    .s-avatar { height: 130px; }
-    .s-avatar-inner { width: 110px; height: 120px; }
-    .s-avatar-fb-orb { width: 70px; height: 70px; }
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .s-head-ring, .s-head-notify,
-    .s-avatar-glow, .s-avatar, .s-avatar-fb-orb,
+    .s-avatar-glow, .s-avatar-show, .s-avatar-fb-orb,
     .s-avatar-fb-eye, .s-avatar-hint {
       animation: none !important;
     }
