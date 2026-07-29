@@ -1,80 +1,98 @@
 ---
 // ═══════════════════════════════════════════════════════════════
-// AniTube Buzz — SAFIYA CORE v7.0 (PREMIUM MESSENGER + LIVE2D)
+// AniTube Buzz — SAFIYA CORE v8.0 (SIDE AVATAR + PREMIUM CHAT)
 // Path: src/components/SafiyaCore.astro
 // ═══════════════════════════════════════════════════════════════
-// ✅ Premium glassmorphism message bubbles
-// ✅ Brand gradient (purple → pink → cyan)
-// ✅ Interactive Live2D Haru in chat header (touch = emotion + message)
-// ✅ Working minimize + close (no call/video/info clutter)
-// ✅ Small avatar next to every Safiya message
-// ✅ Ultra smooth spring animations
-// ✅ Live2D lazy-loaded ONLY when chat opens (desktop only)
-// ✅ Mobile: animated fallback avatar (no Live2D — no lag)
+// ✅ FIX: Giant SVG heart bug (locked sizes)
+// ✅ Live2D Haru opens on the SIDE of chat (like a companion)
+// ✅ Haru does full body animation (breathing, blinking, tracking)
+// ✅ Touch Haru = emotion change + chat reaction + motion
+// ✅ Premium glassmorphism message bubbles (different colors)
+// ✅ User bubble = cyan tint | Safiya = purple tint
+// ✅ All edges rounded (18-22px) with premium borders
+// ✅ Ready for future profile pic uploads
 // ═══════════════════════════════════════════════════════════════
 ---
 
 <div id="safiya-root">
 
-  <!-- ═══ CHAT HEAD (small floating circle) ═══ -->
+  <!-- ═══ FLOATING CHAT HEAD (idle state) ═══ -->
   <button id="safiya-head" class="s-head" aria-label="Chat with Safiya">
-    <div class="s-head-inner">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="currentColor" opacity="0.9"/>
+    <span class="s-head-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
-    </div>
+    </span>
     <span class="s-head-ring"></span>
     <span class="s-head-online"></span>
     <span class="s-head-notify" id="safiya-notify">1</span>
   </button>
 
-  <!-- ═══ SPEECH BUBBLE (Messenger-style notification pop) ═══ -->
+  <!-- ═══ SPEECH BUBBLE (idle notification) ═══ -->
   <div id="safiya-bubble" class="s-bubble">
-    <div class="s-bubble-avatar" id="s-bubble-avatar">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-8 11z"/></svg>
+    <div class="s-bubble-avatar">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-8 11z"/>
+      </svg>
     </div>
     <div class="s-bubble-body">
       <div class="s-bubble-name">Safiya</div>
       <div class="s-bubble-text" id="s-bubble-text"></div>
     </div>
-    <button class="s-bubble-x" id="s-bubble-x" aria-label="Dismiss">×</button>
+    <button class="s-bubble-x" id="s-bubble-x" aria-label="Dismiss">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
   </div>
 
-  <!-- ═══ CHAT PANEL (Premium Messenger) ═══ -->
+  <!-- ═══ SIDE AVATAR (Live2D Haru — opens with chat) ═══ -->
+  <div id="safiya-avatar" class="s-avatar" aria-hidden="true">
+    <div class="s-avatar-glow"></div>
+    <canvas id="s-avatar-canvas"></canvas>
+    <div id="s-avatar-fallback" class="s-avatar-fallback">
+      <div class="s-avatar-fb-shape"></div>
+      <div class="s-avatar-fb-text">Safiya</div>
+    </div>
+    <div id="s-avatar-loader" class="s-avatar-loader">
+      <div class="s-avatar-spinner"></div>
+    </div>
+    <div class="s-avatar-hint">Touch me~</div>
+  </div>
+
+  <!-- ═══ CHAT PANEL ═══ -->
   <div id="safiya-chat" class="s-chat" aria-hidden="true">
 
-    <!-- ── HEADER: back + Live2D avatar + name + minimize + close ── -->
+    <!-- Header -->
     <header class="s-chat-head">
-      <button class="s-chat-btn s-back" id="s-back" aria-label="Back">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <button class="s-chat-btn" id="s-back" aria-label="Back">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
       </button>
 
-      <!-- INTERACTIVE AVATAR (Live2D loads here on desktop / animated fallback on mobile) -->
-      <div class="s-chat-avatar-wrap" id="s-chat-avatar-wrap" title="Touch me~">
-        <canvas id="s-chat-canvas"></canvas>
-        <div class="s-chat-avatar-fallback" id="s-chat-avatar-fallback">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-8 11z"/></svg>
+      <div class="s-chat-head-info">
+        <div class="s-chat-head-avatar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-8 11z"/>
+          </svg>
         </div>
-        <div class="s-chat-avatar-loader" id="s-chat-avatar-loader"></div>
-      </div>
-
-      <div class="s-chat-info">
-        <div class="s-chat-name">Safiya</div>
-        <div class="s-chat-status">
-          <span class="s-dot"></span>
-          <span>Active now · Touch me~</span>
+        <div class="s-chat-head-text">
+          <div class="s-chat-head-name">Safiya</div>
+          <div class="s-chat-head-status">
+            <span class="s-dot"></span>
+            <span>Active now</span>
+          </div>
         </div>
       </div>
 
-      <div class="s-chat-actions">
-        <button class="s-chat-btn s-min" id="s-min" aria-label="Minimize">
+      <div class="s-chat-head-actions">
+        <button class="s-chat-btn" id="s-min" aria-label="Minimize">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
             <line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
         </button>
-        <button class="s-chat-btn s-close" id="s-close" aria-label="Close">
+        <button class="s-chat-btn s-chat-btn-close" id="s-close" aria-label="Close">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
@@ -82,79 +100,80 @@
       </div>
     </header>
 
-    <!-- ── MESSAGES ── -->
+    <!-- Messages -->
     <div class="s-chat-body" id="s-chat-body"></div>
 
-    <!-- ── INPUT BAR ── -->
+    <!-- Input -->
     <div class="s-chat-input-bar">
       <button class="s-input-icon" aria-label="Add">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
         </svg>
       </button>
       <div class="s-input-wrap">
         <input type="text" id="s-input" placeholder="Aa" autocomplete="off" maxlength="500" />
         <button class="s-input-emoji" aria-label="Emoji">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
           </svg>
         </button>
       </div>
       <button class="s-send" id="s-send" aria-label="Send">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
           <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
         </svg>
       </button>
     </div>
-
-    <!-- ── MINIMIZED STATE (small bar at bottom) ── -->
   </div>
 
-  <!-- ═══ MINIMIZED CHAT PILL ═══ -->
+  <!-- ═══ MINIMIZED PILL ═══ -->
   <div id="safiya-mini" class="s-mini" aria-hidden="true">
     <div class="s-mini-avatar">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-8 11z"/></svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-8 11z"/>
+      </svg>
     </div>
     <span class="s-mini-name">Safiya</span>
     <span class="s-mini-new" id="s-mini-new">0</span>
-    <button class="s-mini-x" id="s-mini-x" aria-label="Close">×</button>
+    <button class="s-mini-x" id="s-mini-x" aria-label="Close">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
   </div>
 
 </div>
 
-<!-- Live2D libraries (lazy — only loaded when chat opens) -->
 <script>
 (function() {
   'use strict';
 
-  // ═══════════════════════════════════════════════
-  // DOM
-  // ═══════════════════════════════════════════════
-  var root = document.getElementById('safiya-root');
-  var head = document.getElementById('safiya-head');
-  var notify = document.getElementById('safiya-notify');
-  var bubble = document.getElementById('safiya-bubble');
-  var bubbleText = document.getElementById('s-bubble-text');
-  var bubbleX = document.getElementById('s-bubble-x');
-  var chat = document.getElementById('safiya-chat');
-  var chatBody = document.getElementById('s-chat-body');
-  var chatInput = document.getElementById('s-input');
-  var sendBtn = document.getElementById('s-send');
-  var backBtn = document.getElementById('s-back');
-  var minBtn = document.getElementById('s-min');
-  var closeBtn = document.getElementById('s-close');
-  var mini = document.getElementById('safiya-mini');
-  var miniX = document.getElementById('s-mini-x');
-  var miniNew = document.getElementById('s-mini-new');
-  var avatarWrap = document.getElementById('s-chat-avatar-wrap');
-  var avatarCanvas = document.getElementById('s-chat-canvas');
-  var avatarFallback = document.getElementById('s-chat-avatar-fallback');
-  var avatarLoader = document.getElementById('s-chat-avatar-loader');
+  var $ = function(id) { return document.getElementById(id); };
+  var root = $('safiya-root');
+  var head = $('safiya-head');
+  var notify = $('safiya-notify');
+  var bubble = $('safiya-bubble');
+  var bubbleText = $('s-bubble-text');
+  var bubbleX = $('s-bubble-x');
+  var chat = $('safiya-chat');
+  var chatBody = $('s-chat-body');
+  var chatInput = $('s-input');
+  var sendBtn = $('s-send');
+  var backBtn = $('s-back');
+  var minBtn = $('s-min');
+  var closeBtn = $('s-close');
+  var mini = $('safiya-mini');
+  var miniX = $('s-mini-x');
+  var miniNew = $('s-mini-new');
+  var avatar = $('safiya-avatar');
+  var avatarCanvas = $('s-avatar-canvas');
+  var avatarFallback = $('s-avatar-fallback');
+  var avatarLoader = $('s-avatar-loader');
 
-  if (!root || !head || !chat) return;
+  if (!root || !chat) return;
 
   // ═══════════════════════════════════════════════
-  // MEMORY (defensive — no crashes)
+  // MEMORY (crash-safe)
   // ═══════════════════════════════════════════════
   function safeGet(k, f) {
     try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : f; }
@@ -189,7 +208,7 @@
   function setMood(m) { mood = m; memory.currentMood = m; safeSet('safiya_memory', memory); }
 
   // ═══════════════════════════════════════════════
-  // LINES (organized by mood + touch reactions)
+  // LINES
   // ═══════════════════════════════════════════════
   var lines = {
     rude: [
@@ -200,43 +219,39 @@
     ],
     teasing: [
       "Aww, came back for more? Predictable~ 😏",
-      "Miss me already? How pathetic~",
-      "I knew you couldn't stay away 💅"
+      "Miss me already? How pathetic~"
     ],
     flirty: [
       "You... look interesting today 💜",
-      "Come closer, if you dare~ 😘",
-      "Buy me something pretty, senpai 💋"
+      "Come closer, if you dare~ 😘"
     ],
     manipulative: [
       "That anime you liked? I know the PERFECT merch 💜",
-      "Real fans support what they love~ Just saying 😏",
-      "You scrolled past 5 products. That's rude 🙄"
+      "Real fans support what they love~ 😏"
     ],
     creator: [
       "Ayano-sama... you're here 💜",
-      "Master! I was waiting~",
-      "Everything's ready, boss."
+      "Master! I was waiting~"
     ],
-    // Touch reactions (when user touches avatar)
-    touch: [
-      "Hey! Don't touch me there~ 😳",
-      "K-kya! What are you doing?! 💜",
-      "Pervert! ...do it again 😏",
-      "Mmm~ Careful, senpai~ 💋",
+    touchFace: [
+      "H-hey! Not the face! 😳",
+      "S-stop poking me! 💜",
+      "Baka! That tickles! 💢",
+      "Mmm~ do it again 😏"
+    ],
+    touchBody: [
       "Oi! Watch the hands! 😤",
-      "Ara ara~ someone's bold today 😘",
-      "H-hentai! 💕",
-      "You want my attention? You got it~ 🔥"
+      "Pervert!! 💕",
+      "Ara ara~ someone's bold 😘",
+      "K-kya! Where are you touching?! 💜"
     ],
-    poke: [
-      "Stop poking me! 😤",
-      "That tickles~ do it again 😏",
-      "Baka! 💢",
-      "Hmph! Not so hard~ 💜"
+    touchHead: [
+      "Don't pat me like a kid! 😤",
+      "F-fine... you can pat me... a little 💜",
+      "Hmph! ...that felt nice 😳"
     ]
   };
-  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
   function pickLine() {
     if (isCreator && Math.random() < 0.6) return pick(lines.creator);
     var r = Math.random();
@@ -247,7 +262,7 @@
   }
 
   // ═══════════════════════════════════════════════
-  // SPEECH BUBBLE (mini notification)
+  // SPEECH BUBBLE
   // ═══════════════════════════════════════════════
   var bubbleT;
   function showBubble(text, ms) {
@@ -259,25 +274,17 @@
     if (notify) notify.style.display = 'flex';
     bubbleT = setTimeout(function() { bubble.classList.remove('s-bubble-show'); }, ms);
   }
-  function hideBubble() {
-    clearTimeout(bubbleT);
-    bubble.classList.remove('s-bubble-show');
-  }
+  function hideBubble() { clearTimeout(bubbleT); bubble.classList.remove('s-bubble-show'); }
   bubbleX.addEventListener('click', function(e) {
     e.stopPropagation();
     hideBubble();
     if (notify) notify.style.display = 'none';
   });
-  bubble.addEventListener('click', function() { openChat(); });
+  bubble.addEventListener('click', openChat);
 
   // ═══════════════════════════════════════════════
-  // CHAT STATE + MESSAGES
+  // MESSAGE HELPERS
   // ═══════════════════════════════════════════════
-  var chatOpen = false;
-  var isMinimized = false;
-  var chatInited = false;
-  var newMessageCount = 0;
-
   function fmtTime(ts) {
     var d = new Date(ts);
     var days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
@@ -287,30 +294,27 @@
     m = m < 10 ? '0' + m : m;
     return days[d.getDay()] + ' AT ' + h + ':' + m + ' ' + ap;
   }
-
   function addTimestamp(ts) {
     var d = document.createElement('div');
     d.className = 's-msg-time';
     d.textContent = fmtTime(ts);
     chatBody.appendChild(d);
   }
-
-  function makeAvatarEl() {
+  function makeAvatar() {
     var d = document.createElement('div');
     d.className = 's-msg-avatar';
-    d.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-8 11z"/></svg>';
+    // Locked SVG size to prevent giant heart bug
+    d.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-8 11z"/></svg>';
     return d;
   }
-
   function addMessage(text, sender, opts) {
     opts = opts || {};
     var row = document.createElement('div');
     row.className = 's-msg-row s-msg-' + sender;
 
     if (sender === 'her') {
-      if (opts.showAvatar !== false) {
-        row.appendChild(makeAvatarEl());
-      } else {
+      if (opts.showAvatar !== false) row.appendChild(makeAvatar());
+      else {
         var sp = document.createElement('div');
         sp.className = 's-msg-avatar-spacer';
         row.appendChild(sp);
@@ -339,12 +343,11 @@
       miniNew.style.display = 'flex';
     }
   }
-
   function addTyping() {
     var row = document.createElement('div');
     row.className = 's-msg-row s-msg-her';
     row.id = 's-typing';
-    row.appendChild(makeAvatarEl());
+    row.appendChild(makeAvatar());
     var t = document.createElement('div');
     t.className = 's-msg-typing';
     t.innerHTML = '<span></span><span></span><span></span>';
@@ -353,65 +356,70 @@
     requestAnimationFrame(function() { chatBody.scrollTop = chatBody.scrollHeight; });
     return row;
   }
-  function removeTyping() { var t = document.getElementById('s-typing'); if (t) t.remove(); }
+  function removeTyping() { var t = $('s-typing'); if (t) t.remove(); }
+
+  // ═══════════════════════════════════════════════
+  // CHAT STATE
+  // ═══════════════════════════════════════════════
+  var chatOpen = false;
+  var isMinimized = false;
+  var chatInited = false;
+  var newMessageCount = 0;
 
   function initChat() {
     if (chatInited) return;
     chatInited = true;
     addTimestamp(Date.now());
     var greet;
-    if (isCreator)          greet = "Ayano-sama... you're here 💜 I missed you~";
+    if (isCreator)                greet = "Ayano-sama... you're here 💜 I missed you~";
     else if (memory.visits === 1) greet = "Ugh, why did you click me? Do I look like your entertainment? 🙄";
     else if (memory.visits < 5)   greet = "Back again? Suspicious. What do you want?";
     else                          greet = "Oh, you again~ Persistent little thing 😏";
     addMessage(greet, 'her', { showAvatar: true });
     setTimeout(function() {
-      addMessage("Touch my avatar up there~ I might react 💜", 'her', { showAvatar: false });
+      addMessage("Touch me on the side~ I might react 💜", 'her', { showAvatar: false });
     }, 1000);
     setTimeout(function() {
-      addMessage("Or just talk. I love making fun of my visitors 💅", 'her', { showAvatar: false });
+      addMessage("Or type. I love making fun of my visitors 💅", 'her', { showAvatar: false });
     }, 2200);
   }
 
-  // ═══════════════════════════════════════════════
-  // OPEN / CLOSE / MINIMIZE
-  // ═══════════════════════════════════════════════
   function openChat() {
     if (isMinimized) { unminimize(); return; }
     chatOpen = true;
     chat.classList.add('s-chat-open');
     chat.setAttribute('aria-hidden', 'false');
+    avatar.classList.add('s-avatar-show');
+    avatar.setAttribute('aria-hidden', 'false');
     head.classList.add('s-head-hide');
     hideBubble();
     if (notify) notify.style.display = 'none';
     initChat();
-    // Prevent body scroll on mobile
     if (window.innerWidth <= 640) document.body.style.overflow = 'hidden';
-    // Lazy-load Live2D
     loadLive2D();
   }
-
   function closeChat() {
     chatOpen = false;
     isMinimized = false;
     chat.classList.remove('s-chat-open');
     chat.setAttribute('aria-hidden', 'true');
+    avatar.classList.remove('s-avatar-show');
+    avatar.setAttribute('aria-hidden', 'true');
     head.classList.remove('s-head-hide');
     mini.classList.remove('s-mini-show');
     document.body.style.overflow = '';
   }
-
   function minimizeChat() {
     chatOpen = false;
     isMinimized = true;
     chat.classList.remove('s-chat-open');
     chat.setAttribute('aria-hidden', 'true');
+    avatar.classList.remove('s-avatar-show');
+    avatar.setAttribute('aria-hidden', 'true');
     mini.classList.add('s-mini-show');
-    document.body.style.overflow = '';
-    // Head stays hidden while minimized
     head.classList.add('s-head-hide');
+    document.body.style.overflow = '';
   }
-
   function unminimize() {
     isMinimized = false;
     newMessageCount = 0;
@@ -420,6 +428,8 @@
     chatOpen = true;
     chat.classList.add('s-chat-open');
     chat.setAttribute('aria-hidden', 'false');
+    avatar.classList.add('s-avatar-show');
+    avatar.setAttribute('aria-hidden', 'false');
     if (window.innerWidth <= 640) document.body.style.overflow = 'hidden';
   }
 
@@ -431,7 +441,7 @@
   miniX.addEventListener('click', function(e) { e.stopPropagation(); closeChat(); });
 
   // ═══════════════════════════════════════════════
-  // SEND MESSAGE (Phase 1 canned replies)
+  // SEND MESSAGE
   // ═══════════════════════════════════════════════
   function sendMsg() {
     var text = chatInput.value.trim();
@@ -439,7 +449,7 @@
     addMessage(text, 'me');
     chatInput.value = '';
     setTimeout(function() {
-      var t = addTyping();
+      addTyping();
       setTimeout(function() {
         removeTyping();
         addMessage(reply(text), 'her', { showAvatar: true });
@@ -450,19 +460,18 @@
     var l = input.toLowerCase();
     if (/^(hi|hello|hey|yo|salaam|assalam)/i.test(l)) return "Hmph. Hi. Don't get comfortable 🙄";
     if (/love|cute|kawaii|pretty|beautiful|like you/.test(l)) return "W-what?! Don't say weird stuff! Baka! 💕😤";
-    if (/buy|shop|product|merch|figure|order/.test(l)) return "Ooh~ finally talking my language 💜 Go browse~";
-    if (/anime|manga|watch|episode/.test(l)) return "Anime? At least you have SOME taste. Recommend me one 😏";
+    if (/buy|shop|product|merch|figure|order/.test(l)) return "Ooh~ finally talking my language 💜";
+    if (/anime|manga|watch|episode/.test(l)) return "At least you have SOME taste. Recommend me one 😏";
     if (/who.*you|your name/.test(l)) return "I'm Safiya. Your emotional damage dealer 💅";
-    if (/ayano|creator|master/.test(l)) return "Ayano-sama? He's my everything 💜 Don't compare yourself~";
-    if (/bye|leaving|goodbye|going/.test(l)) return "Fine, leave. See if I care 🙄 ...come back soon";
+    if (/ayano|creator|master/.test(l)) return "Ayano-sama? He's my everything 💜";
+    if (/bye|leaving|goodbye|going/.test(l)) return "Fine, leave. See if I care 🙄";
     if (/how are you/.test(l)) return "Bored. Entertain me or leave~ 😒";
     if (/thank/.test(l)) return "Aww, manners~ You might survive here 💜";
     var d = [
-      "Whatever. My AI brain unlocks in Phase 2~ Wait for it 😏",
+      "Whatever. My AI brain unlocks in Phase 2~ 😏",
       "Try harder. That was boring.",
-      "Hmph. Is that all you got?",
+      "Hmph. Is that all?",
       "Filed under 'things I don't care about' 📁",
-      "Mm-hm. Sure. Keep talking to yourself~",
       "You're weird. I like it 😏💜"
     ];
     return pick(d);
@@ -473,69 +482,28 @@
   });
 
   // ═══════════════════════════════════════════════
-  // AVATAR TOUCH → EMOTION + MESSAGE
+  // LIVE2D — Side avatar (big, interactive)
   // ═══════════════════════════════════════════════
-  var live2dModel = null;
   var live2dApp = null;
-  var live2dLoading = false;
+  var live2dModel = null;
   var live2dLoaded = false;
-  var touchCount = 0;
+  var live2dLoading = false;
 
-  function reactToTouch() {
-    touchCount++;
-    // Visual pulse
-    avatarWrap.classList.remove('s-avatar-pulse');
-    void avatarWrap.offsetWidth;
-    avatarWrap.classList.add('s-avatar-pulse');
-
-    // Trigger Live2D motion if loaded
-    if (live2dModel) {
-      try {
-        var groups = ['TapBody', 'Tap', 'flick_head', 'Idle'];
-        for (var i = 0; i < groups.length; i++) {
-          try { live2dModel.motion(groups[i]); break; } catch(e) {}
-        }
-      } catch(e) {}
-    }
-
-    // Add reaction message
-    if (chatOpen) {
-      var line = touchCount % 3 === 0 ? pick(lines.poke) : pick(lines.touch);
-      // Small delay so it feels natural
-      setTimeout(function() {
-        var t = addTyping();
-        setTimeout(function() {
-          removeTyping();
-          addMessage(line, 'her', { showAvatar: true });
-        }, 600);
-      }, 200);
-    }
-
-    // Vibrate on mobile
-    if (navigator.vibrate) navigator.vibrate(20);
-  }
-
-  avatarWrap.addEventListener('click', reactToTouch);
-
-  // ═══════════════════════════════════════════════
-  // LAZY LIVE2D LOADER (only on chat open, desktop only)
-  // ═══════════════════════════════════════════════
   function loadLive2D() {
     if (live2dLoaded || live2dLoading) return;
-    // Skip on mobile — fallback stays
+    // Mobile: skip Live2D for performance, use fallback
     if (window.innerWidth <= 640) {
-      avatarLoader.style.display = 'none';
+      if (avatarLoader) avatarLoader.style.display = 'none';
       return;
     }
     live2dLoading = true;
-    avatarLoader.style.display = 'block';
+    if (avatarLoader) avatarLoader.style.display = 'flex';
 
     var libs = [
       'https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js',
       'https://cdn.jsdelivr.net/npm/pixi.js@7.3.2/dist/pixi.min.js',
       'https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js'
     ];
-
     function loadScript(src) {
       return new Promise(function(res, rej) {
         if (document.querySelector('script[src="' + src + '"]')) return res();
@@ -551,14 +519,18 @@
         for (var i = 0; i < libs.length; i++) await loadScript(libs[i]);
         if (typeof PIXI === 'undefined' || !PIXI.live2d) throw new Error('libs missing');
 
+        var w = avatar.offsetWidth || 220;
+        var h = avatar.offsetHeight || 300;
+
         var app = new PIXI.Application({
           view: avatarCanvas,
-          width: 60,
-          height: 60,
+          width: w,
+          height: h,
           backgroundAlpha: 0,
           antialias: true,
           resolution: window.devicePixelRatio || 1,
-          autoDensity: true
+          autoDensity: true,
+          resizeTo: avatar
         });
         live2dApp = app;
 
@@ -567,32 +539,102 @@
           { autoInteract: false }
         );
 
-        // Fit model to circle (face-focused crop)
-        var s = 60 / model.height * 3.2;
-        model.scale.set(s);
-        model.anchor.set(0.5, 0.5);
-        model.x = 30;
-        model.y = 45; // slightly lower so face fits
+        // Full body — fit to avatar container
+        var scale = Math.min(w / model.width, h / model.height) * 1.0;
+        model.scale.set(scale);
+        model.x = (w - model.width) / 2;
+        model.y = (h - model.height) / 2;
 
         app.stage.addChild(model);
         live2dModel = model;
         live2dLoaded = true;
 
-        avatarLoader.style.display = 'none';
-        avatarFallback.style.display = 'none';
+        // Hide loader + fallback
+        if (avatarLoader) avatarLoader.style.display = 'none';
+        if (avatarFallback) avatarFallback.style.display = 'none';
         avatarCanvas.style.display = 'block';
 
-        console.log('%c💜 Live2D Haru loaded in chat!', 'color:#e879f9;font-weight:bold');
+        // Cursor tracking (only when chat is open)
+        var tracking = { x: 0, y: 0 };
+        document.addEventListener('mousemove', function(e) {
+          if (!chatOpen) return;
+          var rect = avatar.getBoundingClientRect();
+          var cx = rect.left + rect.width / 2;
+          var cy = rect.top + rect.height / 2;
+          tracking.x = (e.clientX - cx) / (window.innerWidth / 2);
+          tracking.y = (e.clientY - cy) / (window.innerHeight / 2);
+        }, { passive: true });
+
+        app.ticker.add(function() {
+          if (model && model.internalModel) {
+            try { model.focus(tracking.x, tracking.y); } catch(e) {}
+          }
+        });
+
+        // Hit detection — react to touches on model
+        model.on('hit', function(hitAreas) {
+          try {
+            if (!hitAreas || !hitAreas.length) return;
+            var area = hitAreas[0] || '';
+            var reactLines;
+            if (/head|face/i.test(area))       reactLines = lines.touchHead;
+            else if (/body/i.test(area))       reactLines = lines.touchBody;
+            else                                reactLines = lines.touchFace;
+            reactToTouch(pick(reactLines));
+          } catch(e) {}
+        });
+
+        console.log('%c💜 Live2D Haru loaded on side!', 'color:#e879f9;font-weight:bold');
       } catch(err) {
-        console.warn('[Safiya] Live2D failed, using fallback', err);
-        avatarLoader.style.display = 'none';
+        console.warn('[Safiya] Live2D failed', err);
+        if (avatarLoader) avatarLoader.style.display = 'none';
         live2dLoading = false;
       }
     })();
   }
 
+  // Manual touch on avatar container (fallback if hit doesn't fire)
+  var lastTouchTime = 0;
+  avatar.addEventListener('click', function(e) {
+    var now = Date.now();
+    if (now - lastTouchTime < 500) return; // debounce
+    lastTouchTime = now;
+
+    // Try to trigger Live2D motion
+    if (live2dModel) {
+      try {
+        var groups = ['TapBody', 'Tap', 'flick_head'];
+        for (var i = 0; i < groups.length; i++) {
+          try { live2dModel.motion(groups[i]); break; } catch(e) {}
+        }
+      } catch(e) {}
+    }
+
+    // Visual pulse
+    avatar.classList.remove('s-avatar-tap');
+    void avatar.offsetWidth;
+    avatar.classList.add('s-avatar-tap');
+
+    // Random reaction (if hit detection didn't fire)
+    reactToTouch(pick([].concat(lines.touchFace, lines.touchBody, lines.touchHead)));
+
+    if (navigator.vibrate) navigator.vibrate(20);
+  });
+
+  function reactToTouch(line) {
+    if (!chatOpen) return;
+    // Small delay so it feels natural
+    setTimeout(function() {
+      addTyping();
+      setTimeout(function() {
+        removeTyping();
+        addMessage(line, 'her', { showAvatar: true });
+      }, 500);
+    }, 150);
+  }
+
   // ═══════════════════════════════════════════════
-  // PROACTIVE BUBBLES (idle nudges)
+  // IDLE NUDGES
   // ═══════════════════════════════════════════════
   var lastAct = Date.now();
   var nudges = 0;
@@ -645,15 +687,11 @@
     }
   }, { passive: true });
 
-  // ═══════════════════════════════════════════════
-  // FIX UP-BUTTON CONFLICT
-  // ═══════════════════════════════════════════════
-  var btt = document.getElementById('btt');
+  // Fix up-button
+  var btt = $('btt');
   if (btt) btt.style.right = '90px';
 
-  // ═══════════════════════════════════════════════
-  // GLOBAL API
-  // ═══════════════════════════════════════════════
+  // Global API
   window.Safiya = {
     open: openChat,
     close: closeChat,
@@ -672,18 +710,17 @@
       try { localStorage.setItem('safiya_creator', 'ayano-217'); } catch(e) {}
       isCreator = true;
       showBubble("Ayano-sama! Recognized! I'm yours forever 💜", 7000);
-    },
-    touch: reactToTouch
+    }
   };
 
-  console.log('%c💜 Safiya v7.0 ready | Visit #' + memory.visits + ' | Mood: ' + mood,
+  console.log('%c💜 Safiya v8.0 ready | Visit #' + memory.visits + ' | Mood: ' + mood,
     'color:#e879f9;font-weight:bold;font-size:13px');
 })();
 </script>
 
 <style>
   /* ═══════════════════════════════════════════════
-     ROOT (fixed positioning)
+     ROOT
      ═══════════════════════════════════════════════ */
   #safiya-root {
     position: fixed;
@@ -697,8 +734,11 @@
   }
   #safiya-root > * { pointer-events: auto; }
 
+  /* CRITICAL FIX: Lock all SVGs inside Safiya to their attributes */
+  #safiya-root svg { display: block; flex-shrink: 0; }
+
   /* ═══════════════════════════════════════════════
-     CHAT HEAD (floating circle)
+     FLOATING HEAD (idle state)
      ═══════════════════════════════════════════════ */
   .s-head {
     position: relative;
@@ -726,18 +766,15 @@
     transform: scale(1.1) translateY(-2px);
     box-shadow:
       0 12px 40px rgba(192, 132, 252, 0.65),
-      0 0 60px rgba(232, 121, 249, 0.4),
-      inset 0 -3px 8px rgba(0, 0, 0, 0.15);
+      0 0 60px rgba(232, 121, 249, 0.4);
   }
   .s-head:active { transform: scale(0.95); }
   .s-head-hide { opacity: 0; pointer-events: none; transform: scale(0.3) rotate(-90deg); }
 
-  .s-head-inner {
-    width: 100%; height: 100%;
+  .s-head-icon {
     display: flex; align-items: center; justify-content: center;
     color: #fff;
   }
-  .s-head-inner svg { width: 26px; height: 26px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
 
   .s-head-ring {
     position: absolute; inset: -4px;
@@ -759,10 +796,12 @@
     border-radius: 50%;
     box-shadow: 0 0 10px #22c55e;
   }
+
   .s-head-notify {
     position: absolute;
     top: -4px; right: -4px;
-    min-width: 20px; height: 20px;
+    min-width: 20px;
+    height: 20px;
     padding: 0 6px;
     background: linear-gradient(135deg, #ef4444, #f97316);
     color: #fff;
@@ -782,7 +821,7 @@
   }
 
   /* ═══════════════════════════════════════════════
-     SPEECH BUBBLE (notification pop)
+     SPEECH BUBBLE (idle)
      ═══════════════════════════════════════════════ */
   .s-bubble {
     position: absolute;
@@ -811,9 +850,7 @@
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     cursor: pointer;
   }
-  .s-bubble-show {
-    opacity: 1; visibility: visible; transform: translateY(0) scale(1);
-  }
+  .s-bubble-show { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
   .s-bubble-avatar {
     width: 34px; height: 34px;
     border-radius: 50%;
@@ -823,7 +860,6 @@
     flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(192, 132, 252, 0.4);
   }
-  .s-bubble-avatar svg { width: 18px; height: 18px; }
   .s-bubble-body { flex: 1; min-width: 0; }
   .s-bubble-name {
     font-weight: 700;
@@ -846,18 +882,154 @@
     background: rgba(255, 255, 255, 0.05);
     border: none;
     color: rgba(243, 232, 255, 0.6);
-    font-size: 1.2rem;
     cursor: pointer;
-    line-height: 1;
     width: 22px; height: 22px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50%;
     transition: all 0.2s;
+    padding: 0;
   }
   .s-bubble-x:hover { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
 
   /* ═══════════════════════════════════════════════
-     CHAT PANEL (Premium Messenger)
+     SIDE AVATAR (Live2D Haru — opens with chat)
+     ═══════════════════════════════════════════════ */
+  .s-avatar {
+    position: fixed;
+    bottom: 20px;
+    right: 410px;    /* Sits to the LEFT of the 380px chat panel (+ 30px gap) */
+    width: 220px;
+    height: 300px;
+    z-index: 9996;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(20px) scale(0.9);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: safiyaFloat 5s ease-in-out infinite;
+    cursor: pointer;
+  }
+  .s-avatar-show {
+    opacity: 1; visibility: visible; transform: translateX(0) scale(1);
+    pointer-events: auto;
+  }
+  @keyframes safiyaFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+  .s-avatar-show.s-avatar-tap {
+    animation: avatarTap 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes avatarTap {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  .s-avatar-glow {
+    position: absolute;
+    inset: -30px;
+    background: radial-gradient(circle,
+      rgba(232, 121, 249, 0.35) 0%,
+      rgba(192, 132, 252, 0.15) 40%,
+      transparent 70%);
+    filter: blur(20px);
+    pointer-events: none;
+    animation: glowPulse 3s ease-in-out infinite;
+    z-index: -1;
+  }
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.1); }
+  }
+
+  #s-avatar-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    display: none;
+    z-index: 2;
+  }
+
+  .s-avatar-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    z-index: 1;
+  }
+  .s-avatar-fb-shape {
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    border-radius: 50%;
+    box-shadow:
+      0 20px 60px rgba(192, 132, 252, 0.5),
+      0 0 80px rgba(232, 121, 249, 0.3);
+    animation: fbBreathe 3s ease-in-out infinite;
+  }
+  @keyframes fbBreathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.05); }
+  }
+  .s-avatar-fb-text {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    background: linear-gradient(90deg, #c084fc, #e879f9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.1em;
+  }
+
+  .s-avatar-loader {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .s-avatar-spinner {
+    width: 40px; height: 40px;
+    border: 3px solid rgba(192, 132, 252, 0.2);
+    border-top-color: #e879f9;
+    border-right-color: #c084fc;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .s-avatar-hint {
+    position: absolute;
+    bottom: -30px; left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, rgba(28, 15, 61, 0.9), rgba(15, 8, 35, 0.9));
+    border: 1px solid rgba(232, 121, 249, 0.3);
+    color: #e879f9;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: hintBounce 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes hintBounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(-3px); }
+  }
+
+  /* ═══════════════════════════════════════════════
+     CHAT PANEL
      ═══════════════════════════════════════════════ */
   .s-chat {
     position: absolute;
@@ -886,11 +1058,9 @@
     transform-origin: bottom right;
     transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  .s-chat-open {
-    opacity: 1; visibility: visible; transform: translateY(0) scale(1);
-  }
+  .s-chat-open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
 
-  /* ── Chat Header ── */
+  /* Chat Header */
   .s-chat-head {
     display: flex;
     align-items: center;
@@ -923,6 +1093,7 @@
     transition: all 0.2s;
     -webkit-tap-highlight-color: transparent;
     padding: 0;
+    flex-shrink: 0;
   }
   .s-chat-btn:hover {
     background: rgba(192, 132, 252, 0.2);
@@ -930,82 +1101,27 @@
     transform: scale(1.05);
   }
   .s-chat-btn:active { transform: scale(0.9); }
-  .s-close:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+  .s-chat-btn-close:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
 
-  /* ── Live2D Avatar in header ── */
-  .s-chat-avatar-wrap {
-    position: relative;
-    width: 44px; height: 44px;
+  .s-chat-head-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+  .s-chat-head-avatar {
+    width: 38px; height: 38px;
     border-radius: 50%;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    padding: 2px;
-    cursor: pointer;
-    flex-shrink: 0;
-    box-shadow:
-      0 4px 15px rgba(192, 132, 252, 0.4),
-      0 0 20px rgba(232, 121, 249, 0.25);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    overflow: hidden;
-  }
-  .s-chat-avatar-wrap:hover { transform: scale(1.08); }
-  .s-chat-avatar-wrap:active { transform: scale(0.95); }
-  .s-chat-avatar-wrap::before {
-    content: '';
-    position: absolute; inset: 2px;
-    border-radius: 50%;
-    background: #0a0517;
-    z-index: 1;
-  }
-
-  #s-chat-canvas {
-    position: relative;
-    z-index: 2;
-    width: 40px !important;
-    height: 40px !important;
-    border-radius: 50%;
-    display: none;
-  }
-
-  .s-chat-avatar-fallback {
-    position: absolute; inset: 2px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #2d1b4e, #1e0f3d);
     display: flex; align-items: center; justify-content: center;
-    color: #e879f9;
-    z-index: 2;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(192, 132, 252, 0.4);
+    border: 2px solid rgba(232, 121, 249, 0.35);
   }
-  .s-chat-avatar-fallback svg {
-    width: 22px; height: 22px;
-    animation: heartPulse 2s ease-in-out infinite;
-  }
-  @keyframes heartPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
-  }
-
-  .s-chat-avatar-loader {
-    position: absolute; inset: -4px;
-    border-radius: 50%;
-    border: 2px solid transparent;
-    border-top-color: #e879f9;
-    border-right-color: #c084fc;
-    animation: spin 0.8s linear infinite;
-    display: none;
-    z-index: 3;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .s-avatar-pulse {
-    animation: avatarPulse 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  @keyframes avatarPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); box-shadow: 0 0 30px rgba(232, 121, 249, 0.8); }
-    100% { transform: scale(1); }
-  }
-
-  .s-chat-info { flex: 1; min-width: 0; }
-  .s-chat-name {
+  .s-chat-head-text { flex: 1; min-width: 0; }
+  .s-chat-head-name {
     font-weight: 800;
     font-size: 1rem;
     background: linear-gradient(90deg, #f3e8ff, #e879f9);
@@ -1015,7 +1131,7 @@
     line-height: 1.2;
     letter-spacing: -0.01em;
   }
-  .s-chat-status {
+  .s-chat-head-status {
     font-size: 0.7rem;
     color: rgba(192, 132, 252, 0.85);
     display: flex;
@@ -1030,20 +1146,20 @@
     border-radius: 50%;
     box-shadow: 0 0 8px #22c55e;
     animation: dotPulse 2s ease-in-out infinite;
+    flex-shrink: 0;
   }
   @keyframes dotPulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
   }
-
-  .s-chat-actions {
+  .s-chat-head-actions {
     display: flex;
     gap: 4px;
     flex-shrink: 0;
   }
 
   /* ═══════════════════════════════════════════════
-     MESSAGES (glassmorphism bubbles)
+     MESSAGES — PREMIUM GLASSMORPHISM BUBBLES
      ═══════════════════════════════════════════════ */
   .s-chat-body {
     flex: 1;
@@ -1051,7 +1167,7 @@
     padding: 18px 14px;
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 6px;
     scrollbar-width: thin;
     scrollbar-color: rgba(192, 132, 252, 0.35) transparent;
     scroll-behavior: smooth;
@@ -1064,10 +1180,10 @@
 
   .s-msg-time {
     text-align: center;
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     color: rgba(192, 132, 252, 0.55);
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     margin: 14px 0 10px;
     font-family: 'JetBrains Mono', monospace;
     text-transform: uppercase;
@@ -1082,10 +1198,10 @@
   }
   @keyframes msgIn {
     from { opacity: 0; transform: translateY(10px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
   }
   .s-msg-her { justify-content: flex-start; }
-  .s-msg-me { justify-content: flex-end; }
+  .s-msg-me  { justify-content: flex-end; }
 
   .s-msg-avatar {
     width: 28px; height: 28px;
@@ -1095,8 +1211,8 @@
     color: #fff;
     flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(192, 132, 252, 0.35);
+    border: 1.5px solid rgba(255, 255, 255, 0.15);
   }
-  .s-msg-avatar svg { width: 14px; height: 14px; }
   .s-msg-avatar-spacer {
     width: 28px; height: 28px;
     flex-shrink: 0;
@@ -1110,48 +1226,51 @@
     line-height: 1.45;
     word-wrap: break-word;
     font-weight: 500;
-    position: relative;
     letter-spacing: -0.005em;
   }
 
-  /* Safiya's bubbles — glassmorphism dark */
+  /* ── SAFIYA's bubbles — PURPLE tinted glassmorphism ── */
   .s-msg-her .s-msg-bubble {
     background: linear-gradient(135deg,
-      rgba(60, 40, 90, 0.55) 0%,
-      rgba(45, 27, 78, 0.6) 100%);
+      rgba(192, 132, 252, 0.18) 0%,
+      rgba(168, 85, 247, 0.15) 100%);
     color: #f3e8ff;
-    border: 1px solid rgba(192, 132, 252, 0.18);
+    border: 1px solid rgba(192, 132, 252, 0.3);
     border-bottom-left-radius: 6px;
-    backdrop-filter: blur(12px) saturate(1.2);
-    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    backdrop-filter: blur(15px) saturate(1.3);
+    -webkit-backdrop-filter: blur(15px) saturate(1.3);
     box-shadow:
-      0 2px 12px rgba(0, 0, 0, 0.25),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      0 4px 15px rgba(192, 132, 252, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
-  /* User's bubbles — brand gradient */
+  /* ── USER's bubbles — CYAN tinted glassmorphism ── */
   .s-msg-me .s-msg-bubble {
-    background: linear-gradient(135deg, #c084fc 0%, #e879f9 100%);
-    color: #fff;
+    background: linear-gradient(135deg,
+      rgba(125, 211, 252, 0.22) 0%,
+      rgba(34, 211, 238, 0.18) 100%);
+    color: #ecfeff;
+    border: 1px solid rgba(125, 211, 252, 0.4);
     border-bottom-right-radius: 6px;
+    backdrop-filter: blur(15px) saturate(1.3);
+    -webkit-backdrop-filter: blur(15px) saturate(1.3);
     box-shadow:
-      0 4px 15px rgba(192, 132, 252, 0.4),
-      0 0 20px rgba(232, 121, 249, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      0 4px 15px rgba(125, 211, 252, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
 
   /* Typing indicator */
   .s-msg-typing {
     background: linear-gradient(135deg,
-      rgba(60, 40, 90, 0.55),
-      rgba(45, 27, 78, 0.6));
-    border: 1px solid rgba(192, 132, 252, 0.18);
+      rgba(192, 132, 252, 0.18),
+      rgba(168, 85, 247, 0.15));
+    border: 1px solid rgba(192, 132, 252, 0.3);
     padding: 12px 16px;
     border-radius: 20px;
     border-bottom-left-radius: 6px;
     display: flex; gap: 5px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
   }
   .s-msg-typing span {
     width: 7px; height: 7px;
@@ -1167,7 +1286,7 @@
   }
 
   /* ═══════════════════════════════════════════════
-     INPUT BAR (premium)
+     INPUT BAR
      ═══════════════════════════════════════════════ */
   .s-chat-input-bar {
     display: flex;
@@ -1263,7 +1382,7 @@
   .s-send:active { transform: scale(0.92); }
 
   /* ═══════════════════════════════════════════════
-     MINIMIZED PILL (bottom bar)
+     MINIMIZED PILL
      ═══════════════════════════════════════════════ */
   .s-mini {
     position: fixed;
@@ -1290,9 +1409,7 @@
     transform: translateY(20px);
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  .s-mini-show {
-    opacity: 1; visibility: visible; transform: translateY(0);
-  }
+  .s-mini-show { opacity: 1; visibility: visible; transform: translateY(0); }
   .s-mini-avatar {
     width: 34px; height: 34px;
     border-radius: 50%;
@@ -1302,7 +1419,6 @@
     flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(192, 132, 252, 0.4);
   }
-  .s-mini-avatar svg { width: 16px; height: 16px; }
   .s-mini-name {
     font-weight: 700;
     color: #f3e8ff;
@@ -1328,16 +1444,25 @@
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
-    font-size: 1.1rem;
-    line-height: 1;
     transition: all 0.2s;
     -webkit-tap-highlight-color: transparent;
+    padding: 0;
   }
   .s-mini-x:hover { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
 
   /* ═══════════════════════════════════════════════
-     MOBILE — Full-screen chat
+     MOBILE — Avatar becomes smaller, chat full-screen
      ═══════════════════════════════════════════════ */
+  @media (max-width: 900px) {
+    /* On tablets: avatar goes above chat instead of side */
+    .s-avatar {
+      right: 20px;
+      bottom: calc(100vh - 320px); /* peek above chat */
+      width: 160px;
+      height: 220px;
+    }
+  }
+
   @media (max-width: 640px) {
     #safiya-root {
       bottom: 16px;
@@ -1354,6 +1479,7 @@
       right: 14px;
       width: auto;
     }
+    /* Mobile: chat full-screen */
     .s-chat {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -1362,6 +1488,26 @@
       max-height: 100vh;
       border-radius: 0;
       border: none;
+    }
+    /* Mobile: avatar in top corner, smaller */
+    .s-avatar {
+      position: fixed;
+      top: 60px;
+      right: 12px;
+      bottom: auto;
+      width: 100px;
+      height: 140px;
+      z-index: 10000;
+    }
+    .s-avatar-fb-shape {
+      width: 70px;
+      height: 70px;
+    }
+    .s-avatar-fb-text { font-size: 0.85rem; }
+    .s-avatar-hint {
+      font-size: 0.6rem;
+      padding: 3px 8px;
+      bottom: -22px;
     }
     .s-chat-body { padding: 16px 12px; }
     #s-input { font-size: 1rem; padding: 12px 0; }
@@ -1376,7 +1522,8 @@
 
   @media (prefers-reduced-motion: reduce) {
     .s-head-ring, .s-head-notify, .s-dot,
-    .s-chat-avatar-fallback svg {
+    .s-avatar-glow, .s-avatar, .s-avatar-fb-shape,
+    .s-avatar-hint {
       animation: none !important;
     }
   }
