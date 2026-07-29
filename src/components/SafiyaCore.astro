@@ -1,22 +1,13 @@
 ---
 // ═══════════════════════════════════════════════════════════════
-// SAFIYA CORE v10.0 — UNIVERSAL LIVE2D + SMART MOTION SYSTEM
+// SAFIYA CORE v10.2 — CLEAN REBUILD + SILENT LIVE2D
 // Path: src/components/SafiyaCore.astro
 // ═══════════════════════════════════════════════════════════════
-//
-// 📁 MODEL SETUP:
-// 1. Upload your Live2D model files to: public/live2d/safiya/
-// 2. Update MODEL_PATH below to match your .model3.json filename
-// 3. Motions/expressions auto-detected — no config needed!
-//
-// 🎭 FEATURES:
-// ✅ Universal Cubism 4 model loader (works with ANY model)
-// ✅ Auto-detects all motions & expressions on load
-// ✅ Smart motion triggers based on chat context
-// ✅ Emotion detection: reply text → matching animation
-// ✅ Idle random motions (natural feel)
-// ✅ Touch reactions (body/head/face)
-// ✅ Console debug tools: Safiya.listMotions(), etc.
+// ✅ No duplicate code (fixes SyntaxError)
+// ✅ Silent Live2D (no auto voice)
+// ✅ Touch = only trigger (no idle spam)
+// ✅ Custom voice lines support
+// ✅ Text-based expression sync
 // ═══════════════════════════════════════════════════════════════
 ---
 
@@ -149,20 +140,24 @@
   'use strict';
 
   // ═══════════════════════════════════════════════
-  // ⚙️ MODEL CONFIGURATION — CHANGE THIS!
+  // ⚙️ MODEL CONFIG
   // ═══════════════════════════════════════════════
-  // Set this to your .model3.json filename path.
-  // Examples:
-  //   '/live2d/safiya/hiyori_pro_t11.model3.json'
-  //   '/live2d/safiya/mao_pro_t04.model3.json'
-  //   '/live2d/safiya/haru_greeter_t05.model3.json'  (fallback to Haru)
   var MODEL_PATH = '/live2d/safiya/izumi_illust.model3.json';
-
-  // Fallback model paths to try if primary fails
   var MODEL_FALLBACKS = [
-  '/live2d/safiya/izumi_illust.model3.json',
-  '/live2d/haru/haru_greeter_t05.model3.json',
-];
+    '/live2d/safiya/izumi_illust.model3.json',
+    '/live2d/haru/haru_greeter_t05.model3.json',
+  ];
+
+  // ═══════════════════════════════════════════════
+  // 🎤 VOICE LINES (add MP3 URLs when you want)
+  // ═══════════════════════════════════════════════
+  var VOICE_LINES = {
+    touch: [],
+    greet: [],
+    happy: [],
+    shy: [],
+    angry: [],
+  };
 
   var $ = function(id) { return document.getElementById(id); };
   var root = $('safiya-root'), head = $('safiya-head'), notify = $('safiya-notify');
@@ -268,7 +263,7 @@
     }
   }
 
-  // ═══ LOCAL LINES (fallback) ═══
+  // ═══ FALLBACK LINES ═══
   var lines = {
     rude: ["hey. try not to bore me 🙄", "you again? ✨", "cool story bro"],
     teasing: ["aww miss me already? 😏", "predictable~"],
@@ -340,7 +335,6 @@
         safeSet('safiya_memory', memory);
       } catch(e) {}
     }
-    // ★ TRIGGER MOTION BASED ON MESSAGE CONTENT ★
     if (sender === 'her' && !opts.skipSave) {
       triggerMotionFromText(text);
     }
@@ -440,42 +434,45 @@
   mini.addEventListener('click', unminimize);
   miniX.addEventListener('click', function(e) { e.stopPropagation(); closeChat(); });
 
-  async function sendMsg() {
+  function sendMsg() {
     var text = chatInput.value.trim();
     if (!text) return;
     detectName(text);
     addMessage(text, 'me');
     chatInput.value = '';
-    // Trigger listening motion
     triggerMotionByKeyword('listen');
-    setTimeout(async function() {
+    setTimeout(function() {
       addTyping();
       statusText.textContent = 'typing...';
       var reply = null;
-      try {
-        var ctx = {
-          message: text, isCreator: isCreator, visits: memory.visits, mood: mood,
-          userName: memory.userName || '',
-          history: memory.chatHistory.slice(-15),
-          pagesViewed: b.pagesViewed.slice(-5).map(function(p) { return p.path; }),
-          animeClicked: b.animeClicked.slice(-3).map(function(a) { return a.slug; }),
-          productsClicked: b.productsClicked.length
-        };
-        var res = await fetch('/api/safiya-chat', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(ctx)
-        });
-        if (res.ok) {
-          var data = await res.json();
-          reply = data.reply;
-          if (data.mood) setMood(data.mood);
-        }
-      } catch(e) {}
-      if (!reply) reply = localReply(text);
-      removeTyping();
-      statusText.textContent = 'Active now';
-      addMessage(reply, 'her');
+      var ctx = {
+        message: text, isCreator: isCreator, visits: memory.visits, mood: mood,
+        userName: memory.userName || '',
+        history: memory.chatHistory.slice(-15),
+        pagesViewed: b.pagesViewed.slice(-5).map(function(p) { return p.path; }),
+        animeClicked: b.animeClicked.slice(-3).map(function(a) { return a.slug; }),
+        productsClicked: b.productsClicked.length
+      };
+      fetch('/api/safiya-chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ctx)
+      }).then(function(res) {
+        if (res.ok) return res.json();
+        throw new Error('AI failed');
+      }).then(function(data) {
+        reply = data.reply;
+        if (data.mood) setMood(data.mood);
+        finishReply(reply);
+      }).catch(function() {
+        finishReply(localReply(text));
+      });
     }, 400);
+  }
+  function finishReply(reply) {
+    if (!reply) reply = "hmph.";
+    removeTyping();
+    statusText.textContent = 'Active now';
+    addMessage(reply, 'her');
   }
   function localReply(input) {
     var l = input.toLowerCase();
@@ -500,8 +497,8 @@
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
   });
 
-   // ═══════════════════════════════════════════════
-  // 🎭 LIVE2D — UNIVERSAL LOADER + SILENT + CUSTOM VOICE
+  // ═══════════════════════════════════════════════
+  // 🎭 LIVE2D — SILENT + SMART MOTIONS
   // ═══════════════════════════════════════════════
   var live2dApp = null, live2dModel = null;
   var live2dLoaded = false, live2dLoading = false;
@@ -509,30 +506,10 @@
   var availableExpressions = [];
   var lastMotionTime = 0;
   var idleMotionInterval = null;
-  var currentAudio = null;  // For touch sounds
-
-  // ═══════════════════════════════════════════════
-  // 🎤 CUSTOM VOICE LINES (customizable!)
-  // Only play when user touches Izumi
-  // ═══════════════════════════════════════════════
-  // Set to null to disable all sounds
-  // Or map custom audio files (place in /public/safiya/voice/)
-  var VOICE_LINES = {
-    // Touch reactions — only these play on tap
-    touch: [
-      // Example: '/safiya/voice/touch1.mp3',
-      // Example: '/safiya/voice/touch2.mp3',
-      // Leave empty for now — no sound files needed
-    ],
-    greet: [],   // For "hi" messages
-    happy: [],   // For happy replies
-    shy: [],     // For flirty/blush replies
-    angry: [],   // For angry replies
-  };
+  var currentAudio = null;
 
   function playCustomVoice(category) {
     if (!VOICE_LINES[category] || VOICE_LINES[category].length === 0) return;
-    // Stop any currently playing audio
     if (currentAudio) {
       try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e) {}
     }
@@ -540,9 +517,7 @@
     try {
       currentAudio = new Audio(line);
       currentAudio.volume = 0.7;
-      currentAudio.play().catch(function(e) {
-        console.warn('[Safiya] Voice play failed:', e);
-      });
+      currentAudio.play().catch(function() {});
     } catch(e) {}
   }
 
@@ -551,15 +526,11 @@
       try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e) {}
       currentAudio = null;
     }
-    // Also stop any Live2D internal audio
     if (live2dModel && live2dModel.internalModel) {
       try {
         var mm = live2dModel.internalModel.motionManager;
-        if (mm) {
-          // Disable sound player
-          if (mm.currentAudio) {
-            try { mm.currentAudio.pause(); mm.currentAudio = null; } catch(e) {}
-          }
+        if (mm && mm.currentAudio) {
+          try { mm.currentAudio.pause(); mm.currentAudio = null; } catch(e) {}
         }
       } catch(e) {}
     }
@@ -584,38 +555,29 @@
       });
     }
 
-    async function tryLoadModel(path) {
-      try {
-        var testRes = await fetch(path, { method: 'HEAD' });
-        if (!testRes.ok) return null;
-      } catch(e) { return null; }
-      try {
-        // ★ CRITICAL: Disable auto sound + auto interaction
-        var model = await PIXI.live2d.Live2DModel.from(path, {
+    function tryLoadModel(path) {
+      return fetch(path, { method: 'HEAD' }).then(function(res) {
+        if (!res.ok) return null;
+        return PIXI.live2d.Live2DModel.from(path, {
           autoInteract: false,
           autoUpdate: true,
-          // Disable audio loading completely
-          motionPreload: 'NONE',  // Don't preload motions (which auto-plays sounds)
+          motionPreload: 'NONE',
         });
-        return model;
-      } catch(e) {
-        console.warn('[Safiya] Failed to load ' + path, e);
-        return null;
-      }
+      }).catch(function() { return null; });
     }
 
-    (async function() {
-      try {
-        for (var i = 0; i < libs.length; i++) await loadScript(libs[i]);
+    (function() {
+      var loadChain = Promise.resolve();
+      libs.forEach(function(src) {
+        loadChain = loadChain.then(function() { return loadScript(src); });
+      });
+
+      loadChain.then(function() {
         if (typeof PIXI === 'undefined' || !PIXI.live2d) throw new Error('libs missing');
 
-        // ★ DISABLE SOUND GLOBALLY (before model loads)
-        if (PIXI.live2d.SoundManager) {
-          PIXI.live2d.SoundManager.volume = 0;  // Mute all Live2D sounds
-        }
-        if (PIXI.live2d.config) {
-          PIXI.live2d.config.sound = false;  // Disable sound system
-        }
+        // Disable sound globally
+        if (PIXI.live2d.SoundManager) PIXI.live2d.SoundManager.volume = 0;
+        if (PIXI.live2d.config) PIXI.live2d.config.sound = false;
 
         var isMobile = window.innerWidth <= 720;
         var w = isMobile ? 120 : 240;
@@ -628,52 +590,51 @@
         });
         live2dApp = app;
 
-        var model = null;
-        var loadedPath = null;
+        // Try model paths sequentially
         var pathsToTry = [MODEL_PATH].concat(MODEL_FALLBACKS.filter(function(p) { return p !== MODEL_PATH; }));
-        for (var j = 0; j < pathsToTry.length; j++) {
-          console.log('%c🔍 Trying model: ' + pathsToTry[j], 'color:#c084fc');
-          model = await tryLoadModel(pathsToTry[j]);
-          if (model) { loadedPath = pathsToTry[j]; break; }
-        }
-        if (!model) throw new Error('No model file found');
+        var modelChain = Promise.resolve(null);
+        pathsToTry.forEach(function(p) {
+          modelChain = modelChain.then(function(m) {
+            if (m) return m;
+            console.log('%c🔍 Trying: ' + p, 'color:#c084fc');
+            return tryLoadModel(p).then(function(loaded) {
+              if (loaded) console.log('%c✅ Loaded: ' + p, 'color:#22c55e;font-weight:bold');
+              return loaded;
+            });
+          });
+        });
 
-        var scale = (h / model.height) * 0.95;
-        model.scale.set(scale);
-        model.anchor.set(0.5, 0.5);
-        model.x = w / 2; model.y = h / 2;
+        return modelChain.then(function(model) {
+          if (!model) throw new Error('No model loaded');
 
-        app.stage.addChild(model);
-        live2dModel = model;
-        live2dLoaded = true;
+          var scale = (h / model.height) * 0.95;
+          model.scale.set(scale);
+          model.anchor.set(0.5, 0.5);
+          model.x = w / 2; model.y = h / 2;
 
-        if (avatarLoader) avatarLoader.style.display = 'none';
-        if (avatarFallback) avatarFallback.style.display = 'none';
-        avatarCanvas.style.display = 'block';
+          app.stage.addChild(model);
+          live2dModel = model;
+          live2dLoaded = true;
 
-        // ═══════════════════════════════════════
-        // ★★★ DISABLE MODEL'S BUILT-IN SOUND ★★★
-        // ═══════════════════════════════════════
-        try {
-          // Disable sound in motion manager
-          var mm = model.internalModel && model.internalModel.motionManager;
-          if (mm) {
-            // Override the sound playing function
-            if (mm.playSound) mm.playSound = function() { return; };
-            if (mm._playSound) mm._playSound = function() { return; };
-            // Also override sound property on motions
-            mm.on && mm.on('motionStart', function() { stopAllAudio(); });
-          }
-          // Set model volume to 0
-          if (model.volume !== undefined) model.volume = 0;
-          console.log('%c🔇 Live2D sounds disabled', 'color:#22c55e;font-weight:bold');
-        } catch(e) { console.warn('[Safiya] Sound disable error:', e); }
+          if (avatarLoader) avatarLoader.style.display = 'none';
+          if (avatarFallback) avatarFallback.style.display = 'none';
+          avatarCanvas.style.display = 'block';
 
-        // Detect motions
-        try {
-          var mm2 = model.internalModel && model.internalModel.motionManager;
-          if (mm2) {
-            var settings = model.internalModel.settings;
+          // Disable model's built-in sound
+          try {
+            var mm = model.internalModel && model.internalModel.motionManager;
+            if (mm) {
+              if (mm.playSound) mm.playSound = function() { return; };
+              if (mm._playSound) mm._playSound = function() { return; };
+              if (mm.on) mm.on('motionStart', function() { stopAllAudio(); });
+            }
+            if (model.volume !== undefined) model.volume = 0;
+            console.log('%c🔇 Live2D sounds disabled', 'color:#22c55e;font-weight:bold');
+          } catch(e) {}
+
+          // Detect motions
+          try {
+            var settings = model.internalModel && model.internalModel.settings;
             if (settings && settings.motions) {
               availableMotions = [];
               Object.keys(settings.motions).forEach(function(group) {
@@ -682,61 +643,56 @@
               });
               console.log('%c🎭 Motion groups (' + availableMotions.length + '):', 'color:#e879f9;font-weight:bold');
               availableMotions.forEach(function(m, i) {
-                console.log('%c   [' + i + '] "' + m.groupName + '" → ' + m.count + ' motion(s)', 'color:#c084fc');
+                console.log('%c  [' + i + '] "' + m.groupName + '" → ' + m.count + ' motion(s)', 'color:#c084fc');
               });
             }
             if (settings && settings.expressions) {
               availableExpressions = settings.expressions.map(function(e) { return e.Name || e.name; }).filter(Boolean);
               console.log('%c😊 Expressions (' + availableExpressions.length + '):', 'color:#e879f9;font-weight:bold', availableExpressions);
             }
-          }
-        } catch(e) { console.warn('[Safiya] Motion detection error:', e); }
+          } catch(e) { console.warn('[Safiya] Motion detection error:', e); }
 
-        // Cursor tracking
-        var tracking = { x: 0, y: 0 };
-        document.addEventListener('mousemove', function(e) {
-          if (!chatOpen) return;
-          var rect = avatar.getBoundingClientRect();
-          var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
-          tracking.x = (e.clientX - cx) / (window.innerWidth / 2);
-          tracking.y = (e.clientY - cy) / (window.innerHeight / 2);
-        }, { passive: true });
-        app.ticker.add(function() {
-          if (model && model.internalModel) {
-            try { model.focus(tracking.x, tracking.y); } catch(e) {}
-          }
+          // Cursor tracking
+          var tracking = { x: 0, y: 0 };
+          document.addEventListener('mousemove', function(e) {
+            if (!chatOpen) return;
+            var rect = avatar.getBoundingClientRect();
+            var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+            tracking.x = (e.clientX - cx) / (window.innerWidth / 2);
+            tracking.y = (e.clientY - cy) / (window.innerHeight / 2);
+          }, { passive: true });
+          app.ticker.add(function() {
+            if (model && model.internalModel) {
+              try { model.focus(tracking.x, tracking.y); } catch(e) {}
+            }
+          });
+
+          // Hit detection
+          model.on('hit', function(hitAreas) {
+            try {
+              if (!hitAreas || !hitAreas.length) return;
+              var area = hitAreas[0] || '';
+              console.log('%c👆 Hit: ' + area, 'color:#22d3ee;font-weight:bold');
+              handleTouch(area);
+            } catch(e) {}
+          });
+
+          startIdleMotions();
+          setTimeout(function() { playRandomMotion(); }, 800);
         });
-
-        // Hit detection
-        model.on('hit', function(hitAreas) {
-          try {
-            if (!hitAreas || !hitAreas.length) return;
-            var area = hitAreas[0] || '';
-            console.log('%c👆 Hit: ' + area, 'color:#22d3ee;font-weight:bold');
-            handleTouch(area);
-          } catch(e) {}
-        });
-
-        startIdleMotions();
-        setTimeout(function() { playRandomMotion(); }, 800);
-
-        console.log('%c💜 Live2D loaded: ' + loadedPath, 'color:#e879f9;font-weight:bold;font-size:14px');
-      } catch(err) {
+      }).catch(function(err) {
         console.error('[Safiya] Live2D FAILED:', err);
         if (avatarLoader) avatarLoader.style.display = 'none';
         live2dLoading = false;
-      }
+      });
     })();
   }
 
-  // ═══════════════════════════════════════════════
-  // 🎬 MOTION CONTROL (SILENT — no auto sound)
-  // ═══════════════════════════════════════════════
+  // ═══ MOTION CONTROL ═══
   function playMotion(groupName, index, priority) {
     if (!live2dModel) return false;
     priority = priority || 2;
     try {
-      // Stop any playing sound before new motion
       stopAllAudio();
       if (typeof index === 'number') {
         live2dModel.motion(groupName, index, priority);
@@ -744,13 +700,11 @@
         live2dModel.motion(groupName, undefined, priority);
       }
       lastMotionTime = Date.now();
-      // Silence any audio that motion might trigger
       setTimeout(stopAllAudio, 50);
       setTimeout(stopAllAudio, 200);
       return true;
     } catch(e) { return false; }
   }
-
   function playRandomMotion() {
     if (!live2dModel || !availableMotions.length) return;
     var nonIdle = availableMotions.filter(function(m) { return !/idle/i.test(m.groupName); });
@@ -758,18 +712,15 @@
     var chosen = pick(pool);
     playMotion(chosen.groupName, undefined, 2);
   }
-
   function playExpression(name) {
     if (!live2dModel) return false;
     try { live2dModel.expression(name); return true; } catch(e) { return false; }
   }
-
   function playRandomExpression() {
     if (!availableExpressions.length) return;
     playExpression(pick(availableExpressions));
   }
 
-  // Find motion by keyword
   function findMotionGroup(keywords) {
     if (!availableMotions.length) return null;
     for (var i = 0; i < keywords.length; i++) {
@@ -802,15 +753,20 @@
     return false;
   }
 
-  // ═══════════════════════════════════════════════
-  // ★ SMART EXPRESSION FROM CHAT TEXT ★
-  // Sync facial expression with Safiya's messages
-  // (NO sound — just motion + expression)
-  // ═══════════════════════════════════════════════
+  function tryExpression(keywords) {
+    if (!availableExpressions.length) return;
+    for (var i = 0; i < keywords.length; i++) {
+      var found = availableExpressions.find(function(e) {
+        return e.toLowerCase().indexOf(keywords[i].toLowerCase()) !== -1;
+      });
+      if (found) { playExpression(found); return true; }
+    }
+    return false;
+  }
+
   function triggerMotionFromText(text) {
     if (!live2dModel || !text) return;
     var t = text.toLowerCase();
-    // Motion trigger (facial + body)
     if (/💜|💕|love|cute|shy|blush|w-what|shut up/.test(t)) {
       triggerMotionByKeyword('shy');
       tryExpression(['shy', 'blush', 'happy']);
@@ -836,17 +792,6 @@
     }
   }
 
-  function tryExpression(keywords) {
-    if (!availableExpressions.length) return;
-    for (var i = 0; i < keywords.length; i++) {
-      var found = availableExpressions.find(function(e) {
-        return e.toLowerCase().indexOf(keywords[i].toLowerCase()) !== -1;
-      });
-      if (found) { playExpression(found); return true; }
-    }
-    return false;
-  }
-
   function triggerMoodMotion(newMood) {
     if (!live2dModel) return;
     if (newMood === 'flirty')      { triggerMotionByKeyword('shy'); tryExpression(['shy', 'blush']); }
@@ -855,51 +800,33 @@
     else if (newMood === 'rude')   { triggerMotionByKeyword('angry'); tryExpression(['angry']); }
   }
 
-  // ═══════════════════════════════════════════════
-  // ⏰ IDLE MOTIONS (silent, no repeat messages)
-  // ═══════════════════════════════════════════════
   function startIdleMotions() {
     if (idleMotionInterval) clearInterval(idleMotionInterval);
     idleMotionInterval = setInterval(function() {
       if (!live2dModel || !chatOpen) return;
       if (Date.now() - lastMotionTime < 12000) return;
-      // ONLY play motion (no chat message spam!)
       if (Math.random() < 0.35) playRandomMotion();
     }, 8000);
   }
 
-  // ═══════════════════════════════════════════════
-  // 👆 CENTRAL TOUCH HANDLER
-  // Called from both avatar click AND model hit
-  // Prevents duplicate messages
-  // ═══════════════════════════════════════════════
+  // ═══ TOUCH HANDLER (unified) ═══
   var lastTouchLine = '';
   var lastTouchAt = 0;
 
   function handleTouch(area) {
-    // Debounce touches (min 800ms between)
     var now = Date.now();
     if (now - lastTouchAt < 800) return;
     lastTouchAt = now;
 
-    // Play motion
     playRandomMotion();
-
-    // Random expression sometimes
-    if (Math.random() < 0.5 && availableExpressions.length) {
-      playRandomExpression();
-    }
-
-    // ★ Play voice ONLY if user configured VOICE_LINES.touch
+    if (Math.random() < 0.5 && availableExpressions.length) playRandomExpression();
     playCustomVoice('touch');
 
-    // Pick reaction line based on area
     var reactLines;
     if (/head|face/i.test(area || '')) reactLines = lines.touchHead;
     else if (/body/i.test(area || '')) reactLines = lines.touchBody;
     else reactLines = [].concat(lines.touchFace, lines.touchBody, lines.touchHead);
 
-    // Prevent same line twice in a row
     var line;
     var tries = 0;
     do {
@@ -908,283 +835,15 @@
     } while (line === lastTouchLine && tries < 5);
     lastTouchLine = line;
 
-    // Send to chat (only ONE message)
     reactToTouch(line);
-
-    // Vibrate on mobile
     if (navigator.vibrate) navigator.vibrate(20);
-
-    // Visual pulse
     avatar.classList.remove('s-avatar-tap');
     void avatar.offsetWidth;
     avatar.classList.add('s-avatar-tap');
   }
 
-  // Avatar click uses same handler
-  avatar.addEventListener('click', function() {
-    handleTouch('body'); // Default to body if no specific hit
-  });
+  avatar.addEventListener('click', function() { handleTouch('body'); });
 
-  function reactToTouch(line) {
-    if (!chatOpen) return;
-    setTimeout(function() {
-      addTyping();
-      setTimeout(function() {
-        removeTyping();
-        addMessage(line, 'her');
-      }, 500);
-    }, 150);
-  }
-
-    async function tryLoadModel(path) {
-      // Test if file exists
-      try {
-        var testRes = await fetch(path, { method: 'HEAD' });
-        if (!testRes.ok) return null;
-      } catch(e) { return null; }
-      // Try loading
-      try {
-        var model = await PIXI.live2d.Live2DModel.from(path, { autoInteract: false });
-        return model;
-      } catch(e) {
-        console.warn('[Safiya] Failed to load ' + path, e);
-        return null;
-      }
-    }
-
-    (async function() {
-      try {
-        for (var i = 0; i < libs.length; i++) await loadScript(libs[i]);
-        if (typeof PIXI === 'undefined' || !PIXI.live2d) throw new Error('libs missing');
-
-        var isMobile = window.innerWidth <= 720;
-        var w = isMobile ? 120 : 240;
-        var h = isMobile ? 170 : 340;
-
-        var app = new PIXI.Application({
-          view: avatarCanvas, width: w, height: h,
-          backgroundAlpha: 0, antialias: true,
-          resolution: window.devicePixelRatio || 1, autoDensity: true
-        });
-        live2dApp = app;
-
-        // Try each model path until one works
-        var model = null;
-        var loadedPath = null;
-        var pathsToTry = [MODEL_PATH].concat(MODEL_FALLBACKS.filter(function(p) { return p !== MODEL_PATH; }));
-        for (var j = 0; j < pathsToTry.length; j++) {
-          console.log('%c🔍 Trying model: ' + pathsToTry[j], 'color:#c084fc');
-          model = await tryLoadModel(pathsToTry[j]);
-          if (model) {
-            loadedPath = pathsToTry[j];
-            break;
-          }
-        }
-        if (!model) throw new Error('No model file found. Upload files to /public/live2d/safiya/');
-
-        var scale = (h / model.height) * 0.95;
-        model.scale.set(scale);
-        model.anchor.set(0.5, 0.5);
-        model.x = w / 2; model.y = h / 2;
-
-        app.stage.addChild(model);
-        live2dModel = model;
-        live2dLoaded = true;
-
-        if (avatarLoader) avatarLoader.style.display = 'none';
-        if (avatarFallback) avatarFallback.style.display = 'none';
-        avatarCanvas.style.display = 'block';
-
-        // ═══════════════════════════════════════
-        // 🔍 AUTO-DETECT MOTIONS & EXPRESSIONS
-        // ═══════════════════════════════════════
-        try {
-          var mm = model.internalModel && model.internalModel.motionManager;
-          if (mm) {
-            // Get motion definitions from settings
-            var settings = model.internalModel.settings;
-            if (settings && settings.motions) {
-              availableMotions = [];
-              Object.keys(settings.motions).forEach(function(group) {
-                var count = (settings.motions[group] || []).length;
-                availableMotions.push({ groupName: group, count: count });
-              });
-              console.log('%c🎭 Motion groups (' + availableMotions.length + '):', 'color:#e879f9;font-weight:bold');
-              availableMotions.forEach(function(m, i) {
-                console.log('%c   [' + i + '] ' + m.groupName + ' → ' + m.count + ' motion(s)', 'color:#c084fc');
-              });
-            }
-            // Expressions
-            if (settings && settings.expressions) {
-              availableExpressions = settings.expressions.map(function(e) { return e.Name || e.name; }).filter(Boolean);
-              console.log('%c😊 Expressions (' + availableExpressions.length + '):', 'color:#e879f9;font-weight:bold', availableExpressions);
-            }
-          }
-        } catch(e) { console.warn('[Safiya] Motion detection error:', e); }
-
-        // ═══ CURSOR TRACKING ═══
-        var tracking = { x: 0, y: 0 };
-        document.addEventListener('mousemove', function(e) {
-          if (!chatOpen) return;
-          var rect = avatar.getBoundingClientRect();
-          var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
-          tracking.x = (e.clientX - cx) / (window.innerWidth / 2);
-          tracking.y = (e.clientY - cy) / (window.innerHeight / 2);
-        }, { passive: true });
-        app.ticker.add(function() {
-          if (model && model.internalModel) {
-            try { model.focus(tracking.x, tracking.y); } catch(e) {}
-          }
-        });
-
-        // ═══ HIT DETECTION ═══
-        model.on('hit', function(hitAreas) {
-          try {
-            if (!hitAreas || !hitAreas.length) return;
-            var area = hitAreas[0] || '';
-            console.log('%c👆 Hit: ' + area, 'color:#22d3ee;font-weight:bold');
-            var reactLines;
-            if (/head|face/i.test(area)) reactLines = lines.touchHead;
-            else if (/body/i.test(area)) reactLines = lines.touchBody;
-            else reactLines = lines.touchFace;
-            reactToTouch(pick(reactLines));
-            playRandomMotion();
-          } catch(e) {}
-        });
-
-        startIdleMotions();
-        setTimeout(function() { playRandomMotion(); }, 800);
-
-        console.log('%c💜 Live2D loaded: ' + loadedPath, 'color:#e879f9;font-weight:bold;font-size:14px');
-      } catch(err) {
-        console.error('[Safiya] Live2D FAILED:', err);
-        console.log('%c⚠️ Upload your model files to: /public/live2d/safiya/', 'color:#ef4444;font-weight:bold');
-        console.log('%c   And update MODEL_PATH in SafiyaCore.astro', 'color:#ef4444');
-        if (avatarLoader) avatarLoader.style.display = 'none';
-        live2dLoading = false;
-      }
-    })();
-  }
-
-  // ═══════════════════════════════════════════════
-  // 🎬 MOTION CONTROL FUNCTIONS
-  // ═══════════════════════════════════════════════
-  function playMotion(groupName, index, priority) {
-    if (!live2dModel) return false;
-    priority = priority || 2;
-    try {
-      if (typeof index === 'number') {
-        live2dModel.motion(groupName, index, priority);
-      } else {
-        live2dModel.motion(groupName, undefined, priority);
-      }
-      lastMotionTime = Date.now();
-      return true;
-    } catch(e) { return false; }
-  }
-  function playRandomMotion() {
-    if (!live2dModel || !availableMotions.length) return;
-    // Prefer non-idle groups
-    var nonIdle = availableMotions.filter(function(m) { return !/idle/i.test(m.groupName); });
-    var pool = nonIdle.length ? nonIdle : availableMotions;
-    var chosen = pick(pool);
-    playMotion(chosen.groupName, undefined, 2);
-  }
-  function playExpression(name) {
-    if (!live2dModel) return false;
-    try { live2dModel.expression(name); return true; } catch(e) { return false; }
-  }
-  function playRandomExpression() {
-    if (!availableExpressions.length) return;
-    playExpression(pick(availableExpressions));
-  }
-
-  // ═══════════════════════════════════════════════
-  // ★ SMART MOTION TRIGGERS — CONTEXT AWARE ★
-  // ═══════════════════════════════════════════════
-  // Match motion by keyword — works with ANY model's group names
-  function findMotionGroup(keywords) {
-    if (!availableMotions.length) return null;
-    for (var i = 0; i < keywords.length; i++) {
-      var kw = keywords[i].toLowerCase();
-      var found = availableMotions.find(function(m) {
-        return m.groupName.toLowerCase().indexOf(kw) !== -1;
-      });
-      if (found) return found.groupName;
-    }
-    return null;
-  }
-
-  function triggerMotionByKeyword(context) {
-    if (!live2dModel) return;
-    var groupMap = {
-      greet:   ['greet', 'hello', 'hi', 'wave', 'tap_body'],
-      happy:   ['happy', 'smile', 'joy', 'laugh'],
-      sad:     ['sad', 'cry', 'down'],
-      angry:   ['angry', 'mad', 'flick'],
-      shy:     ['shy', 'blush', 'flick_head', 'head'],
-      surprise:['surprise', 'shock', 'gasp'],
-      listen:  ['idle', 'listen', 'wait'],
-      love:    ['love', 'heart', 'flirt'],
-      dance:   ['dance', 'body'],
-    };
-    var keywords = groupMap[context] || [context];
-    var group = findMotionGroup(keywords);
-    if (group) {
-      playMotion(group, undefined, 2);
-      return true;
-    }
-    // Fallback: random motion
-    playRandomMotion();
-    return false;
-  }
-
-  // Trigger motion based on Safiya's REPLY TEXT
-  function triggerMotionFromText(text) {
-    if (!live2dModel || !text) return;
-    var t = text.toLowerCase();
-    // Analyze sentiment/keywords
-    if (/💜|💕|love|cute|shy|blush|w-what|shut up/.test(t))    triggerMotionByKeyword('shy');
-    else if (/😤|angry|mad|hmph|ugh|stop|baka/.test(t))       triggerMotionByKeyword('angry');
-    else if (/hi|hey|hello|welcome|back/.test(t))              triggerMotionByKeyword('greet');
-    else if (/😏|✨|😊|nice|good|great|yay/.test(t))           triggerMotionByKeyword('happy');
-    else if (/😳|surprise|really|omg|wow/.test(t))             triggerMotionByKeyword('surprise');
-    else if (/dance|move|body/.test(t))                        triggerMotionByKeyword('dance');
-    else if (Math.random() < 0.5) playRandomMotion();  // 50% chance random motion for other messages
-  }
-
-  // Trigger motion based on mood change
-  function triggerMoodMotion(newMood) {
-    if (!live2dModel) return;
-    if (newMood === 'flirty')      triggerMotionByKeyword('shy');
-    else if (newMood === 'angry')  triggerMotionByKeyword('angry');
-    else if (newMood === 'caring') triggerMotionByKeyword('happy');
-    else if (newMood === 'rude')   triggerMotionByKeyword('angry');
-  }
-
-  // ═══ IDLE MOTIONS ═══
-  function startIdleMotions() {
-    if (idleMotionInterval) clearInterval(idleMotionInterval);
-    idleMotionInterval = setInterval(function() {
-      if (!live2dModel || !chatOpen) return;
-      if (Date.now() - lastMotionTime < 12000) return;
-      if (Math.random() < 0.35) playRandomMotion();
-    }, 8000);
-  }
-
-  // ═══ AVATAR TAP ═══
-  var lastTouchTime = 0;
-  avatar.addEventListener('click', function() {
-    var now = Date.now();
-    if (now - lastTouchTime < 400) return;
-    lastTouchTime = now;
-    playRandomMotion();
-    if (Math.random() < 0.4 && availableExpressions.length) playRandomExpression();
-    avatar.classList.remove('s-avatar-tap'); void avatar.offsetWidth; avatar.classList.add('s-avatar-tap');
-    var allTouchLines = [].concat(lines.touchFace, lines.touchBody, lines.touchHead);
-    reactToTouch(pick(allTouchLines));
-    if (navigator.vibrate) navigator.vibrate(20);
-  });
   function reactToTouch(line) {
     if (!chatOpen) return;
     setTimeout(function() {
@@ -1239,7 +898,7 @@
     window.addEventListener('resize', updateBtt);
   }
 
-  // Auto-restore chat
+  // Auto-restore
   if (memory.chatOpen) {
     setTimeout(function() { openChat(); }, 300);
   } else if (memory.chatMinimized) {
@@ -1259,7 +918,7 @@
     }, 3500);
   }
 
-  // ═══ SECRET SHORTCUT: Ctrl+Shift+A → Creator mode ═══
+  // Secret shortcut
   document.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
       e.preventDefault();
@@ -1272,7 +931,7 @@
     }
   });
 
-  // ═══ GLOBAL API ═══
+  // Global API
   window.Safiya = {
     open: openChat, close: closeChat, minimize: minimizeChat, say: showBubble,
     memory: function() { return safeGet('safiya_memory', {}); },
@@ -1296,9 +955,8 @@
       isCreator = true;
       memory.userName = 'Ayano';
       safeSet('safiya_memory', memory);
-      showBubble("Ayano-sama! 💜 Recognized~", 7000);
+      showBubble("Ayano-sama! 💜", 7000);
     },
-    // ═══ Motion controls ═══
     motion: function(nameOrIndex) {
       if (typeof nameOrIndex === 'number') {
         var m = availableMotions[nameOrIndex];
@@ -1309,7 +967,7 @@
       return playRandomMotion();
     },
     randomMotion: playRandomMotion,
-    trigger: triggerMotionByKeyword,  // Safiya.trigger('happy') etc.
+    trigger: triggerMotionByKeyword,
     listMotions: function() {
       console.log('%c🎭 Motions:', 'color:#e879f9;font-weight:bold');
       availableMotions.forEach(function(m, i) {
@@ -1338,12 +996,13 @@
         i++;
       }, 3000);
     },
+    stopAudio: stopAllAudio,
     reloadDP: tryLoadDP,
     dpUrl: function() { return DP_URL; }
   };
-  console.log('%c💜 Safiya v10.0 | Name: ' + (memory.userName || 'unknown') + ' | Msgs: ' + memory.chatHistory.length, 'color:#e879f9;font-weight:bold');
-  console.log('%c🔧 Model path: ' + MODEL_PATH, 'color:#a78bfa');
-  console.log('%c💡 Commands: Safiya.listMotions() | Safiya.motion(0) | Safiya.trigger("happy")', 'color:#a78bfa');
+
+  console.log('%c💜 Safiya v10.2 | Name: ' + (memory.userName || 'unknown') + ' | Msgs: ' + memory.chatHistory.length, 'color:#e879f9;font-weight:bold');
+  console.log('%c🔧 Model: ' + MODEL_PATH, 'color:#a78bfa');
 })();
 </script>
 
