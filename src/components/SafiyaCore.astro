@@ -732,7 +732,19 @@
   }, { passive: true });
 
   var btt = $('btt');
-  if (btt) btt.style.right = '90px';
+if (btt) {
+  btt.style.right = '90px';
+  // Hide up-button on mobile (< 720px) to avoid conflict with Safiya chat head
+  var updateBtt = function() {
+    if (window.innerWidth <= 720) {
+      btt.style.display = 'none';
+    } else {
+      btt.style.display = '';
+    }
+  };
+  updateBtt();
+  window.addEventListener('resize', updateBtt);
+}
 
   // ★ Auto-restore chat state
   if (memory.chatOpen) {
