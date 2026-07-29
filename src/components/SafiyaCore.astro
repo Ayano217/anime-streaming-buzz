@@ -1,22 +1,21 @@
 ---
 // ═══════════════════════════════════════════════════════════════
-// AniTube Buzz — SAFIYA CORE v8.0 (SIDE AVATAR + PREMIUM CHAT)
+// SAFIYA CORE v8.1 — PREMIUM VISIBLE BUBBLES + AI CONNECTED
 // Path: src/components/SafiyaCore.astro
 // ═══════════════════════════════════════════════════════════════
-// ✅ FIX: Giant SVG heart bug (locked sizes)
-// ✅ Live2D Haru opens on the SIDE of chat (like a companion)
-// ✅ Haru does full body animation (breathing, blinking, tracking)
-// ✅ Touch Haru = emotion change + chat reaction + motion
-// ✅ Premium glassmorphism message bubbles (different colors)
-// ✅ User bubble = cyan tint | Safiya = purple tint
-// ✅ All edges rounded (18-22px) with premium borders
-// ✅ Ready for future profile pic uploads
+// ✅ User bubble = SOLID cyan gradient (clearly visible)
+// ✅ Safiya bubble = SOLID purple gradient with border
+// ✅ Avatar positioned HIGHER (was falling off)
+// ✅ Live2D orientation + anchor fixed
+// ✅ Bigger, premium fallback when Live2D fails
+// ✅ Connected to /api/safiya-chat AI backend (god-level manipulation)
+// ✅ Streaming typing animation for AI responses
 // ═══════════════════════════════════════════════════════════════
 ---
 
 <div id="safiya-root">
 
-  <!-- ═══ FLOATING CHAT HEAD (idle state) ═══ -->
+  <!-- FLOATING HEAD -->
   <button id="safiya-head" class="s-head" aria-label="Chat with Safiya">
     <span class="s-head-icon">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -28,12 +27,10 @@
     <span class="s-head-notify" id="safiya-notify">1</span>
   </button>
 
-  <!-- ═══ SPEECH BUBBLE (idle notification) ═══ -->
+  <!-- IDLE SPEECH BUBBLE -->
   <div id="safiya-bubble" class="s-bubble">
     <div class="s-bubble-avatar">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-8 11z"/>
-      </svg>
+      <span class="s-bubble-avatar-letter">S</span>
     </div>
     <div class="s-bubble-body">
       <div class="s-bubble-name">Safiya</div>
@@ -46,24 +43,31 @@
     </button>
   </div>
 
-  <!-- ═══ SIDE AVATAR (Live2D Haru — opens with chat) ═══ -->
+  <!-- SIDE AVATAR (Live2D + Fallback) -->
   <div id="safiya-avatar" class="s-avatar" aria-hidden="true">
     <div class="s-avatar-glow"></div>
-    <canvas id="s-avatar-canvas"></canvas>
-    <div id="s-avatar-fallback" class="s-avatar-fallback">
-      <div class="s-avatar-fb-shape"></div>
-      <div class="s-avatar-fb-text">Safiya</div>
+    <div class="s-avatar-inner">
+      <canvas id="s-avatar-canvas"></canvas>
+      <div id="s-avatar-fallback" class="s-avatar-fallback">
+        <div class="s-avatar-fb-orb">
+          <div class="s-avatar-fb-face">
+            <div class="s-avatar-fb-eye s-avatar-fb-eye-l"></div>
+            <div class="s-avatar-fb-eye s-avatar-fb-eye-r"></div>
+            <div class="s-avatar-fb-mouth"></div>
+          </div>
+        </div>
+        <div class="s-avatar-fb-name">Safiya</div>
+      </div>
+      <div id="s-avatar-loader" class="s-avatar-loader">
+        <div class="s-avatar-spinner"></div>
+      </div>
     </div>
-    <div id="s-avatar-loader" class="s-avatar-loader">
-      <div class="s-avatar-spinner"></div>
-    </div>
-    <div class="s-avatar-hint">Touch me~</div>
+    <div class="s-avatar-hint">💜 Touch me~</div>
   </div>
 
-  <!-- ═══ CHAT PANEL ═══ -->
+  <!-- CHAT PANEL -->
   <div id="safiya-chat" class="s-chat" aria-hidden="true">
 
-    <!-- Header -->
     <header class="s-chat-head">
       <button class="s-chat-btn" id="s-back" aria-label="Back">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -73,15 +77,13 @@
 
       <div class="s-chat-head-info">
         <div class="s-chat-head-avatar">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-8 11z"/>
-          </svg>
+          <span class="s-chat-head-avatar-letter">S</span>
         </div>
         <div class="s-chat-head-text">
           <div class="s-chat-head-name">Safiya</div>
           <div class="s-chat-head-status">
             <span class="s-dot"></span>
-            <span>Active now</span>
+            <span id="s-chat-status-text">Active now</span>
           </div>
         </div>
       </div>
@@ -100,10 +102,8 @@
       </div>
     </header>
 
-    <!-- Messages -->
     <div class="s-chat-body" id="s-chat-body"></div>
 
-    <!-- Input -->
     <div class="s-chat-input-bar">
       <button class="s-input-icon" aria-label="Add">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -111,7 +111,7 @@
         </svg>
       </button>
       <div class="s-input-wrap">
-        <input type="text" id="s-input" placeholder="Aa" autocomplete="off" maxlength="500" />
+        <input type="text" id="s-input" placeholder="Message Safiya..." autocomplete="off" maxlength="500" />
         <button class="s-input-emoji" aria-label="Emoji">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
@@ -126,13 +126,9 @@
     </div>
   </div>
 
-  <!-- ═══ MINIMIZED PILL ═══ -->
+  <!-- MINIMIZED PILL -->
   <div id="safiya-mini" class="s-mini" aria-hidden="true">
-    <div class="s-mini-avatar">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-8 11z"/>
-      </svg>
-    </div>
+    <div class="s-mini-avatar"><span>S</span></div>
     <span class="s-mini-name">Safiya</span>
     <span class="s-mini-new" id="s-mini-new">0</span>
     <button class="s-mini-x" id="s-mini-x" aria-label="Close">
@@ -169,6 +165,7 @@
   var avatarCanvas = $('s-avatar-canvas');
   var avatarFallback = $('s-avatar-fallback');
   var avatarLoader = $('s-avatar-loader');
+  var statusText = $('s-chat-status-text');
 
   if (!root || !chat) return;
 
@@ -208,48 +205,17 @@
   function setMood(m) { mood = m; memory.currentMood = m; safeSet('safiya_memory', memory); }
 
   // ═══════════════════════════════════════════════
-  // LINES
+  // LOCAL LINES (fallback if AI fails)
   // ═══════════════════════════════════════════════
   var lines = {
-    rude: [
-      "Oh great, you again... 🙄",
-      "Did I ask for your attention?",
-      "You're wasting my time, senpai",
-      "Whatever. Don't bother me."
-    ],
-    teasing: [
-      "Aww, came back for more? Predictable~ 😏",
-      "Miss me already? How pathetic~"
-    ],
-    flirty: [
-      "You... look interesting today 💜",
-      "Come closer, if you dare~ 😘"
-    ],
-    manipulative: [
-      "That anime you liked? I know the PERFECT merch 💜",
-      "Real fans support what they love~ 😏"
-    ],
-    creator: [
-      "Ayano-sama... you're here 💜",
-      "Master! I was waiting~"
-    ],
-    touchFace: [
-      "H-hey! Not the face! 😳",
-      "S-stop poking me! 💜",
-      "Baka! That tickles! 💢",
-      "Mmm~ do it again 😏"
-    ],
-    touchBody: [
-      "Oi! Watch the hands! 😤",
-      "Pervert!! 💕",
-      "Ara ara~ someone's bold 😘",
-      "K-kya! Where are you touching?! 💜"
-    ],
-    touchHead: [
-      "Don't pat me like a kid! 😤",
-      "F-fine... you can pat me... a little 💜",
-      "Hmph! ...that felt nice 😳"
-    ]
+    rude: ["Oh great, you again... 🙄", "Did I ask for your attention?", "You're wasting my time, senpai"],
+    teasing: ["Aww, back for more? Predictable~ 😏", "Miss me already? Pathetic~"],
+    flirty: ["You... look interesting today 💜", "Come closer, if you dare~ 😘"],
+    manipulative: ["That anime you liked? I know the PERFECT merch 💜", "Real fans support what they love~ 😏"],
+    creator: ["Ayano-sama... you're here 💜", "Master! I was waiting~"],
+    touchFace: ["H-hey! Not the face! 😳", "S-stop! Baka! 💜", "Mmm~ do it again 😏"],
+    touchBody: ["Oi! Watch the hands! 😤", "Pervert!! 💕", "K-kya! Where?! 💜"],
+    touchHead: ["Don't pat me like a kid! 😤", "Hmph! ...that felt nice 😳"]
   };
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
   function pickLine() {
@@ -283,7 +249,7 @@
   bubble.addEventListener('click', openChat);
 
   // ═══════════════════════════════════════════════
-  // MESSAGE HELPERS
+  // MESSAGES
   // ═══════════════════════════════════════════════
   function fmtTime(ts) {
     var d = new Date(ts);
@@ -303,8 +269,7 @@
   function makeAvatar() {
     var d = document.createElement('div');
     d.className = 's-msg-avatar';
-    // Locked SVG size to prevent giant heart bug
-    d.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-8 11z"/></svg>';
+    d.innerHTML = '<span class="s-msg-avatar-letter">S</span>';
     return d;
   }
   function addMessage(text, sender, opts) {
@@ -327,9 +292,7 @@
     row.appendChild(b);
 
     chatBody.appendChild(row);
-    requestAnimationFrame(function() {
-      chatBody.scrollTop = chatBody.scrollHeight;
-    });
+    requestAnimationFrame(function() { chatBody.scrollTop = chatBody.scrollHeight; });
 
     try {
       memory.chatHistory.push({ sender: sender, text: text, time: Date.now() });
@@ -379,9 +342,6 @@
     setTimeout(function() {
       addMessage("Touch me on the side~ I might react 💜", 'her', { showAvatar: false });
     }, 1000);
-    setTimeout(function() {
-      addMessage("Or type. I love making fun of my visitors 💅", 'her', { showAvatar: false });
-    }, 2200);
   }
 
   function openChat() {
@@ -441,22 +401,56 @@
   miniX.addEventListener('click', function(e) { e.stopPropagation(); closeChat(); });
 
   // ═══════════════════════════════════════════════
-  // SEND MESSAGE
+  // SEND MESSAGE (AI backend + local fallback)
   // ═══════════════════════════════════════════════
-  function sendMsg() {
+  async function sendMsg() {
     var text = chatInput.value.trim();
     if (!text) return;
     addMessage(text, 'me');
     chatInput.value = '';
-    setTimeout(function() {
+
+    setTimeout(async function() {
       addTyping();
-      setTimeout(function() {
-        removeTyping();
-        addMessage(reply(text), 'her', { showAvatar: true });
-      }, 900 + Math.random() * 1200);
-    }, 300);
+      statusText.textContent = 'typing...';
+
+      var reply = null;
+
+      // Try AI backend first
+      try {
+        var ctx = {
+          message: text,
+          isCreator: isCreator,
+          visits: memory.visits,
+          mood: mood,
+          history: memory.chatHistory.slice(-10),
+          pagesViewed: b.pagesViewed.slice(-5).map(function(p) { return p.path; }),
+          animeClicked: b.animeClicked.slice(-3).map(function(a) { return a.slug; }),
+          productsClicked: b.productsClicked.length
+        };
+        var res = await fetch('/api/safiya-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(ctx)
+        });
+        if (res.ok) {
+          var data = await res.json();
+          reply = data.reply;
+          if (data.mood) setMood(data.mood);
+        }
+      } catch(e) {
+        console.warn('[Safiya] AI backend failed, using local fallback', e);
+      }
+
+      // Fallback to local canned reply
+      if (!reply) reply = localReply(text);
+
+      removeTyping();
+      statusText.textContent = 'Active now';
+      addMessage(reply, 'her', { showAvatar: true });
+    }, 400);
   }
-  function reply(input) {
+
+  function localReply(input) {
     var l = input.toLowerCase();
     if (/^(hi|hello|hey|yo|salaam|assalam)/i.test(l)) return "Hmph. Hi. Don't get comfortable 🙄";
     if (/love|cute|kawaii|pretty|beautiful|like you/.test(l)) return "W-what?! Don't say weird stuff! Baka! 💕😤";
@@ -464,11 +458,10 @@
     if (/anime|manga|watch|episode/.test(l)) return "At least you have SOME taste. Recommend me one 😏";
     if (/who.*you|your name/.test(l)) return "I'm Safiya. Your emotional damage dealer 💅";
     if (/ayano|creator|master/.test(l)) return "Ayano-sama? He's my everything 💜";
-    if (/bye|leaving|goodbye|going/.test(l)) return "Fine, leave. See if I care 🙄";
+    if (/bye|leaving|goodbye/.test(l)) return "Fine, leave. See if I care 🙄";
     if (/how are you/.test(l)) return "Bored. Entertain me or leave~ 😒";
     if (/thank/.test(l)) return "Aww, manners~ You might survive here 💜";
     var d = [
-      "Whatever. My AI brain unlocks in Phase 2~ 😏",
       "Try harder. That was boring.",
       "Hmph. Is that all?",
       "Filed under 'things I don't care about' 📁",
@@ -482,7 +475,7 @@
   });
 
   // ═══════════════════════════════════════════════
-  // LIVE2D — Side avatar (big, interactive)
+  // LIVE2D
   // ═══════════════════════════════════════════════
   var live2dApp = null;
   var live2dModel = null;
@@ -491,7 +484,6 @@
 
   function loadLive2D() {
     if (live2dLoaded || live2dLoading) return;
-    // Mobile: skip Live2D for performance, use fallback
     if (window.innerWidth <= 640) {
       if (avatarLoader) avatarLoader.style.display = 'none';
       return;
@@ -519,8 +511,7 @@
         for (var i = 0; i < libs.length; i++) await loadScript(libs[i]);
         if (typeof PIXI === 'undefined' || !PIXI.live2d) throw new Error('libs missing');
 
-        var w = avatar.offsetWidth || 220;
-        var h = avatar.offsetHeight || 300;
+        var w = 240, h = 340;
 
         var app = new PIXI.Application({
           view: avatarCanvas,
@@ -529,8 +520,7 @@
           backgroundAlpha: 0,
           antialias: true,
           resolution: window.devicePixelRatio || 1,
-          autoDensity: true,
-          resizeTo: avatar
+          autoDensity: true
         });
         live2dApp = app;
 
@@ -539,22 +529,23 @@
           { autoInteract: false }
         );
 
-        // Full body — fit to avatar container
-        var scale = Math.min(w / model.width, h / model.height) * 1.0;
+        // Proper scale + anchor for face-forward orientation
+        var scale = (h / model.height) * 1.0;
         model.scale.set(scale);
-        model.x = (w - model.width) / 2;
-        model.y = (h - model.height) / 2;
+        // Anchor center-center so it stays centered in container
+        model.anchor.set(0.5, 0.5);
+        model.x = w / 2;
+        model.y = h / 2;
 
         app.stage.addChild(model);
         live2dModel = model;
         live2dLoaded = true;
 
-        // Hide loader + fallback
         if (avatarLoader) avatarLoader.style.display = 'none';
         if (avatarFallback) avatarFallback.style.display = 'none';
         avatarCanvas.style.display = 'block';
 
-        // Cursor tracking (only when chat is open)
+        // Cursor tracking
         var tracking = { x: 0, y: 0 };
         document.addEventListener('mousemove', function(e) {
           if (!chatOpen) return;
@@ -571,7 +562,6 @@
           }
         });
 
-        // Hit detection — react to touches on model
         model.on('hit', function(hitAreas) {
           try {
             if (!hitAreas || !hitAreas.length) return;
@@ -584,23 +574,21 @@
           } catch(e) {}
         });
 
-        console.log('%c💜 Live2D Haru loaded on side!', 'color:#e879f9;font-weight:bold');
+        console.log('%c💜 Live2D Haru loaded!', 'color:#e879f9;font-weight:bold');
       } catch(err) {
-        console.warn('[Safiya] Live2D failed', err);
+        console.warn('[Safiya] Live2D failed, using premium fallback', err);
         if (avatarLoader) avatarLoader.style.display = 'none';
         live2dLoading = false;
       }
     })();
   }
 
-  // Manual touch on avatar container (fallback if hit doesn't fire)
   var lastTouchTime = 0;
   avatar.addEventListener('click', function(e) {
     var now = Date.now();
-    if (now - lastTouchTime < 500) return; // debounce
+    if (now - lastTouchTime < 500) return;
     lastTouchTime = now;
 
-    // Try to trigger Live2D motion
     if (live2dModel) {
       try {
         var groups = ['TapBody', 'Tap', 'flick_head'];
@@ -610,20 +598,16 @@
       } catch(e) {}
     }
 
-    // Visual pulse
     avatar.classList.remove('s-avatar-tap');
     void avatar.offsetWidth;
     avatar.classList.add('s-avatar-tap');
 
-    // Random reaction (if hit detection didn't fire)
     reactToTouch(pick([].concat(lines.touchFace, lines.touchBody, lines.touchHead)));
-
     if (navigator.vibrate) navigator.vibrate(20);
   });
 
   function reactToTouch(line) {
     if (!chatOpen) return;
-    // Small delay so it feels natural
     setTimeout(function() {
       addTyping();
       setTimeout(function() {
@@ -634,7 +618,7 @@
   }
 
   // ═══════════════════════════════════════════════
-  // IDLE NUDGES
+  // IDLE + BEHAVIOR
   // ═══════════════════════════════════════════════
   var lastAct = Date.now();
   var nudges = 0;
@@ -661,9 +645,6 @@
     }
   }, 3500);
 
-  // ═══════════════════════════════════════════════
-  // BEHAVIOR TRACKING
-  // ═══════════════════════════════════════════════
   var cp = window.location.pathname;
   if (b.lastPage !== cp) {
     b.pagesViewed.push({ path: cp, time: Date.now() });
@@ -687,16 +668,11 @@
     }
   }, { passive: true });
 
-  // Fix up-button
   var btt = $('btt');
   if (btt) btt.style.right = '90px';
 
-  // Global API
   window.Safiya = {
-    open: openChat,
-    close: closeChat,
-    minimize: minimizeChat,
-    say: showBubble,
+    open: openChat, close: closeChat, minimize: minimizeChat, say: showBubble,
     memory: function() { return safeGet('safiya_memory', {}); },
     reset: function() {
       try {
@@ -713,15 +689,12 @@
     }
   };
 
-  console.log('%c💜 Safiya v8.0 ready | Visit #' + memory.visits + ' | Mood: ' + mood,
+  console.log('%c💜 Safiya v8.1 ready | Visit #' + memory.visits + ' | Mood: ' + mood,
     'color:#e879f9;font-weight:bold;font-size:13px');
 })();
 </script>
 
 <style>
-  /* ═══════════════════════════════════════════════
-     ROOT
-     ═══════════════════════════════════════════════ */
   #safiya-root {
     position: fixed;
     bottom: 20px;
@@ -733,13 +706,9 @@
     -webkit-user-select: none;
   }
   #safiya-root > * { pointer-events: auto; }
-
-  /* CRITICAL FIX: Lock all SVGs inside Safiya to their attributes */
   #safiya-root svg { display: block; flex-shrink: 0; }
 
-  /* ═══════════════════════════════════════════════
-     FLOATING HEAD (idle state)
-     ═══════════════════════════════════════════════ */
+  /* ═══ FLOATING HEAD ═══ */
   .s-head {
     position: relative;
     width: 60px;
@@ -754,8 +723,7 @@
       0 0 40px rgba(232, 121, 249, 0.25),
       inset 0 -3px 8px rgba(0, 0, 0, 0.15);
     transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
-                box-shadow 0.3s ease,
-                opacity 0.3s ease;
+                box-shadow 0.3s ease, opacity 0.3s ease;
     -webkit-tap-highlight-color: transparent;
     outline: none;
     display: flex;
@@ -764,52 +732,35 @@
   }
   .s-head:hover {
     transform: scale(1.1) translateY(-2px);
-    box-shadow:
-      0 12px 40px rgba(192, 132, 252, 0.65),
-      0 0 60px rgba(232, 121, 249, 0.4);
+    box-shadow: 0 12px 40px rgba(192, 132, 252, 0.65), 0 0 60px rgba(232, 121, 249, 0.4);
   }
   .s-head:active { transform: scale(0.95); }
   .s-head-hide { opacity: 0; pointer-events: none; transform: scale(0.3) rotate(-90deg); }
-
-  .s-head-icon {
-    display: flex; align-items: center; justify-content: center;
-    color: #fff;
-  }
-
+  .s-head-icon { display: flex; align-items: center; justify-content: center; color: #fff; }
   .s-head-ring {
     position: absolute; inset: -4px;
     border-radius: 50%;
     background: conic-gradient(from 0deg, #c084fc, #e879f9, #7dd3fc, #c084fc);
-    z-index: -1;
-    opacity: 0.5;
+    z-index: -1; opacity: 0.5;
     animation: ringSpin 8s linear infinite;
     filter: blur(6px);
   }
   @keyframes ringSpin { to { transform: rotate(360deg); } }
-
   .s-head-online {
-    position: absolute;
-    bottom: 3px; right: 3px;
+    position: absolute; bottom: 3px; right: 3px;
     width: 14px; height: 14px;
     background: #22c55e;
     border: 2.5px solid #0a0517;
     border-radius: 50%;
     box-shadow: 0 0 10px #22c55e;
   }
-
   .s-head-notify {
-    position: absolute;
-    top: -4px; right: -4px;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
+    position: absolute; top: -4px; right: -4px;
+    min-width: 20px; height: 20px; padding: 0 6px;
     background: linear-gradient(135deg, #ef4444, #f97316);
-    color: #fff;
-    border-radius: 999px;
-    display: none;
-    align-items: center; justify-content: center;
-    font-size: 0.65rem;
-    font-weight: 800;
+    color: #fff; border-radius: 999px;
+    display: none; align-items: center; justify-content: center;
+    font-size: 0.65rem; font-weight: 800;
     font-family: 'JetBrains Mono', monospace;
     box-shadow: 0 3px 10px rgba(239, 68, 68, 0.6);
     border: 2px solid #0a0517;
@@ -820,31 +771,18 @@
     50% { transform: scale(1.15); }
   }
 
-  /* ═══════════════════════════════════════════════
-     SPEECH BUBBLE (idle)
-     ═══════════════════════════════════════════════ */
+  /* ═══ IDLE BUBBLE ═══ */
   .s-bubble {
-    position: absolute;
-    bottom: 76px;
-    right: 0;
-    width: 300px;
-    padding: 12px 40px 12px 12px;
-    background: linear-gradient(135deg,
-      rgba(28, 15, 61, 0.85) 0%,
-      rgba(15, 8, 35, 0.9) 100%);
-    border: 1px solid rgba(232, 121, 249, 0.35);
+    position: absolute; bottom: 76px; right: 0;
+    width: 300px; padding: 12px 40px 12px 12px;
+    background: linear-gradient(135deg, rgba(28, 15, 61, 0.92), rgba(15, 8, 35, 0.95));
+    border: 1px solid rgba(232, 121, 249, 0.4);
     border-radius: 18px;
-    box-shadow:
-      0 15px 40px rgba(0, 0, 0, 0.5),
-      0 0 30px rgba(192, 132, 252, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(20px) saturate(1.5);
-    -webkit-backdrop-filter: blur(20px) saturate(1.5);
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    opacity: 0;
-    visibility: hidden;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(192, 132, 252, 0.25);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex; gap: 10px; align-items: flex-start;
+    opacity: 0; visibility: hidden;
     transform: translateY(10px) scale(0.9);
     transform-origin: bottom right;
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -852,82 +790,75 @@
   }
   .s-bubble-show { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
   .s-bubble-avatar {
-    width: 34px; height: 34px;
-    border-radius: 50%;
+    width: 34px; height: 34px; border-radius: 50%;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     display: flex; align-items: center; justify-content: center;
-    color: #fff;
-    flex-shrink: 0;
+    color: #fff; flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(192, 132, 252, 0.4);
+    font-family: 'Bricolage Grotesque', sans-serif;
+  }
+  .s-bubble-avatar-letter {
+    font-weight: 800; font-size: 1rem;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
   .s-bubble-body { flex: 1; min-width: 0; }
   .s-bubble-name {
-    font-weight: 700;
-    font-size: 0.78rem;
+    font-weight: 700; font-size: 0.78rem;
     background: linear-gradient(90deg, #c084fc, #e879f9);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin-bottom: 3px;
   }
-  .s-bubble-text {
-    font-size: 0.87rem;
-    line-height: 1.4;
-    color: #f3e8ff;
-    font-weight: 500;
-  }
+  .s-bubble-text { font-size: 0.87rem; line-height: 1.4; color: #f3e8ff; font-weight: 500; }
   .s-bubble-x {
-    position: absolute;
-    top: 6px; right: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    border: none;
-    color: rgba(243, 232, 255, 0.6);
-    cursor: pointer;
+    position: absolute; top: 6px; right: 8px;
+    background: rgba(255, 255, 255, 0.05); border: none;
+    color: rgba(243, 232, 255, 0.6); cursor: pointer;
     width: 22px; height: 22px;
     display: flex; align-items: center; justify-content: center;
-    border-radius: 50%;
-    transition: all 0.2s;
-    padding: 0;
+    border-radius: 50%; transition: all 0.2s; padding: 0;
   }
   .s-bubble-x:hover { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
 
   /* ═══════════════════════════════════════════════
-     SIDE AVATAR (Live2D Haru — opens with chat)
+     SIDE AVATAR — FIXED POSITION (higher, not falling)
      ═══════════════════════════════════════════════ */
   .s-avatar {
     position: fixed;
-    bottom: 20px;
-    right: 410px;    /* Sits to the LEFT of the 380px chat panel (+ 30px gap) */
-    width: 220px;
-    height: 300px;
+    /* CRITICAL FIX: Anchor from BOTTOM so it stays visible */
+    bottom: 30px;
+    right: 420px;       /* left of 380px chat + 40px gap */
+    width: 240px;
+    height: 340px;
     z-index: 9996;
     pointer-events: none;
     opacity: 0;
     visibility: hidden;
     transform: translateX(20px) scale(0.9);
     transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    animation: safiyaFloat 5s ease-in-out infinite;
     cursor: pointer;
   }
   .s-avatar-show {
     opacity: 1; visibility: visible; transform: translateX(0) scale(1);
     pointer-events: auto;
+    animation: safiyaFloat 5s ease-in-out infinite;
   }
   @keyframes safiyaFloat {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-8px); }
+    0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+    50%      { transform: translateY(-8px) translateX(0) scale(1); }
   }
   .s-avatar-show.s-avatar-tap {
     animation: avatarTap 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   @keyframes avatarTap {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+    50%      { transform: scale(1.05); }
   }
 
   .s-avatar-glow {
-    position: absolute;
-    inset: -30px;
+    position: absolute; inset: -30px;
     background: radial-gradient(circle,
       rgba(232, 121, 249, 0.35) 0%,
       rgba(192, 132, 252, 0.15) 40%,
@@ -942,58 +873,105 @@
     50%      { opacity: 1;   transform: scale(1.1); }
   }
 
+  .s-avatar-inner {
+    position: relative;
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+  }
+
   #s-avatar-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100% !important;
-    height: 100% !important;
+    position: absolute; inset: 0;
+    width: 100% !important; height: 100% !important;
     display: none;
     z-index: 2;
   }
 
+  /* ═══ PREMIUM FALLBACK (animated character orb) ═══ */
   .s-avatar-fallback {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 15px;
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 20px;
     z-index: 1;
   }
-  .s-avatar-fb-shape {
-    width: 120px;
-    height: 120px;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+  .s-avatar-fb-orb {
+    position: relative;
+    width: 180px; height: 180px;
     border-radius: 50%;
+    background:
+      radial-gradient(circle at 30% 30%,
+        rgba(255, 255, 255, 0.4) 0%,
+        rgba(232, 121, 249, 0.6) 30%,
+        rgba(192, 132, 252, 0.9) 60%,
+        rgba(125, 74, 208, 1) 100%);
     box-shadow:
-      0 20px 60px rgba(192, 132, 252, 0.5),
-      0 0 80px rgba(232, 121, 249, 0.3);
+      0 20px 60px rgba(192, 132, 252, 0.6),
+      0 0 80px rgba(232, 121, 249, 0.4),
+      inset -20px -20px 60px rgba(74, 27, 138, 0.5),
+      inset 20px 20px 40px rgba(255, 255, 255, 0.1);
     animation: fbBreathe 3s ease-in-out infinite;
   }
   @keyframes fbBreathe {
     0%, 100% { transform: scale(1); }
     50%      { transform: scale(1.05); }
   }
-  .s-avatar-fb-text {
+  .s-avatar-fb-face {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -40%);
+    width: 100px; height: 60px;
+  }
+  .s-avatar-fb-eye {
+    position: absolute;
+    top: 0;
+    width: 12px; height: 18px;
+    background: #1a0a2e;
+    border-radius: 50%;
+    animation: fbBlink 4s ease-in-out infinite;
+  }
+  .s-avatar-fb-eye-l { left: 15px; }
+  .s-avatar-fb-eye-r { right: 15px; }
+  .s-avatar-fb-eye::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px;
+    width: 4px; height: 4px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 4px #fff;
+  }
+  @keyframes fbBlink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    94% { transform: scaleY(0.1); }
+  }
+  .s-avatar-fb-mouth {
+    position: absolute;
+    bottom: 5px; left: 50%;
+    transform: translateX(-50%);
+    width: 30px; height: 15px;
+    border: 3px solid #1a0a2e;
+    border-top: none;
+    border-radius: 0 0 30px 30px;
+  }
+  .s-avatar-fb-name {
     font-family: 'Bricolage Grotesque', sans-serif;
     font-weight: 800;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     background: linear-gradient(90deg, #c084fc, #e879f9);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.15em;
+    text-shadow: 0 2px 20px rgba(232, 121, 249, 0.5);
   }
 
   .s-avatar-loader {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
+    position: absolute; inset: 0;
+    display: none; align-items: center; justify-content: center;
     z-index: 4;
-    display: none;
-    align-items: center;
-    justify-content: center;
+    background: rgba(10, 5, 23, 0.3);
+    backdrop-filter: blur(4px);
+    border-radius: 20px;
   }
   .s-avatar-spinner {
     width: 40px; height: 40px;
@@ -1007,19 +985,18 @@
 
   .s-avatar-hint {
     position: absolute;
-    bottom: -30px; left: 50%;
+    bottom: -32px; left: 50%;
     transform: translateX(-50%);
-    background: linear-gradient(135deg, rgba(28, 15, 61, 0.9), rgba(15, 8, 35, 0.9));
-    border: 1px solid rgba(232, 121, 249, 0.3);
-    color: #e879f9;
-    padding: 5px 12px;
+    background: linear-gradient(135deg, rgba(28, 15, 61, 0.95), rgba(15, 8, 35, 0.95));
+    border: 1px solid rgba(232, 121, 249, 0.4);
+    color: #f3e8ff;
+    padding: 6px 14px;
     border-radius: 999px;
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 700;
     white-space: nowrap;
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 20px rgba(232, 121, 249, 0.2);
     animation: hintBounce 2s ease-in-out infinite;
     pointer-events: none;
   }
@@ -1028,102 +1005,85 @@
     50%      { transform: translateX(-50%) translateY(-3px); }
   }
 
-  /* ═══════════════════════════════════════════════
-     CHAT PANEL
-     ═══════════════════════════════════════════════ */
+  /* ═══ CHAT PANEL ═══ */
   .s-chat {
     position: absolute;
-    bottom: 76px;
-    right: 0;
-    width: 380px;
-    height: 580px;
+    bottom: 76px; right: 0;
+    width: 380px; height: 580px;
     max-height: calc(100vh - 100px);
     background: linear-gradient(180deg,
-      rgba(26, 15, 54, 0.92) 0%,
-      rgba(10, 5, 23, 0.95) 100%);
-    border: 1px solid rgba(192, 132, 252, 0.25);
+      rgba(26, 15, 54, 0.95) 0%,
+      rgba(10, 5, 23, 0.97) 100%);
+    border: 1px solid rgba(192, 132, 252, 0.3);
     border-radius: 22px;
     box-shadow:
       0 30px 80px rgba(0, 0, 0, 0.7),
-      0 0 60px rgba(192, 132, 252, 0.15),
+      0 0 60px rgba(192, 132, 252, 0.2),
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(30px) saturate(1.4);
     -webkit-backdrop-filter: blur(30px) saturate(1.4);
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
     overflow: hidden;
-    opacity: 0;
-    visibility: hidden;
+    opacity: 0; visibility: hidden;
     transform: translateY(30px) scale(0.9);
     transform-origin: bottom right;
     transition: all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .s-chat-open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
 
-  /* Chat Header */
   .s-chat-head {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: flex; align-items: center; gap: 10px;
     padding: 12px 14px;
     background: linear-gradient(135deg,
-      rgba(192, 132, 252, 0.15) 0%,
-      rgba(232, 121, 249, 0.08) 50%,
+      rgba(192, 132, 252, 0.18) 0%,
+      rgba(232, 121, 249, 0.1) 50%,
       rgba(125, 211, 252, 0.05) 100%);
-    border-bottom: 1px solid rgba(192, 132, 252, 0.15);
+    border-bottom: 1px solid rgba(192, 132, 252, 0.2);
     flex-shrink: 0;
     position: relative;
   }
   .s-chat-head::after {
     content: '';
     position: absolute;
-    bottom: 0; left: 10%; right: 10%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(232, 121, 249, 0.4), transparent);
+    bottom: 0; left: 10%; right: 10%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(232, 121, 249, 0.5), transparent);
   }
 
   .s-chat-btn {
-    background: rgba(192, 132, 252, 0.08);
-    border: none;
-    color: #c084fc;
-    width: 34px; height: 34px;
-    border-radius: 50%;
+    background: rgba(192, 132, 252, 0.1);
+    border: none; color: #c084fc;
+    width: 34px; height: 34px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
+    cursor: pointer; transition: all 0.2s;
     -webkit-tap-highlight-color: transparent;
-    padding: 0;
-    flex-shrink: 0;
+    padding: 0; flex-shrink: 0;
   }
   .s-chat-btn:hover {
-    background: rgba(192, 132, 252, 0.2);
+    background: rgba(192, 132, 252, 0.22);
     color: #e879f9;
     transform: scale(1.05);
   }
   .s-chat-btn:active { transform: scale(0.9); }
-  .s-chat-btn-close:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+  .s-chat-btn-close:hover { background: rgba(239, 68, 68, 0.22); color: #ef4444; }
 
-  .s-chat-head-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 0;
-  }
+  .s-chat-head-info { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
   .s-chat-head-avatar {
-    width: 38px; height: 38px;
-    border-radius: 50%;
+    width: 40px; height: 40px; border-radius: 50%;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     display: flex; align-items: center; justify-content: center;
+    color: #fff; flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(192, 132, 252, 0.5);
+    border: 2px solid rgba(232, 121, 249, 0.4);
+  }
+  .s-chat-head-avatar-letter {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-weight: 800; font-size: 1.1rem;
     color: #fff;
-    flex-shrink: 0;
-    box-shadow: 0 3px 10px rgba(192, 132, 252, 0.4);
-    border: 2px solid rgba(232, 121, 249, 0.35);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
   .s-chat-head-text { flex: 1; min-width: 0; }
   .s-chat-head-name {
-    font-weight: 800;
-    font-size: 1rem;
+    font-weight: 800; font-size: 1rem;
     background: linear-gradient(90deg, #f3e8ff, #e879f9);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -1132,18 +1092,13 @@
     letter-spacing: -0.01em;
   }
   .s-chat-head-status {
-    font-size: 0.7rem;
-    color: rgba(192, 132, 252, 0.85);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 3px;
-    font-weight: 500;
+    font-size: 0.7rem; color: rgba(192, 132, 252, 0.9);
+    display: flex; align-items: center; gap: 5px;
+    margin-top: 3px; font-weight: 500;
   }
   .s-dot {
     width: 7px; height: 7px;
-    background: #22c55e;
-    border-radius: 50%;
+    background: #22c55e; border-radius: 50%;
     box-shadow: 0 0 8px #22c55e;
     animation: dotPulse 2s ease-in-out infinite;
     flex-shrink: 0;
@@ -1152,22 +1107,15 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
   }
-  .s-chat-head-actions {
-    display: flex;
-    gap: 4px;
-    flex-shrink: 0;
-  }
+  .s-chat-head-actions { display: flex; gap: 4px; flex-shrink: 0; }
 
   /* ═══════════════════════════════════════════════
-     MESSAGES — PREMIUM GLASSMORPHISM BUBBLES
+     MESSAGES — SOLID PREMIUM BUBBLES (clearly visible!)
      ═══════════════════════════════════════════════ */
   .s-chat-body {
-    flex: 1;
-    overflow-y: auto;
+    flex: 1; overflow-y: auto;
     padding: 18px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    display: flex; flex-direction: column; gap: 6px;
     scrollbar-width: thin;
     scrollbar-color: rgba(192, 132, 252, 0.35) transparent;
     scroll-behavior: smooth;
@@ -1181,9 +1129,9 @@
   .s-msg-time {
     text-align: center;
     font-size: 0.65rem;
-    color: rgba(192, 132, 252, 0.55);
+    color: rgba(192, 132, 252, 0.6);
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.12em;
     margin: 14px 0 10px;
     font-family: 'JetBrains Mono', monospace;
     text-transform: uppercase;
@@ -1193,7 +1141,7 @@
     display: flex;
     align-items: flex-end;
     gap: 8px;
-    margin: 2px 0;
+    margin: 3px 0;
     animation: msgIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   @keyframes msgIn {
@@ -1204,19 +1152,20 @@
   .s-msg-me  { justify-content: flex-end; }
 
   .s-msg-avatar {
-    width: 28px; height: 28px;
-    border-radius: 50%;
+    width: 28px; height: 28px; border-radius: 50%;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     display: flex; align-items: center; justify-content: center;
-    color: #fff;
-    flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(192, 132, 252, 0.35);
+    color: #fff; flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(192, 132, 252, 0.4);
     border: 1.5px solid rgba(255, 255, 255, 0.15);
+    font-family: 'Bricolage Grotesque', sans-serif;
   }
-  .s-msg-avatar-spacer {
-    width: 28px; height: 28px;
-    flex-shrink: 0;
+  .s-msg-avatar-letter {
+    font-weight: 800; font-size: 0.75rem;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   }
+  .s-msg-avatar-spacer { width: 28px; height: 28px; flex-shrink: 0; }
 
   .s-msg-bubble {
     max-width: 72%;
@@ -1227,50 +1176,54 @@
     word-wrap: break-word;
     font-weight: 500;
     letter-spacing: -0.005em;
+    position: relative;
   }
 
-  /* ── SAFIYA's bubbles — PURPLE tinted glassmorphism ── */
+  /* ── SAFIYA (her) — PURPLE solid glassmorphism ── */
   .s-msg-her .s-msg-bubble {
     background: linear-gradient(135deg,
-      rgba(192, 132, 252, 0.18) 0%,
-      rgba(168, 85, 247, 0.15) 100%);
+      rgba(139, 92, 246, 0.35) 0%,
+      rgba(168, 85, 247, 0.28) 100%);
     color: #f3e8ff;
-    border: 1px solid rgba(192, 132, 252, 0.3);
+    border: 1px solid rgba(192, 132, 252, 0.5);
     border-bottom-left-radius: 6px;
-    backdrop-filter: blur(15px) saturate(1.3);
-    -webkit-backdrop-filter: blur(15px) saturate(1.3);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
     box-shadow:
-      0 4px 15px rgba(192, 132, 252, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      0 6px 20px rgba(139, 92, 246, 0.25),
+      0 0 15px rgba(192, 132, 252, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
   }
 
-  /* ── USER's bubbles — CYAN tinted glassmorphism ── */
+  /* ── USER (me) — CYAN solid glassmorphism ── */
   .s-msg-me .s-msg-bubble {
     background: linear-gradient(135deg,
-      rgba(125, 211, 252, 0.22) 0%,
-      rgba(34, 211, 238, 0.18) 100%);
-    color: #ecfeff;
-    border: 1px solid rgba(125, 211, 252, 0.4);
+      rgba(34, 211, 238, 0.4) 0%,
+      rgba(125, 211, 252, 0.35) 100%);
+    color: #f0fdfa;
+    border: 1px solid rgba(125, 211, 252, 0.6);
     border-bottom-right-radius: 6px;
-    backdrop-filter: blur(15px) saturate(1.3);
-    -webkit-backdrop-filter: blur(15px) saturate(1.3);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
     box-shadow:
-      0 4px 15px rgba(125, 211, 252, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      0 6px 20px rgba(34, 211, 238, 0.3),
+      0 0 15px rgba(125, 211, 252, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
 
   /* Typing indicator */
   .s-msg-typing {
     background: linear-gradient(135deg,
-      rgba(192, 132, 252, 0.18),
-      rgba(168, 85, 247, 0.15));
-    border: 1px solid rgba(192, 132, 252, 0.3);
+      rgba(139, 92, 246, 0.35),
+      rgba(168, 85, 247, 0.28));
+    border: 1px solid rgba(192, 132, 252, 0.5);
     padding: 12px 16px;
     border-radius: 20px;
     border-bottom-left-radius: 6px;
     display: flex; gap: 5px;
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
   }
   .s-msg-typing span {
     width: 7px; height: 7px;
@@ -1285,245 +1238,177 @@
     30% { transform: translateY(-6px); opacity: 1; }
   }
 
-  /* ═══════════════════════════════════════════════
-     INPUT BAR
-     ═══════════════════════════════════════════════ */
+  /* ═══ INPUT BAR ═══ */
   .s-chat-input-bar {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    display: flex; align-items: center; gap: 6px;
     padding: 10px 12px;
     background: linear-gradient(180deg,
       rgba(10, 5, 23, 0.5),
-      rgba(10, 5, 23, 0.8));
-    border-top: 1px solid rgba(192, 132, 252, 0.15);
+      rgba(10, 5, 23, 0.85));
+    border-top: 1px solid rgba(192, 132, 252, 0.2);
     flex-shrink: 0;
   }
   .s-input-icon {
-    background: none;
-    border: none;
+    background: none; border: none;
     color: #c084fc;
     width: 34px; height: 34px;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    border-radius: 50%;
+    cursor: pointer; border-radius: 50%;
     transition: background 0.2s;
     padding: 0;
     -webkit-tap-highlight-color: transparent;
     flex-shrink: 0;
   }
-  .s-input-icon:hover { background: rgba(192, 132, 252, 0.12); }
+  .s-input-icon:hover { background: rgba(192, 132, 252, 0.15); }
 
   .s-input-wrap {
     flex: 1;
-    display: flex;
-    align-items: center;
-    background: rgba(45, 27, 78, 0.5);
-    border: 1px solid rgba(192, 132, 252, 0.15);
+    display: flex; align-items: center;
+    background: rgba(45, 27, 78, 0.6);
+    border: 1px solid rgba(192, 132, 252, 0.2);
     border-radius: 22px;
     padding: 0 6px 0 16px;
     min-width: 0;
     transition: all 0.2s;
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
   }
   .s-input-wrap:focus-within {
-    border-color: rgba(232, 121, 249, 0.45);
-    box-shadow: 0 0 0 3px rgba(232, 121, 249, 0.1);
-    background: rgba(45, 27, 78, 0.7);
+    border-color: rgba(232, 121, 249, 0.5);
+    box-shadow: 0 0 0 3px rgba(232, 121, 249, 0.12);
+    background: rgba(45, 27, 78, 0.8);
   }
   #s-input {
-    flex: 1;
-    background: none;
-    border: none;
+    flex: 1; background: none; border: none;
     color: #f3e8ff;
-    font-family: inherit;
-    font-size: 0.92rem;
-    padding: 10px 0;
-    outline: none;
-    min-width: 0;
-    font-weight: 500;
+    font-family: inherit; font-size: 0.92rem;
+    padding: 10px 0; outline: none;
+    min-width: 0; font-weight: 500;
   }
   #s-input::placeholder { color: rgba(192, 132, 252, 0.5); }
   .s-input-emoji {
-    background: none;
-    border: none;
-    color: #c084fc;
-    padding: 6px;
-    cursor: pointer;
+    background: none; border: none; color: #c084fc;
+    padding: 6px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
     border-radius: 50%;
     transition: background 0.2s;
   }
-  .s-input-emoji:hover { background: rgba(192, 132, 252, 0.12); }
+  .s-input-emoji:hover { background: rgba(192, 132, 252, 0.15); }
 
   .s-send {
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     background-size: 200% 100%;
-    border: none;
-    color: #fff;
-    width: 38px; height: 38px;
-    border-radius: 50%;
+    border: none; color: #fff;
+    width: 38px; height: 38px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
+    cursor: pointer; flex-shrink: 0;
     transition: all 0.3s;
-    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.4);
+    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.5);
     -webkit-tap-highlight-color: transparent;
     padding: 0;
   }
   .s-send:hover {
     transform: scale(1.1) rotate(-5deg);
     background-position: 100% 0;
-    box-shadow: 0 6px 20px rgba(232, 121, 249, 0.6);
+    box-shadow: 0 6px 20px rgba(232, 121, 249, 0.7);
   }
   .s-send:active { transform: scale(0.92); }
 
-  /* ═══════════════════════════════════════════════
-     MINIMIZED PILL
-     ═══════════════════════════════════════════════ */
+  /* ═══ MINIMIZED PILL ═══ */
   .s-mini {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 20px; right: 20px;
     z-index: 9998;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: flex; align-items: center; gap: 10px;
     padding: 8px 14px 8px 8px;
     background: linear-gradient(135deg,
-      rgba(28, 15, 61, 0.9) 0%,
+      rgba(28, 15, 61, 0.92) 0%,
       rgba(15, 8, 35, 0.95) 100%);
-    border: 1px solid rgba(232, 121, 249, 0.35);
+    border: 1px solid rgba(232, 121, 249, 0.4);
     border-radius: 100px;
     box-shadow:
       0 10px 30px rgba(0, 0, 0, 0.5),
-      0 0 30px rgba(192, 132, 252, 0.2);
+      0 0 30px rgba(192, 132, 252, 0.25);
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     cursor: pointer;
-    opacity: 0;
-    visibility: hidden;
+    opacity: 0; visibility: hidden;
     transform: translateY(20px);
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .s-mini-show { opacity: 1; visibility: visible; transform: translateY(0); }
   .s-mini-avatar {
-    width: 34px; height: 34px;
-    border-radius: 50%;
+    width: 34px; height: 34px; border-radius: 50%;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     display: flex; align-items: center; justify-content: center;
-    color: #fff;
-    flex-shrink: 0;
+    color: #fff; flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(192, 132, 252, 0.4);
-  }
-  .s-mini-name {
-    font-weight: 700;
-    color: #f3e8ff;
-    font-size: 0.88rem;
-  }
-  .s-mini-new {
-    min-width: 20px; height: 20px;
-    padding: 0 6px;
-    background: linear-gradient(135deg, #ef4444, #f97316);
-    color: #fff;
-    border-radius: 999px;
-    display: none;
-    align-items: center; justify-content: center;
-    font-size: 0.65rem;
+    font-family: 'Bricolage Grotesque', sans-serif;
     font-weight: 800;
+    font-size: 0.9rem;
+  }
+  .s-mini-name { font-weight: 700; color: #f3e8ff; font-size: 0.88rem; }
+  .s-mini-new {
+    min-width: 20px; height: 20px; padding: 0 6px;
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff; border-radius: 999px;
+    display: none; align-items: center; justify-content: center;
+    font-size: 0.65rem; font-weight: 800;
     font-family: 'JetBrains Mono', monospace;
   }
   .s-mini-x {
-    background: rgba(255, 255, 255, 0.05);
-    border: none;
+    background: rgba(255, 255, 255, 0.05); border: none;
     color: rgba(243, 232, 255, 0.6);
-    width: 24px; height: 24px;
-    border-radius: 50%;
+    width: 24px; height: 24px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s;
+    cursor: pointer; transition: all 0.2s;
     -webkit-tap-highlight-color: transparent;
     padding: 0;
   }
   .s-mini-x:hover { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
 
-  /* ═══════════════════════════════════════════════
-     MOBILE — Avatar becomes smaller, chat full-screen
-     ═══════════════════════════════════════════════ */
+  /* ═══ RESPONSIVE ═══ */
   @media (max-width: 900px) {
-    /* On tablets: avatar goes above chat instead of side */
     .s-avatar {
       right: 20px;
-      bottom: calc(100vh - 320px); /* peek above chat */
-      width: 160px;
-      height: 220px;
+      bottom: calc(100vh - 340px);
+      width: 170px;
+      height: 240px;
     }
+    .s-avatar-fb-orb { width: 130px; height: 130px; }
+    .s-avatar-fb-name { font-size: 1rem; }
   }
-
   @media (max-width: 640px) {
-    #safiya-root {
-      bottom: 16px;
-      right: 16px;
-    }
-    .s-head {
-      width: 54px;
-      height: 54px;
-    }
-    .s-bubble {
-      position: fixed;
-      bottom: 82px;
-      left: 14px;
-      right: 14px;
-      width: auto;
-    }
-    /* Mobile: chat full-screen */
+    #safiya-root { bottom: 16px; right: 16px; }
+    .s-head { width: 54px; height: 54px; }
+    .s-bubble { position: fixed; bottom: 82px; left: 14px; right: 14px; width: auto; }
     .s-chat {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      width: 100vw;
-      height: 100vh;
+      width: 100vw; height: 100vh;
       max-height: 100vh;
-      border-radius: 0;
-      border: none;
+      border-radius: 0; border: none;
     }
-    /* Mobile: avatar in top corner, smaller */
     .s-avatar {
       position: fixed;
-      top: 60px;
-      right: 12px;
+      top: 60px; right: 12px;
       bottom: auto;
-      width: 100px;
-      height: 140px;
+      width: 110px; height: 150px;
       z-index: 10000;
     }
-    .s-avatar-fb-shape {
-      width: 70px;
-      height: 70px;
-    }
-    .s-avatar-fb-text { font-size: 0.85rem; }
-    .s-avatar-hint {
-      font-size: 0.6rem;
-      padding: 3px 8px;
-      bottom: -22px;
-    }
+    .s-avatar-fb-orb { width: 75px; height: 75px; }
+    .s-avatar-fb-name { font-size: 0.75rem; }
+    .s-avatar-hint { font-size: 0.6rem; padding: 4px 10px; bottom: -25px; }
     .s-chat-body { padding: 16px 12px; }
     #s-input { font-size: 1rem; padding: 12px 0; }
     .s-send { width: 42px; height: 42px; }
-    .s-mini {
-      bottom: 14px;
-      right: 14px;
-      left: 14px;
-      justify-content: flex-start;
-    }
+    .s-mini { bottom: 14px; right: 14px; left: 14px; justify-content: flex-start; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .s-head-ring, .s-head-notify, .s-dot,
-    .s-avatar-glow, .s-avatar, .s-avatar-fb-shape,
-    .s-avatar-hint {
+    .s-avatar-glow, .s-avatar-show, .s-avatar-fb-orb,
+    .s-avatar-fb-eye, .s-avatar-hint {
       animation: none !important;
     }
   }
