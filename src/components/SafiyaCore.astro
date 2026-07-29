@@ -610,18 +610,18 @@
     height: 100%;
     overflow: hidden;
     z-index: 1;
-    /* Circle mask with soft edge */
+    /* Larger visible area — show her full body not just face */
     -webkit-mask-image: radial-gradient(
-      ellipse 55% 70% at 50% 45%,
-      black 50%,
+      ellipse 70% 90% at 50% 45%,
+      black 60%,
       transparent 100%
     );
     mask-image: radial-gradient(
-      ellipse 55% 70% at 50% 45%,
-      black 50%,
+      ellipse 70% 90% at 50% 45%,
+      black 60%,
       transparent 100%
     );
-  }
+}
   
   /* The character sheet image — positioned to show main front pose */
   .safiya-sprite {
@@ -629,9 +629,9 @@
        Main front pose is top-left ~35% width, ~55% height
        We enlarge and shift to frame just her front body */
     position: absolute;
-    top: -12%;
-    left: -15%;
-    width: 400%; /* zoom into character sheet */
+    top: -5%;
+    left: -20%;
+    width: 380%; /* zoom into sheet — shows only main front pose */
     height: auto;
     user-select: none;
     -webkit-user-drag: none;
@@ -639,8 +639,7 @@
     transform-origin: center 40%;
     transition: transform 0.3s ease;
     image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-  }
+}
   
   /* Status dot (bottom right of avatar) */
   .safiya-status {
