@@ -500,15 +500,70 @@
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
   });
 
-  // ═══════════════════════════════════════════════
-  // 🎭 LIVE2D — UNIVERSAL LOADER + SMART MOTIONS
+   // ═══════════════════════════════════════════════
+  // 🎭 LIVE2D — UNIVERSAL LOADER + SILENT + CUSTOM VOICE
   // ═══════════════════════════════════════════════
   var live2dApp = null, live2dModel = null;
   var live2dLoaded = false, live2dLoading = false;
-  var availableMotions = [];    // {groupName, count}
+  var availableMotions = [];
   var availableExpressions = [];
   var lastMotionTime = 0;
   var idleMotionInterval = null;
+  var currentAudio = null;  // For touch sounds
+
+  // ═══════════════════════════════════════════════
+  // 🎤 CUSTOM VOICE LINES (customizable!)
+  // Only play when user touches Izumi
+  // ═══════════════════════════════════════════════
+  // Set to null to disable all sounds
+  // Or map custom audio files (place in /public/safiya/voice/)
+  var VOICE_LINES = {
+    // Touch reactions — only these play on tap
+    touch: [
+      // Example: '/safiya/voice/touch1.mp3',
+      // Example: '/safiya/voice/touch2.mp3',
+      // Leave empty for now — no sound files needed
+    ],
+    greet: [],   // For "hi" messages
+    happy: [],   // For happy replies
+    shy: [],     // For flirty/blush replies
+    angry: [],   // For angry replies
+  };
+
+  function playCustomVoice(category) {
+    if (!VOICE_LINES[category] || VOICE_LINES[category].length === 0) return;
+    // Stop any currently playing audio
+    if (currentAudio) {
+      try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e) {}
+    }
+    var line = pick(VOICE_LINES[category]);
+    try {
+      currentAudio = new Audio(line);
+      currentAudio.volume = 0.7;
+      currentAudio.play().catch(function(e) {
+        console.warn('[Safiya] Voice play failed:', e);
+      });
+    } catch(e) {}
+  }
+
+  function stopAllAudio() {
+    if (currentAudio) {
+      try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e) {}
+      currentAudio = null;
+    }
+    // Also stop any Live2D internal audio
+    if (live2dModel && live2dModel.internalModel) {
+      try {
+        var mm = live2dModel.internalModel.motionManager;
+        if (mm) {
+          // Disable sound player
+          if (mm.currentAudio) {
+            try { mm.currentAudio.pause(); mm.currentAudio = null; } catch(e) {}
+          }
+        }
+      } catch(e) {}
+    }
+  }
 
   function loadLive2D() {
     if (live2dLoaded || live2dLoading) return;
@@ -528,6 +583,358 @@
         document.head.appendChild(s);
       });
     }
+
+    async function tryLoadModel(path) {
+      try {
+        var testRes = await fetch(path, { method: 'HEAD' });
+        if (!testRes.ok) return null;
+      } catch(e) { return null; }
+      try {
+        // ★ CRITICAL: Disable auto sound + auto interaction
+        var model = await PIXI.live2d.Live2DModel.from(path, {
+          autoInteract: false,
+          autoUpdate: true,
+          // Disable audio loading completely
+          motionPreload: 'NONE',  // Don't preload motions (which auto-plays sounds)
+        });
+        return model;
+      } catch(e) {
+        console.warn('[Safiya] Failed to load ' + path, e);
+        return null;
+      }
+    }
+
+    (async function() {
+      try {
+        for (var i = 0; i < libs.length; i++) await loadScript(libs[i]);
+        if (typeof PIXI === 'undefined' || !PIXI.live2d) throw new Error('libs missing');
+
+        // ★ DISABLE SOUND GLOBALLY (before model loads)
+        if (PIXI.live2d.SoundManager) {
+          PIXI.live2d.SoundManager.volume = 0;  // Mute all Live2D sounds
+        }
+        if (PIXI.live2d.config) {
+          PIXI.live2d.config.sound = false;  // Disable sound system
+        }
+
+        var isMobile = window.innerWidth <= 720;
+        var w = isMobile ? 120 : 240;
+        var h = isMobile ? 170 : 340;
+
+        var app = new PIXI.Application({
+          view: avatarCanvas, width: w, height: h,
+          backgroundAlpha: 0, antialias: true,
+          resolution: window.devicePixelRatio || 1, autoDensity: true
+        });
+        live2dApp = app;
+
+        var model = null;
+        var loadedPath = null;
+        var pathsToTry = [MODEL_PATH].concat(MODEL_FALLBACKS.filter(function(p) { return p !== MODEL_PATH; }));
+        for (var j = 0; j < pathsToTry.length; j++) {
+          console.log('%c🔍 Trying model: ' + pathsToTry[j], 'color:#c084fc');
+          model = await tryLoadModel(pathsToTry[j]);
+          if (model) { loadedPath = pathsToTry[j]; break; }
+        }
+        if (!model) throw new Error('No model file found');
+
+        var scale = (h / model.height) * 0.95;
+        model.scale.set(scale);
+        model.anchor.set(0.5, 0.5);
+        model.x = w / 2; model.y = h / 2;
+
+        app.stage.addChild(model);
+        live2dModel = model;
+        live2dLoaded = true;
+
+        if (avatarLoader) avatarLoader.style.display = 'none';
+        if (avatarFallback) avatarFallback.style.display = 'none';
+        avatarCanvas.style.display = 'block';
+
+        // ═══════════════════════════════════════
+        // ★★★ DISABLE MODEL'S BUILT-IN SOUND ★★★
+        // ═══════════════════════════════════════
+        try {
+          // Disable sound in motion manager
+          var mm = model.internalModel && model.internalModel.motionManager;
+          if (mm) {
+            // Override the sound playing function
+            if (mm.playSound) mm.playSound = function() { return; };
+            if (mm._playSound) mm._playSound = function() { return; };
+            // Also override sound property on motions
+            mm.on && mm.on('motionStart', function() { stopAllAudio(); });
+          }
+          // Set model volume to 0
+          if (model.volume !== undefined) model.volume = 0;
+          console.log('%c🔇 Live2D sounds disabled', 'color:#22c55e;font-weight:bold');
+        } catch(e) { console.warn('[Safiya] Sound disable error:', e); }
+
+        // Detect motions
+        try {
+          var mm2 = model.internalModel && model.internalModel.motionManager;
+          if (mm2) {
+            var settings = model.internalModel.settings;
+            if (settings && settings.motions) {
+              availableMotions = [];
+              Object.keys(settings.motions).forEach(function(group) {
+                var count = (settings.motions[group] || []).length;
+                availableMotions.push({ groupName: group, count: count });
+              });
+              console.log('%c🎭 Motion groups (' + availableMotions.length + '):', 'color:#e879f9;font-weight:bold');
+              availableMotions.forEach(function(m, i) {
+                console.log('%c   [' + i + '] "' + m.groupName + '" → ' + m.count + ' motion(s)', 'color:#c084fc');
+              });
+            }
+            if (settings && settings.expressions) {
+              availableExpressions = settings.expressions.map(function(e) { return e.Name || e.name; }).filter(Boolean);
+              console.log('%c😊 Expressions (' + availableExpressions.length + '):', 'color:#e879f9;font-weight:bold', availableExpressions);
+            }
+          }
+        } catch(e) { console.warn('[Safiya] Motion detection error:', e); }
+
+        // Cursor tracking
+        var tracking = { x: 0, y: 0 };
+        document.addEventListener('mousemove', function(e) {
+          if (!chatOpen) return;
+          var rect = avatar.getBoundingClientRect();
+          var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+          tracking.x = (e.clientX - cx) / (window.innerWidth / 2);
+          tracking.y = (e.clientY - cy) / (window.innerHeight / 2);
+        }, { passive: true });
+        app.ticker.add(function() {
+          if (model && model.internalModel) {
+            try { model.focus(tracking.x, tracking.y); } catch(e) {}
+          }
+        });
+
+        // Hit detection
+        model.on('hit', function(hitAreas) {
+          try {
+            if (!hitAreas || !hitAreas.length) return;
+            var area = hitAreas[0] || '';
+            console.log('%c👆 Hit: ' + area, 'color:#22d3ee;font-weight:bold');
+            handleTouch(area);
+          } catch(e) {}
+        });
+
+        startIdleMotions();
+        setTimeout(function() { playRandomMotion(); }, 800);
+
+        console.log('%c💜 Live2D loaded: ' + loadedPath, 'color:#e879f9;font-weight:bold;font-size:14px');
+      } catch(err) {
+        console.error('[Safiya] Live2D FAILED:', err);
+        if (avatarLoader) avatarLoader.style.display = 'none';
+        live2dLoading = false;
+      }
+    })();
+  }
+
+  // ═══════════════════════════════════════════════
+  // 🎬 MOTION CONTROL (SILENT — no auto sound)
+  // ═══════════════════════════════════════════════
+  function playMotion(groupName, index, priority) {
+    if (!live2dModel) return false;
+    priority = priority || 2;
+    try {
+      // Stop any playing sound before new motion
+      stopAllAudio();
+      if (typeof index === 'number') {
+        live2dModel.motion(groupName, index, priority);
+      } else {
+        live2dModel.motion(groupName, undefined, priority);
+      }
+      lastMotionTime = Date.now();
+      // Silence any audio that motion might trigger
+      setTimeout(stopAllAudio, 50);
+      setTimeout(stopAllAudio, 200);
+      return true;
+    } catch(e) { return false; }
+  }
+
+  function playRandomMotion() {
+    if (!live2dModel || !availableMotions.length) return;
+    var nonIdle = availableMotions.filter(function(m) { return !/idle/i.test(m.groupName); });
+    var pool = nonIdle.length ? nonIdle : availableMotions;
+    var chosen = pick(pool);
+    playMotion(chosen.groupName, undefined, 2);
+  }
+
+  function playExpression(name) {
+    if (!live2dModel) return false;
+    try { live2dModel.expression(name); return true; } catch(e) { return false; }
+  }
+
+  function playRandomExpression() {
+    if (!availableExpressions.length) return;
+    playExpression(pick(availableExpressions));
+  }
+
+  // Find motion by keyword
+  function findMotionGroup(keywords) {
+    if (!availableMotions.length) return null;
+    for (var i = 0; i < keywords.length; i++) {
+      var kw = keywords[i].toLowerCase();
+      var found = availableMotions.find(function(m) {
+        return m.groupName.toLowerCase().indexOf(kw) !== -1;
+      });
+      if (found) return found.groupName;
+    }
+    return null;
+  }
+
+  function triggerMotionByKeyword(context) {
+    if (!live2dModel) return;
+    var groupMap = {
+      greet:    ['greet', 'hello', 'hi', 'wave', 'tap_body'],
+      happy:    ['happy', 'smile', 'joy', 'laugh'],
+      sad:      ['sad', 'cry', 'down'],
+      angry:    ['angry', 'mad', 'flick'],
+      shy:      ['shy', 'blush', 'flick_head', 'head'],
+      surprise: ['surprise', 'shock', 'gasp'],
+      listen:   ['idle', 'listen', 'wait'],
+      love:     ['love', 'heart', 'flirt'],
+      dance:    ['dance', 'body'],
+    };
+    var keywords = groupMap[context] || [context];
+    var group = findMotionGroup(keywords);
+    if (group) { playMotion(group, undefined, 2); return true; }
+    playRandomMotion();
+    return false;
+  }
+
+  // ═══════════════════════════════════════════════
+  // ★ SMART EXPRESSION FROM CHAT TEXT ★
+  // Sync facial expression with Safiya's messages
+  // (NO sound — just motion + expression)
+  // ═══════════════════════════════════════════════
+  function triggerMotionFromText(text) {
+    if (!live2dModel || !text) return;
+    var t = text.toLowerCase();
+    // Motion trigger (facial + body)
+    if (/💜|💕|love|cute|shy|blush|w-what|shut up/.test(t)) {
+      triggerMotionByKeyword('shy');
+      tryExpression(['shy', 'blush', 'happy']);
+    }
+    else if (/😤|angry|mad|hmph|ugh|stop|baka/.test(t)) {
+      triggerMotionByKeyword('angry');
+      tryExpression(['angry', 'mad']);
+    }
+    else if (/hi|hey|hello|welcome|back/.test(t)) {
+      triggerMotionByKeyword('greet');
+      tryExpression(['happy', 'smile']);
+    }
+    else if (/😏|✨|😊|nice|good|great|yay|lol/.test(t)) {
+      triggerMotionByKeyword('happy');
+      tryExpression(['happy', 'smile']);
+    }
+    else if (/😳|surprise|really|omg|wow/.test(t)) {
+      triggerMotionByKeyword('surprise');
+      tryExpression(['surprise', 'shock']);
+    }
+    else if (Math.random() < 0.4) {
+      playRandomMotion();
+    }
+  }
+
+  function tryExpression(keywords) {
+    if (!availableExpressions.length) return;
+    for (var i = 0; i < keywords.length; i++) {
+      var found = availableExpressions.find(function(e) {
+        return e.toLowerCase().indexOf(keywords[i].toLowerCase()) !== -1;
+      });
+      if (found) { playExpression(found); return true; }
+    }
+    return false;
+  }
+
+  function triggerMoodMotion(newMood) {
+    if (!live2dModel) return;
+    if (newMood === 'flirty')      { triggerMotionByKeyword('shy'); tryExpression(['shy', 'blush']); }
+    else if (newMood === 'angry')  { triggerMotionByKeyword('angry'); tryExpression(['angry']); }
+    else if (newMood === 'caring') { triggerMotionByKeyword('happy'); tryExpression(['happy']); }
+    else if (newMood === 'rude')   { triggerMotionByKeyword('angry'); tryExpression(['angry']); }
+  }
+
+  // ═══════════════════════════════════════════════
+  // ⏰ IDLE MOTIONS (silent, no repeat messages)
+  // ═══════════════════════════════════════════════
+  function startIdleMotions() {
+    if (idleMotionInterval) clearInterval(idleMotionInterval);
+    idleMotionInterval = setInterval(function() {
+      if (!live2dModel || !chatOpen) return;
+      if (Date.now() - lastMotionTime < 12000) return;
+      // ONLY play motion (no chat message spam!)
+      if (Math.random() < 0.35) playRandomMotion();
+    }, 8000);
+  }
+
+  // ═══════════════════════════════════════════════
+  // 👆 CENTRAL TOUCH HANDLER
+  // Called from both avatar click AND model hit
+  // Prevents duplicate messages
+  // ═══════════════════════════════════════════════
+  var lastTouchLine = '';
+  var lastTouchAt = 0;
+
+  function handleTouch(area) {
+    // Debounce touches (min 800ms between)
+    var now = Date.now();
+    if (now - lastTouchAt < 800) return;
+    lastTouchAt = now;
+
+    // Play motion
+    playRandomMotion();
+
+    // Random expression sometimes
+    if (Math.random() < 0.5 && availableExpressions.length) {
+      playRandomExpression();
+    }
+
+    // ★ Play voice ONLY if user configured VOICE_LINES.touch
+    playCustomVoice('touch');
+
+    // Pick reaction line based on area
+    var reactLines;
+    if (/head|face/i.test(area || '')) reactLines = lines.touchHead;
+    else if (/body/i.test(area || '')) reactLines = lines.touchBody;
+    else reactLines = [].concat(lines.touchFace, lines.touchBody, lines.touchHead);
+
+    // Prevent same line twice in a row
+    var line;
+    var tries = 0;
+    do {
+      line = pick(reactLines);
+      tries++;
+    } while (line === lastTouchLine && tries < 5);
+    lastTouchLine = line;
+
+    // Send to chat (only ONE message)
+    reactToTouch(line);
+
+    // Vibrate on mobile
+    if (navigator.vibrate) navigator.vibrate(20);
+
+    // Visual pulse
+    avatar.classList.remove('s-avatar-tap');
+    void avatar.offsetWidth;
+    avatar.classList.add('s-avatar-tap');
+  }
+
+  // Avatar click uses same handler
+  avatar.addEventListener('click', function() {
+    handleTouch('body'); // Default to body if no specific hit
+  });
+
+  function reactToTouch(line) {
+    if (!chatOpen) return;
+    setTimeout(function() {
+      addTyping();
+      setTimeout(function() {
+        removeTyping();
+        addMessage(line, 'her');
+      }, 500);
+    }, 150);
+  }
 
     async function tryLoadModel(path) {
       // Test if file exists
