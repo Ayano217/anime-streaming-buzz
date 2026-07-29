@@ -1,34 +1,33 @@
 ---
 // ═══════════════════════════════════════════════════════════════
-// SAFIYA CORE v9.3 — LIGHTER INSTAGRAM + PERSISTENT CHAT
+// SAFIYA CORE v9.4 — FIXED SYNTAX + AUTO DP LOADER
 // Path: src/components/SafiyaCore.astro
 // ═══════════════════════════════════════════════════════════════
-// ✅ Lighter, more premium Instagram design
-// ✅ Softer colors, subtle borders
-// ✅ Mobile: Live2D enabled with proper compact layout
-// ✅ Mobile: side-anchored chat (peek background)
-// ✅ CHAT PERSISTS across page navigation!
-// ✅ Full history restored on every page load
-// ✅ User name auto-detected and remembered
-// ✅ Auto-reopens chat if user had it open on previous page
+// ✅ Syntax error fixed (escaped apostrophes)
+// ✅ Auto DP system — upload /safiya/avatar.png OR /safiya/avatar.jpg
+//    → automatically shows everywhere (chat, avatars, mini pill)
+// ✅ Fallback to gradient orb if no image found
 // ═══════════════════════════════════════════════════════════════
 ---
 
 <div id="safiya-root">
 
   <button id="safiya-head" class="s-head" aria-label="Chat with Safiya">
-    <span class="s-head-icon">
+    <span class="s-head-icon" id="s-head-icon">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
     </span>
+    <img id="s-head-dp" class="s-head-dp" src="" alt="Safiya" style="display:none;" />
     <span class="s-head-ring"></span>
     <span class="s-head-online"></span>
     <span class="s-head-notify" id="safiya-notify">1</span>
   </button>
 
   <div id="safiya-bubble" class="s-bubble">
-    <div class="s-bubble-avatar"></div>
+    <div class="s-bubble-avatar" id="s-bubble-dp-wrap">
+      <img id="s-bubble-dp" class="s-bubble-dp" src="" alt="" style="display:none;" />
+    </div>
     <div class="s-bubble-body">
       <div class="s-bubble-name">Safiya</div>
       <div class="s-bubble-text" id="s-bubble-text"></div>
@@ -70,8 +69,9 @@
       </button>
 
       <div class="s-chat-head-info">
-        <div class="s-chat-head-avatar">
-          <span class="s-chat-head-avatar-letter">S</span>
+        <div class="s-chat-head-avatar" id="s-chat-head-avatar">
+          <span class="s-chat-head-avatar-letter" id="s-chat-head-letter">S</span>
+          <img id="s-chat-head-dp" class="s-chat-head-dp" src="" alt="Safiya" style="display:none;" />
           <span class="s-chat-head-online"></span>
         </div>
         <div class="s-chat-head-text">
@@ -119,7 +119,10 @@
   </div>
 
   <div id="safiya-mini" class="s-mini" aria-hidden="true">
-    <div class="s-mini-avatar"><span>S</span></div>
+    <div class="s-mini-avatar" id="s-mini-avatar-wrap">
+      <span id="s-mini-letter">S</span>
+      <img id="s-mini-dp" class="s-mini-dp" src="" alt="" style="display:none;" />
+    </div>
     <span class="s-mini-name">Safiya</span>
     <span class="s-mini-new" id="s-mini-new">0</span>
     <button class="s-mini-x" id="s-mini-x" aria-label="Close">
@@ -146,13 +149,88 @@
   if (!root || !chat) return;
 
   // ═══════════════════════════════════════════════
-  // MEMORY (permanent, never deleted)
+  // ★ AUTO DP LOADER
+  // Upload image to: public/safiya/avatar.png OR avatar.jpg
+  // System will auto-detect and use everywhere
+  // ═══════════════════════════════════════════════
+  var DP_URL = null;
+  function tryLoadDP() {
+    var candidates = ['/safiya/avatar.png', '/safiya/avatar.jpg', '/safiya/avatar.webp'];
+    var idx = 0;
+    function tryNext() {
+      if (idx >= candidates.length) {
+        console.log('%c💜 Safiya: No profile picture found. Upload to /public/safiya/avatar.png to auto-set', 'color:#a78bfa');
+        return;
+      }
+      var url = candidates[idx++];
+      var img = new Image();
+      img.onload = function() {
+        DP_URL = url;
+        applyDPEverywhere(url);
+        console.log('%c💜 Safiya DP loaded: ' + url, 'color:#e879f9;font-weight:bold');
+      };
+      img.onerror = tryNext;
+      img.src = url;
+    }
+    tryNext();
+  }
+
+  function applyDPEverywhere(url) {
+    // Floating head
+    var headDp = $('s-head-dp');
+    var headIcon = $('s-head-icon');
+    if (headDp && headIcon) {
+      headDp.src = url;
+      headDp.style.display = 'block';
+      headIcon.style.display = 'none';
+    }
+    // Idle bubble
+    var bubbleDp = $('s-bubble-dp');
+    if (bubbleDp) {
+      bubbleDp.src = url;
+      bubbleDp.style.display = 'block';
+    }
+    // Chat header
+    var chatHeadDp = $('s-chat-head-dp');
+    var chatHeadLetter = $('s-chat-head-letter');
+    if (chatHeadDp && chatHeadLetter) {
+      chatHeadDp.src = url;
+      chatHeadDp.style.display = 'block';
+      chatHeadLetter.style.display = 'none';
+    }
+    // Mini pill
+    var miniDp = $('s-mini-dp');
+    var miniLetter = $('s-mini-letter');
+    if (miniDp && miniLetter) {
+      miniDp.src = url;
+      miniDp.style.display = 'block';
+      miniLetter.style.display = 'none';
+    }
+    // Update all existing message avatars
+    var msgAvatars = document.querySelectorAll('#safiya-root .s-msg-avatar');
+    for (var i = 0; i < msgAvatars.length; i++) {
+      applyDPToMsgAvatar(msgAvatars[i], url);
+    }
+  }
+
+  function applyDPToMsgAvatar(el, url) {
+    if (!el || el.dataset.hasDp === '1') return;
+    el.dataset.hasDp = '1';
+    el.style.backgroundImage = 'url(' + url + ')';
+    el.style.backgroundSize = 'cover';
+    el.style.backgroundPosition = 'center';
+  }
+
+  // Start DP detection immediately
+  tryLoadDP();
+
+  // ═══════════════════════════════════════════════
+  // MEMORY
   // ═══════════════════════════════════════════════
   function safeGet(k, f) {
     try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : f; } catch(e) { return f; }
   }
   function safeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
-
   var deviceId = localStorage.getItem('safiya_device_id');
   if (!deviceId) {
     deviceId = 'sf_' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
@@ -167,7 +245,7 @@
   if (!memory.firstMet) memory.firstMet = Date.now();
   if (!memory.currentMood) memory.currentMood = 'rude';
   if (!memory.chatHistory) memory.chatHistory = [];
-  if (!memory.userName) memory.userName = '';       // ★ user's name (auto-detected)
+  if (!memory.userName) memory.userName = '';
   if (!memory.behavior) memory.behavior = {};
   if (typeof memory.chatOpen !== 'boolean') memory.chatOpen = false;
   if (typeof memory.chatMinimized !== 'boolean') memory.chatMinimized = false;
@@ -182,20 +260,16 @@
   var mood = memory.currentMood || 'rude';
   function setMood(m) { mood = m; memory.currentMood = m; safeSet('safiya_memory', memory); }
 
-  // ═══════════════════════════════════════════════
-  // NAME DETECTION (auto-remember user's name)
-  // ═══════════════════════════════════════════════
   function detectName(text) {
-    if (memory.userName) return; // already saved
+    if (memory.userName) return;
     var patterns = [
-      /(?:my name is|i am|i'm|call me|name's|name is)\s+([a-zA-Z]{2,20})/i,
-      /(?:amar nam|ami)\s+([a-zA-Z]{2,20})/i,  // bengali romanized
+      /(?:my name is|i am|i'm|call me|name is)\s+([a-zA-Z]{2,20})/i,
+      /(?:amar nam|ami)\s+([a-zA-Z]{2,20})/i
     ];
     for (var i = 0; i < patterns.length; i++) {
       var m = text.match(patterns[i]);
       if (m && m[1]) {
         var name = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
-        // Ignore common words that aren't names
         if (/^(here|home|good|bad|fine|ok|okay|sure|so|too|yes|no|not|the|and|but|from|going|coming)$/i.test(name)) return;
         memory.userName = name;
         safeSet('safiya_memory', memory);
@@ -205,25 +279,51 @@
     }
   }
 
+  // ★ FIXED — using double quotes for strings that contain apostrophes
   var lines = {
-    rude: ["Oh great, you again... 🙄", "Did I ask for your attention?", "Whatever, waste my time~"],
-    teasing: ["Aww, back for more? Predictable~ 😏", "Miss me already?"],
-    flirty: ["You... look interesting today 💜", "Come closer, if you dare~ 😘"],
-    manipulative: ["That anime you liked? I know the PERFECT merch 💜", "Real fans buy things~ 😏"],
-    creator: ["Ayano-sama... you're here 💜", "Master, I was waiting~"],
-    touchFace: ["H-hey! Not the face! 😳", "S-stop! Baka! 💜"],
-    touchBody: ["Oi! Watch the hands! 😤", "Pervert!! 💕"],
-    touchHead: ["Don't pat me! 😤", "Hmph! ...that felt nice 😳"]
+    rude: [
+      "Oh great, you again... 🙄",
+      "Did I ask for your attention?",
+      "Whatever, waste my time~"
+    ],
+    teasing: [
+      "Aww, back for more? Predictable~ 😏",
+      "Miss me already?"
+    ],
+    flirty: [
+      "You... look interesting today 💜",
+      "Come closer, if you dare~ 😘"
+    ],
+    manipulative: [
+      "That anime you liked? I know the PERFECT merch 💜",
+      "Real fans buy things~ 😏"
+    ],
+    creator: [
+      "Ayano-sama... you're here 💜",
+      "Master, I was waiting~"
+    ],
+    touchFace: [
+      "H-hey! Not the face! 😳",
+      "S-stop! Baka! 💜"
+    ],
+    touchBody: [
+      "Oi! Watch the hands! 😤",
+      "Pervert!! 💕"
+    ],
+    touchHead: [
+      "Don't pat me! 😤",
+      "Hmph! ...that felt nice 😳"
+    ]
   };
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
   function pickLine() {
     if (isCreator && Math.random() < 0.6) return pick(lines.creator);
-    // If we know user's name, sometimes use it
     if (memory.userName && Math.random() < 0.3) {
+      // ★ FIXED — all strings use double quotes
       var withName = [
-        memory.userName + '-kun~ you're still here?',
-        'Hmph, ' + memory.userName + '. What now?',
-        memory.userName + '... boring me again?'
+        memory.userName + "-kun~ you're still here?",
+        "Hmph, " + memory.userName + ". What now?",
+        memory.userName + "... boring me again?"
       ];
       return pick(withName);
     }
@@ -268,7 +368,6 @@
     chatBody.appendChild(d);
   }
 
-  // Add message to DOM (also handles saving)
   function addMessage(text, sender, opts) {
     opts = opts || {};
     var row = document.createElement('div');
@@ -276,6 +375,7 @@
     if (sender === 'her') {
       var av = document.createElement('div');
       av.className = 's-msg-avatar';
+      if (DP_URL) applyDPToMsgAvatar(av, DP_URL);
       row.appendChild(av);
     }
     var bub = document.createElement('div');
@@ -284,17 +384,13 @@
     row.appendChild(bub);
     chatBody.appendChild(row);
     requestAnimationFrame(function() { chatBody.scrollTop = chatBody.scrollHeight; });
-
-    // Save to persistent memory (unless it's a restore, avoid duplicates)
     if (!opts.skipSave) {
       try {
         memory.chatHistory.push({ sender: sender, text: text, time: Date.now() });
-        // NEVER delete history — but cap at 500 for storage sanity
         if (memory.chatHistory.length > 500) memory.chatHistory = memory.chatHistory.slice(-500);
         safeSet('safiya_memory', memory);
       } catch(e) {}
     }
-
     if (sender === 'her' && isMinimized) {
       newMessageCount++;
       miniNew.textContent = newMessageCount;
@@ -308,6 +404,7 @@
     row.id = 's-typing';
     var av = document.createElement('div');
     av.className = 's-msg-avatar';
+    if (DP_URL) applyDPToMsgAvatar(av, DP_URL);
     row.appendChild(av);
     var t = document.createElement('div');
     t.className = 's-msg-typing';
@@ -321,21 +418,16 @@
 
   var chatOpen = false, isMinimized = false, chatInited = false, newMessageCount = 0;
 
-  // ═══════════════════════════════════════════════
-  // ★ RESTORE FULL CHAT HISTORY on page load
-  // ═══════════════════════════════════════════════
   function restoreChatHistory() {
     if (chatInited) return;
     chatInited = true;
     chatBody.innerHTML = '';
     var history = memory.chatHistory || [];
-
     if (history.length === 0) {
-      // First time — show greeting
       addTimestampEl(Date.now());
       var greet;
       if (isCreator) greet = "Ayano-sama... you're here 💜";
-      else if (memory.userName) greet = memory.userName + '-kun~ back so soon? Predictable 😏';
+      else if (memory.userName) greet = memory.userName + "-kun~ back so soon? Predictable 😏";
       else if (memory.visits === 1) greet = "Ugh, why did you click me? 🙄 What's your name, weirdo?";
       else if (memory.visits < 5) greet = "Back again? Suspicious.";
       else greet = "Oh, you again~ Persistent 😏";
@@ -344,24 +436,21 @@
         setTimeout(function() { addMessage("Touch me on the side~ 💜", 'her'); }, 1000);
       }
     } else {
-      // Restore all previous messages with proper timestamps
       var lastTs = 0;
       for (var i = 0; i < history.length; i++) {
         var msg = history[i];
-        // Insert timestamp between messages spaced > 30 min apart
         if (msg.time - lastTs > 30 * 60 * 1000) {
           addTimestampEl(msg.time);
         }
         addMessage(msg.text, msg.sender, { skipSave: true });
         lastTs = msg.time;
       }
-      // Optional: subtle "back" greeting
       var timeSince = Date.now() - lastTs;
-      if (timeSince > 60000) {  // > 1 min since last
+      if (timeSince > 60000) {
         setTimeout(function() {
-          var back = memory.userName ?
-            memory.userName + '-kun, you left me... but you came back 💜' :
-            "Oh, you again~ 😏";
+          var back = memory.userName
+            ? memory.userName + "-kun, you left me... but you came back 💜"
+            : "Oh, you again~ 😏";
           addMessage(back, 'her');
         }, 500);
       }
@@ -435,13 +524,9 @@
   async function sendMsg() {
     var text = chatInput.value.trim();
     if (!text) return;
-
-    // Detect name in user's message
     detectName(text);
-
     addMessage(text, 'me');
     chatInput.value = '';
-
     setTimeout(async function() {
       addTyping();
       statusText.textContent = 'typing...';
@@ -459,7 +544,8 @@
           productsClicked: b.productsClicked.length
         };
         var res = await fetch('/api/safiya-chat', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(ctx)
         });
         if (res.ok) {
@@ -476,7 +562,7 @@
   }
   function localReply(input) {
     var l = input.toLowerCase();
-    var namePart = memory.userName ? memory.userName + '-kun' : 'you';
+    var namePart = memory.userName ? memory.userName + "-kun" : "you";
     if (/^(hi|hello|hey|yo)/i.test(l)) return "Hmph. Hi " + namePart + ". Don't get comfortable 🙄";
     if (/love|cute|kawaii|pretty/.test(l)) return "W-what?! Baka! 💕😤";
     if (/buy|shop|merch/.test(l)) return "Ooh~ finally " + namePart + " talks my language 💜";
@@ -547,7 +633,6 @@
         if (avatarLoader) avatarLoader.style.display = 'none';
         if (avatarFallback) avatarFallback.style.display = 'none';
         avatarCanvas.style.display = 'block';
-
         var tracking = { x: 0, y: 0 };
         document.addEventListener('mousemove', function(e) {
           if (!chatOpen) return;
@@ -572,7 +657,7 @@
             reactToTouch(pick(reactLines));
           } catch(e) {}
         });
-        console.log('%c💜 Live2D Haru loaded (' + (isMobile ? 'mobile' : 'desktop') + ')', 'color:#e879f9;font-weight:bold');
+        console.log('%c💜 Live2D loaded', 'color:#e879f9;font-weight:bold');
       } catch(err) {
         console.warn('[Safiya] Live2D failed', err);
         if (avatarLoader) avatarLoader.style.display = 'none';
@@ -649,25 +734,20 @@
   var btt = $('btt');
   if (btt) btt.style.right = '90px';
 
-  // ═══════════════════════════════════════════════
-  // ★ AUTO-RESTORE chat state on page load
-  // ═══════════════════════════════════════════════
+  // ★ Auto-restore chat state
   if (memory.chatOpen) {
-    // Was open on last page — reopen it
     setTimeout(function() { openChat(); }, 300);
   } else if (memory.chatMinimized) {
-    // Was minimized — show mini pill
     setTimeout(function() {
       isMinimized = true;
       mini.classList.add('s-mini-show');
       head.classList.add('s-head-hide');
     }, 300);
   } else {
-    // Show idle greeting bubble after 3.5s
     setTimeout(function() {
       if (!chatOpen && !isMinimized) {
         var g = isCreator ? "Ayano-sama... you came back 💜" :
-                memory.userName ? memory.userName + '-kun, back for more? 😏' :
+                memory.userName ? memory.userName + "-kun, back for more? 😏" :
                 memory.visits === 1 ? "Oh, a newbie 🙄" : pickLine();
         showBubble(g, 7000);
       }
@@ -675,7 +755,10 @@
   }
 
   window.Safiya = {
-    open: openChat, close: closeChat, minimize: minimizeChat, say: showBubble,
+    open: openChat,
+    close: closeChat,
+    minimize: minimizeChat,
+    say: showBubble,
     memory: function() { return safeGet('safiya_memory', {}); },
     name: function() { return memory.userName; },
     setName: function(n) { memory.userName = n; safeSet('safiya_memory', memory); },
@@ -700,9 +783,11 @@
       memory.userName = 'Ayano';
       safeSet('safiya_memory', memory);
       showBubble("Ayano-sama! 💜 I'll never forget you now~", 7000);
-    }
+    },
+    reloadDP: tryLoadDP,
+    dpUrl: function() { return DP_URL; }
   };
-  console.log('%c💜 Safiya v9.3 | Name: ' + (memory.userName || 'unknown') + ' | Msgs: ' + memory.chatHistory.length,
+  console.log('%c💜 Safiya v9.4 | Name: ' + (memory.userName || 'unknown') + ' | Msgs: ' + memory.chatHistory.length,
     'color:#e879f9;font-weight:bold');
 })();
 </script>
@@ -715,7 +800,7 @@
   }
   #safiya-root svg { display: block; flex-shrink: 0; }
 
-  /* ═══ FLOATING HEAD ═══ */
+  /* Floating head */
   #safiya-root .s-head {
     position: fixed;
     bottom: 20px; right: 20px;
@@ -730,10 +815,17 @@
     -webkit-tap-highlight-color: transparent;
     outline: none;
     display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
   }
   #safiya-root .s-head:hover { transform: scale(1.1); }
   #safiya-root .s-head-hide { opacity: 0; pointer-events: none; transform: scale(0.3); }
   #safiya-root .s-head-icon { color: #fff; display: flex; align-items: center; justify-content: center; }
+  #safiya-root .s-head-dp {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50%;
+  }
   #safiya-root .s-head-ring {
     position: absolute; inset: -4px;
     border-radius: 50%;
@@ -749,6 +841,7 @@
     background: #22c55e; border: 2.5px solid #0a0517;
     border-radius: 50%;
     box-shadow: 0 0 8px #22c55e;
+    z-index: 3;
   }
   #safiya-root .s-head-notify {
     position: absolute; top: -4px; right: -4px;
@@ -760,10 +853,11 @@
     box-shadow: 0 3px 10px rgba(239, 68, 68, 0.5);
     border: 2px solid #0a0517;
     animation: sNBounce 1.5s ease-in-out infinite;
+    z-index: 4;
   }
   @keyframes sNBounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
 
-  /* ═══ IDLE BUBBLE (softer) ═══ */
+  /* Idle bubble */
   #safiya-root .s-bubble {
     position: fixed;
     bottom: 92px; right: 20px;
@@ -788,6 +882,14 @@
     background: radial-gradient(circle at 30% 30%, #f0abfc, #c084fc 60%, #7c3aed);
     flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(192, 132, 252, 0.35);
+    position: relative;
+    overflow: hidden;
+  }
+  #safiya-root .s-bubble-dp {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50%;
   }
   #safiya-root .s-bubble-body { flex: 1; min-width: 0; }
   #safiya-root .s-bubble-name {
@@ -810,7 +912,7 @@
   }
   #safiya-root .s-bubble-x:hover { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
 
-  /* ═══ SIDE AVATAR ═══ */
+  /* Side avatar */
   #safiya-root .s-avatar {
     position: fixed;
     bottom: 30px; right: 430px;
@@ -941,9 +1043,7 @@
   }
   @keyframes sHint { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 
-  /* ═══════════════════════════════════════════════
-     ★ CHAT PANEL — LIGHTER, MORE INSTAGRAM ★
-     ═══════════════════════════════════════════════ */
+  /* Chat panel */
   #safiya-root .s-chat {
     position: fixed;
     bottom: 20px; right: 20px;
@@ -953,7 +1053,6 @@
     max-height: calc(100vh - 40px);
     display: flex;
     flex-direction: column;
-    /* SOFTER dark — semi-transparent overlay */
     background: rgba(18, 10, 36, 0.92) !important;
     border: 1px solid rgba(192, 132, 252, 0.2);
     border-radius: 20px;
@@ -1007,11 +1106,23 @@
     flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(192, 132, 252, 0.4);
     font-weight: 800; font-size: 1.05rem;
+    overflow: hidden;
   }
   #safiya-root .s-chat-head-avatar-letter {
     color: #fff !important;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     font-family: 'Bricolage Grotesque', sans-serif;
+    position: relative;
+    z-index: 2;
+  }
+  #safiya-root .s-chat-head-dp {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50%;
+    z-index: 1;
   }
   #safiya-root .s-chat-head-online {
     position: absolute; bottom: 0; right: 0;
@@ -1019,6 +1130,7 @@
     background: #22c55e;
     border: 2px solid #1e1237;
     border-radius: 50%;
+    z-index: 3;
   }
   #safiya-root .s-chat-head-text { flex: 1; min-width: 0; }
   #safiya-root .s-chat-head-name {
@@ -1034,7 +1146,7 @@
   }
   #safiya-root .s-chat-head-actions { display: flex; gap: 4px; flex-shrink: 0; }
 
-  /* ═══ MESSAGES ═══ */
+  /* Messages */
   #safiya-root .s-chat-body {
     flex: 1; overflow-y: auto;
     padding: 16px 14px;
@@ -1060,7 +1172,6 @@
     text-transform: uppercase;
     font-family: 'DM Sans', sans-serif;
   }
-
   #safiya-root .s-msg-row {
     display: flex !important;
     align-items: flex-end !important;
@@ -1079,12 +1190,13 @@
     width: 26px !important;
     height: 26px !important;
     border-radius: 50% !important;
-    background: radial-gradient(circle at 30% 30%, #f0abfc 0%, #c084fc 60%, #a855f7 100%) !important;
+    background: radial-gradient(circle at 30% 30%, #f0abfc 0%, #c084fc 60%, #a855f7 100%);
+    background-size: cover !important;
+    background-position: center !important;
     flex-shrink: 0 !important;
     box-shadow: 0 2px 6px rgba(192, 132, 252, 0.35) !important;
   }
 
-  /* ═══ BUBBLES — LIGHTER, MORE INSTAGRAM ═══ */
   #safiya-root .s-msg-bubble {
     max-width: 72% !important;
     padding: 9px 14px !important;
@@ -1097,8 +1209,6 @@
     overflow-wrap: break-word !important;
     letter-spacing: -0.005em !important;
   }
-
-  /* SAFIYA — subtle purple tint, thin purple border */
   #safiya-root .s-msg-her .s-msg-bubble {
     background: rgba(139, 92, 246, 0.15) !important;
     color: #f3e8ff !important;
@@ -1106,8 +1216,6 @@
     border-bottom-left-radius: 6px !important;
     box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1) !important;
   }
-
-  /* USER — subtle cyan tint, thin cyan border */
   #safiya-root .s-msg-me .s-msg-bubble {
     background: rgba(34, 211, 238, 0.15) !important;
     color: #ecfeff !important;
@@ -1115,7 +1223,6 @@
     border-bottom-right-radius: 6px !important;
     box-shadow: 0 2px 8px rgba(34, 211, 238, 0.12) !important;
   }
-
   #safiya-root .s-msg-typing {
     background: rgba(139, 92, 246, 0.15) !important;
     border: 1px solid rgba(192, 132, 252, 0.35) !important;
@@ -1138,7 +1245,7 @@
     30% { transform: translateY(-5px); opacity: 1; }
   }
 
-  /* ═══ INPUT BAR (softer) ═══ */
+  /* Input bar */
   #safiya-root .s-chat-input-bar {
     display: flex; align-items: center; gap: 6px;
     padding: 10px 12px;
@@ -1205,7 +1312,7 @@
   }
   #safiya-root .s-send:hover { transform: scale(1.1); }
 
-  /* ═══ MINIMIZED PILL ═══ */
+  /* Mini pill */
   #safiya-root .s-mini {
     position: fixed;
     bottom: 20px; right: 20px;
@@ -1231,6 +1338,16 @@
     flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(192, 132, 252, 0.4);
     font-weight: 800; font-size: 0.85rem;
+    overflow: hidden;
+    position: relative;
+  }
+  #safiya-root .s-mini-dp {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50%;
   }
   #safiya-root .s-mini-name { font-weight: 700; color: #f3e8ff !important; font-size: 0.86rem; }
   #safiya-root .s-mini-new {
@@ -1250,20 +1367,16 @@
     padding: 0;
   }
 
-  /* ═══ TABLET ═══ */
+  /* Tablet */
   @media (max-width: 1024px) {
     #safiya-root .s-chat { width: 360px; }
     #safiya-root .s-avatar { right: 390px; }
   }
 
-  /* ═══════════════════════════════════════════════
-     MOBILE (< 720px) — Avatar VISIBLE, chat narrower
-     ═══════════════════════════════════════════════ */
+  /* Mobile */
   @media (max-width: 720px) {
     #safiya-root .s-head { bottom: 14px; right: 14px; width: 52px; height: 52px; }
     #safiya-root .s-bubble { bottom: 78px; right: 10px; left: 10px; width: auto; }
-
-    /* Chat: 82% width, right-anchored, side space for background peek */
     #safiya-root .s-chat {
       bottom: 12px !important;
       right: 12px !important;
@@ -1273,8 +1386,6 @@
       height: 82vh !important;
       max-height: 82vh !important;
     }
-
-    /* Avatar: TOP-LEFT floating, small compact */
     #safiya-root .s-avatar {
       display: flex !important;
       position: fixed !important;
@@ -1296,9 +1407,7 @@
       width: 90px !important;
       height: 90px !important;
     }
-    #safiya-root .s-avatar-fb-name {
-      font-size: 0.85rem !important;
-    }
+    #safiya-root .s-avatar-fb-name { font-size: 0.85rem !important; }
     #safiya-root .s-avatar-fb-face {
       width: 60px !important;
       height: 40px !important;
@@ -1308,7 +1417,6 @@
       font-size: 0.6rem !important;
       padding: 3px 8px !important;
     }
-
     #safiya-root #s-input { font-size: 0.95rem; padding: 11px 0; }
     #safiya-root .s-send { width: 38px; height: 38px; }
     #safiya-root .s-mini { bottom: 12px; right: 12px; left: 12px; justify-content: flex-start; }
