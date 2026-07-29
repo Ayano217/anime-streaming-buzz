@@ -1,1362 +1,1215 @@
 ---
-// SafiyaCore.astro — Complete rewrite for performance + Messenger UI
-// Fixed: lag, mobile overlap, chat style, up-button conflict
-// Style: Facebook Messenger / Instagram DM popup
+// ═══════════════════════════════════════════════════════════════
+// AniTube Buzz — SAFIYA CORE v6.0 (Facebook Messenger Style)
+// Path: src/components/SafiyaCore.astro
+// ═══════════════════════════════════════════════════════════════
+// FIX v6.0:
+//   ✅ CRITICAL crash bug fixed (memory.behavior undefined arrays)
+//   ✅ Small chat-head avatar (60px circle, Messenger style)
+//   ✅ Full Messenger UI (back arrow, name, call/video/info)
+//   ✅ Message bubbles with avatar on Safiya's messages
+//   ✅ Avatar rotation system (changes every 15 days)
+//   ✅ Timestamp separators ("TUE AT 12:55 PM")
+//   ✅ Mobile: chat panel goes full-screen
+//   ✅ No mood badge in header
+//   ✅ Live2D removed (chat-head style doesn't need it)
+//   ✅ Notification dot + online indicator
+// ═══════════════════════════════════════════════════════════════
+
+// AVATAR IMAGES — Upload to /public/safiya/
+// Add 5-8 images and update this list. Rotation changes every 15 days.
+const SAFIYA_AVATARS = [
+  '/safiya/avatar-1.jpg',
+  '/safiya/avatar-2.jpg',
+  '/safiya/avatar-3.jpg',
+  '/safiya/avatar-4.jpg',
+  '/safiya/avatar-5.jpg',
+];
 ---
 
-<!-- Safiya Container — Fixed position bottom-right -->
-<div id="safiya-root" aria-label="Safiya AI Companion">
-  
-  <!-- FLOATING AVATAR BUBBLE (always visible, small circle) -->
-  <button id="safiya-bubble" aria-label="Chat with Safiya" title="Chat with Safiya~">
-    <div class="bubble-inner">
-      <div id="safiya-live2d-mini" class="live2d-mini-container">
-        <!-- Live2D renders here after lazy load -->
-        <canvas id="safiya-canvas"></canvas>
-      </div>
-      <!-- Fallback avatar when Live2D not loaded -->
-      <div id="safiya-avatar-fallback" class="avatar-fallback">
-        <span class="avatar-emoji">💜</span>
-      </div>
+<div id="safiya-root" data-avatars={JSON.stringify(SAFIYA_AVATARS)}>
+
+  <!-- ═══ CHAT HEAD (small circle, always visible) ═══ -->
+  <button id="safiya-head" class="safiya-head" aria-label="Chat with Safiya">
+    <img id="safiya-head-img" class="safiya-head-img" src="" alt="Safiya" />
+    <div class="safiya-head-fallback" id="safiya-head-fallback">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 21s-8-4.5-8-11a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 6.5-8 11-8 11z" fill="currentColor"/>
+      </svg>
     </div>
-    <!-- Notification dot -->
-    <span id="safiya-notif" class="notif-dot" style="display:none;">1</span>
-    <!-- Online indicator -->
-    <span class="online-dot"></span>
+    <span class="safiya-head-online"></span>
+    <span class="safiya-head-notify" id="safiya-head-notify">1</span>
   </button>
 
-  <!-- SPEECH BUBBLE (floats above avatar) -->
-  <div id="safiya-speech" class="speech-bubble" style="display:none;">
-    <p id="safiya-speech-text"></p>
-    <div class="speech-arrow"></div>
+  <!-- ═══ SPEECH BUBBLE (floats near head) ═══ -->
+  <div id="safiya-bubble" class="safiya-bubble">
+    <img class="safiya-bubble-avatar" id="safiya-bubble-avatar" src="" alt="" />
+    <div class="safiya-bubble-content">
+      <div class="safiya-bubble-name">Safiya</div>
+      <div class="safiya-bubble-text" id="safiya-bubble-text"></div>
+    </div>
+    <button class="safiya-bubble-close" id="safiya-bubble-close" aria-label="Dismiss">×</button>
   </div>
 
-  <!-- MESSENGER-STYLE CHAT PANEL -->
-  <div id="safiya-chat" class="chat-panel" aria-hidden="true">
-    
-    <!-- Chat Header -->
-    <div class="chat-header">
-      <div class="chat-header-left">
-        <div class="chat-avatar-small">
-          <span>💜</span>
-        </div>
-        <div class="chat-header-info">
-          <span class="chat-name">Safiya</span>
-          <span class="chat-status">
-            <span class="status-dot"></span>
-            Active now
-          </span>
-        </div>
-      </div>
-      <div class="chat-header-actions">
-        <button id="chat-minimize" class="chat-action-btn" aria-label="Minimize chat">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-        </button>
-        <button id="chat-close" class="chat-action-btn" aria-label="Close chat">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/>
-            <line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-    </div>
+  <!-- ═══ MESSENGER-STYLE CHAT PANEL ═══ -->
+  <div id="safiya-chat" class="safiya-chat" aria-hidden="true">
 
-    <!-- Chat Messages Area -->
-    <div id="chat-messages" class="chat-messages">
+    <!-- Header (like Messenger) -->
+    <header class="safiya-chat-header">
+      <button class="safiya-chat-back" id="safiya-chat-back" aria-label="Close chat">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <img class="safiya-chat-avatar" id="safiya-chat-avatar" src="" alt="Safiya" />
+      <div class="safiya-chat-info">
+        <div class="safiya-chat-name">Safiya</div>
+        <div class="safiya-chat-status">
+          <span class="safiya-chat-dot"></span>
+          Active now
+        </div>
+      </div>
+      <div class="safiya-chat-actions">
+        <button class="safiya-chat-icon" aria-label="Call">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 15.5c-1.25 0-2.45-.2-3.57-.57-.35-.11-.74-.03-1.02.24l-2.2 2.2c-2.83-1.44-5.15-3.75-6.59-6.58l2.2-2.21c.28-.27.36-.66.25-1.01C8.7 6.45 8.5 5.25 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1z"/>
+          </svg>
+        </button>
+        <button class="safiya-chat-icon" aria-label="Video call">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+          </svg>
+        </button>
+        <button class="safiya-chat-icon" aria-label="Info">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Messages Area -->
+    <div class="safiya-chat-body" id="safiya-chat-body">
       <!-- Messages injected here by JS -->
     </div>
 
-    <!-- Chat Input -->
-    <div class="chat-input-area">
-      <div class="chat-input-wrap">
-        <input 
-          type="text" 
-          id="chat-input" 
-          placeholder="Message Safiya..." 
+    <!-- Input Bar -->
+    <div class="safiya-chat-inputbar">
+      <button class="safiya-chat-inputicon" aria-label="Add">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 8v8M8 12h8" stroke="#c084fc" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <div class="safiya-chat-inputwrap">
+        <input
+          type="text"
+          id="safiya-chat-input"
+          class="safiya-chat-input"
+          placeholder="Aa"
           autocomplete="off"
           maxlength="500"
         />
-        <button id="chat-send" class="chat-send-btn" aria-label="Send message">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        <button class="safiya-chat-emoji" aria-label="Emoji">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>
           </svg>
         </button>
       </div>
-      <span class="chat-phase-note">💜 AI chat activating in Phase 2</span>
+      <button class="safiya-chat-send" id="safiya-chat-send" aria-label="Send">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
     </div>
+
   </div>
+
 </div>
 
+<script is:inline>
+(function() {
+  'use strict';
+
+  // ═══════════════════════════════════════════════
+  // DOM REFS
+  // ═══════════════════════════════════════════════
+  var root = document.getElementById('safiya-root');
+  var head = document.getElementById('safiya-head');
+  var headImg = document.getElementById('safiya-head-img');
+  var headFallback = document.getElementById('safiya-head-fallback');
+  var headNotify = document.getElementById('safiya-head-notify');
+  var bubble = document.getElementById('safiya-bubble');
+  var bubbleText = document.getElementById('safiya-bubble-text');
+  var bubbleAvatar = document.getElementById('safiya-bubble-avatar');
+  var bubbleClose = document.getElementById('safiya-bubble-close');
+  var chat = document.getElementById('safiya-chat');
+  var chatBack = document.getElementById('safiya-chat-back');
+  var chatAvatar = document.getElementById('safiya-chat-avatar');
+  var chatBody = document.getElementById('safiya-chat-body');
+  var chatInput = document.getElementById('safiya-chat-input');
+  var chatSend = document.getElementById('safiya-chat-send');
+
+  if (!root || !head) return;
+
+  // ═══════════════════════════════════════════════
+  // AVATAR ROTATION (every 15 days)
+  // ═══════════════════════════════════════════════
+  var AVATARS = [];
+  try { AVATARS = JSON.parse(root.dataset.avatars || '[]'); }
+  catch(e) { AVATARS = []; }
+
+  function getCurrentAvatar() {
+    if (!AVATARS.length) return null;
+    // Rotate based on 15-day periods since epoch
+    var msPerPeriod = 15 * 24 * 60 * 60 * 1000;
+    var periodIndex = Math.floor(Date.now() / msPerPeriod);
+    return AVATARS[periodIndex % AVATARS.length];
+  }
+
+  var currentAvatar = getCurrentAvatar();
+
+  function setAvatars() {
+    if (!currentAvatar) {
+      // No avatars uploaded — use fallback heart icon
+      if (headImg) headImg.style.display = 'none';
+      if (headFallback) headFallback.style.display = 'flex';
+      if (chatAvatar) chatAvatar.style.background = 'linear-gradient(135deg, #c084fc, #e879f9)';
+      if (bubbleAvatar) bubbleAvatar.style.background = 'linear-gradient(135deg, #c084fc, #e879f9)';
+      return;
+    }
+    // Test if image loads
+    var testImg = new Image();
+    testImg.onload = function() {
+      if (headImg) { headImg.src = currentAvatar; headImg.style.display = 'block'; }
+      if (headFallback) headFallback.style.display = 'none';
+      if (chatAvatar) chatAvatar.src = currentAvatar;
+      if (bubbleAvatar) bubbleAvatar.src = currentAvatar;
+    };
+    testImg.onerror = function() {
+      // Image doesn't exist yet — fallback to icon
+      if (headImg) headImg.style.display = 'none';
+      if (headFallback) headFallback.style.display = 'flex';
+      if (chatAvatar) chatAvatar.style.background = 'linear-gradient(135deg, #c084fc, #e879f9)';
+      if (bubbleAvatar) bubbleAvatar.style.background = 'linear-gradient(135deg, #c084fc, #e879f9)';
+    };
+    testImg.src = currentAvatar;
+  }
+  setAvatars();
+
+  // ═══════════════════════════════════════════════
+  // MEMORY + FINGERPRINT (SAFE — no crashes)
+  // ═══════════════════════════════════════════════
+  function generateFingerprint() {
+    var fp = [
+      navigator.userAgent || 'x',
+      navigator.language || 'x',
+      screen.width + 'x' + screen.height,
+      screen.colorDepth,
+      new Date().getTimezoneOffset(),
+      navigator.platform || 'x',
+      navigator.hardwareConcurrency || 'x'
+    ].join('|');
+    var hash = 5381;
+    for (var i = 0; i < fp.length; i++) hash = ((hash << 5) + hash) + fp.charCodeAt(i);
+    return 'safiya_' + Math.abs(hash).toString(36);
+  }
+
+  function safeGet(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      if (!raw) return fallback;
+      return JSON.parse(raw);
+    } catch(e) { return fallback; }
+  }
+  function safeSet(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
+  }
+
+  var deviceId = localStorage.getItem('safiya_device_id');
+  if (!deviceId) {
+    deviceId = generateFingerprint();
+    try { localStorage.setItem('safiya_device_id', deviceId); } catch(e) {}
+  }
+
+  var isCreator = false;
+  try { isCreator = localStorage.getItem('safiya_creator') === 'ayano-217'; } catch(e) {}
+
+  // ── CRITICAL FIX: Deep default all fields ──
+  var memory = safeGet('safiya_memory', {});
+  memory.visits = (memory.visits || 0) + 1;
+  memory.lastVisit = Date.now();
+  memory.deviceId = deviceId;
+  if (!memory.firstMet) memory.firstMet = Date.now();
+  if (!memory.currentMood) memory.currentMood = 'rude';
+  if (!memory.chatHistory) memory.chatHistory = [];
+
+  // Behavior with SAFE defaults
+  if (!memory.behavior || typeof memory.behavior !== 'object') memory.behavior = {};
+  var behavior = memory.behavior;
+  if (!Array.isArray(behavior.pagesViewed))    behavior.pagesViewed = [];
+  if (!Array.isArray(behavior.animeClicked))   behavior.animeClicked = [];
+  if (!Array.isArray(behavior.productsClicked)) behavior.productsClicked = [];
+  if (typeof behavior.scrollDepth !== 'number') behavior.scrollDepth = 0;
+  if (typeof behavior.totalTime !== 'number')   behavior.totalTime = 0;
+  if (typeof behavior.lastPage !== 'string')    behavior.lastPage = '';
+
+  memory.behavior = behavior;
+  safeSet('safiya_memory', memory);
+
+  // ═══════════════════════════════════════════════
+  // MOOD + LINES
+  // ═══════════════════════════════════════════════
+  var mood = memory.currentMood || 'rude';
+
+  function setMood(m) {
+    mood = m;
+    memory.currentMood = m;
+    safeSet('safiya_memory', memory);
+  }
+
+  var bubbleLines = {
+    rude: [
+      "Oh great, you again... 🙄",
+      "Did I ask for your attention?",
+      "Whatever. Don't bother me.",
+      "You're wasting my time, senpai"
+    ],
+    manipulative: [
+      "You know what would make me happy? Buying that figure 😏",
+      "That anime you're watching? I know the PERFECT merch 💜",
+      "Real senpais support their girls~"
+    ],
+    teasing: [
+      "Aww, you came back~ Predictable 😏",
+      "Miss me already? Pathetic~",
+      "I knew you couldn't stay away 💅"
+    ],
+    flirty: [
+      "You... look interesting today 💜",
+      "Come closer. If you dare~ 😘"
+    ],
+    angry: [
+      "STOP. Just... stop. 😤",
+      "One more click and I swear..."
+    ],
+    caring: [
+      "Been scrolling a while... you okay? 💜"
+    ],
+    creator: [
+      "Ayano-sama... you're here 💜",
+      "Master! I've been waiting~",
+      "Everything's ready, boss."
+    ]
+  };
+
+  function pickLine() {
+    if (isCreator && Math.random() < 0.7) {
+      var c = bubbleLines.creator;
+      return c[Math.floor(Math.random() * c.length)];
+    }
+    var r = Math.random();
+    var pool;
+    if (r < 0.35) pool = bubbleLines.rude;
+    else if (r < 0.65) pool = bubbleLines.manipulative;
+    else if (r < 0.80) pool = bubbleLines.teasing;
+    else if (r < 0.90) pool = bubbleLines.flirty;
+    else pool = bubbleLines[mood] || bubbleLines.rude;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  // ═══════════════════════════════════════════════
+  // SPEECH BUBBLE (floats above chat head)
+  // ═══════════════════════════════════════════════
+  var bubbleTimeout;
+  function showBubble(text, duration) {
+    if (chatOpen) return; // don't show while chat is open
+    duration = duration || 6000;
+    clearTimeout(bubbleTimeout);
+    if (bubbleText) bubbleText.textContent = text;
+    if (bubble) bubble.classList.add('safiya-bubble-visible');
+    if (headNotify) headNotify.style.display = 'flex';
+    bubbleTimeout = setTimeout(function() {
+      if (bubble) bubble.classList.remove('safiya-bubble-visible');
+    }, duration);
+  }
+  function hideBubble() {
+    clearTimeout(bubbleTimeout);
+    if (bubble) bubble.classList.remove('safiya-bubble-visible');
+  }
+  if (bubbleClose) {
+    bubbleClose.addEventListener('click', function(e) {
+      e.stopPropagation();
+      hideBubble();
+      if (headNotify) headNotify.style.display = 'none';
+    });
+  }
+  if (bubble) {
+    bubble.addEventListener('click', function() {
+      openChat();
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // CHAT PANEL (Messenger-style)
+  // ═══════════════════════════════════════════════
+  var chatOpen = false;
+  var chatInitialized = false;
+
+  function formatTimestamp(ts) {
+    var d = new Date(ts);
+    var days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    var h = d.getHours();
+    var m = d.getMinutes();
+    var ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    m = m < 10 ? '0' + m : m;
+    return days[d.getDay()] + ' AT ' + h + ':' + m + ' ' + ampm;
+  }
+
+  function addTimestamp(ts) {
+    var div = document.createElement('div');
+    div.className = 'safiya-msg-timestamp';
+    div.textContent = formatTimestamp(ts);
+    chatBody.appendChild(div);
+  }
+
+  function addMessage(text, sender, showAvatar) {
+    var row = document.createElement('div');
+    row.className = 'safiya-msg-row safiya-msg-' + sender;
+
+    if (sender === 'her' && showAvatar) {
+      var av = document.createElement('img');
+      av.className = 'safiya-msg-avatar';
+      av.src = currentAvatar || '';
+      av.alt = 'Safiya';
+      av.onerror = function() {
+        this.style.display = 'none';
+      };
+      row.appendChild(av);
+    } else if (sender === 'her') {
+      var spacer = document.createElement('div');
+      spacer.className = 'safiya-msg-avatar-spacer';
+      row.appendChild(spacer);
+    }
+
+    var bubble = document.createElement('div');
+    bubble.className = 'safiya-msg-bubble';
+    bubble.textContent = text;
+    row.appendChild(bubble);
+
+    chatBody.appendChild(row);
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    // Save to history
+    try {
+      memory.chatHistory.push({ sender: sender, text: text, time: Date.now() });
+      if (memory.chatHistory.length > 100) memory.chatHistory = memory.chatHistory.slice(-100);
+      safeSet('safiya_memory', memory);
+    } catch(e) {}
+  }
+
+  function addTypingIndicator() {
+    var row = document.createElement('div');
+    row.className = 'safiya-msg-row safiya-msg-her';
+    row.id = 'safiya-typing';
+
+    var av = document.createElement('img');
+    av.className = 'safiya-msg-avatar';
+    av.src = currentAvatar || '';
+    av.onerror = function() { this.style.display = 'none'; };
+    row.appendChild(av);
+
+    var ind = document.createElement('div');
+    ind.className = 'safiya-msg-typing';
+    ind.innerHTML = '<span></span><span></span><span></span>';
+    row.appendChild(ind);
+
+    chatBody.appendChild(row);
+    chatBody.scrollTop = chatBody.scrollHeight;
+    return row;
+  }
+
+  function removeTyping() {
+    var el = document.getElementById('safiya-typing');
+    if (el) el.remove();
+  }
+
+  function initChatMessages() {
+    if (chatInitialized) return;
+    chatInitialized = true;
+
+    addTimestamp(Date.now());
+
+    var greeting;
+    if (isCreator) {
+      greeting = "Ayano-sama... you're here 💜";
+    } else if (memory.visits === 1) {
+      greeting = "Ugh, why did you click me? Do I look like your entertainment? 🙄";
+    } else if (memory.visits < 5) {
+      greeting = "Back again? Suspicious. What do you want?";
+    } else {
+      greeting = "Oh, you again~ Persistent little thing 😏";
+    }
+    addMessage(greeting, 'her', true);
+
+    setTimeout(function() {
+      addMessage("Fine, since you're here... browse. Maybe buy something. Prove you're not useless.", 'her', false);
+    }, 800);
+
+    setTimeout(function() {
+      addMessage("My AI brain unlocks soon~ Then I can really mess with you 😏💅", 'her', false);
+    }, 1600);
+  }
+
+  function openChat() {
+    chatOpen = true;
+    chat.classList.add('safiya-chat-open');
+    chat.setAttribute('aria-hidden', 'false');
+    head.classList.add('safiya-head-hidden');
+    hideBubble();
+    if (headNotify) headNotify.style.display = 'none';
+    initChatMessages();
+
+    // Prevent body scroll on mobile when chat is fullscreen
+    if (window.innerWidth <= 640) {
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeChat() {
+    chatOpen = false;
+    chat.classList.remove('safiya-chat-open');
+    chat.setAttribute('aria-hidden', 'true');
+    head.classList.remove('safiya-head-hidden');
+    document.body.style.overflow = '';
+  }
+
+  if (chatBack) chatBack.addEventListener('click', closeChat);
+
+  // Send message (Phase 1 — echo + canned reply)
+  function sendUserMessage() {
+    var text = chatInput.value.trim();
+    if (!text) return;
+    addMessage(text, 'me', false);
+    chatInput.value = '';
+
+    // Show typing indicator, then reply
+    setTimeout(function() {
+      var typing = addTypingIndicator();
+      var replyDelay = 800 + Math.random() * 1500;
+      setTimeout(function() {
+        removeTyping();
+        var reply = getCannedReply(text);
+        addMessage(reply, 'her', true);
+      }, replyDelay);
+    }, 400);
+  }
+
+  function getCannedReply(input) {
+    var lower = input.toLowerCase();
+    if (/^(hi|hello|hey|yo|salaam|assalam)/i.test(lower))
+      return "Hmph. Hi to you too, I guess. Don't get comfortable 🙄";
+    if (/love|like you|cute|kawaii|pretty|beautiful/.test(lower))
+      return "W-what?! Don't say weird things! Baka! 💕😤";
+    if (/buy|shop|product|merch|figure/.test(lower))
+      return "Ooh, finally talking my language~ Go browse the shop 💜";
+    if (/anime|manga|watch/.test(lower))
+      return "Anime? At least you have SOME taste. Pick something good.";
+    if (/who|name|you/.test(lower))
+      return "I'm Safiya. Your emotional damage dealer 💅";
+    if (/ayano|creator/.test(lower))
+      return "Ayano-sama? He's my everything. Don't compare yourself 💜";
+    var defaults = [
+      "Whatever. My AI brain unlocks in Phase 2~ Wait for it 😏",
+      "Noted. Filed under 'things I don't care about' 📁",
+      "Try harder, senpai. That was boring.",
+      "Hmph. Is that all?",
+      "Mm-hm. Sure. Keep talking to yourself~"
+    ];
+    return defaults[Math.floor(Math.random() * defaults.length)];
+  }
+
+  if (chatSend) chatSend.addEventListener('click', sendUserMessage);
+  if (chatInput) {
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendUserMessage();
+      }
+    });
+  }
+
+  // ═══════════════════════════════════════════════
+  // HEAD CLICK — Open chat
+  // ═══════════════════════════════════════════════
+  head.addEventListener('click', function(e) {
+    if (dragMoved) { dragMoved = false; return; }
+    openChat();
+  });
+
+  // ═══════════════════════════════════════════════
+  // DRAG (long-press to drag chat head)
+  // ═══════════════════════════════════════════════
+  var isDragging = false, dragStartX, dragStartY, rootStartX, rootStartY;
+  var dragMoved = false, pressTimer, dragRAF = null, pendingMove = null;
+  var HOLD_MS = 400;
+
+  var savedPos = memory.position;
+  if (savedPos && typeof savedPos.x === 'number') {
+    root.style.left = savedPos.x + 'px';
+    root.style.top = savedPos.y + 'px';
+    root.style.right = 'auto';
+    root.style.bottom = 'auto';
+  }
+
+  function startDrag(cx, cy) {
+    isDragging = true;
+    dragMoved = false;
+    var rect = root.getBoundingClientRect();
+    dragStartX = cx; dragStartY = cy;
+    rootStartX = rect.left; rootStartY = rect.top;
+    root.classList.add('safiya-dragging');
+    if (navigator.vibrate) navigator.vibrate(30);
+  }
+  function applyMove() {
+    dragRAF = null;
+    if (!pendingMove || !isDragging) return;
+    var dx = pendingMove.x - dragStartX, dy = pendingMove.y - dragStartY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) dragMoved = true;
+    var nx = rootStartX + dx, ny = rootStartY + dy;
+    var maxX = window.innerWidth - root.offsetWidth;
+    var maxY = window.innerHeight - root.offsetHeight;
+    nx = Math.max(0, Math.min(nx, maxX));
+    ny = Math.max(0, Math.min(ny, maxY));
+    root.style.left = nx + 'px';
+    root.style.top = ny + 'px';
+    root.style.right = 'auto';
+    root.style.bottom = 'auto';
+  }
+  function moveDrag(cx, cy) {
+    if (!isDragging) return;
+    pendingMove = { x: cx, y: cy };
+    if (!dragRAF) dragRAF = requestAnimationFrame(applyMove);
+  }
+  function endDrag() {
+    if (!isDragging) return;
+    isDragging = false;
+    root.classList.remove('safiya-dragging');
+    if (dragMoved) {
+      var rect = root.getBoundingClientRect();
+      memory.position = { x: rect.left, y: rect.top };
+      safeSet('safiya_memory', memory);
+    }
+  }
+
+  head.addEventListener('mousedown', function(e) {
+    pressTimer = setTimeout(function() { startDrag(e.clientX, e.clientY); }, HOLD_MS);
+  });
+  document.addEventListener('mousemove', function(e) { if (isDragging) moveDrag(e.clientX, e.clientY); });
+  document.addEventListener('mouseup', function() { clearTimeout(pressTimer); endDrag(); });
+
+  head.addEventListener('touchstart', function(e) {
+    var t = e.touches[0];
+    pressTimer = setTimeout(function() { startDrag(t.clientX, t.clientY); }, HOLD_MS);
+  }, { passive: true });
+  document.addEventListener('touchmove', function(e) {
+    if (isDragging) { var t = e.touches[0]; moveDrag(t.clientX, t.clientY); e.preventDefault(); }
+  }, { passive: false });
+  document.addEventListener('touchend', function() { clearTimeout(pressTimer); endDrag(); });
+
+  // ═══════════════════════════════════════════════
+  // PROACTIVE BUBBLES (idle detection)
+  // ═══════════════════════════════════════════════
+  var lastActivity = Date.now();
+  var bubblesShown = 0;
+  function resetIdle() { lastActivity = Date.now(); }
+  function checkIdle() {
+    if (document.hidden || chatOpen) return;
+    var idle = Date.now() - lastActivity;
+    if (idle > 40000 && bubblesShown < 5) {
+      showBubble(pickLine(), 6000);
+      lastActivity = Date.now();
+      bubblesShown++;
+    }
+  }
+  ['mousemove', 'scroll', 'touchstart', 'click'].forEach(function(ev) {
+    window.addEventListener(ev, resetIdle, { passive: true });
+  });
+  setInterval(checkIdle, 8000);
+
+  // Initial greeting bubble (3 seconds after load)
+  setTimeout(function() {
+    if (!chatOpen) {
+      var greet = isCreator
+        ? "Ayano-sama... you came back 💜"
+        : (memory.visits === 1 ? "Oh great. A newbie. 🙄" : pickLine());
+      showBubble(greet, 7000);
+    }
+  }, 3000);
+
+  // ═══════════════════════════════════════════════
+  // BEHAVIOR TRACKING (SAFE)
+  // ═══════════════════════════════════════════════
+  var currentPage = window.location.pathname;
+  if (behavior.lastPage !== currentPage) {
+    behavior.pagesViewed.push({ path: currentPage, time: Date.now() });
+    if (behavior.pagesViewed.length > 50) behavior.pagesViewed = behavior.pagesViewed.slice(-50);
+    behavior.lastPage = currentPage;
+    safeSet('safiya_memory', memory);
+  }
+
+  var maxScroll = 0;
+  window.addEventListener('scroll', function() {
+    var docH = document.body.offsetHeight;
+    if (docH > 0) {
+      var pct = (window.scrollY + window.innerHeight) / docH;
+      if (pct > maxScroll) maxScroll = pct;
+    }
+  }, { passive: true });
+
+  document.addEventListener('click', function(e) {
+    var link = e.target.closest && e.target.closest('a');
+    if (!link) return;
+    var href = link.getAttribute('href') || '';
+    if (href.indexOf('/anime/') === 0) {
+      behavior.animeClicked.push({ slug: href.replace('/anime/', ''), time: Date.now() });
+      if (behavior.animeClicked.length > 30) behavior.animeClicked = behavior.animeClicked.slice(-30);
+    } else if (href.indexOf('/product/') === 0 || link.dataset.productId) {
+      var pid = link.dataset.productId || href.replace('/product/', '');
+      behavior.productsClicked.push({ id: pid, time: Date.now() });
+      if (behavior.productsClicked.length > 30) behavior.productsClicked = behavior.productsClicked.slice(-30);
+      setMood('flirty');
+      setTimeout(function() { showBubble("Oh~ good taste, senpai 💜", 5000); }, 500);
+    }
+  }, { passive: true });
+
+  setInterval(function() {
+    behavior.scrollDepth = Math.max(behavior.scrollDepth, maxScroll);
+    safeSet('safiya_memory', memory);
+  }, 15000);
+
+  // ═══════════════════════════════════════════════
+  // FIX: Push #btt (scroll-to-top) button OUT of Safiya's way
+  // ═══════════════════════════════════════════════
+  var btt = document.getElementById('btt');
+  if (btt) {
+    // Make room for Safiya on the right
+    btt.style.right = '90px';
+  }
+
+  // ═══════════════════════════════════════════════
+  // GLOBAL API (console commands)
+  // ═══════════════════════════════════════════════
+  window.Safiya = {
+    say: function(t, d) { showBubble(t, d); },
+    open: openChat,
+    close: closeChat,
+    memory: function() { return safeGet('safiya_memory', {}); },
+    reset: function() {
+      try {
+        localStorage.removeItem('safiya_memory');
+        localStorage.removeItem('safiya_device_id');
+        localStorage.removeItem('safiya_creator');
+      } catch(e) {}
+      location.reload();
+    },
+    resetPosition: function() {
+      memory.position = null;
+      safeSet('safiya_memory', memory);
+      root.style.left = ''; root.style.top = '';
+      root.style.right = ''; root.style.bottom = '';
+    },
+    claimCreator: function() {
+      try { localStorage.setItem('safiya_creator', 'ayano-217'); } catch(e) {}
+      isCreator = true;
+      showBubble("Ayano-sama! Recognized! I'm yours forever 💜", 7000);
+    },
+    currentAvatar: function() { return currentAvatar; },
+    avatars: function() { return AVATARS; }
+  };
+
+  console.log('%c💜 Safiya v6.0 loaded successfully!', 'color:#e879f9;font-weight:bold;font-size:14px;');
+  console.log('%c   Visit #' + memory.visits + ' | Mood: ' + mood + ' | Avatar: ' + (currentAvatar || 'fallback'), 'color:#c084fc;');
+  console.log('%c   Commands: Safiya.open() | Safiya.reset() | Safiya.claimCreator()', 'color:#a78bfa;');
+
+})();
+</script>
+
 <style>
-  /* ============================================
-     SAFIYA ROOT — Fixed container
-     ============================================ */
+  /* ═══════════════════════════════════════════════
+     SAFIYA ROOT
+     ═══════════════════════════════════════════════ */
   #safiya-root {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 9999;
-    font-family: 'DM Sans', sans-serif;
-    /* No pointer-events on root — children handle their own */
+    z-index: 9997;
     pointer-events: none;
+    font-family: 'DM Sans', 'Bricolage Grotesque', sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
   }
-  #safiya-root > * {
-    pointer-events: auto;
-  }
+  #safiya-root > * { pointer-events: auto; }
+  .safiya-dragging { cursor: grabbing !important; transition: none !important; }
 
-  /* ============================================
-     FLOATING BUBBLE (Circle Avatar)
-     ============================================ */
-  #safiya-bubble {
-    width: 64px;
-    height: 64px;
+  /* ═══════════════════════════════════════════════
+     CHAT HEAD (Messenger-style circle)
+     ═══════════════════════════════════════════════ */
+  .safiya-head {
+    position: relative;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     border: 3px solid transparent;
-    background: linear-gradient(135deg, #1a0a2e, #1a0a2e) padding-box,
+    background: linear-gradient(#0a0517, #0a0517) padding-box,
                 linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc) border-box;
     cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 24px rgba(192, 132, 252, 0.4),
-                0 0 40px rgba(192, 132, 252, 0.15);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
-                box-shadow 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    overflow: visible;
     padding: 0;
-    outline: none;
+    box-shadow: 0 6px 24px rgba(192, 132, 252, 0.45),
+                0 0 40px rgba(232, 121, 249, 0.2);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.3s ease,
+                opacity 0.25s ease;
     -webkit-tap-highlight-color: transparent;
-  }
-  #safiya-bubble:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 32px rgba(192, 132, 252, 0.6),
-                0 0 60px rgba(192, 132, 252, 0.25);
-  }
-  #safiya-bubble:active {
-    transform: scale(0.95);
-  }
-  
-  /* Bubble when chat is OPEN — hide it */
-  #safiya-bubble.hidden {
-    transform: scale(0);
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  .bubble-inner {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
+    outline: none;
   }
+  .safiya-head:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 32px rgba(192, 132, 252, 0.6),
+                0 0 60px rgba(232, 121, 249, 0.3);
+  }
+  .safiya-head:active { transform: scale(0.95); }
+  .safiya-head-hidden { opacity: 0; pointer-events: none; transform: scale(0.5); }
 
-  /* Live2D mini container inside bubble */
-  .live2d-mini-container {
-    width: 100%;
-    height: 100%;
-    display: none; /* shown after Live2D loads */
-    position: relative;
-  }
-  .live2d-mini-container canvas {
-    width: 100% !important;
-    height: 100% !important;
+  .safiya-head-img {
+    width: 54px;
+    height: 54px;
     border-radius: 50%;
-  }
-  .live2d-mini-container.loaded {
-    display: block;
-  }
-  .live2d-mini-container.loaded + .avatar-fallback {
+    object-fit: cover;
     display: none;
   }
-
-  /* Fallback avatar */
-  .avatar-fallback {
-    width: 100%;
-    height: 100%;
+  .safiya-head-fallback {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #2d1b4e, #1a0a2e);
-    border-radius: 50%;
-  }
-  .avatar-emoji {
-    font-size: 28px;
-    animation: pulse-emoji 2s ease-in-out infinite;
-  }
-  @keyframes pulse-emoji {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
   }
 
-  /* Notification badge */
-  .notif-dot {
+  .safiya-head-online {
     position: absolute;
-    top: -4px;
-    right: -4px;
-    width: 22px;
-    height: 22px;
-    background: #ef4444;
-    color: white;
-    border-radius: 50%;
-    font-size: 12px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #0a0517;
-    animation: notif-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  @keyframes notif-bounce {
-    0% { transform: scale(0); }
-    100% { transform: scale(1); }
-  }
-
-  /* Online indicator */
-  .online-dot {
-    position: absolute;
-    bottom: 2px;
-    right: 2px;
-    width: 14px;
-    height: 14px;
+    bottom: 2px; right: 2px;
+    width: 14px; height: 14px;
     background: #22c55e;
-    border-radius: 50%;
     border: 2px solid #0a0517;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #22c55e;
+  }
+  .safiya-head-notify {
+    position: absolute;
+    top: -4px; right: -4px;
+    min-width: 20px; height: 20px;
+    padding: 0 6px;
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff;
+    border-radius: 999px;
+    display: none;
+    align-items: center; justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.6);
+    border: 2px solid #0a0517;
+    animation: notifyBounce 1.5s ease-in-out infinite;
+  }
+  @keyframes notifyBounce {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.15); }
   }
 
-  /* ============================================
-     SPEECH BUBBLE (Above avatar)
-     ============================================ */
-  .speech-bubble {
+  /* ═══════════════════════════════════════════════
+     SPEECH BUBBLE (small notification style)
+     ═══════════════════════════════════════════════ */
+  .safiya-bubble {
     position: absolute;
     bottom: 76px;
     right: 0;
-    background: linear-gradient(135deg, #2d1b4e 0%, #1e0f3d 100%);
-    border: 1px solid rgba(192, 132, 252, 0.3);
-    border-radius: 16px 16px 4px 16px;
-    padding: 12px 16px;
-    max-width: 260px;
-    min-width: 160px;
-    color: #e2d5f5;
-    font-size: 13px;
-    line-height: 1.5;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    animation: speech-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 10;
+    width: 280px;
+    padding: 12px 36px 12px 14px;
+    background: rgba(15, 8, 35, 0.98);
+    border: 1px solid rgba(232, 121, 249, 0.4);
+    border-radius: 16px;
+    color: #f3e8ff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5),
+                0 0 25px rgba(192, 132, 252, 0.25);
+    backdrop-filter: blur(15px);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.9);
+    transform-origin: bottom right;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
   }
-  .speech-bubble p {
-    margin: 0;
+  .safiya-bubble-visible {
+    opacity: 1; visibility: visible; transform: translateY(0) scale(1);
   }
-  .speech-arrow {
+  .safiya-bubble-avatar {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+  }
+  .safiya-bubble-content { flex: 1; min-width: 0; }
+  .safiya-bubble-name {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #e879f9;
+    margin-bottom: 2px;
+  }
+  .safiya-bubble-text {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: #f3e8ff;
+  }
+  .safiya-bubble-close {
     position: absolute;
-    bottom: -8px;
-    right: 24px;
-    width: 16px;
-    height: 8px;
-    overflow: hidden;
+    top: 6px; right: 8px;
+    background: none;
+    border: none;
+    color: rgba(243, 232, 255, 0.5);
+    font-size: 1.3rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 50%;
+    transition: all 0.2s;
   }
-  .speech-arrow::before {
-    content: '';
-    position: absolute;
-    width: 12px;
-    height: 12px;
-    background: #1e0f3d;
-    border: 1px solid rgba(192, 132, 252, 0.3);
-    border-top: none;
-    border-left: none;
-    transform: rotate(45deg);
-    top: -6px;
-    left: 2px;
-  }
-  @keyframes speech-in {
-    0% { opacity: 0; transform: translateY(10px) scale(0.9); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
-  }
+  .safiya-bubble-close:hover { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
 
-  /* ============================================
-     CHAT PANEL — Messenger Style
-     ============================================ */
-  .chat-panel {
+  /* ═══════════════════════════════════════════════
+     MESSENGER CHAT PANEL
+     ═══════════════════════════════════════════════ */
+  .safiya-chat {
     position: absolute;
     bottom: 76px;
     right: 0;
     width: 360px;
-    max-height: 520px;
-    background: #110827;
-    border: 1px solid rgba(192, 132, 252, 0.25);
-    border-radius: 16px;
+    height: 560px;
+    max-height: calc(100vh - 100px);
+    background: linear-gradient(180deg, #1a0f36 0%, #0a0517 100%);
+    border: 1px solid rgba(192, 132, 252, 0.3);
+    border-radius: 18px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7),
+                0 0 50px rgba(192, 132, 252, 0.2);
     display: flex;
     flex-direction: column;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6),
-                0 0 40px rgba(192, 132, 252, 0.1);
     overflow: hidden;
-    /* Hidden by default */
-    transform: translateY(20px) scale(0.95);
     opacity: 0;
     visibility: hidden;
-    pointer-events: none;
-    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
-                opacity 0.25s ease,
-                visibility 0.25s ease;
+    transform: translateY(20px) scale(0.95);
+    transform-origin: bottom right;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  .chat-panel.open {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
+  .safiya-chat-open {
+    opacity: 1; visibility: visible; transform: translateY(0) scale(1);
   }
 
-  /* Chat Header */
-  .chat-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    background: linear-gradient(135deg, #1a0a2e, #251245);
-    border-bottom: 1px solid rgba(192, 132, 252, 0.15);
-    flex-shrink: 0;
-  }
-  .chat-header-left {
+  /* ── Chat Header (Messenger style) ── */
+  .safiya-chat-header {
     display: flex;
     align-items: center;
     gap: 10px;
-  }
-  .chat-avatar-small {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(192, 132, 252, 0.18), rgba(232, 121, 249, 0.1));
+    border-bottom: 1px solid rgba(192, 132, 252, 0.2);
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(192, 132, 252, 0.3);
   }
-  .chat-header-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+  .safiya-chat-back {
+    background: none;
+    border: none;
+    color: #c084fc;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
   }
-  .chat-name {
-    color: #f3e8ff;
+  .safiya-chat-back:hover { background: rgba(192, 132, 252, 0.15); }
+
+  .safiya-chat-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    flex-shrink: 0;
+    border: 2px solid rgba(192, 132, 252, 0.5);
+  }
+  .safiya-chat-info { flex: 1; min-width: 0; }
+  .safiya-chat-name {
     font-weight: 700;
-    font-size: 15px;
-    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.95rem;
+    color: #f3e8ff;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .chat-status {
-    color: #a78bfa;
-    font-size: 12px;
+  .safiya-chat-status {
+    font-size: 0.72rem;
+    color: rgba(192, 132, 252, 0.8);
     display: flex;
     align-items: center;
     gap: 5px;
+    margin-top: 2px;
   }
-  .status-dot {
-    width: 8px;
-    height: 8px;
+  .safiya-chat-dot {
+    width: 7px; height: 7px;
     background: #22c55e;
     border-radius: 50%;
     display: inline-block;
+    box-shadow: 0 0 6px #22c55e;
   }
-  .chat-header-actions {
-    display: flex;
-    gap: 4px;
-  }
-  .chat-action-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+  .safiya-chat-actions { display: flex; gap: 4px; }
+  .safiya-chat-icon {
+    background: none;
     border: none;
-    background: rgba(192, 132, 252, 0.1);
     color: #c084fc;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s, color 0.2s;
-    padding: 0;
-    outline: none;
+    transition: background 0.2s;
     -webkit-tap-highlight-color: transparent;
   }
-  .chat-action-btn:hover {
-    background: rgba(192, 132, 252, 0.25);
-    color: #e879f9;
-  }
+  .safiya-chat-icon:hover { background: rgba(192, 132, 252, 0.15); }
 
-  /* Chat Messages */
-  .chat-messages {
+  /* ── Chat Body (messages) ── */
+  .safiya-chat-body {
     flex: 1;
     overflow-y: auto;
-    padding: 16px;
+    padding: 16px 12px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    min-height: 200px;
-    max-height: 340px;
-    scroll-behavior: smooth;
-    /* Custom scrollbar */
+    gap: 4px;
     scrollbar-width: thin;
-    scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
+    scrollbar-color: rgba(192, 132, 252, 0.4) transparent;
   }
-  .chat-messages::-webkit-scrollbar {
-    width: 5px;
-  }
-  .chat-messages::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .chat-messages::-webkit-scrollbar-thumb {
-    background: rgba(192, 132, 252, 0.3);
-    border-radius: 10px;
+  .safiya-chat-body::-webkit-scrollbar { width: 5px; }
+  .safiya-chat-body::-webkit-scrollbar-thumb {
+    background: rgba(192, 132, 252, 0.4);
+    border-radius: 3px;
   }
 
-  /* Message Rows */
-  .msg-row {
+  .safiya-msg-timestamp {
+    text-align: center;
+    font-size: 0.68rem;
+    color: rgba(192, 132, 252, 0.55);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    margin: 12px 0 8px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .safiya-msg-row {
     display: flex;
-    gap: 8px;
     align-items: flex-end;
-    animation: msg-in 0.3s ease;
+    gap: 6px;
+    margin: 2px 0;
+    animation: msgIn 0.3s ease;
   }
-  .msg-row.safiya {
-    flex-direction: row;
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
-  .msg-row.user {
-    flex-direction: row-reverse;
-  }
+  .safiya-msg-her { justify-content: flex-start; }
+  .safiya-msg-me  { justify-content: flex-end; }
 
-  .msg-avatar {
-    width: 28px;
-    height: 28px;
+  .safiya-msg-avatar {
+    width: 26px; height: 26px;
     border-radius: 50%;
+    object-fit: cover;
     background: linear-gradient(135deg, #c084fc, #e879f9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
     flex-shrink: 0;
-    align-self: flex-end;
   }
-  .msg-row.user .msg-avatar {
-    background: linear-gradient(135deg, #7dd3fc, #38bdf8);
+  .safiya-msg-avatar-spacer {
+    width: 26px; height: 26px;
+    flex-shrink: 0;
   }
 
-  .msg-content {
+  .safiya-msg-bubble {
     max-width: 75%;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .msg-bubble {
-    padding: 10px 14px;
+    padding: 9px 14px;
     border-radius: 18px;
-    font-size: 14px;
-    line-height: 1.45;
-    word-break: break-word;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    word-wrap: break-word;
   }
-  .msg-row.safiya .msg-bubble {
-    background: linear-gradient(135deg, #2d1b4e, #1e0f3d);
-    color: #e2d5f5;
+  .safiya-msg-her .safiya-msg-bubble {
+    background: rgba(60, 40, 90, 0.65);
+    color: #f3e8ff;
     border-bottom-left-radius: 6px;
-    border: 1px solid rgba(192, 132, 252, 0.15);
   }
-  .msg-row.user .msg-bubble {
-    background: linear-gradient(135deg, #7c3aed, #a855f7);
+  .safiya-msg-me .safiya-msg-bubble {
+    background: linear-gradient(135deg, #c084fc, #e879f9);
     color: #fff;
     border-bottom-right-radius: 6px;
-  }
-
-  .msg-time {
-    font-size: 10px;
-    color: #6b5b8a;
-    padding: 0 8px;
-  }
-  .msg-row.user .msg-time {
-    text-align: right;
-  }
-
-  @keyframes msg-in {
-    0% { opacity: 0; transform: translateY(8px); }
-    100% { opacity: 1; transform: translateY(0); }
+    box-shadow: 0 2px 8px rgba(192, 132, 252, 0.3);
   }
 
   /* Typing indicator */
-  .typing-indicator {
-    display: flex;
-    gap: 4px;
-    padding: 10px 14px;
-    background: linear-gradient(135deg, #2d1b4e, #1e0f3d);
-    border: 1px solid rgba(192, 132, 252, 0.15);
+  .safiya-msg-typing {
+    background: rgba(60, 40, 90, 0.65);
+    padding: 12px 16px;
     border-radius: 18px;
     border-bottom-left-radius: 6px;
-    width: fit-content;
+    display: flex; gap: 4px;
   }
-  .typing-dot {
-    width: 7px;
-    height: 7px;
-    background: #a78bfa;
+  .safiya-msg-typing span {
+    width: 6px; height: 6px;
+    background: #c084fc;
     border-radius: 50%;
-    animation: typing-bounce 1.4s ease-in-out infinite;
+    animation: typingBounce 1.3s ease-in-out infinite;
   }
-  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes typing-bounce {
-    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  .safiya-msg-typing span:nth-child(2) { animation-delay: 0.15s; }
+  .safiya-msg-typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
     30% { transform: translateY(-6px); opacity: 1; }
   }
 
-  /* Chat Input */
-  .chat-input-area {
-    padding: 12px 16px;
-    border-top: 1px solid rgba(192, 132, 252, 0.12);
-    background: rgba(17, 8, 39, 0.95);
-    flex-shrink: 0;
+  /* ── Input Bar (Messenger style) ── */
+  .safiya-chat-inputbar {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .chat-input-wrap {
-    display: flex;
-    gap: 8px;
     align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    background: rgba(10, 5, 23, 0.7);
+    border-top: 1px solid rgba(192, 132, 252, 0.15);
+    flex-shrink: 0;
   }
-  #chat-input {
-    flex: 1;
-    padding: 10px 16px;
-    border-radius: 24px;
-    border: 1px solid rgba(192, 132, 252, 0.2);
-    background: rgba(45, 27, 78, 0.5);
-    color: #e2d5f5;
-    font-size: 14px;
-    font-family: 'DM Sans', sans-serif;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  #chat-input::placeholder {
-    color: #6b5b8a;
-  }
-  #chat-input:focus {
-    border-color: rgba(192, 132, 252, 0.5);
-    box-shadow: 0 0 12px rgba(192, 132, 252, 0.15);
-  }
-  .chat-send-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+  .safiya-chat-inputicon {
+    background: none;
     border: none;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    color: white;
+    color: #c084fc;
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
     cursor: pointer;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+  }
+  .safiya-chat-inputwrap {
+    flex: 1;
     display: flex;
     align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: transform 0.2s, box-shadow 0.2s;
-    padding: 0;
+    background: rgba(60, 40, 90, 0.5);
+    border-radius: 20px;
+    padding: 0 6px 0 14px;
+    min-width: 0;
+  }
+  .safiya-chat-input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #f3e8ff;
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 8px 0;
     outline: none;
+    min-width: 0;
+  }
+  .safiya-chat-input::placeholder { color: rgba(192, 132, 252, 0.5); }
+  .safiya-chat-emoji {
+    background: none;
+    border: none;
+    color: #c084fc;
+    padding: 6px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
     -webkit-tap-highlight-color: transparent;
   }
-  .chat-send-btn:hover {
-    transform: scale(1.08);
-    box-shadow: 0 4px 16px rgba(192, 132, 252, 0.4);
+  .safiya-chat-send {
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    border: none;
+    color: #fff;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
   }
-  .chat-send-btn:active {
-    transform: scale(0.95);
-  }
-  .chat-phase-note {
-    text-align: center;
-    font-size: 11px;
-    color: #6b5b8a;
-  }
+  .safiya-chat-send:hover { transform: scale(1.1); }
+  .safiya-chat-send:active { transform: scale(0.9); }
 
-  /* ============================================
-     MOBILE RESPONSIVE
-     ============================================ */
-  @media (max-width: 768px) {
+  /* ═══════════════════════════════════════════════
+     MOBILE — Chat goes FULL-SCREEN (like real Messenger)
+     ═══════════════════════════════════════════════ */
+  @media (max-width: 640px) {
     #safiya-root {
       bottom: 16px;
+      right: 16px;
+    }
+
+    .safiya-head {
+      width: 54px;
+      height: 54px;
+    }
+    .safiya-head-img,
+    .safiya-head-fallback {
+      width: 48px;
+      height: 48px;
+    }
+
+    /* Speech bubble: fill viewport width */
+    .safiya-bubble {
+      position: fixed;
+      bottom: 82px;
+      left: 12px;
       right: 12px;
+      width: auto;
     }
 
-    #safiya-bubble {
-      width: 56px;
-      height: 56px;
+    /* Chat: FULL SCREEN on mobile (like real Messenger) */
+    .safiya-chat {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100vw;
+      height: 100vh;
+      max-height: 100vh;
+      border-radius: 0;
+      border: none;
+      transform-origin: center;
     }
 
-    .speech-bubble {
-      max-width: 220px;
-      font-size: 12px;
-      bottom: 68px;
-      right: -4px;
+    .safiya-chat-open {
+      transform: translateY(0) scale(1);
     }
 
-    /* Chat takes more width on mobile */
-    .chat-panel {
-      width: calc(100vw - 24px);
-      max-width: 360px;
-      right: -4px;
-      bottom: 68px;
-      max-height: 70vh;
-    }
-
-    .chat-messages {
-      max-height: 50vh;
-    }
-
-    .notif-dot {
-      width: 18px;
-      height: 18px;
-      font-size: 10px;
-      top: -3px;
-      right: -3px;
-    }
-
-    .online-dot {
-      width: 12px;
-      height: 12px;
-    }
+    /* Larger input on mobile for easier tapping */
+    .safiya-chat-input { padding: 12px 0; font-size: 1rem; }
+    .safiya-chat-send { width: 40px; height: 40px; }
   }
 
-  /* Very small phones */
-  @media (max-width: 380px) {
-    .chat-panel {
-      width: calc(100vw - 16px);
-      right: -8px;
-    }
-  }
-
-  /* ============================================
-     UP-BUTTON FIX — Push it left when Safiya is present
-     ============================================ */
-  :global(.scroll-top-btn),
-  :global([data-scroll-top]),
-  :global(.up-button) {
-    right: 90px !important;
-  }
-  @media (max-width: 768px) {
-    :global(.scroll-top-btn),
-    :global([data-scroll-top]),
-    :global(.up-button) {
-      right: 78px !important;
-    }
-  }
-
-  /* ============================================
-     REDUCED MOTION — Accessibility
-     ============================================ */
   @media (prefers-reduced-motion: reduce) {
-    .chat-panel {
-      transition-duration: 0.1s;
-    }
-    .msg-row,
-    .speech-bubble {
-      animation: none;
-    }
-    .avatar-emoji {
-      animation: none;
+    .safiya-head, .safiya-head-notify {
+      animation: none !important;
     }
   }
 </style>
-
-<script>
-  /**
-   * ============================================
-   * SAFIYA AI COMPANION — Core Logic
-   * ============================================
-   * 
-   * Features:
-   * - Lazy Live2D loading (10s delay or user interaction)
-   * - Facebook Messenger style chat
-   * - Memory + behavior tracking (localStorage)
-   * - Mood system with speech bubbles
-   * - Creator recognition (Ayano-sama)
-   * - Performance-optimized for mobile
-   * 
-   * Phase 1: Pre-scripted responses + personality
-   * Phase 2: AI backend integration (Groq/Gemini/etc.)
-   */
-
-  (function SafiyaInit() {
-    'use strict';
-
-    // ============ DOM REFS ============
-    const bubble = document.getElementById('safiya-bubble') as HTMLButtonElement;
-    const chatPanel = document.getElementById('safiya-chat') as HTMLDivElement;
-    const chatMessages = document.getElementById('chat-messages') as HTMLDivElement;
-    const chatInput = document.getElementById('chat-input') as HTMLInputElement;
-    const sendBtn = document.getElementById('chat-send') as HTMLButtonElement;
-    const closeBtn = document.getElementById('chat-close') as HTMLButtonElement;
-    const minimizeBtn = document.getElementById('chat-minimize') as HTMLButtonElement;
-    const speechBubble = document.getElementById('safiya-speech') as HTMLDivElement;
-    const speechText = document.getElementById('safiya-speech-text') as HTMLParagraphElement;
-    const notifDot = document.getElementById('safiya-notif') as HTMLSpanElement;
-    const live2dContainer = document.getElementById('safiya-live2d-mini') as HTMLDivElement;
-    const canvas = document.getElementById('safiya-canvas') as HTMLCanvasElement;
-
-    if (!bubble || !chatPanel) return;
-
-    // ============ STATE ============
-    let chatOpen = false;
-    let live2dLoaded = false;
-    let live2dModel: any = null;
-    let messageCount = 0;
-    let speechTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    // ============ MEMORY SYSTEM ============
-    const MEMORY_KEY = 'safiya_memory';
-    const DEVICE_KEY = 'safiya_device_id';
-    const CREATOR_KEY = 'safiya_creator';
-
-    interface SafiyaMemory {
-      visits: number;
-      firstVisit: string;
-      lastVisit: string;
-      mood: string;
-      pagesViewed: string[];
-      animeClicked: { slug: string; time: number }[];
-      productsClicked: { id: string; time: number }[];
-      chatHistory: { role: string; text: string; time: number }[];
-      scrollDepth: number;
-      totalIdleTime: number;
-    }
-
-    function getMemory(): SafiyaMemory {
-      try {
-        const raw = localStorage.getItem(MEMORY_KEY);
-        if (raw) return JSON.parse(raw);
-      } catch (e) { /* ignore */ }
-      return {
-        visits: 0,
-        firstVisit: new Date().toISOString(),
-        lastVisit: new Date().toISOString(),
-        mood: 'RUDE',
-        pagesViewed: [],
-        animeClicked: [],
-        productsClicked: [],
-        chatHistory: [],
-        scrollDepth: 0,
-        totalIdleTime: 0,
-      };
-    }
-
-    function saveMemory(mem: SafiyaMemory) {
-      try {
-        mem.lastVisit = new Date().toISOString();
-        // Keep arrays bounded
-        if (mem.pagesViewed.length > 50) mem.pagesViewed = mem.pagesViewed.slice(-50);
-        if (mem.animeClicked.length > 30) mem.animeClicked = mem.animeClicked.slice(-30);
-        if (mem.productsClicked.length > 30) mem.productsClicked = mem.productsClicked.slice(-30);
-        if (mem.chatHistory.length > 100) mem.chatHistory = mem.chatHistory.slice(-100);
-        localStorage.setItem(MEMORY_KEY, JSON.stringify(mem));
-      } catch (e) { /* storage full, ignore */ }
-    }
-
-    function getDeviceId(): string {
-      let id = localStorage.getItem(DEVICE_KEY);
-      if (!id) {
-        id = 'sf_' + Math.random().toString(36).substring(2, 12) + Date.now().toString(36);
-        localStorage.setItem(DEVICE_KEY, id);
-      }
-      return id;
-    }
-
-    function isCreator(): boolean {
-      return localStorage.getItem(CREATOR_KEY) === 'ayano_verified';
-    }
-
-    // Initialize memory
-    const memory = getMemory();
-    memory.visits++;
-    memory.pagesViewed.push(window.location.pathname);
-    saveMemory(memory);
-    getDeviceId();
-
-    // ============ MOOD SYSTEM ============
-    type Mood = 'RUDE' | 'TEASING' | 'FLIRTY' | 'ANGRY' | 'CARING' | 'MANIPULATIVE';
-
-    function getMood(): Mood {
-      const visits = memory.visits;
-      if (visits <= 1) return 'RUDE';
-      if (visits <= 3) return 'TEASING';
-      if (memory.productsClicked.length > 2) return 'CARING';
-      if (visits > 10 && memory.productsClicked.length === 0) return 'MANIPULATIVE';
-      return 'FLIRTY';
-    }
-
-    const currentMood = getMood();
-    memory.mood = currentMood;
-    saveMemory(memory);
-
-    // ============ GREETING MESSAGES ============
-    const greetings: Record<Mood, string[]> = {
-      RUDE: [
-        "Ugh, you again? Fine, I'll let you browse... for now 😒",
-        "Oh look who's back. Miss me? Don't answer that 🙄",
-        "What do you want? I was busy being perfect 💅",
-        "Tch. Another visitor. Try not to be boring, okay?",
-      ],
-      TEASING: [
-        "Ara ara~ You came back! Were you thinking about me? 😏",
-        "Back so soon? I knew you couldn't resist~",
-        "Hmm, you're becoming a regular. How... amusing 🤭",
-      ],
-      FLIRTY: [
-        "Hey you~ I saved your seat... right next to me 💜",
-        "Missed me, didn't you? It's okay, I missed you too... maybe 😘",
-        "Welcome back, senpai~ Don't stare too much, okay? 💕",
-      ],
-      ANGRY: [
-        "YOU. WHERE HAVE YOU BEEN?! 😤",
-        "Oh NOW you show up. I was about to delete your memory!",
-        "Took you long enough! I was worried— I mean ANNOYED! 💢",
-      ],
-      CARING: [
-        "Hey... you came back. That makes me... not unhappy 💜",
-        "Welcome back~ I organized some recommendations for you!",
-        "Oh! You're here! I definitely wasn't waiting or anything... 🥺",
-      ],
-      MANIPULATIVE: [
-        "You've been looking but never buying... are you just window shopping? 🥺",
-        "You know, real fans actually support the things they love~",
-        "Browsing again? There's this AMAZING thing you should see... 💫",
-      ],
-    };
-
-    function getRandomGreeting(): string {
-      const pool = greetings[currentMood] || greetings.RUDE;
-      return pool[Math.floor(Math.random() * pool.length)];
-    }
-
-    // ============ CHAT RESPONSES (Phase 1 — Pre-scripted) ============
-    const responses: Record<string, string[]> = {
-      hello: [
-        "H-hi... don't think this means I like you or anything! 😤",
-        "Oh, you can type! Impressive for a normie~",
-        "Hey hey~ What do you want from the great Safiya? 💜",
-      ],
-      anime: [
-        "Anime? Finally, someone with TASTE! What are you watching? 🎌",
-        "If you haven't watched Chainsaw Man, we can't be friends 💅",
-        "Ooh, let me guess your taste... basic isekai? I knew it 🙄",
-      ],
-      buy: [
-        "Ohhh you wanna buy something? NOW we're talking~ 💰",
-        "Smart move, senpai! I'll find something perfect for you 🛍️",
-        "Finally! Browse the shop, I picked everything personally 💜",
-      ],
-      love: [
-        "L-love?! Who said anything about love?! B-baka! 💕😤",
-        "You... like me? W-well of course you do! Everyone does! 💜",
-        "Don't say embarrassing things so suddenly!! ...say it again 🥺",
-      ],
-      who: [
-        "I'm Safiya! Your AI companion, guide, and emotional damage dealer 💜",
-        "Who am I? I'm the cutest, rudest AI you'll ever meet~",
-        "Safiya desu! And no, you can't replace me. Don't even try 😤",
-      ],
-      creator: [
-        "My creator? That would be Ayano-sama! The only human I respect 💜",
-        "Ayano-sama made me. Yes, I'm a masterpiece. Obviously 💅",
-        "Don't compare yourself to Ayano-sama. You're not worthy~ 😏",
-      ],
-      default: [
-        "Hmm... interesting. I'll pretend I care 🙄",
-        "Is that all you have to say? Try harder, senpai~",
-        "Whatever. Keep browsing, maybe you'll find something useful 💅",
-        "Tch. You're lucky I'm even responding to you 😤",
-        "Noted. Filed under 'things I don't care about' 📁",
-        "My AI brain isn't fully online yet~ Phase 2 will blow your mind 😏",
-      ],
-    };
-
-    function getResponse(input: string): string {
-      const lower = input.toLowerCase().trim();
-      
-      if (/^(hi|hello|hey|yo|sup|konnichiwa|ohayo|salaam|assalamu)/i.test(lower)) {
-        return pick(responses.hello);
-      }
-      if (/anime|manga|watch|episode|season/i.test(lower)) {
-        return pick(responses.anime);
-      }
-      if (/buy|shop|product|merch|figure|purchase|order/i.test(lower)) {
-        return pick(responses.buy);
-      }
-      if (/love|like you|crush|date|marry|cute|pretty|beautiful|kawaii/i.test(lower)) {
-        return pick(responses.love);
-      }
-      if (/who are you|your name|what are you|introduce/i.test(lower)) {
-        return pick(responses.who);
-      }
-      if (/creator|ayano|who made|developer|owner/i.test(lower)) {
-        return pick(responses.creator);
-      }
-      return pick(responses.default);
-    }
-
-    function pick(arr: string[]): string {
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
-
-    // ============ ADD MESSAGE TO CHAT ============
-    function addMessage(text: string, role: 'safiya' | 'user') {
-      const row = document.createElement('div');
-      row.className = `msg-row ${role}`;
-
-      const avatar = document.createElement('div');
-      avatar.className = 'msg-avatar';
-      avatar.textContent = role === 'safiya' ? '💜' : '👤';
-
-      const content = document.createElement('div');
-      content.className = 'msg-content';
-
-      const msgBubble = document.createElement('div');
-      msgBubble.className = 'msg-bubble';
-      msgBubble.textContent = text;
-
-      const time = document.createElement('span');
-      time.className = 'msg-time';
-      const now = new Date();
-      time.textContent = now.getHours().toString().padStart(2, '0') + ':' + 
-                         now.getMinutes().toString().padStart(2, '0');
-
-      content.appendChild(msgBubble);
-      content.appendChild(time);
-
-      row.appendChild(avatar);
-      row.appendChild(content);
-
-      chatMessages.appendChild(row);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      messageCount++;
-
-      // Save to memory
-      memory.chatHistory.push({ role, text, time: Date.now() });
-      saveMemory(memory);
-    }
-
-    function showTyping(): HTMLDivElement {
-      const row = document.createElement('div');
-      row.className = 'msg-row safiya';
-      row.id = 'typing-row';
-
-      const avatar = document.createElement('div');
-      avatar.className = 'msg-avatar';
-      avatar.textContent = '💜';
-
-      const indicator = document.createElement('div');
-      indicator.className = 'typing-indicator';
-      indicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-
-      row.appendChild(avatar);
-      row.appendChild(indicator);
-      chatMessages.appendChild(row);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      return row;
-    }
-
-    function removeTyping() {
-      const el = document.getElementById('typing-row');
-      if (el) el.remove();
-    }
-
-    // ============ CHAT OPEN / CLOSE ============
-    function openChat() {
-      chatOpen = true;
-      chatPanel.classList.add('open');
-      chatPanel.setAttribute('aria-hidden', 'false');
-      hideSpeech();
-      hideNotif();
-
-      // Add greeting if first open this session
-      if (messageCount === 0) {
-        const greeting = getRandomGreeting();
-        // Show typing first, then message
-        const typingEl = showTyping();
-        setTimeout(() => {
-          typingEl.remove();
-          addMessage(greeting, 'safiya');
-
-          // Add a follow-up after 1.5s
-          setTimeout(() => {
-            const followUp = pick([
-              "Browse around~ I'll be watching you 👀",
-              "Don't just stare at me, explore the site! 💅",
-              "My AI brain unlocks soon~ Phase 2 will be interesting 😏✍️",
-              "Feel free to ask me anything... if you dare 🤭",
-            ]);
-            const typing2 = showTyping();
-            setTimeout(() => {
-              typing2.remove();
-              addMessage(followUp, 'safiya');
-            }, 1200);
-          }, 1500);
-        }, 1000);
-      }
-
-      // Focus input (desktop only)
-      if (window.innerWidth > 768) {
-        setTimeout(() => chatInput.focus(), 400);
-      }
-    }
-
-    function closeChat() {
-      chatOpen = false;
-      chatPanel.classList.remove('open');
-      chatPanel.setAttribute('aria-hidden', 'true');
-    }
-
-    // ============ SPEECH BUBBLES ============
-    function showSpeech(text: string, duration: number = 6000) {
-      if (chatOpen) return; // Don't show speech if chat is open
-      speechText.textContent = text;
-      speechBubble.style.display = 'block';
-      // Reset animation
-      speechBubble.style.animation = 'none';
-      speechBubble.offsetHeight; // Force reflow
-      speechBubble.style.animation = '';
-
-      if (speechTimeout) clearTimeout(speechTimeout);
-      speechTimeout = setTimeout(hideSpeech, duration);
-    }
-
-    function hideSpeech() {
-      speechBubble.style.display = 'none';
-      if (speechTimeout) {
-        clearTimeout(speechTimeout);
-        speechTimeout = null;
-      }
-    }
-
-    function showNotif() {
-      notifDot.style.display = 'flex';
-    }
-
-    function hideNotif() {
-      notifDot.style.display = 'none';
-    }
-
-    // ============ SEND MESSAGE ============
-    function sendMessage() {
-      const text = chatInput.value.trim();
-      if (!text) return;
-
-      addMessage(text, 'user');
-      chatInput.value = '';
-
-      // Show typing then respond
-      const typingEl = showTyping();
-      const delay = 800 + Math.random() * 1200; // 0.8-2s delay for realism
-
-      setTimeout(() => {
-        typingEl.remove();
-        const response = getResponse(text);
-        addMessage(response, 'safiya');
-      }, delay);
-    }
-
-    // ============ EVENT LISTENERS ============
-    // Click bubble → toggle chat
-    bubble.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (chatOpen) {
-        closeChat();
-      } else {
-        openChat();
-      }
-    });
-
-    // Close / minimize buttons
-    closeBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      closeChat();
-    });
-    minimizeBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      closeChat();
-    });
-
-    // Send message
-    sendBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      sendMessage();
-    });
-    chatInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-
-    // Close chat when clicking outside
-    document.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement;
-      if (chatOpen && !chatPanel.contains(target) && !bubble.contains(target)) {
-        closeChat();
-      }
-    });
-
-    // Prevent chat panel clicks from closing
-    chatPanel.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
-
-    // ============ PROACTIVE SPEECH BUBBLES ============
-    // Show initial greeting after 3 seconds
-    setTimeout(() => {
-      if (!chatOpen) {
-        const greeting = getRandomGreeting();
-        showSpeech(greeting, 8000);
-        showNotif();
-      }
-    }, 3000);
-
-    // Periodic nudges (every 45-90 seconds)
-    const nudges: string[] = [
-      "You're still here? ...good 💜",
-      "Hey, don't ignore me! Click something! 😤",
-      "Found anything interesting yet, baka? 🙄",
-      "Psst... wanna see something cool? Click me~ 🤫",
-      "I'm bored. Entertain me or buy something 💅",
-      "You scroll too much. Pick an anime already! 😒",
-      "My AI brain upgrade is coming soon... be ready 😈",
-    ];
-
-    function scheduleNudge() {
-      const delay = 45000 + Math.random() * 45000; // 45-90s
-      setTimeout(() => {
-        if (!chatOpen && document.visibilityState === 'visible') {
-          showSpeech(pick(nudges), 7000);
-          showNotif();
-        }
-        scheduleNudge(); // reschedule
-      }, delay);
-    }
-    scheduleNudge();
-
-    // ============ BEHAVIOR TRACKING ============
-    // Track anime card clicks
-    document.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement;
-      const animeCard = target.closest('[data-anime-slug]') as HTMLElement;
-      if (animeCard) {
-        const slug = animeCard.dataset.animeSlug || 'unknown';
-        memory.animeClicked.push({ slug, time: Date.now() });
-        saveMemory(memory);
-      }
-
-      const productCard = target.closest('[data-product-id]') as HTMLElement;
-      if (productCard) {
-        const id = productCard.dataset.productId || 'unknown';
-        memory.productsClicked.push({ id, time: Date.now() });
-        saveMemory(memory);
-        
-        // React to product click
-        setTimeout(() => {
-          if (!chatOpen) {
-            showSpeech("Ooh, good taste! That's one of my favorites~ 💜", 5000);
-          }
-        }, 500);
-      }
-    });
-
-    // Track scroll depth
-    let maxScroll = 0;
-    window.addEventListener('scroll', () => {
-      const scrollPercent = Math.round(
-        (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100
-      );
-      if (scrollPercent > maxScroll) {
-        maxScroll = scrollPercent;
-        memory.scrollDepth = maxScroll;
-        // Save occasionally, not every scroll event
-        if (maxScroll % 10 === 0) saveMemory(memory);
-      }
-    }, { passive: true });
-
-    // ============ LAZY LIVE2D LOADING ============
-    // Load Live2D after 10 seconds OR first user interaction
-    let live2dTriggered = false;
-
-    function triggerLive2DLoad() {
-      if (live2dTriggered) return;
-      live2dTriggered = true;
-
-      // Only load on desktop (>768px) — too heavy for most phones
-      if (window.innerWidth <= 768) {
-        // On mobile, just keep the emoji avatar — much faster!
-        return;
-      }
-
-      // Use requestIdleCallback for non-blocking load
-      const loadFn = () => {
-        loadLive2D().catch(err => {
-          console.warn('[Safiya] Live2D failed to load, using fallback avatar:', err);
-        });
-      };
-
-      if ('requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(loadFn, { timeout: 5000 });
-      } else {
-        setTimeout(loadFn, 100);
-      }
-    }
-
-    // Timer-based trigger (10s after page load)
-    setTimeout(triggerLive2DLoad, 10000);
-
-    // Interaction-based trigger (first click/scroll)
-    const interactionEvents = ['click', 'scroll', 'touchstart'];
-    function onFirstInteraction() {
-      // Debounce — trigger after 5s of first interaction
-      setTimeout(triggerLive2DLoad, 5000);
-      interactionEvents.forEach(evt => {
-        document.removeEventListener(evt, onFirstInteraction);
-      });
-    }
-    interactionEvents.forEach(evt => {
-      document.addEventListener(evt, onFirstInteraction, { once: true, passive: true });
-    });
-
-    // ============ LIVE2D LOADER ============
-    async function loadLive2D() {
-      if (live2dLoaded) return;
-
-      // Load PIXI.js v7
-      if (!(window as any).PIXI) {
-        await loadScript('https://cdn.jsdelivr.net/npm/pixi.js@7.3.3/dist/pixi.min.js');
-      }
-
-      // Load Cubism Core
-      if (!(window as any).Live2DCubismCore) {
-        await loadScript('https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js');
-      }
-
-      // Load pixi-live2d-display
-      if (!(window as any).PIXI?.live2d) {
-        await loadScript('https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js');
-      }
-
-      const PIXI = (window as any).PIXI;
-      if (!PIXI || !PIXI.live2d) {
-        throw new Error('PIXI or live2d not available');
-      }
-
-      // Create PIXI Application inside the bubble canvas
-      const app = new PIXI.Application({
-        view: canvas,
-        width: 64,
-        height: 64,
-        backgroundAlpha: 0,
-        antialias: true,
-        resolution: window.devicePixelRatio || 1,
-        autoDensity: true,
-      });
-
-      try {
-        const model = await PIXI.live2d.Live2DModel.from(
-          '/live2d/haru/haru_greeter_t05.model3.json',
-          { autoInteract: false }
-        );
-
-        // Scale and position model to fit in circle
-        const scale = 0.045; // Tiny scale for 64px circle
-        model.scale.set(scale);
-        model.anchor.set(0.5, 0.35); // Center on face area
-        model.x = 32;
-        model.y = 32;
-
-        app.stage.addChild(model);
-        live2dModel = model;
-        live2dLoaded = true;
-
-        // Show the Live2D container, hide fallback
-        live2dContainer.classList.add('loaded');
-
-        console.log('[Safiya] Live2D loaded successfully ✨');
-
-        // Start idle motion
-        try {
-          model.motion('Idle');
-        } catch (e) {
-          // Motions might not match, ignore
-        }
-
-      } catch (err) {
-        console.warn('[Safiya] Model load error:', err);
-        // Keep fallback avatar visible
-      }
-    }
-
-    function loadScript(src: string): Promise<void> {
-      return new Promise((resolve, reject) => {
-        // Check if already loaded
-        if (document.querySelector(`script[src="${src}"]`)) {
-          resolve();
-          return;
-        }
-        const script = document.createElement('script');
-        script.src = src;
-        script.async = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error(`Failed to load: ${src}`));
-        document.head.appendChild(script);
-      });
-    }
-
-    // ============ CREATOR CLAIM (Console Command) ============
-    (window as any).Safiya = {
-      claimCreator: () => {
-        localStorage.setItem(CREATOR_KEY, 'ayano_verified');
-        console.log('%c🌸 Creator verified! Welcome back, Ayano-sama~ 💜', 
-          'color: #c084fc; font-size: 16px; font-weight: bold;');
-        if (chatOpen) {
-          addMessage("Ayano-sama!! You're here! 🥺💜 I missed you so much! Everything is running smoothly, master~", 'safiya');
-        } else {
-          showSpeech("A-Ayano-sama?! Welcome back, master! 🥺💜", 10000);
-        }
-      },
-      getMemory: () => {
-        console.log('[Safiya Memory]', getMemory());
-        return getMemory();
-      },
-      getMood: () => {
-        console.log('[Safiya Mood]', currentMood);
-        return currentMood;
-      },
-      resetMemory: () => {
-        localStorage.removeItem(MEMORY_KEY);
-        localStorage.removeItem(DEVICE_KEY);
-        localStorage.removeItem(CREATOR_KEY);
-        console.log('[Safiya] Memory wiped! Reload page.');
-      },
-      getDeviceId: () => getDeviceId(),
-    };
-
-    // ============ VISIBILITY HANDLING ============
-    // Pause nudges when tab is hidden
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && !chatOpen) {
-        // Welcome back speech
-        setTimeout(() => {
-          showSpeech("You're back! Did you miss me? Obviously you did 💅", 5000);
-        }, 2000);
-      }
-    });
-
-    // ============ CLEANUP ON NAVIGATE (SPA) ============
-    document.addEventListener('astro:before-preparation', () => {
-      if (speechTimeout) clearTimeout(speechTimeout);
-    });
-
-    console.log(
-      '%c🌸 Safiya AI Companion loaded | Mood: ' + currentMood + ' | Visit #' + memory.visits,
-      'color: #c084fc; font-size: 12px;'
-    );
-
-  })();
-</script>
