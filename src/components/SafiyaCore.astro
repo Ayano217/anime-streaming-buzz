@@ -261,23 +261,38 @@
   function setMood(m) { mood = m; memory.currentMood = m; safeSet('safiya_memory', memory); }
 
   function detectName(text) {
-    if (memory.userName) return;
-    var patterns = [
-      /(?:my name is|i am|i'm|call me|name is)\s+([a-zA-Z]{2,20})/i,
-      /(?:amar nam|ami)\s+([a-zA-Z]{2,20})/i
-    ];
-    for (var i = 0; i < patterns.length; i++) {
-      var m = text.match(patterns[i]);
-      if (m && m[1]) {
-        var name = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
-        if (/^(here|home|good|bad|fine|ok|okay|sure|so|too|yes|no|not|the|and|but|from|going|coming)$/i.test(name)) return;
-        memory.userName = name;
-        safeSet('safiya_memory', memory);
-        console.log('%c💜 Safiya learned your name: ' + name, 'color:#e879f9;font-weight:bold');
-        return name;
+  if (memory.userName) return;
+  // Stricter patterns — must be followed by end-of-sentence or common markers
+  var patterns = [
+    // English: "my name is X", "I'm X", "call me X" — X must be followed by punctuation, end, or common markers
+    /(?:my\s+name\s+is|i\s+am|i'm|call\s+me|name['']?s|the\s+name['']?s)\s+([A-Z][a-zA-Z]{2,15})(?:\s|$|[.,!?])/,
+    // Bengali romanized: "amar nam X" or "ami X bolchi" — name must be capitalized or clear
+    /(?:amar\s+nam\s+|ami\s+)([A-Z][a-zA-Z]{2,15})(?:\s|$|[.,!?])/,
+  ];
+
+  // Blocklist — common words falsely detected as names
+  var blockList = /^(tumi|tomar|amar|ami|apni|apnar|here|home|going|coming|good|bad|fine|ok|okay|sure|the|and|but|from|will|would|could|should|maybe|really|very|too|yes|no|not|nice|cool|great|awesome|thank|hello|hi|hey|bye|safiya|ayano|user|test|kemon|acho|kotha|bolchi|jano|jani|dekho|bhalo|kharap|khub|onek|sob|kisu|kichu|eta|ota|ki|kina|hobe|hoye|hoyeche|korbo|korchi|korche|kore|korte|dhonnobad|please|thanks)$/i;
+
+  for (var i = 0; i < patterns.length; i++) {
+    var m = text.match(patterns[i]);
+    if (m && m[1]) {
+      var name = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
+      // Check blocklist
+      if (blockList.test(name)) {
+        console.log('[Safiya] Rejected fake name: ' + name);
+        continue;
       }
+      // Name must be 3-15 chars, must look like a real name (not all one letter)
+      if (name.length < 3 || name.length > 15) continue;
+      if (!/^[A-Z][a-z]+$/.test(name)) continue;
+      // Save it!
+      memory.userName = name;
+      safeSet('safiya_memory', memory);
+      console.log('%c💜 Safiya learned your name: ' + name, 'color:#e879f9;font-weight:bold');
+      return name;
     }
   }
+}
 
   // ★ FIXED — using double quotes for strings that contain apostrophes
   var lines = {
