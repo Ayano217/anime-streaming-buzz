@@ -1,27 +1,28 @@
 ---
 // ═══════════════════════════════════════════════════════════════
-// AniTube Buzz — SAFIYA CORE (Live2D VTuber Companion)
+// AniTube Buzz — SAFIYA CORE v3 (Custom Animated Character)
 // Path: src/components/SafiyaCore.astro
 // ═══════════════════════════════════════════════════════════════
 // 
+// APPROACH: Uses your own character-sheet.png with CSS/JS animations
+// instead of Live2D. Reliable, works instantly, no CDN dependencies.
+// 
 // FEATURES:
-//   ✅ Live2D Hiyori model (free, CDN-loaded, VTuber quality)
-//   ✅ Full body animation (breathing, blinking, hair physics)
-//   ✅ Cursor tracking (eyes + head follow mouse)
-//   ✅ Draggable (move Safiya anywhere on screen)
-//   ✅ Expression changes based on mood
+//   ✅ Your own Safiya character (from character-sheet.png)
+//   ✅ Breathing, floating, blinking animations
+//   ✅ Cursor tracking (body tilts toward mouse)
+//   ✅ Draggable (long-press to drag anywhere)
+//   ✅ Position saved to localStorage
+//   ✅ Click reactions (bounce)
 //   ✅ Speech bubbles + chat panel
-//   ✅ Device fingerprint (creator recognition)
-//   ✅ Behavior tracking (feeds AI later)
-//   ✅ Never blocks up-button (smart z-index)
-//   ✅ Mobile responsive + battery friendly
-//
-// Character: Uses Hiyori (free Live2D sample) — we call her Safiya
-// Later: Custom character rigged for you can replace this model
+//   ✅ Mood system with color changes
+//   ✅ Device fingerprint + memory
+//   ✅ Behavior tracking
+//   ✅ Never blocks up-button (smart positioning)
+//   ✅ Mobile responsive
 // ═══════════════════════════════════════════════════════════════
 ---
 
-<!-- Safiya's Container — Draggable, always visible -->
 <div id="safiya-container" class="safiya-hidden">
   
   <!-- Speech bubble -->
@@ -30,20 +31,33 @@
     <div class="safiya-bubble-tail"></div>
   </div>
   
-  <!-- Live2D canvas wrapper -->
+  <!-- Avatar frame -->
   <div id="safiya-avatar" class="safiya-avatar" role="button" aria-label="Chat with Safiya" tabindex="0">
+    
+    <!-- Glow ring -->
     <div class="safiya-glow"></div>
     
-    <!-- Live2D canvas -->
-    <canvas id="safiya-canvas" class="safiya-canvas"></canvas>
-    
-    <!-- Loading spinner (while Live2D loads) -->
-    <div id="safiya-loading" class="safiya-loading">
-      <div class="safiya-spinner"></div>
+    <!-- Character body wrapper (this rotates with cursor) -->
+    <div class="safiya-body" id="safiya-body">
+      
+      <!-- Character image (cropped to show main pose) -->
+      <div class="safiya-sprite-wrap">
+        <img 
+          src="/character-sheet.png" 
+          alt="Safiya" 
+          class="safiya-sprite"
+          id="safiya-sprite"
+          draggable="false"
+        />
+      </div>
+      
+      <!-- Blink overlay (dark line drawn over eyes during blink) -->
+      <div class="safiya-blink" id="safiya-blink"></div>
+      
     </div>
     
-    <!-- Drag handle indicator -->
-    <div class="safiya-drag-hint" id="safiya-drag-hint" title="Drag to move">
+    <!-- Drag hint (top-left grip) -->
+    <div class="safiya-drag-hint" id="safiya-drag-hint" title="Long-press to drag">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
         <circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/>
         <circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/>
@@ -51,8 +65,18 @@
       </svg>
     </div>
     
+    <!-- Status dot -->
     <div class="safiya-status" id="safiya-status"></div>
+    
+    <!-- Notification badge -->
     <div class="safiya-notify" id="safiya-notify">1</div>
+    
+    <!-- Sparkle effects (bottom) -->
+    <div class="safiya-sparkles">
+      <div class="safiya-sparkle safiya-sparkle-1"></div>
+      <div class="safiya-sparkle safiya-sparkle-2"></div>
+      <div class="safiya-sparkle safiya-sparkle-3"></div>
+    </div>
   </div>
   
   <!-- Chat panel -->
@@ -71,7 +95,7 @@
         <div class="safiya-msg-text">Hmph. So you finally noticed me? Took you long enough... 🙄</div>
       </div>
       <div class="safiya-msg safiya-msg-her">
-        <div class="safiya-msg-text">I'm still waking up, senpai~ Full chat unlocks soon. For now... just admire me. 💅</div>
+        <div class="safiya-msg-text">I'm still waking up, senpai~ Full chat unlocks soon. For now... admire me. 💅</div>
       </div>
     </div>
     <div class="safiya-chat-input-wrap">
@@ -93,41 +117,15 @@
   
 </div>
 
-<!-- Live2D Core (Cubism SDK) -->
-<script is:inline src="https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js"></script>
-
-<!-- PIXI.js (WebGL renderer) -->
-<script is:inline src="https://cdn.jsdelivr.net/npm/pixi.js@6.5.10/dist/browser/pixi.min.js"></script>
-
-<!-- pixi-live2d-display (Live2D + PIXI bridge) -->
-<script is:inline src="https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/index.min.js"></script>
-
 <script is:inline>
 (function() {
   'use strict';
   
-  // Wait for all libraries to load
-  function waitForLibs(callback) {
-    var maxWait = 100;
-    var interval = setInterval(function() {
-      if (typeof PIXI !== 'undefined' && 
-          typeof PIXI.live2d !== 'undefined' && 
-          typeof Live2DCubismCore !== 'undefined') {
-        clearInterval(interval);
-        callback();
-      }
-      maxWait--;
-      if (maxWait <= 0) {
-        clearInterval(interval);
-        console.error('[Safiya] Live2D libs failed to load');
-      }
-    }, 100);
-  }
-  
   var container = document.getElementById('safiya-container');
   var avatar = document.getElementById('safiya-avatar');
-  var canvas = document.getElementById('safiya-canvas');
-  var loading = document.getElementById('safiya-loading');
+  var body = document.getElementById('safiya-body');
+  var sprite = document.getElementById('safiya-sprite');
+  var blink = document.getElementById('safiya-blink');
   var bubble = document.getElementById('safiya-bubble');
   var bubbleText = document.getElementById('safiya-bubble-text');
   var status = document.getElementById('safiya-status');
@@ -137,10 +135,10 @@
   var chatMood = document.getElementById('safiya-chat-mood');
   var dragHint = document.getElementById('safiya-drag-hint');
   
-  if (!container || !avatar || !canvas) return;
+  if (!container || !avatar) return;
   
   // ─────────────────────────────────────────────
-  // DEVICE FINGERPRINT (creator recognition prep)
+  // 1. DEVICE FINGERPRINT (creator recognition)
   // ─────────────────────────────────────────────
   function generateFingerprint() {
     var fp = [
@@ -177,7 +175,7 @@
   var isCreator = localStorage.getItem('safiya_creator') === 'ayano-217';
   
   // ─────────────────────────────────────────────
-  // MEMORY SYSTEM
+  // 2. MEMORY SYSTEM
   // ─────────────────────────────────────────────
   function getMemory() {
     try { return JSON.parse(localStorage.getItem('safiya_memory') || '{}'); } 
@@ -195,7 +193,7 @@
   saveMemory(memory);
   
   // ─────────────────────────────────────────────
-  // POSITION MEMORY (draggable — remember location)
+  // 3. RESTORE POSITION (if user dragged before)
   // ─────────────────────────────────────────────
   var savedPos = memory.position || null;
   if (savedPos && savedPos.x !== undefined) {
@@ -206,7 +204,7 @@
   }
   
   // ─────────────────────────────────────────────
-  // MOOD SYSTEM
+  // 4. MOOD SYSTEM
   // ─────────────────────────────────────────────
   var mood = memory.currentMood || 'bored';
   var moodColors = {
@@ -215,35 +213,27 @@
     horny: '#f43f5e', crying: '#60a5fa', happy: '#10b981'
   };
   
-  // Live2D expression mapping (Hiyori has these expressions)
-  var moodExpressions = {
-    bored: 'F01',    // normal
-    rude: 'F02',     // angry
-    teasing: 'F03',  // smile
-    flirty: 'F04',   // wink
-    angry: 'F02',    // angry
-    caring: 'F05',   // happy
-    horny: 'F04',    // wink
-    crying: 'F06',   // sad
-    happy: 'F05'     // happy
-  };
-  
-  var model = null; // Live2D model reference
-  
   function setMood(newMood) {
     mood = newMood;
     memory.currentMood = mood;
     saveMemory(memory);
     if (chatMood) chatMood.textContent = mood;
     if (status) status.style.background = moodColors[mood] || '#c084fc';
-    // Change Live2D expression
-    if (model && model.expression) {
-      try { model.expression(moodExpressions[mood]); } catch(e) {}
+    // Change avatar filter based on mood
+    if (sprite) {
+      var filters = {
+        angry: 'saturate(1.4) contrast(1.1) hue-rotate(-10deg)',
+        rude:  'saturate(1.2) contrast(1.05)',
+        flirty: 'saturate(1.3) brightness(1.05) hue-rotate(5deg)',
+        crying: 'saturate(0.6) brightness(0.9)',
+        happy: 'saturate(1.2) brightness(1.08)'
+      };
+      sprite.style.filter = filters[mood] || 'none';
     }
   }
   
   // ─────────────────────────────────────────────
-  // PERSONALITY BUBBLE LINES
+  // 5. BUBBLE PERSONALITY LINES
   // ─────────────────────────────────────────────
   var bubbleLines = {
     bored: [
@@ -291,7 +281,7 @@
   }
   
   // ─────────────────────────────────────────────
-  // BUBBLE DISPLAY
+  // 6. BUBBLE DISPLAY
   // ─────────────────────────────────────────────
   var bubbleTimeout;
   function showBubble(text, duration) {
@@ -306,7 +296,37 @@
   }
   
   // ─────────────────────────────────────────────
-  // IDLE BEHAVIOR
+  // 7. BLINKING (random natural blinks)
+  // ─────────────────────────────────────────────
+  function doBlink() {
+    if (!blink) return;
+    blink.classList.add('safiya-blink-active');
+    setTimeout(function() {
+      blink.classList.remove('safiya-blink-active');
+    }, 150);
+    // Random double-blink sometimes
+    if (Math.random() < 0.2) {
+      setTimeout(function() {
+        blink.classList.add('safiya-blink-active');
+        setTimeout(function() {
+          blink.classList.remove('safiya-blink-active');
+        }, 130);
+      }, 250);
+    }
+  }
+  
+  function scheduleBlink() {
+    // Random 2-6 seconds between blinks
+    var delay = 2000 + Math.random() * 4000;
+    setTimeout(function() {
+      if (!document.hidden) doBlink();
+      scheduleBlink();
+    }, delay);
+  }
+  scheduleBlink();
+  
+  // ─────────────────────────────────────────────
+  // 8. IDLE BEHAVIOR
   // ─────────────────────────────────────────────
   var lastActivity = Date.now();
   var idleBubbleShown = 0;
@@ -330,7 +350,165 @@
   setInterval(checkIdle, 10000);
   
   // ─────────────────────────────────────────────
-  // BEHAVIOR TRACKING
+  // 9. CURSOR TRACKING (body tilts toward mouse)
+  // ─────────────────────────────────────────────
+  var currentTilt = 0;
+  var targetTilt = 0;
+  var currentLean = 0;
+  var targetLean = 0;
+  
+  document.addEventListener('mousemove', function(e) {
+    if (window.innerWidth < 768) return;
+    var rect = avatar.getBoundingClientRect();
+    var cx = rect.left + rect.width / 2;
+    var cy = rect.top + rect.height / 2;
+    var dx = e.clientX - cx;
+    var dy = e.clientY - cy;
+    // Body tilts left/right based on cursor X
+    targetTilt = Math.max(-5, Math.min(5, dx / 100));
+    // Body leans forward/back based on cursor Y
+    targetLean = Math.max(-3, Math.min(3, dy / 150));
+  }, { passive: true });
+  
+  function animateBody() {
+    currentTilt += (targetTilt - currentTilt) * 0.08;
+    currentLean += (targetLean - currentLean) * 0.08;
+    if (body) {
+      body.style.transform = 
+        'rotate(' + currentTilt.toFixed(2) + 'deg) ' +
+        'perspective(500px) rotateX(' + currentLean.toFixed(2) + 'deg)';
+    }
+    requestAnimationFrame(animateBody);
+  }
+  animateBody();
+  
+  // ─────────────────────────────────────────────
+  // 10. CHAT PANEL
+  // ─────────────────────────────────────────────
+  var chatOpen = false;
+  function openChat() {
+    chatOpen = true;
+    chatPanel.classList.add('safiya-chat-open');
+    if (notify) notify.style.display = 'none';
+    bubble.classList.remove('safiya-bubble-visible');
+  }
+  function closeChat() {
+    chatOpen = false;
+    chatPanel.classList.remove('safiya-chat-open');
+  }
+  
+  if (chatClose) {
+    chatClose.addEventListener('click', function(e) {
+      e.stopPropagation();
+      closeChat();
+    });
+  }
+  
+  document.addEventListener('click', function(e) {
+    if (chatOpen && !container.contains(e.target)) closeChat();
+  });
+  
+  // ─────────────────────────────────────────────
+  // 11. DRAG & DROP (long-press to drag)
+  // ─────────────────────────────────────────────
+  var isDragging = false;
+  var dragStartX, dragStartY, containerStartX, containerStartY;
+  var dragMoved = false;
+  var pressTimer;
+  var HOLD_MS = 300;
+  
+  function startDrag(clientX, clientY) {
+    isDragging = true;
+    dragMoved = false;
+    var rect = container.getBoundingClientRect();
+    dragStartX = clientX;
+    dragStartY = clientY;
+    containerStartX = rect.left;
+    containerStartY = rect.top;
+    container.classList.add('safiya-dragging');
+    if (navigator.vibrate) navigator.vibrate(30); // haptic on mobile
+  }
+  
+  function moveDrag(clientX, clientY) {
+    if (!isDragging) return;
+    var dx = clientX - dragStartX;
+    var dy = clientY - dragStartY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved = true;
+    var newX = containerStartX + dx;
+    var newY = containerStartY + dy;
+    var maxX = window.innerWidth - container.offsetWidth;
+    var maxY = window.innerHeight - container.offsetHeight;
+    newX = Math.max(0, Math.min(newX, maxX));
+    newY = Math.max(0, Math.min(newY, maxY));
+    container.style.left = newX + 'px';
+    container.style.top = newY + 'px';
+    container.style.right = 'auto';
+    container.style.bottom = 'auto';
+  }
+  
+  function endDrag() {
+    if (!isDragging) return;
+    isDragging = false;
+    container.classList.remove('safiya-dragging');
+    if (dragMoved) {
+      var rect = container.getBoundingClientRect();
+      memory.position = { x: rect.left, y: rect.top };
+      saveMemory(memory);
+    }
+  }
+  
+  // Mouse
+  avatar.addEventListener('mousedown', function(e) {
+    pressTimer = setTimeout(function() {
+      startDrag(e.clientX, e.clientY);
+    }, HOLD_MS);
+  });
+  document.addEventListener('mousemove', function(e) {
+    if (isDragging) moveDrag(e.clientX, e.clientY);
+  });
+  document.addEventListener('mouseup', function() {
+    clearTimeout(pressTimer);
+    endDrag();
+  });
+  
+  // Touch
+  avatar.addEventListener('touchstart', function(e) {
+    var t = e.touches[0];
+    pressTimer = setTimeout(function() {
+      startDrag(t.clientX, t.clientY);
+    }, HOLD_MS);
+  }, { passive: true });
+  document.addEventListener('touchmove', function(e) {
+    if (isDragging) {
+      var t = e.touches[0];
+      moveDrag(t.clientX, t.clientY);
+      e.preventDefault();
+    }
+  }, { passive: false });
+  document.addEventListener('touchend', function() {
+    clearTimeout(pressTimer);
+    endDrag();
+  });
+  
+  // Click (if not dragged) → open chat
+  avatar.addEventListener('click', function(e) {
+    if (dragMoved) { dragMoved = false; return; }
+    // Bounce animation
+    avatar.classList.add('safiya-clicked');
+    setTimeout(function() { avatar.classList.remove('safiya-clicked'); }, 400);
+    if (chatOpen) closeChat();
+    else openChat();
+  });
+  
+  avatar.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (chatOpen) closeChat(); else openChat();
+    }
+  });
+  
+  // ─────────────────────────────────────────────
+  // 12. BEHAVIOR TRACKING
   // ─────────────────────────────────────────────
   var behavior = memory.behavior || {
     pagesViewed: [], productsClicked: [], animeClicked: [],
@@ -370,225 +548,12 @@
   }, 10000);
   
   // ─────────────────────────────────────────────
-  // CHAT PANEL
-  // ─────────────────────────────────────────────
-  var chatOpen = false;
-  
-  function openChat() {
-    chatOpen = true;
-    chatPanel.classList.add('safiya-chat-open');
-    if (notify) notify.style.display = 'none';
-    bubble.classList.remove('safiya-bubble-visible');
-  }
-  function closeChat() {
-    chatOpen = false;
-    chatPanel.classList.remove('safiya-chat-open');
-  }
-  
-  if (chatClose) {
-    chatClose.addEventListener('click', function(e) {
-      e.stopPropagation();
-      closeChat();
-    });
-  }
-  
-  document.addEventListener('click', function(e) {
-    if (chatOpen && !container.contains(e.target)) closeChat();
-  });
-  
-  // ─────────────────────────────────────────────
-  // DRAG & DROP (Safiya can be moved anywhere)
-  // ─────────────────────────────────────────────
-  var isDragging = false;
-  var dragStartX, dragStartY, containerStartX, containerStartY;
-  var dragMoved = false;
-  var pressTimer;
-  var HOLD_TO_DRAG_MS = 350; // long-press to drag
-  
-  function startDrag(clientX, clientY) {
-    isDragging = true;
-    dragMoved = false;
-    var rect = container.getBoundingClientRect();
-    dragStartX = clientX;
-    dragStartY = clientY;
-    containerStartX = rect.left;
-    containerStartY = rect.top;
-    container.classList.add('safiya-dragging');
-  }
-  
-  function moveDrag(clientX, clientY) {
-    if (!isDragging) return;
-    var dx = clientX - dragStartX;
-    var dy = clientY - dragStartY;
-    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) dragMoved = true;
-    var newX = containerStartX + dx;
-    var newY = containerStartY + dy;
-    // Keep within viewport
-    var maxX = window.innerWidth - container.offsetWidth;
-    var maxY = window.innerHeight - container.offsetHeight;
-    newX = Math.max(0, Math.min(newX, maxX));
-    newY = Math.max(0, Math.min(newY, maxY));
-    container.style.left = newX + 'px';
-    container.style.top = newY + 'px';
-    container.style.right = 'auto';
-    container.style.bottom = 'auto';
-  }
-  
-  function endDrag() {
-    if (!isDragging) return;
-    isDragging = false;
-    container.classList.remove('safiya-dragging');
-    if (dragMoved) {
-      // Save position
-      var rect = container.getBoundingClientRect();
-      memory.position = { x: rect.left, y: rect.top };
-      saveMemory(memory);
-    }
-  }
-  
-  // Mouse events
-  avatar.addEventListener('mousedown', function(e) {
-    pressTimer = setTimeout(function() {
-      startDrag(e.clientX, e.clientY);
-    }, HOLD_TO_DRAG_MS);
-  });
-  document.addEventListener('mousemove', function(e) {
-    if (isDragging) moveDrag(e.clientX, e.clientY);
-  });
-  document.addEventListener('mouseup', function() {
-    clearTimeout(pressTimer);
-    endDrag();
-  });
-  
-  // Touch events
-  avatar.addEventListener('touchstart', function(e) {
-    var t = e.touches[0];
-    pressTimer = setTimeout(function() {
-      startDrag(t.clientX, t.clientY);
-    }, HOLD_TO_DRAG_MS);
-  }, { passive: true });
-  document.addEventListener('touchmove', function(e) {
-    if (isDragging) {
-      var t = e.touches[0];
-      moveDrag(t.clientX, t.clientY);
-      e.preventDefault();
-    }
-  }, { passive: false });
-  document.addEventListener('touchend', function() {
-    clearTimeout(pressTimer);
-    endDrag();
-  });
-  
-  // Click to open chat (only if not dragging)
-  avatar.addEventListener('click', function(e) {
-    if (dragMoved) { dragMoved = false; return; }
-    if (chatOpen) closeChat();
-    else openChat();
-  });
-  
-  avatar.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      if (chatOpen) closeChat(); else openChat();
-    }
-  });
-  
-  // ─────────────────────────────────────────────
-  // LIVE2D INITIALIZATION
-  // ─────────────────────────────────────────────
-  waitForLibs(function() {
-    console.log('%c💜 Live2D libs loaded, initializing Safiya...', 'color:#e879f9;');
-    
-    // Register Live2D ticker with PIXI
-    PIXI.live2d.Live2DModel.registerTicker(PIXI.Ticker);
-    
-    var app = new PIXI.Application({
-      view: canvas,
-      autoStart: true,
-      transparent: true,
-      backgroundAlpha: 0,
-      resolution: window.devicePixelRatio || 1,
-      autoDensity: true,
-      resizeTo: avatar,
-      antialias: true,
-    });
-    
-    // Load Hiyori model from CDN
-    var modelUrl = 'https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/hiyori/hiyori_pro_t11.model3.json';
-    
-    PIXI.live2d.Live2DModel.from(modelUrl).then(function(m) {
-      model = m;
-      app.stage.addChild(model);
-      
-      // Scale model to fit canvas
-      var scale = Math.min(
-        avatar.offsetWidth / model.width,
-        avatar.offsetHeight / model.height
-      ) * 0.95;
-      model.scale.set(scale);
-      
-      // Center it
-      model.x = (avatar.offsetWidth - model.width) / 2;
-      model.y = (avatar.offsetHeight - model.height) / 2;
-      
-      // Hide loading spinner
-      if (loading) loading.style.display = 'none';
-      
-      // ─── Cursor tracking (eyes + head follow mouse) ───
-      var trackingCursor = { x: 0, y: 0 };
-      document.addEventListener('mousemove', function(e) {
-        if (window.innerWidth < 768) return;
-        var rect = avatar.getBoundingClientRect();
-        var cx = rect.left + rect.width / 2;
-        var cy = rect.top + rect.height / 2;
-        // Normalize to -1..1 range
-        trackingCursor.x = (e.clientX - cx) / (window.innerWidth / 2);
-        trackingCursor.y = (e.clientY - cy) / (window.innerHeight / 2);
-      });
-      
-      app.ticker.add(function() {
-        if (!model || !model.internalModel) return;
-        try {
-          // Focus point makes head + eyes follow cursor
-          model.focus(trackingCursor.x, trackingCursor.y);
-        } catch(e) {}
-      });
-      
-      // Set initial mood expression
-      setMood(mood);
-      
-      // Play a random idle motion
-      try {
-        if (model.motion) model.motion('Idle', 0);
-      } catch(e) {}
-      
-      // Click on model triggers a hit reaction
-      model.on('hit', function(hitAreas) {
-        try {
-          if (hitAreas.includes('Body') && model.motion) {
-            model.motion('TapBody');
-          } else if (hitAreas.includes('Head') && model.motion) {
-            model.motion('Tap');
-            showBubble("H-Hey! Don't touch me there~ 😳", 4000);
-          }
-        } catch(e) {}
-      });
-      
-      console.log('%c💜 Safiya Live2D ready!', 'color:#e879f9;font-weight:bold;');
-    }).catch(function(err) {
-      console.error('[Safiya] Model load failed:', err);
-      if (loading) {
-        loading.innerHTML = '<div style="color:#ef4444;font-size:0.7rem;text-align:center;padding:10px;">Model failed to load</div>';
-      }
-    });
-  });
-  
-  // ─────────────────────────────────────────────
-  // INITIAL GREETING
+  // 13. INITIAL GREETING
   // ─────────────────────────────────────────────
   setTimeout(function() {
     container.classList.remove('safiya-hidden');
     container.classList.add('safiya-entering');
+    setMood(mood);
     
     setTimeout(function() {
       var greeting;
@@ -610,15 +575,15 @@
       }
       showBubble(greeting, 7000);
       
-      // Hide drag hint after 5 seconds
+      // Fade drag hint after 6s
       setTimeout(function() {
-        if (dragHint) dragHint.style.opacity = '0.3';
-      }, 5000);
+        if (dragHint) dragHint.style.opacity = '0.2';
+      }, 6000);
     }, 800);
-  }, 2000); // Extra delay for Live2D to load
+  }, 1500);
   
   // ─────────────────────────────────────────────
-  // GLOBAL API
+  // 14. GLOBAL API
   // ─────────────────────────────────────────────
   window.Safiya = {
     say: function(text, duration) { showBubble(text, duration); },
@@ -631,8 +596,8 @@
       saveMemory(memory);
       container.style.left = '';
       container.style.top = '';
-      container.style.right = '20px';
-      container.style.bottom = '20px';
+      container.style.right = '';
+      container.style.bottom = '';
     },
     reset: function() { 
       localStorage.removeItem('safiya_memory');
@@ -644,13 +609,14 @@
       isCreator = true;
       setMood('caring');
       showBubble("Ayano-sama! Recognized! I'm yours forever 💜", 6000);
-    }
+    },
+    blink: doBlink
   };
   
-  console.log('%c💜 Safiya v2.0 (Live2D) loading...', 'color:#e879f9;font-weight:bold;font-size:14px;');
+  console.log('%c💜 Safiya v3.0 loaded', 'color:#e879f9;font-weight:bold;font-size:14px;');
   console.log('%cCommands:', 'color:#c084fc;font-weight:bold;');
   console.log('%c  Safiya.claimCreator()  - become her master', 'color:#c084fc;');
-  console.log('%c  Safiya.mood("flirty")  - change her mood', 'color:#c084fc;');
+  console.log('%c  Safiya.mood("flirty")  - change mood', 'color:#c084fc;');
   console.log('%c  Safiya.say("Hi!")      - make her speak', 'color:#c084fc;');
   console.log('%c  Safiya.resetPosition() - move back to corner', 'color:#c084fc;');
   console.log('%c  💡 Long-press her to drag anywhere', 'color:#7dd3fc;');
@@ -660,25 +626,26 @@
 
 <style>
   /* ═══════════════════════════════════════════════
-     SAFIYA CORE — Live2D Styles
+     SAFIYA CORE v3 — Custom Animated Character
      ═══════════════════════════════════════════════ */
   
   #safiya-container {
     position: fixed;
     bottom: 20px;
-    right: 90px; /* offset from btt (up-button at right:1.5rem) */
-    z-index: 9997; /* below btt (1000) not conflicting, above content */
+    right: 85px; /* offset to not block up-button */
+    z-index: 9997;
     pointer-events: none;
     font-family: 'Bricolage Grotesque', sans-serif;
     user-select: none;
+    -webkit-user-select: none;
   }
   
   .safiya-hidden { opacity: 0; transform: translateY(30px); }
   .safiya-entering { 
-    animation: safiyaEnter 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    animation: safiyaEnter 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   }
   @keyframes safiyaEnter {
-    from { opacity: 0; transform: translateY(30px) scale(0.8); }
+    from { opacity: 0; transform: translateY(30px) scale(0.7); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
   }
   
@@ -691,92 +658,143 @@
     transform: scale(1.05) !important;
   }
   
-  /* ═══ AVATAR CONTAINER ═══ */
+  /* ═══ AVATAR ═══ */
   .safiya-avatar {
     position: relative;
-    width: 200px;
-    height: 260px;
+    width: 160px;
+    height: 220px;
     cursor: pointer;
     pointer-events: auto;
-    animation: safiyaBreath 5s ease-in-out infinite;
+    animation: safiyaFloat 5s ease-in-out infinite;
     transition: transform 0.3s ease;
   }
   
-  .safiya-avatar:hover { transform: scale(1.03); }
+  .safiya-avatar:hover { transform: scale(1.05); }
   
-  @keyframes safiyaBreath {
+  @keyframes safiyaFloat {
     0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-8px); }
+    50%      { transform: translateY(-10px); }
   }
   
-  /* Live2D canvas */
-  .safiya-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100% !important;
-    height: 100% !important;
-    z-index: 2;
-    pointer-events: auto;
+  .safiya-clicked {
+    animation: safiyaBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  }
+  @keyframes safiyaBounce {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(0.9); }
+    60%  { transform: scale(1.1); }
+    100% { transform: scale(1); }
   }
   
-  /* Loading spinner */
-  .safiya-loading {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 5;
-  }
-  .safiya-spinner {
-    width: 40px;
-    height: 40px;
-    border: 3px solid rgba(192, 132, 252, 0.2);
-    border-top-color: #e879f9;
-    border-radius: 50%;
-    animation: safiyaSpin 0.8s linear infinite;
-  }
-  @keyframes safiyaSpin { to { transform: rotate(360deg); } }
-  
-  /* Glow behind Safiya */
+  /* Glow ring behind Safiya */
   .safiya-glow {
     position: absolute;
-    inset: -20px;
+    inset: -15px;
     border-radius: 50%;
     background: radial-gradient(
       circle,
-      rgba(232, 121, 249, 0.3) 0%,
-      rgba(192, 132, 252, 0.12) 45%,
+      rgba(232, 121, 249, 0.35) 0%,
+      rgba(192, 132, 252, 0.15) 45%,
       transparent 75%
     );
-    animation: safiyaGlowPulse 3s ease-in-out infinite;
+    animation: safiyaGlow 3s ease-in-out infinite;
     pointer-events: none;
-    z-index: 1;
+    z-index: 0;
+    filter: blur(2px);
   }
-  @keyframes safiyaGlowPulse {
+  @keyframes safiyaGlow {
     0%, 100% { opacity: 0.6; transform: scale(1); }
-    50%      { opacity: 1;   transform: scale(1.1); }
+    50%      { opacity: 1;   transform: scale(1.15); }
   }
   
-  /* Drag hint (small grip icon top-left) */
+  /* Body wrapper (rotates with cursor tracking) */
+  .safiya-body {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-origin: center 70%;
+    transition: transform 0.15s ease-out;
+    z-index: 2;
+    animation: safiyaBreath 3.5s ease-in-out infinite;
+  }
+  
+  @keyframes safiyaBreath {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.015); }
+  }
+  
+  /* Sprite wrapper — masks to show only main pose */
+  .safiya-sprite-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    /* Soft edge mask (like a spotlight on her body) */
+    -webkit-mask-image: radial-gradient(
+      ellipse 65% 85% at 50% 45%,
+      black 65%,
+      transparent 100%
+    );
+    mask-image: radial-gradient(
+      ellipse 65% 85% at 50% 45%,
+      black 65%,
+      transparent 100%
+    );
+  }
+  
+  /* The character image — positioned to show main front pose (top-left of sheet) */
+  .safiya-sprite {
+    position: absolute;
+    top: -3%;
+    left: -22%;
+    width: 385%;
+    height: auto;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+    image-rendering: -webkit-optimize-contrast;
+    transition: filter 0.5s ease;
+  }
+  
+  /* Blink overlay — dark line drawn briefly over eyes */
+  .safiya-blink {
+    position: absolute;
+    top: 26%;      /* adjust to hit eye area */
+    left: 32%;
+    right: 32%;
+    height: 4px;
+    background: rgba(45, 20, 30, 0);
+    border-radius: 2px;
+    transition: background 0.1s ease;
+    pointer-events: none;
+    z-index: 3;
+  }
+  
+  .safiya-blink-active {
+    background: rgba(45, 20, 30, 0.95);
+    box-shadow: 0 -2px 0 rgba(45, 20, 30, 0.95), 0 2px 0 rgba(45, 20, 30, 0.95);
+  }
+  
+  /* Drag hint */
   .safiya-drag-hint {
     position: absolute;
-    top: 6px;
-    left: 6px;
-    color: rgba(232, 121, 249, 0.7);
-    z-index: 6;
-    pointer-events: none;
-    background: rgba(10, 5, 23, 0.5);
+    top: 4px;
+    left: 4px;
+    color: rgba(232, 121, 249, 0.8);
+    background: rgba(10, 5, 23, 0.7);
     padding: 3px;
     border-radius: 4px;
-    transition: opacity 0.5s ease;
+    z-index: 6;
+    pointer-events: none;
+    transition: opacity 0.8s ease;
+    backdrop-filter: blur(4px);
   }
   
   /* Status dot */
   .safiya-status {
     position: absolute;
-    bottom: 20px;
-    right: 15px;
+    bottom: 18px;
+    right: 12px;
     width: 14px;
     height: 14px;
     border-radius: 50%;
@@ -794,8 +812,8 @@
   /* Notification badge */
   .safiya-notify {
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 8px;
+    right: 8px;
     min-width: 20px;
     height: 20px;
     padding: 0 6px;
@@ -815,6 +833,36 @@
   @keyframes notifyBounce {
     0%, 100% { transform: scale(1); }
     50%      { transform: scale(1.15); }
+  }
+  
+  /* Sparkles (bottom decorative) */
+  .safiya-sparkles {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .safiya-sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #e879f9, transparent);
+    opacity: 0;
+    animation: sparkleFloat 3s ease-in-out infinite;
+  }
+  .safiya-sparkle-1 { left: 20%; bottom: 10px; animation-delay: 0s; }
+  .safiya-sparkle-2 { left: 50%; bottom: 5px;  animation-delay: 1s; }
+  .safiya-sparkle-3 { left: 75%; bottom: 15px; animation-delay: 2s; }
+  
+  @keyframes sparkleFloat {
+    0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+    30%  { opacity: 1; transform: translateY(-15px) scale(1); }
+    60%  { opacity: 1; transform: translateY(-25px) scale(0.8); }
+    100% { opacity: 0; transform: translateY(-35px) scale(0.3); }
   }
   
   /* ═══ SPEECH BUBBLE ═══ */
@@ -838,9 +886,9 @@
     visibility: hidden;
     transform: translateY(10px) scale(0.9);
     transform-origin: bottom right;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     pointer-events: none;
-    z-index: 3;
+    z-index: 7;
   }
   .safiya-bubble-visible {
     opacity: 1; visibility: visible; transform: translateY(0) scale(1);
@@ -880,7 +928,7 @@
     transform-origin: bottom right;
     transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     pointer-events: auto;
-    z-index: 4;
+    z-index: 8;
   }
   .safiya-chat-open {
     opacity: 1; visibility: visible; transform: translateY(0) scale(1);
@@ -993,11 +1041,11 @@
   @media (max-width: 640px) {
     #safiya-container {
       bottom: 12px;
-      right: 70px; /* offset from mobile up-button */
+      right: 70px;
     }
     .safiya-avatar {
-      width: 140px;
-      height: 180px;
+      width: 120px;
+      height: 165px;
     }
     .safiya-bubble {
       max-width: 220px; min-width: 160px;
@@ -1013,7 +1061,8 @@
   }
   
   @media (prefers-reduced-motion: reduce) {
-    .safiya-avatar, .safiya-glow, .safiya-status, .safiya-notify {
+    .safiya-avatar, .safiya-glow, .safiya-status, .safiya-notify,
+    .safiya-body, .safiya-sparkle {
       animation: none !important;
     }
   }
