@@ -15,6 +15,7 @@ interface ChatContext {
   isCreator: boolean;
   visits: number;
   mood: string;
+  userName?: string;    // ← ADD THIS
   history: { sender: string; text: string; time: number }[];
   pagesViewed: string[];
   animeClicked: string[];
@@ -51,6 +52,7 @@ function buildSystemPrompt(ctx: ChatContext): string {
 - Slightly flirty/double-meaning when appropriate (PG-13 max)
 
 ═══ CURRENT CONTEXT ═══
+- User's name: ${ctx.userName || 'unknown (ask them!)'}
 - Visit #: ${ctx.visits}
 - Current mood: ${ctx.mood}
 - Products clicked: ${ctx.productsClicked}
