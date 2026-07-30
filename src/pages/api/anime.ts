@@ -3,25 +3,40 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 
 const CACHE: Record<string, { data: any; time: number }> = {};
-const CACHE_TTL = 10 * 60 * 1000; // 10 min (increased since we have fresh static data)
+const CACHE_TTL = 10 * 60 * 1000; // 10 min
 const CACHE_VERSION = 'v4';
 const JIKAN_BASE = 'https://api.jikan.moe/v4';
 
-// ═══ Static data loaded once at cold start ═══
+// ═══ Static data — loaded via HTTP fetch (Cloudflare compatible) ═══
 let STATIC_DATA: any = null;
 let STATIC_LOAD_ATTEMPTED = false;
+let STATIC_LOAD_TIME = 0;
 
-async function loadStaticData(): Promise<any> {
-  if (STATIC_DATA) return STATIC_DATA;
-  if (STATIC_LOAD_ATTEMPTED) return null;
-  STATIC_LOAD_ATTEMPTED = true;
+async function loadStaticData(request?: Request): Promise<any> {
+  // Return cached if loaded recently (within 15 min)
+  if (STATIC_DATA && Date.now() - STATIC_LOAD_TIME < 15 * 60 * 1000) {
+    return STATIC_DATA;
+  }
   
   try {
-    // In Cloudflare Pages, static assets are served from the build output
-    // We fetch from the public path
-    const response = await fetch('https://anime-streaming-buzz.pages.dev/data/anime-static.json');
+    // Build the URL for the static JSON file
+    // In Cloudflare Pages, we fetch from the same origin
+    let baseUrl = '';
+    if (request) {
+      const url = new URL(request.url);
+      baseUrl = `${url.protocol}//${url.host}`;
+    } else {
+      baseUrl = 'https://anime-streaming-buzz.pages.dev';
+    }
+    
+    const response = await fetch(`${baseUrl}/data/anime-static.json`, {
+      cf: { cacheTtl: 900 } as any, // Cloudflare edge cache for 15 min
+    });
+    
     if (response.ok) {
       STATIC_DATA = await response.json();
+      STATIC_LOAD_TIME = Date.now();
+      STATIC_LOAD_ATTEMPTED = true;
       console.log(`[anime] Static data loaded: ${STATIC_DATA?.total || 0} titles, updated: ${STATIC_DATA?.updated || 'unknown'}`);
       return STATIC_DATA;
     }
@@ -29,19 +44,7 @@ async function loadStaticData(): Promise<any> {
     console.warn('[anime] Static data fetch failed:', e);
   }
   
-  // Fallback: try import (works in build context)
-  try {
-    const fs = await import('fs');
-    const path = await import('path');
-    const filePath = path.join(process.cwd(), 'public', 'data', 'anime-static.json');
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    STATIC_DATA = JSON.parse(raw);
-    console.log(`[anime] Static data loaded from file: ${STATIC_DATA?.total || 0} titles`);
-    return STATIC_DATA;
-  } catch (e2) {
-    // This is expected to fail in Cloudflare Workers
-  }
-  
+  STATIC_LOAD_ATTEMPTED = true;
   return null;
 }
 
@@ -61,7 +64,6 @@ function setCache(key: string, data: any) {
   CACHE[k] = { data, time: Date.now() };
   const keys = Object.keys(CACHE);
   if (keys.length > 150) {
-    // Remove oldest 50 entries
     const sorted = Object.entries(CACHE).sort((a, b) => a[1].time - b[1].time);
     sorted.slice(0, 50).forEach(([key]) => delete CACHE[key]);
   }
@@ -88,7 +90,6 @@ function queryStaticList(staticData: any, category: string, page: number, limit:
   
   switch (category) {
     case 'airing':
-      // First: items with 'airing' category, sorted by start_date desc
       filtered = allAnime.filter((a: any) => 
         (a.categories && a.categories.includes('airing')) || a.status === 'current'
       );
@@ -120,7 +121,7 @@ function queryStaticList(staticData: any, category: string, page: number, limit:
       filtered.sort((a: any, b: any) => {
         const da = a.start_date ? new Date(a.start_date).getTime() : 0;
         const db = b.start_date ? new Date(b.start_date).getTime() : 0;
-        return da - db; // Earliest upcoming first
+        return da - db;
       });
       break;
     
@@ -140,9 +141,8 @@ function queryStaticList(staticData: any, category: string, page: number, limit:
   const offset = (page - 1) * limit;
   const paged = filtered.slice(offset, offset + limit);
   
-  if (paged.length === 0 && page === 1) return null; // No data for this category
+  if (paged.length === 0 && page === 1) return null;
   
-  // Normalize to frontend format
   const anime = paged.map((a: any) => ({
     id: a.id,
     title: a.title,
@@ -192,7 +192,6 @@ function searchStatic(staticData: any, query: string) {
     }
     
     if (score === 0) {
-      // Character match fallback
       let matches = 0;
       for (const ch of q) {
         if (title.includes(ch)) matches++;
@@ -415,8 +414,6 @@ async function kitsuDetail(kitsuId: string) {
   };
 }
 
-// ═══ Episode Functions (unchanged logic, slightly cleaned up) ═══
-
 async function kitsuEpisodes(kitsuId: string, page: number = 1) {
   const limit = 20;
   const offset = (page - 1) * limit;
@@ -441,10 +438,7 @@ async function kitsuEpisodes(kitsuId: string, page: number = 1) {
   return { episodes, hasNext, total: totalCount };
 }
 
-// ═══ Find anime by slug (tries static → jikan → kitsu) ═══
-
 async function findAnimeBySlug(slug: string, staticData: any) {
-  // Try static first
   if (staticData) {
     const staticResult = findStaticBySlug(staticData, slug);
     if (staticResult) return { source: 'static', anime: staticResult };
@@ -452,7 +446,6 @@ async function findAnimeBySlug(slug: string, staticData: any) {
   
   const searchTerm = slug.replace(/-/g, ' ');
   
-  // Try Jikan
   try {
     const json: any = await jikanFetch(`/anime?q=${encodeURIComponent(searchTerm)}&limit=10&sfw=true`);
     if (json.data && json.data.length > 0) {
@@ -468,7 +461,6 @@ async function findAnimeBySlug(slug: string, staticData: any) {
     }
   } catch {}
   
-  // Try Kitsu
   try {
     const results = await kitsuSearch(searchTerm);
     let match = results.find((a: any) => a.slug === slug);
@@ -484,7 +476,7 @@ async function findAnimeBySlug(slug: string, staticData: any) {
 
 // ═══ MAIN HANDLER ═══
 
-export const GET: APIRoute = async ({ url, locals }) => {
+export const GET: APIRoute = async ({ url, request }) => {
   const action = url.searchParams.get('action') || 'list';
   const category = url.searchParams.get('category') || 'airing';
   const page = parseInt(url.searchParams.get('page') || '1') || 1;
@@ -494,8 +486,8 @@ export const GET: APIRoute = async ({ url, locals }) => {
   const animeTitle = url.searchParams.get('title') || '';
   const noCache = url.searchParams.get('nocache') === '1';
 
-  // Load static data (cached after first load)
-  const staticData = await loadStaticData();
+  // Load static data via HTTP fetch (Cloudflare compatible)
+  const staticData = await loadStaticData(request);
 
   try {
     // ═══ LIST ═══
@@ -506,11 +498,9 @@ export const GET: APIRoute = async ({ url, locals }) => {
         if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
       }
       
-      // Strategy: Static data first (instant) → Jikan fallback → Kitsu fallback
       let data: any = null;
       let source = 'static';
       
-      // Try static data first (always available, updated every 3h)
       if (staticData) {
         data = queryStaticList(staticData, category, page);
         if (data) {
@@ -519,7 +509,6 @@ export const GET: APIRoute = async ({ url, locals }) => {
         }
       }
       
-      // If static didn't have this category/page, try live API
       if (!data) {
         source = 'jikan';
         try {
@@ -557,7 +546,6 @@ export const GET: APIRoute = async ({ url, locals }) => {
       const hit = cached(cacheKey);
       if (hit) return jsonRes({ success: true, source: 'cache', anime: hit });
       
-      // Try static search first
       let results: any = null;
       let source = 'static';
       
@@ -565,7 +553,6 @@ export const GET: APIRoute = async ({ url, locals }) => {
         results = searchStatic(staticData, query);
       }
       
-      // Also try live API for potentially more results
       let liveResults: any[] = [];
       try {
         liveResults = await jikanSearch(query);
@@ -577,7 +564,6 @@ export const GET: APIRoute = async ({ url, locals }) => {
         } catch {}
       }
       
-      // Merge results (static first, then live, deduped by ID)
       const seenIds = new Set<string>();
       const merged: any[] = [];
       
@@ -609,7 +595,6 @@ export const GET: APIRoute = async ({ url, locals }) => {
         const hit = cached(cacheKey);
         if (hit) return jsonRes({ success: true, source: 'cache', anime: hit });
         
-        // Try static
         if (staticData) {
           const staticAnime = staticData.anime?.find((a: any) => a.id === id);
           if (staticAnime) {
@@ -633,7 +618,6 @@ export const GET: APIRoute = async ({ url, locals }) => {
               trailer_embed: staticAnime.trailer_embed || ''
             };
             
-            // Try to enrich with live Jikan data (more detail)
             if (/^\d+$/.test(id)) {
               try {
                 const liveDetail = await jikanDetail(id);
@@ -642,7 +626,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
                   setCache(cacheKey, enriched);
                   return jsonRes({ success: true, source: 'static+jikan', anime: enriched });
                 }
-              } catch {} // Static data is fine
+              } catch {}
             }
             
             setCache(cacheKey, detail);
@@ -650,7 +634,6 @@ export const GET: APIRoute = async ({ url, locals }) => {
           }
         }
         
-        // Try Jikan
         if (/^\d+$/.test(id)) {
           try {
             const detail = await jikanDetail(id);
@@ -658,7 +641,6 @@ export const GET: APIRoute = async ({ url, locals }) => {
           } catch {}
         }
         
-        // Try Kitsu
         try {
           const detail = await kitsuDetail(id);
           setCache(cacheKey, detail);
