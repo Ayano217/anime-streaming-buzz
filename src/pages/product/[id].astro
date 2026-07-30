@@ -1,0 +1,1391 @@
+---
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const { id } = Astro.params;
+---
+
+<BaseLayout
+  title="Product Details"
+  description="Premium anime merchandise, figures, manga, and more."
+>
+  <Header slot="header" />
+  
+  <div class="pd-wrap">
+    
+    <!-- Loader -->
+    <div id="pdLoader" class="pd-loader">
+      <div class="pd-lo-spinner"></div>
+      <p>Loading product details...</p>
+    </div>
+    
+    <!-- Not Found -->
+    <div id="pdNotFound" class="pd-nf" style="display:none;">
+      <div class="nf-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 01-8 0"/>
+        </svg>
+      </div>
+      <h1>Product Not Found</h1>
+      <p>This product doesn't exist or has been removed.</p>
+      <div class="nf-btns">
+        <a href="/" class="nf-btn nf-btn-primary">← Back to Homepage</a>
+      </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div id="pdContent" style="display:none;">
+      
+      <!-- Breadcrumb -->
+      <div class="pd-breadcrumb container">
+        <a href="/">Home</a>
+        <span class="bc-sep">›</span>
+        <a href="#" id="pdCategoryLink">Products</a>
+        <span class="bc-sep">›</span>
+        <span id="pdBreadcrumbTitle">Product</span>
+      </div>
+      
+      <!-- Product Main Section -->
+      <section class="pd-main-section">
+        <div class="container">
+          <div class="pd-grid">
+            
+            <!-- LEFT: Image Gallery -->
+            <div class="pd-gallery">
+              <div class="pd-main-image">
+                <img id="pdMainImage" src="" alt="" />
+                <div class="pd-image-overlay">
+                  <button id="pdSaveBtn" class="pd-save-btn" aria-label="Save product">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                    </svg>
+                  </button>
+                </div>
+                <div id="pdBadge" class="pd-image-badge"></div>
+              </div>
+              <div id="pdThumbnails" class="pd-thumbnails" style="display:none;"></div>
+              
+              <!-- Video (if exists) -->
+              <div id="pdVideo" class="pd-video" style="display:none;">
+                <div class="pd-video-label">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  Product Video
+                </div>
+                <div id="pdVideoFrame" class="pd-video-frame"></div>
+              </div>
+            </div>
+            
+            <!-- RIGHT: Product Info -->
+            <div class="pd-info">
+              
+              <div class="pd-brand" id="pdBrand">Brand</div>
+              <h1 class="pd-title" id="pdTitle">Loading...</h1>
+              <p class="pd-subtitle" id="pdSubtitle"></p>
+              
+              <!-- Rating -->
+              <div class="pd-rating-row">
+                <div class="pd-rating" id="pdRating">
+                  <div class="pd-stars">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#fbbf24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    <span id="pdRatingNum">0</span>
+                  </div>
+                  <span class="pd-reviews" id="pdReviews">0 reviews</span>
+                </div>
+                <div class="pd-stock in-stock" id="pdStock">
+                  <span class="stock-dot"></span>
+                  <span id="pdStockText">In Stock</span>
+                </div>
+              </div>
+              
+              <!-- Price -->
+              <div class="pd-price-block">
+                <div class="pd-price-row">
+                  <span class="pd-price" id="pdPrice">$0.00</span>
+                  <span class="pd-original-price" id="pdOriginalPrice" style="display:none;"></span>
+                  <span class="pd-discount" id="pdDiscount" style="display:none;"></span>
+                </div>
+                <div class="pd-shipping" id="pdShipping">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                  <span>Free shipping with Prime</span>
+                </div>
+              </div>
+              
+              <!-- Description -->
+              <div class="pd-description" id="pdDescription"></div>
+              
+              <!-- Features -->
+              <div class="pd-features" id="pdFeatures" style="display:none;">
+                <div class="pd-features-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span>Key Features</span>
+                </div>
+                <ul class="pd-features-list" id="pdFeaturesList"></ul>
+              </div>
+              
+              <!-- Purchase Actions -->
+              <div class="pd-actions">
+                <a href="#" id="pdBuyBtn" class="pd-buy-btn" target="_blank" rel="noopener nofollow sponsored">
+                  <div class="pd-buy-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                  </div>
+                  <div class="pd-buy-text">
+                    <div class="pd-buy-main">Buy on <span id="pdStoreName">Amazon</span></div>
+                    <div class="pd-buy-sub">Best price · Fast delivery</div>
+                  </div>
+                  <div class="pd-buy-arrow">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  </div>
+                </a>
+                
+                <button id="pdShareBtn" class="pd-share-btn" aria-label="Share">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                </button>
+              </div>
+              
+              <!-- Trust Badges -->
+              <div class="pd-trust">
+                <div class="trust-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <span>Verified Seller</span>
+                </div>
+                <div class="trust-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/></svg>
+                  <span>Fast Delivery</span>
+                </div>
+                <div class="trust-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <span>24/7 Support</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Related Products -->
+      <section class="pd-related-section" id="pdRelatedSection" style="display:none;">
+        <div class="container">
+          <div class="pd-section-head">
+            <h2 class="pd-section-title">
+              <span class="grad-text">You May Also Like</span>
+            </h2>
+            <p class="pd-section-sub">Handpicked for you based on this product</p>
+          </div>
+          <div id="pdRelatedGrid" class="pd-related-grid"></div>
+        </div>
+      </section>
+      
+      <!-- Related Anime -->
+      <section class="pd-anime-section" id="pdAnimeSection" style="display:none;">
+        <div class="container">
+          <div class="pd-section-head">
+            <h2 class="pd-section-title">
+              <span class="grad-text">Watch the Anime</span>
+            </h2>
+            <p class="pd-section-sub">Discover the shows this product is from</p>
+          </div>
+          <div id="pdAnimeGrid" class="pd-anime-grid"></div>
+        </div>
+      </section>
+      
+    </div>
+  </div>
+  
+  <Footer slot="footer" />
+</BaseLayout>
+
+<script is:inline define:vars={{ id }}>
+(function() {
+  var els = {
+    loader: document.getElementById('pdLoader'),
+    notFound: document.getElementById('pdNotFound'),
+    content: document.getElementById('pdContent'),
+    mainImage: document.getElementById('pdMainImage'),
+    thumbnails: document.getElementById('pdThumbnails'),
+    badge: document.getElementById('pdBadge'),
+    brand: document.getElementById('pdBrand'),
+    title: document.getElementById('pdTitle'),
+    subtitle: document.getElementById('pdSubtitle'),
+    ratingNum: document.getElementById('pdRatingNum'),
+    reviews: document.getElementById('pdReviews'),
+    stock: document.getElementById('pdStock'),
+    stockText: document.getElementById('pdStockText'),
+    price: document.getElementById('pdPrice'),
+    originalPrice: document.getElementById('pdOriginalPrice'),
+    discount: document.getElementById('pdDiscount'),
+    shipping: document.getElementById('pdShipping'),
+    description: document.getElementById('pdDescription'),
+    features: document.getElementById('pdFeatures'),
+    featuresList: document.getElementById('pdFeaturesList'),
+    buyBtn: document.getElementById('pdBuyBtn'),
+    storeName: document.getElementById('pdStoreName'),
+    shareBtn: document.getElementById('pdShareBtn'),
+    saveBtn: document.getElementById('pdSaveBtn'),
+    breadcrumbTitle: document.getElementById('pdBreadcrumbTitle'),
+    categoryLink: document.getElementById('pdCategoryLink'),
+    relatedSection: document.getElementById('pdRelatedSection'),
+    relatedGrid: document.getElementById('pdRelatedGrid'),
+    animeSection: document.getElementById('pdAnimeSection'),
+    animeGrid: document.getElementById('pdAnimeGrid'),
+    video: document.getElementById('pdVideo'),
+    videoFrame: document.getElementById('pdVideoFrame'),
+  };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+      return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
+    });
+  }
+
+  function trunc(s, n) {
+    s = String(s || '');
+    return s.length > n ? s.slice(0, n).trim() + '…' : s;
+  }
+
+  var STORE_NAMES = {
+    amazon: 'Amazon',
+    playasia: 'Play-Asia',
+    cdjapan: 'CDJapan',
+  };
+
+  async function fetchJSON(url) {
+    try {
+      var res = await fetch(url);
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function loadProduct() {
+    var data = await fetchJSON('/api/products?id=' + encodeURIComponent(id) + '&related=true');
+    
+    if (!data || !data.success || !data.product) {
+      els.loader.style.display = 'none';
+      els.notFound.style.display = 'flex';
+      return;
+    }
+    
+    var p = data.product;
+    var related = data.related || [];
+    
+    // Set page title
+    document.title = p.title + ' — AniTube Buzz';
+    
+    // Render main info
+    renderProduct(p);
+    
+    // Render related products
+    if (related.length > 0) {
+      renderRelated(related);
+    }
+    
+    // Load related anime
+    if (p.animeTag && p.animeTag.length > 0) {
+      loadRelatedAnime(p.animeTag);
+    }
+    
+    // Hide loader, show content
+    els.loader.style.display = 'none';
+    els.content.style.display = 'block';
+  }
+
+  function renderProduct(p) {
+    // Main image
+    if (p.image) {
+      els.mainImage.src = p.image;
+      els.mainImage.alt = p.title;
+    }
+    
+    // Thumbnails (if multiple images)
+    if (p.images && p.images.length > 1) {
+      els.thumbnails.style.display = 'flex';
+      els.thumbnails.innerHTML = p.images.map(function(img, i) {
+        return '<button class="pd-thumb ' + (i === 0 ? 'active' : '') + '" data-src="' + esc(img) + '">' +
+          '<img src="' + esc(img) + '" alt="Image ' + (i+1) + '" loading="lazy" />' +
+        '</button>';
+      }).join('');
+      
+      els.thumbnails.querySelectorAll('.pd-thumb').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          els.thumbnails.querySelectorAll('.pd-thumb').forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          els.mainImage.src = btn.dataset.src;
+        });
+      });
+    }
+    
+    // Badge
+    if (p.badge) {
+      els.badge.textContent = p.badge;
+      els.badge.style.display = 'inline-flex';
+    }
+    
+    // Brand
+    els.brand.textContent = p.brand || 'Premium Brand';
+    
+    // Title & subtitle
+    els.title.textContent = p.title;
+    els.subtitle.textContent = p.subtitle || '';
+    els.breadcrumbTitle.textContent = trunc(p.title, 40);
+    els.categoryLink.textContent = p.category ? p.category.charAt(0).toUpperCase() + p.category.slice(1) : 'Products';
+    
+    // Rating
+    els.ratingNum.textContent = p.rating ? p.rating.toFixed(1) : '5.0';
+    els.reviews.textContent = (p.reviews ? p.reviews.toLocaleString() : '0') + ' reviews';
+    
+    // Stock
+    if (p.inStock === false) {
+      els.stock.classList.remove('in-stock');
+      els.stock.classList.add('out-stock');
+      els.stockText.textContent = 'Out of Stock';
+    }
+    
+    // Price
+    els.price.textContent = p.price || '$0.00';
+    if (p.originalPrice) {
+      els.originalPrice.textContent = p.originalPrice;
+      els.originalPrice.style.display = 'inline';
+    }
+    if (p.discount) {
+      els.discount.textContent = '-' + p.discount + '% OFF';
+      els.discount.style.display = 'inline-flex';
+    }
+    
+    // Shipping
+    if (p.shipping) {
+      els.shipping.querySelector('span').textContent = p.shipping;
+    }
+    
+    // Description
+    els.description.innerHTML = '<p>' + esc(p.longDescription || p.description || '') + '</p>';
+    
+    // Features
+    if (p.features && p.features.length > 0) {
+      els.features.style.display = 'block';
+      els.featuresList.innerHTML = p.features.map(function(f) {
+        return '<li>' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' +
+          '<span>' + esc(f) + '</span>' +
+        '</li>';
+      }).join('');
+    }
+    
+    // Buy button
+    els.buyBtn.href = p.affiliateUrl || p.rawUrl || '#';
+    els.storeName.textContent = STORE_NAMES[p.store] || 'Store';
+    
+    // Video
+    if (p.video) {
+      els.video.style.display = 'block';
+      els.videoFrame.innerHTML = '<iframe src="' + esc(p.video) + '" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
+    }
+    
+    // Save button
+    setupSaveButton(p);
+    
+    // Share button
+    setupShareButton(p);
+    
+    // Track product view (analytics)
+    trackView(p);
+  }
+
+  function renderRelated(products) {
+    els.relatedSection.style.display = 'block';
+    els.relatedGrid.innerHTML = products.map(function(p) {
+      return '<a href="/product/' + esc(p.id) + '" class="pd-rel-card">' +
+        '<div class="pd-rel-img">' +
+          (p.image ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" />' : '<div class="pd-rel-no-img">🛍️</div>') +
+          (p.badge ? '<div class="pd-rel-badge">' + esc(p.badge) + '</div>' : '') +
+        '</div>' +
+        '<div class="pd-rel-info">' +
+          '<div class="pd-rel-title">' + esc(trunc(p.title, 55)) + '</div>' +
+          '<div class="pd-rel-price">' + esc(p.price) + '</div>' +
+          (p.rating ? '<div class="pd-rel-rating">' +
+            '<svg width="10" height="10" viewBox="0 0 24 24" fill="#fbbf24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' +
+            '<span>' + p.rating + '</span>' +
+          '</div>' : '') +
+        '</div>' +
+      '</a>';
+    }).join('');
+  }
+
+  async function loadRelatedAnime(animeTags) {
+    var animeToShow = [];
+    var maxToLoad = Math.min(6, animeTags.length);
+    
+    for (var i = 0; i < maxToLoad; i++) {
+      var tag = animeTags[i];
+      try {
+        var res = await fetch('/api/anime?action=detail&slug=' + encodeURIComponent(tag));
+        var data = await res.json();
+        if (data && data.success && data.anime) {
+          animeToShow.push(data.anime);
+        }
+      } catch (e) {}
+    }
+    
+    if (animeToShow.length > 0) {
+      els.animeSection.style.display = 'block';
+      els.animeGrid.innerHTML = animeToShow.map(function(a) {
+        return '<a href="/anime/' + esc(a.slug) + '" class="pd-anime-card">' +
+          '<div class="pd-anime-poster">' +
+            (a.image ? '<img src="' + esc(a.image) + '" alt="' + esc(a.title) + '" loading="lazy" />' : '<div class="pd-anime-no-img">🎬</div>') +
+            '<div class="pd-anime-play">' +
+              '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+            '</div>' +
+          '</div>' +
+          '<div class="pd-anime-title">' + esc(trunc(a.title, 40)) + '</div>' +
+          (a.score ? '<div class="pd-anime-score"><svg width="10" height="10" viewBox="0 0 24 24" fill="#fbbf24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>' + a.score + '</span></div>' : '') +
+        '</a>';
+      }).join('');
+    }
+  }
+
+  function setupSaveButton(p) {
+    var saved = JSON.parse(localStorage.getItem('savedProducts') || '[]');
+    var isSaved = saved.some(function(x) { return x.id === p.id; });
+    
+    if (isSaved) els.saveBtn.classList.add('saved');
+    
+    els.saveBtn.addEventListener('click', function() {
+      var current = JSON.parse(localStorage.getItem('savedProducts') || '[]');
+      var idx = current.findIndex(function(x) { return x.id === p.id; });
+      
+      if (idx >= 0) {
+        current.splice(idx, 1);
+        els.saveBtn.classList.remove('saved');
+      } else {
+        current.push({
+          id: p.id,
+          title: p.title,
+          image: p.image,
+          price: p.price,
+          savedAt: Date.now(),
+        });
+        els.saveBtn.classList.add('saved');
+      }
+      
+      localStorage.setItem('savedProducts', JSON.stringify(current));
+    });
+  }
+
+  function setupShareButton(p) {
+    els.shareBtn.addEventListener('click', function() {
+      var url = window.location.href;
+      var title = p.title + ' — AniTube Buzz';
+      
+      if (navigator.share) {
+        navigator.share({ title: title, url: url }).catch(function() {});
+      } else {
+        navigator.clipboard.writeText(url).then(function() {
+          els.shareBtn.classList.add('copied');
+          setTimeout(function() { els.shareBtn.classList.remove('copied'); }, 1500);
+        });
+      }
+    });
+  }
+
+  function trackView(p) {
+    // Save to user's view history (for Safiya AI personalization later)
+    try {
+      var viewed = JSON.parse(localStorage.getItem('viewedProducts') || '[]');
+      viewed.unshift({
+        id: p.id,
+        title: p.title,
+        category: p.category,
+        animeTag: p.animeTag,
+        viewedAt: Date.now(),
+      });
+      // Keep last 50
+      viewed = viewed.slice(0, 50);
+      localStorage.setItem('viewedProducts', JSON.stringify(viewed));
+    } catch (e) {}
+  }
+
+  loadProduct();
+})();
+</script>
+
+<style>
+  .pd-wrap {
+    min-height: 100vh;
+    color: var(--text-primary);
+  }
+  
+  /* Loader */
+  .pd-loader, .pd-nf {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 1rem;
+    text-align: center;
+    min-height: 60vh;
+  }
+  
+  .pd-lo-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(192, 132, 252, 0.2);
+    border-top-color: #c084fc;
+    border-radius: 50%;
+    animation: pdSpin 0.8s linear infinite;
+    margin-bottom: 1rem;
+  }
+  
+  @keyframes pdSpin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .pd-loader p {
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+  }
+  
+  .nf-icon {
+    color: #c084fc;
+    margin-bottom: 1rem;
+  }
+  
+  .pd-nf h1 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 2rem;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+  
+  .pd-nf p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+  }
+  
+  .nf-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 24px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: transform 0.2s ease;
+  }
+  
+  .nf-btn-primary {
+    background: var(--grad);
+    color: #fff;
+    box-shadow: 0 8px 24px rgba(192, 132, 252, 0.4);
+  }
+  
+  .nf-btn:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* Breadcrumb */
+  .pd-breadcrumb {
+    padding: 1.5rem 0 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  
+  .pd-breadcrumb a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  
+  .pd-breadcrumb a:hover {
+    color: var(--purple);
+  }
+  
+  .bc-sep {
+    color: var(--text-faint);
+    padding: 0 4px;
+  }
+  
+  /* Main Section */
+  .pd-main-section {
+    padding: 1.5rem 0 3rem;
+  }
+  
+  .pd-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+  
+  /* Gallery */
+  .pd-gallery {
+    position: sticky;
+    top: calc(var(--header-h) + 20px);
+  }
+  
+  .pd-main-image {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(28, 15, 61, 0.4);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    margin-bottom: 12px;
+  }
+  
+  [data-theme="light"] .pd-main-image {
+    background: #fff;
+    box-shadow: 0 20px 60px rgba(192, 132, 252, 0.15);
+  }
+  
+  .pd-main-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 2rem;
+    transition: transform 0.4s ease;
+  }
+  
+  .pd-main-image:hover img {
+    transform: scale(1.03);
+  }
+  
+  .pd-image-overlay {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+  }
+  
+  .pd-save-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(10, 5, 23, 0.85);
+    border: 1px solid rgba(192, 132, 252, 0.3);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    backdrop-filter: blur(10px);
+  }
+  
+  .pd-save-btn:hover {
+    background: rgba(232, 121, 249, 0.3);
+    border-color: #e879f9;
+  }
+  
+  .pd-save-btn.saved {
+    background: rgba(232, 121, 249, 0.4);
+    border-color: #e879f9;
+    color: #fff;
+  }
+  
+  .pd-save-btn.saved svg {
+    fill: currentColor;
+  }
+  
+  .pd-image-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    border-radius: 8px;
+    z-index: 3;
+    box-shadow: 0 4px 15px rgba(192, 132, 252, 0.5);
+    display: none;
+  }
+  
+  .pd-thumbnails {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 4px 0;
+  }
+  
+  .pd-thumb {
+    width: 70px;
+    height: 70px;
+    min-width: 70px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(28, 15, 61, 0.4);
+    border: 2px solid var(--border-color);
+    padding: 4px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+  
+  .pd-thumb:hover, .pd-thumb.active {
+    border-color: #e879f9;
+    transform: translateY(-2px);
+  }
+  
+  .pd-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  .pd-video {
+    margin-top: 1.5rem;
+  }
+  
+  .pd-video-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #c084fc;
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  
+  .pd-video-frame {
+    position: relative;
+    aspect-ratio: 16/9;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #000;
+  }
+  
+  .pd-video-frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+  
+  /* Info Panel */
+  .pd-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .pd-brand {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #c084fc;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  
+  .pd-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.4rem;
+    color: var(--text-primary);
+  }
+  
+  .pd-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0 0 1rem;
+  }
+  
+  /* Rating */
+  .pd-rating-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+  
+  .pd-rating {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .pd-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: rgba(251, 191, 36, 0.15);
+    border-radius: 6px;
+    color: #fbbf24;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 800;
+  }
+  
+  .pd-reviews {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  
+  .pd-stock {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  
+  .pd-stock.in-stock {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+  }
+  
+  .pd-stock.out-stock {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+  }
+  
+  .stock-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+    animation: livePulse 2s ease infinite;
+  }
+  
+  /* Price */
+  .pd-price-block {
+    background: linear-gradient(135deg, rgba(192, 132, 252, 0.08), rgba(232, 121, 249, 0.05));
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .pd-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+  }
+  
+  .pd-price {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+  }
+  
+  .pd-original-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    display: none;
+  }
+  
+  .pd-discount {
+    display: none;
+    align-items: center;
+    padding: 3px 8px;
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 800;
+    border-radius: 5px;
+    letter-spacing: 0.05em;
+  }
+  
+  .pd-shipping {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+  }
+  
+  .pd-shipping svg {
+    color: #10b981;
+  }
+  
+  /* Description */
+  .pd-description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin-bottom: 1.25rem;
+  }
+  
+  .pd-description p {
+    margin: 0;
+  }
+  
+  /* Features */
+  .pd-features {
+    background: rgba(28, 15, 61, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  [data-theme="light"] .pd-features {
+    background: rgba(243, 232, 255, 0.5);
+  }
+  
+  .pd-features-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #c084fc;
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  
+  .pd-features-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .pd-features-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+  
+  .pd-features-list svg {
+    color: #10b981;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  
+  /* Actions */
+  .pd-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  
+  .pd-buy-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    border-radius: 14px;
+    color: #fff;
+    text-decoration: none;
+    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.4);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .pd-buy-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+  }
+  
+  .pd-buy-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px rgba(192, 132, 252, 0.6);
+  }
+  
+  .pd-buy-btn:hover::before {
+    transform: translateX(100%);
+  }
+  
+  .pd-buy-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #fff;
+  }
+  
+  .pd-buy-text {
+    flex: 1;
+    text-align: left;
+  }
+  
+  .pd-buy-main {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.1;
+  }
+  
+  .pd-buy-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-top: 3px;
+    letter-spacing: 0.05em;
+  }
+  
+  .pd-buy-arrow {
+    color: #fff;
+  }
+  
+  .pd-share-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: rgba(192, 132, 252, 0.1);
+    border: 1px solid rgba(192, 132, 252, 0.25);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+  }
+  
+  .pd-share-btn:hover {
+    background: rgba(192, 132, 252, 0.2);
+    border-color: rgba(192, 132, 252, 0.5);
+    transform: translateY(-2px);
+  }
+  
+  .pd-share-btn.copied {
+    background: #10b981;
+    border-color: #10b981;
+    color: #fff;
+  }
+  
+  /* Trust Badges */
+  .pd-trust {
+    display: flex;
+    gap: 12px;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+  }
+  
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  
+  .trust-item svg {
+    color: #10b981;
+    flex-shrink: 0;
+  }
+  
+  /* Related Sections */
+  .pd-related-section, .pd-anime-section {
+    padding: 3rem 0;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .pd-section-head {
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+  
+  .pd-section-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 800;
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.02em;
+  }
+  
+  .pd-section-sub {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-family: 'JetBrains Mono', monospace;
+    margin: 0;
+  }
+  
+  /* Related Products Grid */
+  .pd-related-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  
+  .pd-rel-card {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+  
+  .pd-rel-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .pd-rel-img {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(28, 15, 61, 0.4);
+    border: 1px solid var(--border-color);
+    margin-bottom: 8px;
+    padding: 10px;
+    transition: all 0.3s ease;
+  }
+  
+  [data-theme="light"] .pd-rel-img {
+    background: #fff;
+  }
+  
+  .pd-rel-card:hover .pd-rel-img {
+    border-color: rgba(232, 121, 249, 0.6);
+    box-shadow: 0 10px 25px rgba(192, 132, 252, 0.25);
+  }
+  
+  .pd-rel-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  .pd-rel-no-img {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+  }
+  
+  .pd-rel-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    padding: 3px 8px;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    font-weight: 800;
+    border-radius: 5px;
+    letter-spacing: 0.05em;
+  }
+  
+  .pd-rel-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  
+  .pd-rel-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #e879f9;
+    margin-bottom: 3px;
+  }
+  
+  .pd-rel-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: #fbbf24;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  
+  /* Related Anime Grid */
+  .pd-anime-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+  }
+  
+  .pd-anime-card {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+  
+  .pd-anime-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .pd-anime-poster {
+    position: relative;
+    aspect-ratio: 3/4.4;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(28, 15, 61, 0.4);
+    border: 1px solid var(--border-color);
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  .pd-anime-card:hover .pd-anime-poster {
+    border-color: rgba(232, 121, 249, 0.6);
+    box-shadow: 0 10px 25px rgba(192, 132, 252, 0.3);
+  }
+  
+  .pd-anime-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+  }
+  
+  .pd-anime-card:hover .pd-anime-poster img {
+    transform: scale(1.08);
+  }
+  
+  .pd-anime-no-img {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    background: linear-gradient(135deg, rgba(192,132,252,0.2), rgba(125,211,252,0.15));
+  }
+  
+  .pd-anime-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.6);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    padding-left: 3px;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 6px 20px rgba(192, 132, 252, 0.6);
+  }
+  
+  .pd-anime-card:hover .pd-anime-play {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  
+  .pd-anime-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 3px;
+  }
+  
+  .pd-anime-score {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: #fbbf24;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+  }
+  
+  /* Responsive */
+  @media (max-width: 1024px) {
+    .pd-grid { grid-template-columns: 1fr; gap: 2rem; }
+    .pd-gallery { position: relative; top: 0; }
+    .pd-main-image { max-width: 500px; margin: 0 auto 12px; }
+    .pd-related-grid { grid-template-columns: repeat(3, 1fr); }
+    .pd-anime-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  
+  @media (max-width: 768px) {
+    .pd-related-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .pd-anime-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .pd-actions { flex-direction: column; }
+    .pd-share-btn { width: 100%; height: 44px; }
+    .pd-trust { justify-content: center; }
+    .pd-price { font-size: 1.6rem; }
+    .pd-main-image img { padding: 1rem; }
+  }
+  
+  @media (max-width: 480px) {
+    .pd-anime-grid { grid-template-columns: repeat(2, 1fr); }
+    .pd-rating-row { flex-direction: column; align-items: flex-start; }
+  }
+</style>
