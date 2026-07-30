@@ -13,13 +13,10 @@ from datetime import datetime, timezone
 from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
 
-# ═══════════════════════════════════════════
-# CONFIG
-# ═══════════════════════════════════════════
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), '..', 'public', 'data', 'anime-static.json')
 JIKAN_BASE = 'https://api.jikan.moe/v4'
-REQUEST_DELAY = 1.2  # Jikan rate limit: ~3 req/sec, we go slower to be safe
-MAX_RETRIES = 3
+REQUEST_DELAY = 2.0  # Slower — safer for Jikan free tier
+MAX_RETRIES = 4
 USER_AGENT = 'AniTubeBuzz/1.0 (GitHub Auto-Publisher)'
 
 
@@ -33,26 +30,30 @@ def jikan_get(endpoint, retries=MAX_RETRIES):
                 'User-Agent': USER_AGENT,
                 'Accept': 'application/json'
             })
-            with urlopen(req, timeout=15) as resp:
+            with urlopen(req, timeout=20) as resp:
                 data = json.loads(resp.read().decode('utf-8'))
-                time.sleep(REQUEST_DELAY)  # Rate limit respect
+                time.sleep(REQUEST_DELAY)
                 return data
         except HTTPError as e:
             if e.code == 429:
-                wait = 4 * attempt
+                wait = 6 * attempt
                 print(f'  [!] Rate limited (429), waiting {wait}s... (attempt {attempt}/{retries})')
                 time.sleep(wait)
             elif e.code == 404:
                 print(f'  [!] Not found: {url}')
                 return None
+            elif e.code >= 500:
+                wait = 5 * attempt
+                print(f'  [!] Server error {e.code}, waiting {wait}s... (attempt {attempt}/{retries})')
+                time.sleep(wait)
             else:
                 print(f'  [!] HTTP {e.code} for {url} (attempt {attempt}/{retries})')
-                time.sleep(2 * attempt)
+                time.sleep(3 * attempt)
         except (URLError, Exception) as e:
             print(f'  [!] Error: {e} (attempt {attempt}/{retries})')
-            time.sleep(2 * attempt)
+            time.sleep(3 * attempt)
     
-    print(f'  [✗] Failed after {retries} attempts: {url}')
+    print(f'  [x] Failed after {retries} attempts: {url}')
     return None
 
 
@@ -60,13 +61,11 @@ def normalize_anime(item):
     """Convert Jikan anime object to our format"""
     title = item.get('title_english') or item.get('title') or item.get('title_japanese') or 'Unknown'
     
-    # Build slug
     slug = title.lower()
     for ch in [':', "'", '"', '!', '?', ',', '.', '(', ')', '[', ']', '{', '}', '/', '\\', '&', '+', '=', '@', '#', '$', '%', '^', '*']:
         slug = slug.replace(ch, '')
     slug = slug.replace(' ', '-').replace('--', '-').replace('--', '-').strip('-')[:80]
     
-    # Get best image
     images = item.get('images', {})
     image = (
         images.get('jpg', {}).get('large_image_url') or
@@ -76,7 +75,6 @@ def normalize_anime(item):
         ''
     )
     
-    # Score
     score = None
     if item.get('score'):
         try:
@@ -84,7 +82,6 @@ def normalize_anime(item):
         except (ValueError, TypeError):
             score = None
     
-    # Status
     raw_status = (item.get('status') or '').lower()
     if 'airing' in raw_status:
         status = 'current'
@@ -95,7 +92,6 @@ def normalize_anime(item):
     else:
         status = 'unknown'
     
-    # Year
     year = item.get('year')
     if not year and item.get('aired', {}).get('from'):
         try:
@@ -103,13 +99,11 @@ def normalize_anime(item):
         except (ValueError, TypeError, IndexError):
             year = None
     
-    # Genres
     genres = [g.get('name', '') for g in (item.get('genres') or []) if g.get('name')]
     themes = [t.get('name', '') for t in (item.get('themes') or []) if t.get('name')]
     demographics = [d.get('name', '') for d in (item.get('demographics') or []) if d.get('name')]
     all_genres = genres + themes + demographics
     
-    # Studios
     studios = [s.get('name', '') for s in (item.get('studios') or []) if s.get('name')]
     
     return {
@@ -139,123 +133,35 @@ def normalize_anime(item):
     }
 
 
-def fetch_current_season(pages=4):
-    """Fetch currently airing anime"""
-    print('\n[1/5] Fetching current season anime...')
+def fetch_category(name, endpoint_builder, pages=2, category_tag='airing'):
+    """Generic fetch for a category with error recovery"""
+    print(f'\n[Fetching] {name}...')
     anime_list = []
     
     for page in range(1, pages + 1):
         print(f'  Page {page}/{pages}...')
-        data = jikan_get(f'/seasons/now?page={page}&limit=25&sfw=true')
-        if not data or not data.get('data'):
+        endpoint = endpoint_builder(page)
+        data = jikan_get(endpoint)
+        
+        if not data:
+            print(f'  [!] Failed page {page}, stopping this category')
+            break
+        
+        if not data.get('data'):
+            print(f'  [!] No data on page {page}')
             break
         
         for item in data['data']:
             anime = normalize_anime(item)
             if anime['id'] and anime['title'] != 'Unknown':
-                anime['_category'] = 'airing'
+                anime['_category'] = category_tag
                 anime_list.append(anime)
         
         if not data.get('pagination', {}).get('has_next_page', False):
+            print(f'  [i] No more pages after page {page}')
             break
     
-    print(f'  ✓ Got {len(anime_list)} currently airing anime')
-    return anime_list
-
-
-def fetch_top_anime(pages=3):
-    """Fetch top rated anime"""
-    print('\n[2/5] Fetching top rated anime...')
-    anime_list = []
-    
-    for page in range(1, pages + 1):
-        print(f'  Page {page}/{pages}...')
-        data = jikan_get(f'/top/anime?page={page}&limit=25&sfw=true')
-        if not data or not data.get('data'):
-            break
-        
-        for item in data['data']:
-            anime = normalize_anime(item)
-            if anime['id'] and anime['title'] != 'Unknown':
-                anime['_category'] = 'top'
-                anime_list.append(anime)
-        
-        if not data.get('pagination', {}).get('has_next_page', False):
-            break
-    
-    print(f'  ✓ Got {len(anime_list)} top rated anime')
-    return anime_list
-
-
-def fetch_popular_anime(pages=3):
-    """Fetch most popular anime"""
-    print('\n[3/5] Fetching popular anime...')
-    anime_list = []
-    
-    for page in range(1, pages + 1):
-        print(f'  Page {page}/{pages}...')
-        data = jikan_get(f'/top/anime?page={page}&limit=25&sfw=true&filter=bypopularity')
-        if not data or not data.get('data'):
-            break
-        
-        for item in data['data']:
-            anime = normalize_anime(item)
-            if anime['id'] and anime['title'] != 'Unknown':
-                anime['_category'] = 'popular'
-                anime_list.append(anime)
-        
-        if not data.get('pagination', {}).get('has_next_page', False):
-            break
-    
-    print(f'  ✓ Got {len(anime_list)} popular anime')
-    return anime_list
-
-
-def fetch_upcoming_anime(pages=2):
-    """Fetch upcoming anime"""
-    print('\n[4/5] Fetching upcoming anime...')
-    anime_list = []
-    
-    for page in range(1, pages + 1):
-        print(f'  Page {page}/{pages}...')
-        data = jikan_get(f'/top/anime?page={page}&limit=25&sfw=true&filter=upcoming')
-        if not data or not data.get('data'):
-            break
-        
-        for item in data['data']:
-            anime = normalize_anime(item)
-            if anime['id'] and anime['title'] != 'Unknown':
-                anime['_category'] = 'upcoming'
-                anime_list.append(anime)
-        
-        if not data.get('pagination', {}).get('has_next_page', False):
-            break
-    
-    print(f'  ✓ Got {len(anime_list)} upcoming anime')
-    return anime_list
-
-
-def fetch_top_movies(pages=2):
-    """Fetch top anime movies"""
-    print('\n[5/5] Fetching top movies...')
-    anime_list = []
-    
-    for page in range(1, pages + 1):
-        print(f'  Page {page}/{pages}...')
-        data = jikan_get(f'/top/anime?page={page}&limit=25&sfw=true&type=movie')
-        if not data or not data.get('data'):
-            break
-        
-        for item in data['data']:
-            anime = normalize_anime(item)
-            if anime['id'] and anime['title'] != 'Unknown':
-                anime['_category'] = 'movies'
-                anime_list.append(anime)
-        
-        if not data.get('pagination', {}).get('has_next_page', False):
-            break
-    
-    print(f'  ✓ Got {len(anime_list)} top movies')
+    print(f'  [OK] Got {len(anime_list)} {name} anime')
     return anime_list
 
 
@@ -267,7 +173,6 @@ def merge_and_deduplicate(all_lists):
         for anime in anime_list:
             aid = anime['id']
             if aid in seen_ids:
-                # Merge categories
                 existing = seen_ids[aid]
                 existing_cats = existing.get('categories', [])
                 new_cat = anime.get('_category', '')
@@ -275,7 +180,6 @@ def merge_and_deduplicate(all_lists):
                     existing_cats.append(new_cat)
                 existing['categories'] = existing_cats
                 
-                # Keep better data
                 if not existing.get('score') and anime.get('score'):
                     existing['score'] = anime['score']
                 if not existing.get('synopsis') and anime.get('synopsis'):
@@ -310,53 +214,75 @@ def run():
     print(f'Time: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")}')
     print('=' * 60)
     
-    # Fetch from all categories
-    airing = fetch_current_season(pages=4)
+    # Fetch each category with careful rate limiting
+    airing = fetch_category(
+        'Currently Airing',
+        lambda p: f'/seasons/now?page={p}&limit=25&sfw=true',
+        pages=3,
+        category_tag='airing'
+    )
     
-    # Small delay between categories to avoid rate limit
-    time.sleep(2)
-    top = fetch_top_anime(pages=3)
+    time.sleep(4)  # Longer pause between categories
+    top = fetch_category(
+        'Top Rated',
+        lambda p: f'/top/anime?page={p}&limit=25&sfw=true',
+        pages=2,
+        category_tag='top'
+    )
     
-    time.sleep(2)
-    popular = fetch_popular_anime(pages=3)
+    time.sleep(4)
+    popular = fetch_category(
+        'Most Popular',
+        lambda p: f'/top/anime?page={p}&limit=25&sfw=true&filter=bypopularity',
+        pages=2,
+        category_tag='popular'
+    )
     
-    time.sleep(2)
-    upcoming = fetch_upcoming_anime(pages=2)
+    time.sleep(4)
+    upcoming = fetch_category(
+        'Upcoming',
+        lambda p: f'/top/anime?page={p}&limit=25&sfw=true&filter=upcoming',
+        pages=2,
+        category_tag='upcoming'
+    )
     
-    time.sleep(2)
-    movies = fetch_top_movies(pages=2)
+    time.sleep(4)
+    movies = fetch_category(
+        'Top Movies',
+        lambda p: f'/top/anime?page={p}&limit=25&sfw=true&type=movie',
+        pages=2,
+        category_tag='movies'
+    )
     
-    # Merge and deduplicate
     print('\n[Merge] Deduplicating...')
     all_anime = merge_and_deduplicate([airing, top, popular, upcoming, movies])
     
-    # Load existing to preserve manual additions
     existing = load_existing()
-    existing_ids = {a.get('id') for a in existing if a.get('id')}
     new_ids = {a.get('id') for a in all_anime if a.get('id')}
     
-    # Keep manually added anime that aren't in the new fetch
     manual_kept = 0
     for ex in existing:
         if ex.get('id') and ex['id'] not in new_ids:
-            # This was manually added or from a previous fetch — keep it
             if 'categories' not in ex:
                 ex['categories'] = ['archive']
             all_anime.append(ex)
             manual_kept += 1
     
     if manual_kept > 0:
-        print(f'  ✓ Preserved {manual_kept} existing entries not in current fetch')
+        print(f'  [i] Preserved {manual_kept} existing entries not in current fetch')
     
-    # Sort: airing first (by start_date desc), then by members/popularity
+    # Safety check: If we got very few results, KEEP the old data
+    if len(all_anime) < 20 and len(existing) > 20:
+        print(f'\n[!] WARNING: Only got {len(all_anime)} anime, but existing had {len(existing)}!')
+        print('[!] Fetch failed too much. Keeping OLD data to prevent site breaking.')
+        return len(existing)
+    
     def sort_key(a):
         cats = a.get('categories', [])
-        is_airing = 'airing' in cats
         start = a.get('start_date', '') or ''
         members = a.get('members', 0) or 0
         rank = a.get('rank') or 99999
         
-        # Priority: airing > top > popular > upcoming > movies > archive
         priority_map = {'airing': 0, 'top': 1, 'popular': 2, 'upcoming': 3, 'movies': 4, 'archive': 5}
         best_priority = min(priority_map.get(c, 6) for c in cats) if cats else 6
         
@@ -364,7 +290,6 @@ def run():
     
     all_anime.sort(key=sort_key)
     
-    # Build output
     now_utc = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     
     output = {
@@ -380,16 +305,14 @@ def run():
         'anime': all_anime
     }
     
-    # Ensure directory exists
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     
-    # Write output
     with open(OUTPUT_PATH, 'w', encoding='utf-8') as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
     
     file_size = os.path.getsize(OUTPUT_PATH)
     print(f'\n{"=" * 60}')
-    print(f'✅ DONE! Saved {len(all_anime)} anime to anime-static.json')
+    print(f'[DONE] Saved {len(all_anime)} anime to anime-static.json')
     print(f'   File size: {file_size / 1024:.1f} KB')
     print(f'   Categories: {output["categories"]}')
     print(f'   Updated: {now_utc}')
