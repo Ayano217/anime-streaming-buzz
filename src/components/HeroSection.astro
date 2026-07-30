@@ -2,7 +2,7 @@
 let heroAnime = [];
 let trendingList = [];
 
-// Try own API first (uses static data — instant + always fresh)
+// Try own API first
 try {
   const baseUrl = Astro.site || 'https://anime-streaming-buzz.pages.dev';
   const res = await fetch(new URL('/api/anime?action=list&category=airing&page=1', baseUrl));
@@ -23,7 +23,6 @@ try {
         rank: a.rank,
         malId: a.id,
       }));
-      // Trending: get from popular/top
       trendingList = data.anime.slice(0, 8);
     }
   }
@@ -31,7 +30,6 @@ try {
   console.warn('Hero API failed:', e);
 }
 
-// Fetch trending separately if we don't have enough
 if (trendingList.length < 8) {
   try {
     const baseUrl = Astro.site || 'https://anime-streaming-buzz.pages.dev';
@@ -45,7 +43,7 @@ if (trendingList.length < 8) {
   } catch (e) {}
 }
 
-// Fallback to Jikan if our API fails
+// Jikan fallback
 if (heroAnime.length === 0) {
   try {
     const res = await fetch('https://api.jikan.moe/v4/seasons/now?limit=5');
@@ -54,7 +52,7 @@ if (heroAnime.length === 0) {
       heroAnime = (data.data || []).slice(0, 5).map(a => ({
         title: a.title_english || a.title,
         synopsis: (a.synopsis || '').substring(0, 180) + '...',
-        image: a.images?.jpg?.large_image_url || '',
+        image: a.images?.jpg?.large_image_url || a.images?.jpg?.image_url || '',
         score: a.score,
         year: a.year || '',
         episodes: a.episodes || '?',
@@ -65,6 +63,9 @@ if (heroAnime.length === 0) {
         rank: a.rank,
         malId: a.mal_id,
       }));
+      if (trendingList.length === 0) {
+        trendingList = heroAnime.slice();
+      }
     }
   } catch (e) {}
 }
@@ -72,10 +73,10 @@ if (heroAnime.length === 0) {
 if (heroAnime.length === 0) {
   heroAnime = [{
     title: 'Discover Amazing Anime',
-    synopsis: 'The best anime streaming guide, news, and community. Join thousands of fans exploring the latest and greatest anime.',
+    synopsis: 'The best anime streaming guide, news, and community. Join thousands of fans exploring the latest anime.',
     image: '',
-    score: null, year: '', episodes: '?', type: 'TV',
-    genres: [], slug: '', status: '', rank: null,
+    score: null, year: '2026', episodes: '?', type: 'TV',
+    genres: ['Action', 'Adventure'], slug: '', status: 'current', rank: null,
   }];
 }
 ---
@@ -85,7 +86,6 @@ if (heroAnime.length === 0) {
 
   <div class="hero-inner container">
 
-    <!-- ═══ LIVE STATS BAR ═══ -->
     <div class="live-stats">
       <div class="stat-pill live-users">
         <span class="live-dot"></span>
@@ -103,21 +103,22 @@ if (heroAnime.length === 0) {
       </div>
     </div>
 
-    <!-- ═══ MAIN GRID: Slider (60%) + Trending (40%) ═══ -->
     <div class="hero-grid">
 
-      <!-- LEFT: Main Slider -->
       <div class="hero-main">
         <div class="hero-slides" id="heroSlides">
           {heroAnime.map((anime, idx) => (
-            <div class={`hero-slide ${idx === 0 ? 'active' : ''}`} data-index={idx}>
+            <div 
+              class={`hero-slide ${idx === 0 ? 'active' : ''}`} 
+              data-index={idx}
+              data-bg={anime.image}
+            >
               
-              <div class="slide-image-wrap">
-                {anime.image && (
-                  <img src={anime.image} alt={anime.title} class="slide-bg-image" loading={idx === 0 ? 'eager' : 'lazy'} />
-                )}
-                <div class="slide-gradient"></div>
-              </div>
+              <div 
+                class="slide-bg-cover" 
+                style={anime.image ? `background-image: url('${anime.image}')` : ''}
+              ></div>
+              <div class="slide-gradient"></div>
               
               <div class="slide-content-wrap">
                 {idx === 0 && (
@@ -189,7 +190,6 @@ if (heroAnime.length === 0) {
           ))}
         </div>
 
-        <!-- Slider Controls -->
         <div class="hero-controls">
           <div class="slide-dots">
             {heroAnime.map((_, idx) => (
@@ -208,15 +208,13 @@ if (heroAnime.length === 0) {
         </div>
       </div>
 
-      <!-- RIGHT: Trending Sidebar + Mini Game -->
       <aside class="hero-side">
         
-        <!-- Trending List -->
         <div class="side-card trending-card">
           <div class="side-card-head">
             <div class="side-card-title">
               <span class="tc-icon">🎯</span>
-              <span>Trending This Week</span>
+              <span>Trending Now</span>
             </div>
             <div class="tc-live-badge">
               <span class="live-dot"></span>
@@ -249,7 +247,6 @@ if (heroAnime.length === 0) {
           </div>
         </div>
 
-        <!-- Mini Game: Spin & Discover -->
         <div class="side-card spin-card">
           <div class="side-card-head">
             <div class="side-card-title">
@@ -280,13 +277,12 @@ if (heroAnime.length === 0) {
 
 <script is:inline define:vars={{ trendingList }}>
 (function() {
-  // ═══ SLIDER LOGIC ═══
   var slides = document.querySelectorAll('.hero-slide');
   var dots = document.querySelectorAll('.slide-dot');
   var current = 0;
   var interval;
 
-  function goto(idx){
+  function goto(idx) {
     if (slides.length === 0) return;
     slides[current].classList.remove('active');
     dots[current] && dots[current].classList.remove('active');
@@ -295,16 +291,16 @@ if (heroAnime.length === 0) {
     dots[current] && dots[current].classList.add('active');
   }
 
-  function next(){ goto(current + 1); }
-  function prev(){ goto(current - 1); }
+  function next() { goto(current + 1); }
+  function prev() { goto(current - 1); }
 
-  function startAuto(){
+  function startAuto() {
     clearInterval(interval);
     if (slides.length > 1) interval = setInterval(next, 8000);
   }
 
-  dots.forEach(function(dot){
-    dot.addEventListener('click', function(){
+  dots.forEach(function(dot) {
+    dot.addEventListener('click', function() {
       goto(parseInt(dot.dataset.index));
       startAuto();
     });
@@ -312,36 +308,33 @@ if (heroAnime.length === 0) {
 
   var prevBtn = document.getElementById('prevBtn');
   var nextBtn = document.getElementById('nextBtn');
-  if(prevBtn) prevBtn.addEventListener('click', function(){ prev(); startAuto(); });
-  if(nextBtn) nextBtn.addEventListener('click', function(){ next(); startAuto(); });
+  if (prevBtn) prevBtn.addEventListener('click', function() { prev(); startAuto(); });
+  if (nextBtn) nextBtn.addEventListener('click', function() { next(); startAuto(); });
 
   var hero = document.getElementById('heroSec');
-  if(hero) {
-    hero.addEventListener('mouseenter', function(){ clearInterval(interval); });
+  if (hero) {
+    hero.addEventListener('mouseenter', function() { clearInterval(interval); });
     hero.addEventListener('mouseleave', startAuto);
   }
 
   startAuto();
 
-  // ═══ LIVE USER COUNT (realistic simulation) ═══
+  // Live user count
   function generateUserCount() {
-    // Base count based on hour (peak evening, low late night)
     var hour = new Date().getHours();
     var baseUsers;
-    if (hour >= 18 && hour <= 23) baseUsers = 850; // evening peak
-    else if (hour >= 12 && hour <= 17) baseUsers = 620; // afternoon
-    else if (hour >= 8 && hour <= 11) baseUsers = 380; // morning
-    else if (hour >= 0 && hour <= 3) baseUsers = 220; // late night
+    if (hour >= 18 && hour <= 23) baseUsers = 850;
+    else if (hour >= 12 && hour <= 17) baseUsers = 620;
+    else if (hour >= 8 && hour <= 11) baseUsers = 380;
+    else if (hour >= 0 && hour <= 3) baseUsers = 220;
     else baseUsers = 450;
-    
-    // Add random variance
     var variance = Math.floor(Math.random() * 80) - 40;
     return baseUsers + variance;
   }
 
   function animateCount(el, target, duration) {
     if (!el) return;
-    var start = parseInt(el.textContent) || 0;
+    var start = parseInt(String(el.textContent).replace(/,/g, '')) || 0;
     var range = target - start;
     var startTime = Date.now();
     
@@ -360,22 +353,19 @@ if (heroAnime.length === 0) {
   
   if (userCountEl) {
     animateCount(userCountEl, generateUserCount(), 2000);
-    // Update every 30 seconds with slight variation
     setInterval(function() {
-      var current = parseInt(userCountEl.textContent.replace(/,/g, '')) || 0;
+      var current = parseInt(String(userCountEl.textContent).replace(/,/g, '')) || 0;
       var change = Math.floor(Math.random() * 20) - 10;
       var newCount = Math.max(100, current + change);
       animateCount(userCountEl, newCount, 1500);
     }, 30000);
   }
 
-  // Fetch actual anime count from API
   if (animeCountEl) {
     fetch('/api/anime?action=list&category=airing&page=1')
       .then(function(r) { return r.json(); })
       .then(function(data) {
         var count = data && data.total ? data.total : 200;
-        // Round up to make it feel more impressive
         var displayCount = Math.max(count, 200);
         animateCount(animeCountEl, displayCount, 2500);
       })
@@ -384,7 +374,7 @@ if (heroAnime.length === 0) {
       });
   }
 
-  // ═══ SAVE BUTTON ═══
+  // Save button
   document.querySelectorAll('.btn-save').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
@@ -408,7 +398,6 @@ if (heroAnime.length === 0) {
       localStorage.setItem('savedAnime', JSON.stringify(saved));
     });
     
-    // Check if already saved
     var id = btn.dataset.animeId;
     var saved = JSON.parse(localStorage.getItem('savedAnime') || '[]');
     if (saved.some(function(x) { return String(x.id) === String(id); })) {
@@ -417,7 +406,7 @@ if (heroAnime.length === 0) {
     }
   });
 
-  // ═══ SPIN GAME ═══
+  // Spin game
   var spinBtn = document.getElementById('spinBtn');
   var spinResult = document.getElementById('spinResult');
   var spinData = trendingList || [];
@@ -488,7 +477,6 @@ if (heroAnime.length === 0) {
     padding: 1.5rem 1.5rem 2rem; 
   }
   
-  /* ═══ LIVE STATS BAR ═══ */
   .live-stats {
     display: flex;
     gap: 8px;
@@ -548,7 +536,6 @@ if (heroAnime.length === 0) {
     50% { opacity: 0.5; transform: scale(0.85); }
   }
   
-  /* ═══ MAIN GRID ═══ */
   .hero-grid {
     display: grid;
     grid-template-columns: 1fr 340px;
@@ -556,7 +543,6 @@ if (heroAnime.length === 0) {
     align-items: stretch;
   }
   
-  /* ═══ MAIN SLIDER ═══ */
   .hero-main {
     display: flex;
     flex-direction: column;
@@ -583,21 +569,18 @@ if (heroAnime.length === 0) {
     visibility: visible;
   }
   
-  .slide-image-wrap {
+  /* NEW: Background image via CSS background-image (more reliable than <img>) */
+  .slide-bg-cover {
     position: absolute;
     inset: 0;
-    overflow: hidden;
-  }
-  
-  .slide-bg-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     transform: scale(1.05);
     transition: transform 8s ease;
   }
   
-  .hero-slide.active .slide-bg-image {
+  .hero-slide.active .slide-bg-cover {
     transform: scale(1);
   }
   
@@ -606,9 +589,10 @@ if (heroAnime.length === 0) {
     inset: 0;
     background: linear-gradient(90deg, 
       rgba(10, 5, 23, 0.95) 0%,
-      rgba(10, 5, 23, 0.85) 40%,
-      rgba(10, 5, 23, 0.5) 70%,
-      rgba(10, 5, 23, 0.2) 100%);
+      rgba(10, 5, 23, 0.88) 40%,
+      rgba(10, 5, 23, 0.55) 70%,
+      rgba(10, 5, 23, 0.25) 100%);
+    z-index: 1;
   }
   
   .slide-content-wrap {
@@ -619,6 +603,7 @@ if (heroAnime.length === 0) {
     flex-direction: column;
     justify-content: flex-end;
     max-width: 60%;
+    z-index: 2;
   }
   
   .trending-pill {
@@ -830,7 +815,6 @@ if (heroAnime.length === 0) {
     stroke: #e879f9;
   }
   
-  /* ═══ HERO CONTROLS ═══ */
   .hero-controls {
     display: flex;
     align-items: center;
@@ -895,7 +879,6 @@ if (heroAnime.length === 0) {
     transform: scale(1.1);
   }
   
-  /* ═══ SIDE PANEL ═══ */
   .hero-side {
     display: flex;
     flex-direction: column;
@@ -934,9 +917,7 @@ if (heroAnime.length === 0) {
     color: var(--text-primary);
   }
   
-  .tc-icon {
-    font-size: 1.1rem;
-  }
+  .tc-icon { font-size: 1.1rem; }
   
   .tc-live-badge {
     display: inline-flex;
@@ -1010,9 +991,7 @@ if (heroAnime.length === 0) {
     object-fit: cover;
   }
   
-  .tr-info {
-    min-width: 0;
-  }
+  .tr-info { min-width: 0; }
   
   .tr-title {
     font-family: 'Bricolage Grotesque', sans-serif;
@@ -1043,10 +1022,7 @@ if (heroAnime.length === 0) {
     font-weight: 700;
   }
   
-  /* ═══ SPIN GAME ═══ */
-  .spin-content {
-    text-align: center;
-  }
+  .spin-content { text-align: center; }
   
   .spin-desc {
     color: var(--text-secondary);
@@ -1090,9 +1066,7 @@ if (heroAnime.length === 0) {
     animation: spinRotate 1s linear infinite;
   }
   
-  @keyframes spinRotate {
-    to { transform: rotate(360deg); }
-  }
+  @keyframes spinRotate { to { transform: rotate(360deg); } }
   
   .spin-btn-glow {
     position: absolute;
@@ -1221,7 +1195,6 @@ if (heroAnime.length === 0) {
     margin-top: 2px;
   }
   
-  /* ═══ RESPONSIVE ═══ */
   @media (max-width: 1024px) {
     .hero-grid { grid-template-columns: 1fr 300px; }
     .hero-slides { height: 420px; }
