@@ -26,7 +26,7 @@ const news    = sortedPosts.slice(4, 8);
           <div>
             <div class="arrivals-tag">
               <span class="arrivals-dot"></span>
-              <span>LATEST · UPDATED EVERY 3H</span>
+              <span>FRESH · UPDATED EVERY 3H</span>
             </div>
             <h2 class="arrivals-title"><span class="grad-text">New Arrivals</span></h2>
           </div>
@@ -40,7 +40,7 @@ const news    = sortedPosts.slice(4, 8);
       </div>
 
       <div class="cat-tabs" id="catTabs">
-        <button class="cat-tab active" data-cat="airing"><span class="cat-tab-dot"></span><span>Latest</span></button>
+        <button class="cat-tab active" data-cat="airing"><span class="cat-tab-dot"></span><span>Now Airing</span></button>
         <button class="cat-tab" data-cat="top">Top Rated</button>
         <button class="cat-tab" data-cat="upcoming">Upcoming</button>
         <button class="cat-tab" data-cat="popular">Popular</button>
@@ -50,7 +50,7 @@ const news    = sortedPosts.slice(4, 8);
       <div id="arrivalsFeed" class="feed-wrap"></div>
 
       <div class="loading-more" id="loadingMore" style="display:none;">
-        <div class="ld-spinner"></div><span>Loading more anime...</span>
+        <div class="ld-spinner"></div><span>Loading more...</span>
       </div>
 
       <div class="end-message" id="endMessage" style="display:none;">
@@ -60,9 +60,9 @@ const news    = sortedPosts.slice(4, 8);
 
       <div class="error-msg" id="errorMsg" style="display:none;">
         <div class="err-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></div>
-        <h3>Loading anime feed...</h3>
-        <p id="errorSub">First-time fetch takes a moment.</p>
-        <button onclick="location.reload()" class="err-retry">Refresh Page</button>
+        <h3>Oops! Something went wrong</h3>
+        <p id="errorSub">We're having trouble loading anime right now.</p>
+        <button onclick="location.reload()" class="err-retry">Try Again</button>
       </div>
     </div>
   </section>
@@ -103,421 +103,189 @@ const news    = sortedPosts.slice(4, 8);
 </BaseLayout>
 
 <style is:global>
-  /* ═══ FEED CONTAINER — 4 columns landscape ═══ */
+  @keyframes atNaCardIn { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes atNaPlayRing { 0%{transform:scale(1);opacity:.9} 100%{transform:scale(1.7);opacity:0} }
+  
+  @keyframes atNeonPulse {
+    0%, 100% { 
+      box-shadow: 
+        0 0 12px rgba(232, 121, 249, 0.35),
+        0 0 20px rgba(192, 132, 252, 0.25),
+        0 0 0 1px rgba(232, 121, 249, 0.4),
+        0 6px 15px rgba(0, 0, 0, 0.4);
+    }
+    50% { 
+      box-shadow: 
+        0 0 20px rgba(232, 121, 249, 0.55),
+        0 0 35px rgba(192, 132, 252, 0.4),
+        0 0 0 1px rgba(232, 121, 249, 0.7),
+        0 6px 20px rgba(0, 0, 0, 0.5);
+    }
+  }
+  
   .feed-wrap {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    min-height: 400px;
+    gap: 16px;
+    min-height: 300px;
   }
   .feed-wrap .full-row { grid-column: 1 / -1; }
   
-  @media (max-width: 1200px) {
-    .feed-wrap { grid-template-columns: repeat(3, 1fr); gap: 16px; }
-  }
-  @media (max-width: 768px) {
-    .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 12px; min-height: 300px; }
-  }
-  @media (max-width: 480px) {
-    .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  }
+  @media (max-width: 1200px) { .feed-wrap { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 768px) { .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+  @media (max-width: 480px) { .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
   
-  /* ═══ SMOOTH ENTRANCE ═══ */
-  @keyframes atCardFadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  @keyframes atNaPlayRing { 
-    0% { transform: scale(1); opacity: 0.9; } 
-    100% { transform: scale(1.7); opacity: 0; } 
-  }
-  
-  /* ═══ NEW ANIME CARD — 16:9 LANDSCAPE ═══ */
-  .anime-card { 
-    display: block;
+  .at-na-card { 
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1); 
+    cursor: pointer;
     text-decoration: none;
     color: inherit;
-    cursor: pointer;
-    opacity: 0;
-    animation: atCardFadeIn 0.4s ease forwards;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    position: relative;
+    display: block;
+    animation: atNaCardIn 0.5s ease backwards;
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
   }
   
-  .anime-card:hover {
-    transform: translateY(-6px);
-  }
-  
-  .anime-thumb {
+  .at-na-thumb {
     position: relative;
     width: 100%;
-    padding-top: 56.25%; /* 16:9 aspect ratio */
+    padding-top: 140%;
     border-radius: 14px;
     overflow: hidden;
-    background: #0d0520;
-    border: 1px solid rgba(192, 132, 252, 0.25);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-    transition: all 0.35s ease;
-  }
-  
-  [data-theme="light"] .anime-thumb {
-    background: #fff;
-    border-color: rgba(192, 132, 252, 0.35);
-    box-shadow: 0 8px 20px rgba(192, 132, 252, 0.2);
-  }
-  
-  .anime-card:hover .anime-thumb {
-    border-color: rgba(232, 121, 249, 0.9);
+    background: #0a0517;
+    border: 1px solid rgba(232, 121, 249, 0.45);
     box-shadow: 
-      0 15px 40px rgba(0, 0, 0, 0.5),
-      0 0 25px rgba(192, 132, 252, 0.5),
-      0 0 0 1px rgba(232, 121, 249, 0.7);
+      0 0 15px rgba(232, 121, 249, 0.4),
+      0 0 25px rgba(192, 132, 252, 0.3),
+      0 0 0 1px rgba(232, 121, 249, 0.5),
+      0 6px 18px rgba(0, 0, 0, 0.45);
+    transition: transform 0.35s ease, border-color 0.35s ease;
   }
   
-  .anime-thumb-img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.5s ease, filter 0.3s ease;
+  .at-na-thumb.neon-live {
+    animation: atNeonPulse 3s ease-in-out infinite;
   }
   
-  .anime-thumb-img-fallback {
-    filter: blur(6px) brightness(0.5) saturate(1.3);
-    transform: scale(1.3);
-  }
-  
-  .anime-card:hover .anime-thumb-img {
-    transform: scale(1.08);
-    filter: brightness(0.6);
-  }
-  
-  .anime-card:hover .anime-thumb-img-fallback {
-    filter: blur(4px) brightness(0.4) saturate(1.5);
-    transform: scale(1.4);
-  }
-  
-  .anime-shine {
-    position: absolute;
-    top: 0;
-    left: -80%;
-    width: 60%;
-    height: 100%;
-    background: linear-gradient(105deg, transparent, rgba(255,255,255,0.2), transparent);
-    z-index: 3;
-    transition: left 0.8s ease;
-    pointer-events: none;
-  }
-  
-  .anime-card:hover .anime-shine {
-    left: 120%;
-  }
-  
-  .anime-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, transparent 40%, rgba(10, 5, 23, 0.85) 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-    z-index: 3;
-  }
-  
-  .anime-card:hover .anime-overlay {
-    opacity: 1;
-  }
-  
-  .anime-play {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.5);
-    width: 52px;
-    height: 52px;
-    z-index: 5;
-    opacity: 0;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    pointer-events: none;
-  }
-  
-  .anime-play-ring {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    border: 2px solid rgba(192, 132, 252, 0.8);
-    animation: atNaPlayRing 2s ease-out infinite;
-  }
-  
-  .anime-play-btn {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    padding-left: 3px;
+  .at-na-card:hover { transform: translateY(-6px) translateZ(0); }
+  .at-na-card:hover .at-na-thumb {
+    animation: none;
     box-shadow: 
-      0 10px 30px rgba(192, 132, 252, 0.7),
-      0 0 40px rgba(232, 121, 249, 0.5);
-    z-index: 2;
+      0 0 25px rgba(232, 121, 249, 0.75),
+      0 0 50px rgba(192, 132, 252, 0.5),
+      0 0 0 2px rgba(232, 121, 249, 0.9),
+      0 15px 35px rgba(0, 0, 0, 0.55) !important;
+    border-color: rgba(232,121,249,1) !important;
   }
-  
-  .anime-card:hover .anime-play {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  
-  /* Badges */
-  .anime-badge-ep {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    padding: 4px 10px;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    color: #fff;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    border-radius: 6px;
-    z-index: 6;
-    box-shadow: 0 3px 10px rgba(192, 132, 252, 0.5);
-  }
-  
-  .anime-badge-new {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    padding: 4px 10px;
-    background: linear-gradient(135deg, #ef4444, #f97316);
-    color: #fff;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.55rem;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    border-radius: 5px;
-    z-index: 6;
-    box-shadow: 0 2px 10px rgba(239, 68, 68, 0.6);
-  }
-  
-  .anime-badge-score {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    padding: 4px 8px;
-    background: rgba(10, 5, 23, 0.9);
-    border: 1px solid rgba(251, 191, 36, 0.4);
-    color: #fbbf24;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    font-weight: 800;
-    border-radius: 5px;
-    z-index: 6;
-    backdrop-filter: blur(6px);
-  }
-  
-  .anime-badge-duration {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    padding: 3px 8px;
-    background: rgba(10, 5, 23, 0.9);
-    border: 1px solid rgba(192, 132, 252, 0.3);
-    color: #fff;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
-    font-weight: 700;
-    border-radius: 4px;
-    z-index: 6;
-    backdrop-filter: blur(6px);
-  }
-  
-  /* Card info below thumbnail */
-  .anime-info {
-    padding: 10px 4px 4px;
-    position: relative;
-    z-index: 1;
-  }
-  
-  .anime-title {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 4px;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    min-height: 2.2em;
-  }
-  
-  .anime-card:hover .anime-title {
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+  .at-na-card:hover .at-na-play { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  .at-na-card:hover .at-na-img { transform: scale(1.08); filter: brightness(0.6); }
+  .at-na-card:hover .at-na-shine { left: 120%; }
+  .at-na-card:hover .at-na-overlay { opacity: 1; }
+  .at-na-card:hover .at-na-title {
+    background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   
-  .anime-meta {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.66rem;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-  }
-  
-  .anime-meta-sep {
-    opacity: 0.4;
-  }
-  
-  .anime-genre {
-    display: inline-block;
-    margin-top: 4px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.58rem;
-    font-weight: 700;
-    color: #c084fc;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-  
-  /* Mobile — no hover, always show play */
   @media (max-width: 768px) {
-    .anime-card:hover {
-      transform: translateY(-3px);
+    .at-na-thumb.neon-live { animation: none !important; }
+    .at-na-thumb {
+      box-shadow: 
+        0 0 10px rgba(232, 121, 249, 0.35),
+        0 0 18px rgba(192, 132, 252, 0.22),
+        0 0 0 1px rgba(232, 121, 249, 0.4),
+        0 4px 12px rgba(0, 0, 0, 0.4) !important;
     }
-    .anime-card .anime-play {
-      opacity: 0.75;
-      transform: translate(-50%, -50%) scale(0.7);
+    .at-na-card .at-na-play { 
+      opacity: 0.85 !important; 
+      transform: translate(-50%,-50%) scale(0.75) !important; 
     }
-    .anime-play-ring {
+    .at-na-play > div:first-child,
+    .at-na-play > div:nth-child(2) {
+      animation: none !important;
       display: none !important;
     }
-    .anime-title { font-size: 0.82rem; }
   }
   
-  /* Product cards (inline) */
-  .product-card-inline {
+  @media (prefers-reduced-motion: reduce) {
+    .at-na-thumb.neon-live { animation: none !important; }
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+  
+  .at-inline-product {
+    position: relative;
     display: block;
     text-decoration: none;
     color: inherit;
     cursor: pointer;
-    opacity: 0;
-    animation: atCardFadeIn 0.4s ease forwards;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    position: relative;
+    animation: atNaCardIn 0.5s ease backwards;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    transform: translateZ(0);
   }
-  
-  .product-card-inline:hover {
-    transform: translateY(-6px);
+  .at-inline-product:hover { transform: translateY(-6px) translateZ(0); }
+  .at-inline-product:hover .at-ip-thumb {
+    border-color: rgba(232,121,249,0.7);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.55), 0 0 20px rgba(192,132,252,0.35);
   }
-  
-  .product-card-inline:hover .product-thumb {
-    border-color: rgba(232, 121, 249, 0.7);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(192, 132, 252, 0.35);
-  }
-  
-  .product-card-inline:hover .product-img {
-    transform: scale(1.05);
-  }
-  
-  .product-card-inline:hover .product-title {
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+  .at-inline-product:hover .at-ip-img { transform: scale(1.08); filter: brightness(0.65); }
+  .at-inline-product:hover .at-ip-shine { left: 120%; }
+  .at-inline-product:hover .at-ip-overlay { opacity: 1; }
+  .at-inline-product:hover .at-ip-cta { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .at-inline-product:hover .at-ip-title {
+    background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   
-  /* Skeleton */
-  .skel-card {
-    border-radius: 14px;
-    overflow: hidden;
-  }
-  .skel-thumb {
-    width: 100%;
-    padding-top: 56.25%;
-    border-radius: 14px;
-    background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%);
-    background-size: 200% 100%;
-    animation: skelShimmer 1.5s ease-in-out infinite;
-  }
-  [data-theme="light"] .skel-thumb {
-    background: linear-gradient(110deg, #f3e8ff 30%, #ede0ff 50%, #f3e8ff 70%);
-    background-size: 200% 100%;
-  }
-  .skel-title {
-    margin-top: 10px;
-    height: 14px;
-    width: 80%;
-    border-radius: 6px;
-    background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%);
-    background-size: 200% 100%;
-    animation: skelShimmer 1.5s ease-in-out infinite;
-    animation-delay: 0.1s;
-  }
-  [data-theme="light"] .skel-title {
-    background: linear-gradient(110deg, #f3e8ff 30%, #ede0ff 50%, #f3e8ff 70%);
-    background-size: 200% 100%;
-  }
-  .skel-sub {
-    margin-top: 6px;
-    height: 10px;
-    width: 50%;
-    border-radius: 4px;
-    background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%);
-    background-size: 200% 100%;
-    animation: skelShimmer 1.5s ease-in-out infinite;
-    animation-delay: 0.2s;
-  }
-  [data-theme="light"] .skel-sub {
-    background: linear-gradient(110deg, #f3e8ff 30%, #ede0ff 50%, #f3e8ff 70%);
-    background-size: 200% 100%;
-  }
-  @keyframes skelShimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
+  .mini-strip { grid-column: 1 / -1; padding: 10px 0; animation: atNaCardIn 0.5s ease backwards; position: relative; }
+  .mini-strip-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px; flex-wrap: wrap; }
+  .mini-strip-title { display: inline-flex; align-items: center; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em; color: #e879f9; text-transform: uppercase; }
+  .mini-strip-title::before { content: ''; width: 4px; height: 16px; background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc); border-radius: 2px; box-shadow: 0 0 10px rgba(232, 121, 249, 0.7); }
+  .mini-scroll-hint { display: inline-flex; align-items: center; gap: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; font-weight: 700; color: rgba(192, 132, 252, 0.75); letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 10px; background: rgba(192, 132, 252, 0.08); border: 1px solid rgba(192, 132, 252, 0.2); border-radius: 999px; }
+  .mini-scroll-hint svg { animation: hintSwipe 1.8s ease-in-out infinite; }
+  @keyframes hintSwipe { 0%, 100% { transform: translateX(0); opacity: 0.7; } 50% { transform: translateX(5px); opacity: 1; } }
+  .mini-strip-scroll { display: flex; gap: 12px; overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; scroll-snap-type: x mandatory; scrollbar-width: none; -ms-overflow-style: none; padding: 4px 0 12px; -webkit-overflow-scrolling: touch; }
+  .mini-strip-scroll::-webkit-scrollbar { display: none; }
+  .mini-card { flex: 0 0 auto; width: 210px; scroll-snap-align: start; text-decoration: none; color: inherit; display: block; cursor: pointer; transition: transform 0.3s ease; transform: translateZ(0); }
+  .mini-card:hover { transform: translateY(-5px) translateZ(0); }
+  .mini-card:hover .mini-thumb { border-color: rgba(232,121,249,0.85); box-shadow: 0 12px 25px rgba(0,0,0,0.5), 0 0 20px rgba(192,132,252,0.45); }
+  .mini-card:hover .mini-img { transform: scale(1.08); filter: brightness(0.7); }
+  .mini-card:hover .mini-shine { left: 120%; }
+  .mini-card:hover .mini-title { background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .mini-strip-scroll-wrap { position: relative; }
+  .mini-strip-scroll-wrap::after { content: ''; position: absolute; top: 0; right: 0; bottom: 12px; width: 40px; background: linear-gradient(-90deg, var(--bg-base, #0a0517) 20%, transparent); pointer-events: none; z-index: 3; }
+  @media (max-width: 768px) { .at-ip-cta { opacity: 0.85 !important; transform: translate(-50%,-50%) scale(0.85) !important; } .mini-card { width: 175px; } }
+  @media (max-width: 480px) { .mini-card { width: 155px; } }
+
+  .skel-card { border-radius: 14px; overflow: hidden; }
+  .skel-thumb { width: 100%; padding-top: 140%; border-radius: 14px; background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%); background-size: 200% 100%; animation: skelShimmer 1.5s ease-in-out infinite; }
+  .skel-title { margin-top: 9px; height: 14px; width: 80%; border-radius: 6px; background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%); background-size: 200% 100%; animation: skelShimmer 1.5s ease-in-out infinite; animation-delay: 0.1s; }
+  .skel-sub { margin-top: 5px; height: 10px; width: 50%; border-radius: 4px; background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%); background-size: 200% 100%; animation: skelShimmer 1.5s ease-in-out infinite; animation-delay: 0.2s; }
+  @keyframes skelShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 </style>
 
 <script is:inline>
 (function(){
-  var cat = 'airing';
-  var pg = 1;
-  var loading = false;
-  var hasMore = true;
-  var total = 0;
-  var ids = {};
+  var cat='airing', pg=1, loading=false, hasMore=true, total=0, ids={};
   var animeInBlock = 0;
   var productPool = [];
-  var productIdx = 0;
+  var productBigIdx = 0;
+  var productMiniIdx = 0;
   var allAnime = [];
   
-  var feed = document.getElementById('arrivalsFeed');
-  var loadingEl = document.getElementById('loadingMore');
-  var endMsg = document.getElementById('endMessage');
-  var errMsg = document.getElementById('errorMsg');
-  var errSub = document.getElementById('errorSub');
-  var countEl = document.getElementById('arrivalsCount');
-  var tabs = document.querySelectorAll('.cat-tab');
-  var searchIn = document.getElementById('quickSearch');
-  var sdd = document.getElementById('searchDD');
-  var siClear = document.getElementById('siClear');
+  var feed = document.getElementById('arrivalsFeed'),
+      loadingEl = document.getElementById('loadingMore'),
+      endMsg = document.getElementById('endMessage'),
+      errMsg = document.getElementById('errorMsg'),
+      errSub = document.getElementById('errorSub'),
+      countEl = document.getElementById('arrivalsCount'),
+      tabs = document.querySelectorAll('.cat-tab'),
+      searchIn = document.getElementById('quickSearch'),
+      sdd = document.getElementById('searchDD'),
+      siClear = document.getElementById('siClear');
 
-  // Show skeleton immediately
   function showSkeleton() {
     var count = window.innerWidth <= 768 ? 6 : 8;
     var html = '';
@@ -529,114 +297,162 @@ const news    = sortedPosts.slice(4, 8);
   
   showSkeleton();
 
-  function esc(s) {
-    return String(s || '').replace(/[&<>"']/g, function(c) {
-      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-    });
-  }
-  
-  function trunc(s, n) {
-    s = String(s || '');
-    return s.length > n ? s.slice(0, n).trim() + '…' : s;
+  var IS_MOBILE = window.matchMedia('(max-width: 768px)').matches;
+  var neonObserver = null;
+  if (!IS_MOBILE && 'IntersectionObserver' in window) {
+    neonObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        var thumb = entry.target.querySelector('.at-na-thumb');
+        if (!thumb) return;
+        if (entry.isIntersecting) thumb.classList.add('neon-live');
+        else thumb.classList.remove('neon-live');
+      });
+    }, { rootMargin: '100px', threshold: 0.1 });
   }
 
+  function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})}
+  function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n).trim()+'…':s;}
+
   function fuzzyScore(query, title) {
-    query = query.toLowerCase().trim();
-    title = title.toLowerCase();
+    query = query.toLowerCase().trim(); title = title.toLowerCase();
     if (!query) return 0;
     if (title === query) return 1000;
     if (title.startsWith(query)) return 500;
     if (title.includes(query)) return 300;
     var words = title.split(/\s+/);
-    for (var i = 0; i < words.length; i++) {
-      if (words[i].startsWith(query)) return 200;
-    }
+    for (var i = 0; i < words.length; i++) { if (words[i].startsWith(query)) return 200; }
     var matches = 0;
-    for (var i = 0; i < query.length; i++) {
-      if (title.indexOf(query[i]) !== -1) matches++;
-    }
+    for (var i = 0; i < query.length; i++) { if (title.indexOf(query[i]) !== -1) matches++; }
     return matches >= query.length * 0.7 ? 50 : 0;
   }
 
-  // ─── Build 16:9 Landscape Anime Card ───
+  // ═══ ORIGINAL ANIME CARD — POSTER STYLE, NEON GLOW, CLEAR IMAGE ═══
   function animeCard(a, i) {
-    var t = a.title || 'Unknown';
-    var img = a.image || '';
-    var sl = a.slug || 'anime-' + a.id;
-    var sc = a.score ? Number(a.score).toFixed(1) : '';
-    var yr = a.year || '';
-    var ep = a.episodes && a.episodes > 0 ? a.episodes : '';
-    var g = (a.genres && a.genres.length) ? a.genres[0] : '';
-    var isNew = a.status === 'current';
+    var t = a.title || 'Unknown', img = a.image || '', sl = a.slug || 'anime-' + a.id,
+        sc = a.score ? Number(a.score).toFixed(1) : '',
+        yr = a.year || '',
+        ep = a.episodes && a.episodes > 0 ? a.episodes : '',
+        g = (a.genres && a.genres.length) ? a.genres[0] : '',
+        nw = a.status === 'current';
     var delay = ((i % 8) * 40) + 'ms';
     
-    // Since anime posters are portrait (2:3), we blur+scale them for 16:9 thumbnails
-    // This mimics the "episode thumbnail" style from the screenshot
+    var imgStyle = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.5s ease, filter 0.3s ease;';
     var imgHtml = img
-      ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="anime-thumb-img anime-thumb-img-fallback" />'
+      ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="at-na-img" style="' + imgStyle + '" />'
       : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15),rgba(125,211,252,0.2));display:flex;align-items:center;justify-content:center;"><svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" opacity="0.3"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/></svg></div>';
     
     var el = document.createElement('a');
     el.href = '/anime/' + sl;
-    el.className = 'anime-card';
+    el.className = 'at-na-card';
     el.style.animationDelay = delay;
     
     el.innerHTML =
-      '<div class="anime-thumb">' +
+      '<div class="at-na-thumb">' +
         imgHtml +
-        '<div class="anime-shine"></div>' +
-        '<div class="anime-overlay"></div>' +
-        '<div class="anime-play">' +
-          '<div class="anime-play-ring"></div>' +
-          '<div class="anime-play-btn">' +
-            '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+        '<div class="at-na-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.2),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
+        '<div class="at-na-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,5,23,0.85) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
+        '<div class="at-na-play" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.4);width:48px;height:48px;z-index:5;opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;">' +
+          '<div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(192,132,252,0.8);animation:atNaPlayRing 2s ease-out infinite;"></div>' +
+          '<div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:2px;box-shadow:0 8px 25px rgba(192,132,252,0.7),0 0 30px rgba(232,121,249,0.5);z-index:2;">' +
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
           '</div>' +
         '</div>' +
-        (isNew ? '<div class="anime-badge-new">NEW</div>' : '') +
-        (sc ? '<div class="anime-badge-score"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + sc + '</div>' : '') +
-        (ep ? '<div class="anime-badge-duration">' + ep + ' EP</div>' : '') +
+        (nw ? '<div style="position:absolute;top:7px;left:7px;padding:3px 8px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:800;letter-spacing:0.1em;border-radius:5px;z-index:6;box-shadow:0 2px 10px rgba(239,68,68,0.6);">NEW</div>' : '') +
+        (sc ? '<div style="position:absolute;top:7px;right:7px;display:inline-flex;align-items:center;gap:3px;padding:3px 7px;background:rgba(10,5,23,0.9);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;font-weight:800;border-radius:5px;z-index:6;"><svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>' + sc + '</div>' : '') +
+        '<div style="position:absolute;bottom:7px;left:7px;padding:2px 7px;background:rgba(125,211,252,0.9);color:#0a0517;font-family:\'JetBrains Mono\',monospace;font-size:0.52rem;font-weight:800;letter-spacing:0.1em;border-radius:4px;z-index:6;">HD</div>' +
       '</div>' +
-      '<div class="anime-info">' +
-        '<h3 class="anime-title">' + esc(trunc(t, 60)) + '</h3>' +
-        '<div class="anime-meta">' +
-          (yr ? '<span>' + esc(yr) + '</span>' : '') +
-          (yr && a.subtype ? '<span class="anime-meta-sep">·</span>' : '') +
-          (a.subtype ? '<span>' + esc(a.subtype) + '</span>' : '') +
+      '<div style="padding:9px 3px 4px;position:relative;z-index:1;">' +
+        '<h3 class="at-na-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2.1em;">' + esc(trunc(t, 55)) + '</h3>' +
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;color:var(--text-muted);opacity:0.75;">' + 
+          (yr ? esc(yr) : '') +
+          (yr && ep ? ' · ' : '') +
+          (ep ? esc(ep) + ' EP' : '') +
         '</div>' +
-        (g ? '<div class="anime-genre">' + esc(g) + '</div>' : '') +
+        (g ? '<div style="display:inline-block;margin-top:3px;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:700;color:#c084fc;letter-spacing:0.05em;text-transform:uppercase;">' + esc(g) + '</div>' : '') +
+      '</div>';
+    
+    if (neonObserver) neonObserver.observe(el);
+    return el;
+  }
+
+  function bigProductCard(p, i) {
+    var delay = ((i % 8) * 40) + 'ms';
+    var badge = p.badge || 'SPONSORED';
+    var el = document.createElement('a');
+    el.href = '/product/' + encodeURIComponent(p.id);
+    el.className = 'at-inline-product';
+    el.style.animationDelay = delay;
+    
+    var imgHtml = p.image
+      ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="at-ip-img" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.5s ease, filter 0.3s ease;" onerror="this.style.opacity=\'0.3\';" />'
+      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2.5rem;">🛍️</div>';
+    
+    el.innerHTML =
+      '<div class="at-ip-thumb" style="position:relative;width:100%;padding-top:140%;border-radius:14px;overflow:hidden;background:#0d0520;border:1px solid rgba(232,121,249,0.3);box-shadow:0 6px 15px rgba(0,0,0,0.35);transition:all 0.35s ease;">' +
+        imgHtml +
+        '<div class="at-ip-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.22),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
+        '<div class="at-ip-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(10,5,23,0.9) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
+        '<div style="position:absolute;top:7px;left:7px;padding:3px 8px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:800;letter-spacing:0.08em;border-radius:5px;z-index:6;box-shadow:0 2px 10px rgba(192,132,252,0.5);">' + esc(badge) + '</div>' +
+        '<div style="position:absolute;top:7px;right:7px;padding:3px 8px;background:rgba(10,5,23,0.9);border:1px solid rgba(125,211,252,0.4);color:#7dd3fc;font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;font-weight:800;border-radius:5px;z-index:6;">' + esc(p.price) + '</div>' +
+        '<div class="at-ip-cta" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.6);z-index:5;opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;">' +
+          '<div style="display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);color:#fff;font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.72rem;font-weight:800;border-radius:999px;box-shadow:0 8px 25px rgba(192,132,252,0.6),0 0 30px rgba(232,121,249,0.4);white-space:nowrap;">' +
+            '<span>View Details</span>' +
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="padding:9px 3px 4px;position:relative;z-index:1;">' +
+        '<h3 class="at-ip-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2.1em;">' + esc(trunc(p.title, 55)) + '</h3>' +
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;color:var(--text-muted);opacity:0.75;">' + esc(trunc(p.subtitle || '', 45)) + '</div>' +
+        '<div style="display:inline-block;margin-top:3px;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:700;color:#e879f9;letter-spacing:0.05em;text-transform:uppercase;">FROM OUR STORE</div>' +
       '</div>';
     
     return el;
   }
 
-  // ─── Product Card (also 16:9 to match style) ───
-  function productCard(p, i) {
-    var delay = ((i % 8) * 40) + 'ms';
-    var badge = p.badge || 'SPONSORED';
-    
-    var el = document.createElement('a');
-    el.href = '/product/' + encodeURIComponent(p.id);
-    el.className = 'product-card-inline';
-    el.style.animationDelay = delay;
-    
+  function miniProductHtml(p) {
+    var badge = p.badge || 'HOT PICK';
     var imgHtml = p.image
-      ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="product-img" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;padding:15px;background:#fff;transition:transform 0.5s ease;" onerror="this.style.opacity=0.3;" />'
-      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2.5rem;">🛍️</div>';
+      ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="mini-img" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transition:transform 0.5s ease, filter 0.3s ease;" onerror="this.style.opacity=\'0.3\';" />'
+      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2rem;">🛍️</div>';
     
-    el.innerHTML =
-      '<div class="product-thumb" style="position:relative;width:100%;padding-top:56.25%;border-radius:14px;overflow:hidden;background:#0d0520;border:1px solid rgba(232,121,249,0.3);box-shadow:0 6px 15px rgba(0,0,0,0.35);transition:all 0.35s ease;">' +
+    return '<a href="/product/' + esc(p.id) + '" class="mini-card">' +
+      '<div class="mini-thumb" style="position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#0d0520;border:1px solid rgba(192,132,252,0.3);box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:all 0.3s ease;">' +
         imgHtml +
-        '<div style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.22),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;" class="product-shine"></div>' +
-        '<div style="position:absolute;top:8px;left:8px;padding:4px 10px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.6rem;font-weight:800;letter-spacing:0.08em;border-radius:6px;z-index:6;box-shadow:0 2px 10px rgba(192,132,252,0.5);">' + esc(badge) + '</div>' +
-        '<div style="position:absolute;top:8px;right:8px;padding:4px 10px;background:rgba(10,5,23,0.9);border:1px solid rgba(125,211,252,0.4);color:#7dd3fc;font-family:\'JetBrains Mono\',monospace;font-size:0.65rem;font-weight:800;border-radius:6px;z-index:6;backdrop-filter:blur(6px);">' + esc(p.price) + '</div>' +
+        '<div class="mini-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.2),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
+        '<div style="position:absolute;top:5px;left:5px;padding:2px 7px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.06em;border-radius:4px;z-index:6;">' + esc(badge) + '</div>' +
+        '<div style="position:absolute;top:5px;right:5px;padding:2px 7px;background:rgba(10,5,23,0.9);border:1px solid rgba(125,211,252,0.4);color:#7dd3fc;font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;font-weight:800;border-radius:4px;z-index:6;">' + esc(p.price) + '</div>' +
       '</div>' +
-      '<div class="anime-info">' +
-        '<h3 class="product-title anime-title">' + esc(trunc(p.title, 55)) + '</h3>' +
-        '<div class="anime-meta">' + esc(trunc(p.subtitle || 'Premium Product', 45)) + '</div>' +
-        '<div class="anime-genre" style="color:#e879f9;">🛒 SHOP NOW</div>' +
+      '<div style="padding:6px 3px 2px;">' +
+        '<h4 class="mini-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.75rem;font-weight:700;color:var(--text-primary);margin:0 0 2px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;">' + esc(trunc(p.title, 40)) + '</h4>' +
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;color:#e879f9;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;opacity:0.85;">Explore</div>' +
+      '</div>' +
+    '</a>';
+  }
+
+  function buildMiniStrip() {
+    if (productPool.length < 6) return null;
+    var picks = [];
+    for (var i = 0; i < 6; i++) {
+      var p = productPool[productMiniIdx % productPool.length];
+      productMiniIdx++;
+      picks.push(p);
+    }
+    var stripDiv = document.createElement('div');
+    stripDiv.className = 'mini-strip';
+    var itemsHtml = picks.map(miniProductHtml).join('');
+    stripDiv.innerHTML =
+      '<div class="mini-strip-header">' +
+        '<div class="mini-strip-title">You Might Also Like</div>' +
+        '<div class="mini-scroll-hint">' +
+          '<span>Swipe</span>' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
+        '</div>' +
+      '</div>' +
+      '<div class="mini-strip-scroll-wrap">' +
+        '<div class="mini-strip-scroll">' + itemsHtml + '</div>' +
       '</div>';
-    
-    return el;
+    return stripDiv;
   }
 
   async function loadProducts() {
@@ -644,205 +460,120 @@ const news    = sortedPosts.slice(4, 8);
       var res = await fetch('/api/products?limit=50');
       var j = await res.json();
       if (j.success && j.products) productPool = j.products;
-    } catch(e) {
-      console.warn('[products] Load failed:', e.message);
-    }
+    } catch(e) { console.warn('[products] Load failed:', e.message); }
   }
   
-  function getNextProduct() {
+  function getNextBigProduct() {
     if (!productPool.length) return null;
-    var p = productPool[productIdx % productPool.length];
-    productIdx++;
+    var p = productPool[productBigIdx % productPool.length];
+    productBigIdx++;
     return p;
   }
 
-  function updateCount() {
-    if (!countEl) return;
-    var c = parseInt(countEl.textContent) || 0;
-    var t = total;
-    if (c === t) return;
-    var step = Math.max(1, Math.ceil((t - c) / 12));
-    (function f() {
-      c = Math.min(c + step, t);
-      countEl.textContent = c;
-      if (c < t) requestAnimationFrame(f);
-    })();
+  function updateCount(){
+    if(!countEl)return;
+    var c=parseInt(countEl.textContent)||0,t=total;
+    if(c===t)return;
+    var step=Math.max(1,Math.ceil((t-c)/12));
+    (function f(){c=Math.min(c+step,t);countEl.textContent=c;if(c<t)requestAnimationFrame(f);})();
   }
 
-  async function load() {
-    if (loading || !hasMore) return;
-    loading = true;
-    
-    if (pg > 1) {
-      if (loadingEl) loadingEl.style.display = 'flex';
-    }
+  async function load(){
+    if(loading||!hasMore)return;
+    loading=true;
+    if(pg > 1){ if(loadingEl)loadingEl.style.display='flex'; }
 
-    try {
-      var res = await fetch('/api/anime?action=list&category=' + cat + '&page=' + pg);
-      if (!res.ok) throw new Error('API ' + res.status);
-      var j = await res.json();
-      if (!j.success) throw new Error(j.error || 'fail');
+    try{
+      var res=await fetch('/api/anime?action=list&category='+cat+'&page='+pg);
+      if(!res.ok)throw new Error('API '+res.status);
+      var j=await res.json();
+      if(!j.success)throw new Error(j.error||'fail');
+      var items=(j.anime||[]).filter(function(a){if(!a.id||ids[a.id])return false;ids[a.id]=true;return true;});
+      if(pg===1) feed.innerHTML='';
+      if(errMsg)errMsg.style.display='none';
       
-      var items = (j.anime || []).filter(function(a) {
-        if (!a.id || ids[a.id]) return false;
-        ids[a.id] = true;
-        return true;
-      });
-      
-      if (pg === 1) feed.innerHTML = '';
-      if (errMsg) errMsg.style.display = 'none';
-      
-      items.forEach(function(a, i) {
+      items.forEach(function(a,i){
         total++;
         allAnime.push(a);
-        feed.appendChild(animeCard(a, total - 1));
+        feed.appendChild(animeCard(a, total-1));
         animeInBlock++;
         
-        // After every 6 anime, insert a product card
         if (animeInBlock === 6 && productPool.length > 0) {
-          var p = getNextProduct();
-          if (p) feed.appendChild(productCard(p, total));
+          var big = getNextBigProduct();
+          if (big) feed.appendChild(bigProductCard(big, total));
+        }
+        
+        if (animeInBlock === 6 && productPool.length >= 6) {
+          var strip = buildMiniStrip();
+          if (strip) feed.appendChild(strip);
           animeInBlock = 0;
         }
       });
       
       updateCount();
-      hasMore = j.hasNext !== false && items.length > 0;
-      if (loadingEl) loadingEl.style.display = 'none';
-      if (!hasMore && total > 20) {
-        if (endMsg) endMsg.style.display = 'flex';
-      }
-      
+      hasMore=j.hasNext!==false&&items.length>0;
+      if(loadingEl)loadingEl.style.display='none';
+      if(!hasMore && total > 20){if(endMsg)endMsg.style.display='flex';}
       pg++;
-    } catch(e) {
-      console.warn('[feed] Load fail:', e.message);
-      if (loadingEl) loadingEl.style.display = 'none';
-      if (total === 0) {
-        feed.innerHTML = '';
-        if (errMsg) {
-          errMsg.style.display = 'block';
-          if (errSub) errSub.textContent = 'Anime database is loading. Please refresh in a moment.';
-        }
-      }
+    }catch(e){
+      console.warn('[feed] Load fail:',e.message);
+      if(loadingEl)loadingEl.style.display='none';
+      if(total===0){feed.innerHTML='';if(errMsg){errMsg.style.display='block';if(errSub)errSub.textContent='Anime database temporarily unavailable. Please refresh.';}}
     }
-    loading = false;
+    loading=false;
   }
 
-  tabs.forEach(function(tab) {
-    tab.addEventListener('click', function() {
-      var c2 = tab.dataset.cat;
-      if (c2 === cat) return;
-      tabs.forEach(function(t) { t.classList.remove('active'); });
-      tab.classList.add('active');
-      cat = c2;
-      pg = 1;
-      hasMore = true;
-      total = 0;
-      ids = {};
-      allAnime = [];
-      animeInBlock = 0;
-      productIdx = 0;
-      if (countEl) countEl.textContent = '0';
-      if (errMsg) errMsg.style.display = 'none';
-      if (endMsg) endMsg.style.display = 'none';
+  tabs.forEach(function(tab){
+    tab.addEventListener('click',function(){
+      var c2=tab.dataset.cat;if(c2===cat)return;
+      tabs.forEach(function(t){t.classList.remove('active');});tab.classList.add('active');
+      cat=c2;pg=1;hasMore=true;total=0;ids={};allAnime=[];
+      animeInBlock=0;productBigIdx=0;productMiniIdx=0;
+      if(countEl)countEl.textContent='0';
+      if(errMsg)errMsg.style.display='none';
+      if(endMsg)endMsg.style.display='none';
       showSkeleton();
       load();
     });
   });
 
-  // ═══ INFINITE SCROLL — Fixed & Smooth ═══
-  var scrollT;
-  var lastLoadTime = 0;
-  
-  window.addEventListener('scroll', function() {
-    if (loading || !hasMore) return;
-    
-    // Debounce
-    if (scrollT) clearTimeout(scrollT);
-    
-    scrollT = setTimeout(function() {
-      var now = Date.now();
-      if (now - lastLoadTime < 500) return; // Prevent rapid fire
-      
+  // ═══ INFINITE SCROLL — FIXED ═══
+  var scrollTimer;
+  window.addEventListener('scroll',function(){
+    if(loading||!hasMore)return;
+    if(scrollTimer) clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function(){
       var scrollPos = window.scrollY + window.innerHeight;
-      var pageHeight = document.documentElement.scrollHeight || document.body.offsetHeight;
-      
-      // Trigger when 800px from bottom
-      if (scrollPos > pageHeight - 800) {
-        lastLoadTime = now;
-        load();
-      }
-    }, 100);
-  }, { passive: true });
+      var pageHeight = document.documentElement.scrollHeight;
+      if(scrollPos > pageHeight - 1200){ load(); }
+    }, 150);
+  },{passive:true});
 
-  // Also check on window resize
-  window.addEventListener('resize', function() {
-    if (loading || !hasMore) return;
-    var scrollPos = window.scrollY + window.innerHeight;
-    var pageHeight = document.documentElement.scrollHeight || document.body.offsetHeight;
-    if (scrollPos > pageHeight - 800) load();
-  }, { passive: true });
-
-  // ─── Search ───
+  // Search
   var sT;
   function showClear() { if (siClear) siClear.style.display = 'flex'; }
   function hideClear() { if (siClear) siClear.style.display = 'none'; }
-  
   if (siClear) {
     siClear.addEventListener('click', function() {
-      searchIn.value = '';
-      hideClear();
+      searchIn.value = ''; hideClear();
       if (sdd) { sdd.innerHTML = ''; sdd.classList.remove('open'); }
       searchIn.focus();
     });
   }
-  
   async function performSearch(q) {
-    if (!q || q.length < 1) {
-      if (sdd) { sdd.innerHTML = ''; sdd.classList.remove('open'); }
-      return;
-    }
-    if (sdd) {
-      sdd.innerHTML = '<div class="sdd-loading"><div class="ld-spinner"></div><span>Searching...</span></div>';
-      sdd.classList.add('open');
-    }
-    
-    var localMatches = allAnime.map(function(a) {
-      return { anime: a, score: fuzzyScore(q, a.title) };
-    }).filter(function(x) { return x.score > 0; })
-      .sort(function(a, b) { return b.score - a.score; }).slice(0, 5);
-    
+    if (!q || q.length < 1) { if (sdd) { sdd.innerHTML = ''; sdd.classList.remove('open'); } return; }
+    if (sdd) { sdd.innerHTML = '<div class="sdd-loading"><div class="ld-spinner"></div><span>Searching...</span></div>'; sdd.classList.add('open'); }
+    var localMatches = allAnime.map(function(a) { return { anime: a, score: fuzzyScore(q, a.title) }; }).filter(function(x) { return x.score > 0; }).sort(function(a, b) { return b.score - a.score; }).slice(0, 5);
     var apiResults = [];
-    try {
-      var r = await fetch('/api/anime?action=search&q=' + encodeURIComponent(q));
-      var j = await r.json();
-      if (j.success && j.anime) apiResults = j.anime;
-    } catch(e) {}
-    
-    var seen = {};
-    var combined = [];
-    localMatches.forEach(function(m) {
-      if (!seen[m.anime.id]) {
-        seen[m.anime.id] = true;
-        combined.push(m.anime);
-      }
-    });
-    apiResults.forEach(function(a) {
-      if (!seen[a.id]) {
-        seen[a.id] = true;
-        combined.push(a);
-      }
-    });
-    
-    var scored = combined.map(function(a) {
-      return { anime: a, score: fuzzyScore(q, a.title) };
-    }).sort(function(a, b) { return b.score - a.score; });
-    
+    try { var r = await fetch('/api/anime?action=search&q=' + encodeURIComponent(q)); var j = await r.json(); if (j.success && j.anime) apiResults = j.anime; } catch(e) {}
+    var seen = {}; var combined = [];
+    localMatches.forEach(function(m) { if (!seen[m.anime.id]) { seen[m.anime.id] = true; combined.push(m.anime); } });
+    apiResults.forEach(function(a) { if (!seen[a.id]) { seen[a.id] = true; combined.push(a); } });
+    var scored = combined.map(function(a) { return { anime: a, score: fuzzyScore(q, a.title) }; }).sort(function(a, b) { return b.score - a.score; });
     var top = scored.slice(0, 8);
-    
     if (sdd) {
       if (top.length === 0) {
-        sdd.innerHTML = '<div class="hsr-empty"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg><div><div class="hsr-empty-t">No anime found for "' + esc(q) + '"</div><div class="hsr-empty-s">Try a different spelling</div></div></div>';
+        sdd.innerHTML = '<div class="sdd-empty" style="display:flex;align-items:center;gap:12px;padding:20px;color:var(--text-muted);"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg><div><div style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:.9rem;font-weight:700;color:var(--text-primary);margin-bottom:2px;">No anime found for "' + esc(q) + '"</div><div style="font-family:\'JetBrains Mono\',monospace;font-size:.7rem;opacity:.7;">Try a different spelling</div></div></div>';
       } else {
         var html = top.map(function(m) {
           var a = m.anime;
@@ -856,427 +587,78 @@ const news    = sortedPosts.slice(4, 8);
       sdd.classList.add('open');
     }
   }
-  
   if (searchIn) {
     searchIn.addEventListener('input', function() {
-      clearTimeout(sT);
-      var q = searchIn.value.trim();
+      clearTimeout(sT); var q = searchIn.value.trim();
       if (q) showClear(); else hideClear();
       if (!q) { if (sdd) { sdd.innerHTML = ''; sdd.classList.remove('open'); } return; }
       sT = setTimeout(function() { performSearch(q); }, 200);
     });
     searchIn.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        var q = searchIn.value.trim();
-        if (q) {
-          var firstResult = sdd && sdd.querySelector('.sd-i:not(.sd-more):not(.hsr-empty):not(.sdd-loading)');
-          if (firstResult) window.location.href = firstResult.href;
-          else window.location.href = '/search?q=' + encodeURIComponent(q);
-        }
-      }
+      if (e.key === 'Enter') { var q = searchIn.value.trim(); if (q) { var firstResult = sdd && sdd.querySelector('.sd-i:not(.sd-more):not(.sdd-empty)'); if (firstResult) window.location.href = firstResult.href; else window.location.href = '/search?q=' + encodeURIComponent(q); } }
       if (e.key === 'Escape' && sdd) { sdd.classList.remove('open'); searchIn.blur(); }
     });
-    document.addEventListener('click', function(e) {
-      if (sdd && !e.target.closest('.search-inline')) sdd.classList.remove('open');
-    });
-    searchIn.addEventListener('focus', function() {
-      if (searchIn.value.trim() && sdd && sdd.innerHTML) sdd.classList.add('open');
-    });
+    document.addEventListener('click', function(e) { if (sdd && !e.target.closest('.search-inline')) sdd.classList.remove('open'); });
+    searchIn.addEventListener('focus', function() { if (searchIn.value.trim() && sdd && sdd.innerHTML) sdd.classList.add('open'); });
   }
 
-  // Start: load products then anime
   loadProducts().then(load);
 })();
 </script>
 
 <style>
-  .arrivals-block { position: relative; }
-  .arrivals-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-    gap: 1.25rem;
-    flex-wrap: wrap;
-  }
-  .arrivals-title-wrap {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  .arrivals-bar {
-    width: 4px;
-    height: 44px;
-    background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
-    border-radius: 3px;
-    box-shadow: 0 0 15px rgba(192,132,252,.6);
-    animation: bg 3s ease infinite;
-  }
-  @keyframes bg {
-    0%, 100% { box-shadow: 0 0 15px rgba(192,132,252,.6); }
-    50% { box-shadow: 0 0 25px rgba(232,121,249,.8); }
-  }
-  .arrivals-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: .6rem;
-    font-weight: 700;
-    letter-spacing: .15em;
-    color: #c084fc;
-    margin-bottom: 4px;
-  }
-  .arrivals-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #ef4444;
-    box-shadow: 0 0 8px #ef4444;
-    animation: lb 1.5s ease infinite;
-  }
-  @keyframes lb { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
-  .arrivals-title {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: clamp(1.5rem, 2.8vw, 2.2rem);
-    font-weight: 800;
-    margin: 0;
-    letter-spacing: -.03em;
-    line-height: 1;
-  }
-  .arrivals-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  
-  .sdd {
-    position: absolute;
-    top: calc(100% + 10px);
-    left: 0;
-    right: 0;
-    background: var(--bg-elevated);
-    border: 1px solid rgba(192,132,252,.3);
-    border-radius: 16px;
-    padding: 8px;
-    max-height: 500px;
-    overflow-y: auto;
-    box-shadow: 0 25px 60px rgba(0,0,0,.3), 0 0 30px rgba(192,132,252,.15);
-    backdrop-filter: blur(20px);
-    z-index: 100;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-8px);
-    transition: all .25s ease;
-  }
-  [data-theme="dark"] .sdd { background: rgba(15, 8, 35, 0.98); }
-  .sdd.open { opacity: 1; visibility: visible; transform: translateY(0); }
-  .sdd-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 2rem;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: .75rem;
-  }
-  
-  .arrivals-count {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    padding: 7px 14px;
-    background: rgba(192,132,252,.1);
-    border: 1px solid rgba(192,132,252,.25);
-    border-radius: 999px;
-    backdrop-filter: blur(10px);
-  }
-  .arrivals-count-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.1rem;
-    font-weight: 800;
-    background: var(--grad);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    min-width: 22px;
-    display: inline-block;
-    text-align: center;
-  }
-  .arrivals-count-lbl {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: .62rem;
-    font-weight: 700;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-  }
-  
-  .cat-tabs {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 1.5rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .cat-tabs::-webkit-scrollbar { display: none; }
-  .cat-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: rgba(192, 132, 252, 0.05);
-    border: 1px solid var(--border-color);
-    border-radius: 999px;
-    color: var(--text-secondary);
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: .78rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all .25s ease;
-    white-space: nowrap;
-    backdrop-filter: blur(10px);
-  }
-  .cat-tab:hover {
-    background: rgba(192,132,252,.15);
-    border-color: rgba(192,132,252,.4);
-    color: var(--text-primary);
-    transform: translateY(-1px);
-  }
-  .cat-tab.active {
-    background: var(--grad);
-    border-color: transparent;
-    color: #fff;
-    box-shadow: 0 6px 20px rgba(192,132,252,.4);
-  }
-  .cat-tab-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #ef4444;
-    box-shadow: 0 0 6px #ef4444;
-    animation: lb 1.5s ease infinite;
-  }
-  .cat-tab.active .cat-tab-dot {
-    background: #fff;
-    box-shadow: 0 0 6px #fff;
-  }
-  
-  .loading-more {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 2rem 0;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: .85rem;
-  }
-  .ld-spinner {
-    width: 22px;
-    height: 22px;
-    border: 2px solid rgba(192,132,252,.2);
-    border-top-color: #c084fc;
-    border-radius: 50%;
-    animation: sp .8s linear infinite;
-  }
-  @keyframes sp { to { transform: rotate(360deg); } }
-  
-  .end-message {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 2rem;
-    margin-top: 2rem;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: .82rem;
-    background: rgba(192,132,252,.04);
-    border: 1px dashed rgba(192,132,252,.2);
-    border-radius: 14px;
-  }
-  .end-message svg { color: #10b981; }
-  
-  .error-msg {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--text-secondary);
-    background: rgba(239,68,68,.06);
-    border: 1px dashed rgba(239,68,68,.3);
-    border-radius: 16px;
-    margin-top: 2rem;
-  }
-  .err-icon {
-    color: #ef4444;
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: center;
-  }
-  .error-msg h3 {
-    font-size: 1.2rem;
-    margin: 0 0 .5rem;
-    color: var(--text-primary);
-    font-family: 'Bricolage Grotesque', sans-serif;
-  }
-  .error-msg p {
-    font-size: .88rem;
-    margin: 0 0 1.5rem;
-  }
-  .err-retry {
-    padding: 10px 24px;
-    background: var(--grad);
-    color: #fff;
-    border: none;
-    border-radius: 999px;
-    font-family: inherit;
-    font-size: .85rem;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(192,132,252,.4);
-  }
-  
-  .novelty-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.25rem;
-  }
-  .novelty-card {
-    display: block;
-    background: var(--bg-card);
-    border-radius: 20px;
-    overflow: hidden;
-    transition: transform .4s ease, box-shadow .4s ease;
-    text-decoration: none;
-    color: inherit;
-  }
-  .novelty-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(192,132,252,.15);
-  }
-  .nc-img {
-    position: relative;
-    aspect-ratio: 3/4;
-    overflow: hidden;
-  }
-  .nc-img img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform .6s ease;
-  }
-  .novelty-card:hover .nc-img img { transform: scale(1.08); }
-  .nc-ov {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,.5) 70%, rgba(0,0,0,.85) 100%);
-  }
-  .nc-ct { padding: 1rem 1.1rem 1.2rem; }
-  .nc-t {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 .4rem;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .nc-e {
-    font-size: .78rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  
-  .news-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem;
-  }
-  .news-card {
-    display: flex;
-    gap: 1rem;
-    background: var(--bg-card);
-    border-radius: 16px;
-    overflow: hidden;
-    padding: 1rem;
-    transition: transform .3s ease;
-    text-decoration: none;
-    color: inherit;
-  }
-  .news-card:hover {
-    transform: translateY(-3px);
-    background: var(--bg-card-hover);
-  }
-  .nw-img {
-    width: 120px;
-    min-width: 120px;
-    aspect-ratio: 1;
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .nw-img img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  .nw-ct {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-width: 0;
-  }
-  .nw-cat {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: .65rem;
-    font-weight: 700;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    background: var(--grad);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: .4rem;
-  }
-  .nw-t {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: .95rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin: 0 0 .4rem;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .nw-e {
-    font-size: .78rem;
-    color: var(--text-muted);
-    line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  
-  @media (max-width: 1024px) {
-    .novelty-grid { grid-template-columns: repeat(2, 1fr); }
-    .news-grid { grid-template-columns: 1fr; }
-  }
-  @media (max-width: 640px) {
-    .arrivals-header { flex-direction: column; align-items: flex-start; }
-    .arrivals-actions { width: 100%; }
-    .novelty-grid { grid-template-columns: repeat(2, 1fr); gap: .75rem; }
-    .news-card { padding: .75rem; }
-    .nw-img { width: 90px; min-width: 90px; }
-  }
+  .arrivals-block{position:relative}
+  .arrivals-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;gap:1.25rem;flex-wrap:wrap}
+  .arrivals-title-wrap{display:flex;align-items:center;gap:1rem}
+  .arrivals-bar{width:4px;height:44px;background:linear-gradient(180deg,#c084fc,#e879f9,#7dd3fc);border-radius:3px;box-shadow:0 0 15px rgba(192,132,252,.6);animation:bg 3s ease infinite}
+  @keyframes bg{0%,100%{box-shadow:0 0 15px rgba(192,132,252,.6)}50%{box-shadow:0 0 25px rgba(232,121,249,.8)}}
+  .arrivals-tag{display:inline-flex;align-items:center;gap:.4rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.15em;color:#c084fc;margin-bottom:4px}
+  .arrivals-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;box-shadow:0 0 8px #ef4444;animation:lb 1.5s ease infinite}
+  @keyframes lb{0%,100%{opacity:1}50%{opacity:.4}}
+  .arrivals-title{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(1.5rem,2.8vw,2.2rem);font-weight:800;margin:0;letter-spacing:-.03em;line-height:1}
+  .arrivals-actions{display:flex;align-items:center;gap:12px}
+  .sdd{position:absolute;top:calc(100% + 10px);left:0;right:0;background:rgba(15,8,35,.98);border:1px solid rgba(192,132,252,.3);border-radius:16px;padding:8px;max-height:500px;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.6),0 0 30px rgba(192,132,252,.15);backdrop-filter:blur(20px);z-index:100;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .25s ease}
+  .sdd.open{opacity:1;visibility:visible;transform:translateY(0)}
+  .sdd-loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:2rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:.75rem}
+  .arrivals-count{display:flex;align-items:baseline;gap:6px;padding:7px 14px;background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.25);border-radius:999px;backdrop-filter:blur(10px)}
+  .arrivals-count-num{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;min-width:22px;display:inline-block;text-align:center}
+  .arrivals-count-lbl{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
+  .cat-tabs{display:flex;gap:8px;margin-bottom:1.5rem;overflow-x:auto;scrollbar-width:none}
+  .cat-tabs::-webkit-scrollbar{display:none}
+  .cat-tab{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(28,15,61,.5);border:1px solid var(--border-color);border-radius:999px;color:var(--text-secondary);font-family:'Bricolage Grotesque',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .25s ease;white-space:nowrap;backdrop-filter:blur(10px)}
+  .cat-tab:hover{background:rgba(192,132,252,.15);border-color:rgba(192,132,252,.4);color:var(--text-primary);transform:translateY(-1px)}
+  .cat-tab.active{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 6px 20px rgba(192,132,252,.4)}
+  .cat-tab-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;box-shadow:0 0 6px #ef4444;animation:lb 1.5s ease infinite}
+  .cat-tab.active .cat-tab-dot{background:#fff;box-shadow:0 0 6px #fff}
+  .loading-more{display:flex;align-items:center;justify-content:center;gap:12px;padding:2rem 0;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:.85rem}
+  .ld-spinner{width:22px;height:22px;border:2px solid rgba(192,132,252,.2);border-top-color:#c084fc;border-radius:50%;animation:sp .8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .end-message{display:none;align-items:center;justify-content:center;gap:10px;padding:2rem;margin-top:2rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:.82rem;background:rgba(192,132,252,.04);border:1px dashed rgba(192,132,252,.2);border-radius:14px}
+  .end-message svg{color:#10b981}
+  .error-msg{text-align:center;padding:3rem 1rem;color:var(--text-secondary);background:rgba(239,68,68,.06);border:1px dashed rgba(239,68,68,.3);border-radius:16px;margin-top:2rem}
+  .err-icon{color:#ef4444;margin-bottom:1rem;display:flex;justify-content:center}
+  .error-msg h3{font-size:1.2rem;margin:0 0 .5rem;color:var(--text-primary);font-family:'Bricolage Grotesque',sans-serif}
+  .error-msg p{font-size:.88rem;margin:0 0 1.5rem}
+  .err-retry{padding:10px 24px;background:var(--grad);color:#fff;border:none;border-radius:999px;font-family:inherit;font-size:.85rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(192,132,252,.4)}
+  .novelty-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem}
+  .novelty-card{display:block;background:var(--bg-card);border-radius:20px;overflow:hidden;transition:transform .4s ease,box-shadow .4s ease;text-decoration:none;color:inherit}
+  .novelty-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(192,132,252,.15)}
+  .nc-img{position:relative;aspect-ratio:3/4;overflow:hidden}
+  .nc-img img{width:100%;height:100%;object-fit:cover;transition:transform .6s ease}
+  .novelty-card:hover .nc-img img{transform:scale(1.08)}
+  .nc-ov{position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,.5) 70%,rgba(0,0,0,.85) 100%)}
+  .nc-ct{padding:1rem 1.1rem 1.2rem}
+  .nc-t{font-family:'Bricolage Grotesque',sans-serif;font-size:1rem;font-weight:700;color:var(--text-primary);margin:0 0 .4rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .nc-e{font-size:.78rem;color:var(--text-muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .news-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.25rem}
+  .news-card{display:flex;gap:1rem;background:var(--bg-card);border-radius:16px;overflow:hidden;padding:1rem;transition:transform .3s ease;text-decoration:none;color:inherit}
+  .news-card:hover{transform:translateY(-3px);background:var(--bg-card-hover)}
+  .nw-img{width:120px;min-width:120px;aspect-ratio:1;border-radius:12px;overflow:hidden}
+  .nw-img img{width:100%;height:100%;object-fit:cover}
+  .nw-ct{flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0}
+  .nw-cat{font-family:'Bricolage Grotesque',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.4rem}
+  .nw-t{font-family:'Bricolage Grotesque',sans-serif;font-size:.95rem;font-weight:700;color:var(--text-primary);margin:0 0 .4rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .nw-e{font-size:.78rem;color:var(--text-muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  @media(max-width:1024px){.novelty-grid{grid-template-columns:repeat(2,1fr)}.news-grid{grid-template-columns:1fr}}
+  @media(max-width:640px){.arrivals-header{flex-direction:column;align-items:flex-start}.arrivals-actions{width:100%}.novelty-grid{grid-template-columns:repeat(2,1fr);gap:.75rem}.news-card{padding:.75rem}.nw-img{width:90px;min-width:90px}}
 </style>
