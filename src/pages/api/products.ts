@@ -95,9 +95,9 @@ const PRODUCTS: Product[] = [
       'Includes display base',
       'Perfect for Chainsaw Man collectors',
     ],
-    image: 'https://m.media-amazon.com/images/I/71E0Y3Z8ZDL._AC_SL1500_.jpg',
+    image: 'https://m.media-amazon.com/images/I/71E0Y3Z8ZDL._AC_UY327_FMwebp_QL65_.jpg',
     images: [
-      'https://m.media-amazon.com/images/I/71E0Y3Z8ZDL._AC_SL1500_.jpg',
+      'https://m.media-amazon.com/images/I/71E0Y3Z8ZDL._AC_UY327_FMwebp_QL65_.jpg',
     ],
     video: null,
     category: 'figures',
