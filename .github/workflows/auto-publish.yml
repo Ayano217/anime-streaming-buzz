@@ -40,6 +40,9 @@ jobs:
           pip install --upgrade pip
           pip install feedparser requests python-slugify python-dateutil
 
+      - name: Fetch fresh anime data
+        run: python scripts/fetch_anime.py
+
       - name: Fetch anime background images
         run: python scripts/fetch_bg_images.py
         continue-on-error: true
@@ -63,7 +66,10 @@ jobs:
             exit 0
           fi
           
-          git commit -m "auto: update backgrounds, videos, articles"
+          ANIME_COUNT=$(python -c "import json; d=json.load(open('public/data/anime-static.json')); print(d.get('total', '?'))" 2>/dev/null || echo "?")
+          TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M UTC")
+          
+          git commit -m "auto: update anime data (${ANIME_COUNT} titles), backgrounds, videos, articles [${TIMESTAMP}]"
           
           # Try push with retry logic
           for i in 1 2 3; do
