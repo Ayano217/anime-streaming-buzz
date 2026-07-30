@@ -1,5 +1,13 @@
 {
-  "updated": "2025-01-15",
+  "updated": "2026-07-30T12:45:33Z",
+  "total": 12,
+  "categories": {
+    "airing": 0,
+    "top": 0,
+    "popular": 0,
+    "upcoming": 0,
+    "movies": 0
+  },
   "anime": [
     {
       "id": "1",
@@ -9,9 +17,16 @@
       "episodes": 75,
       "status": "finished",
       "synopsis": "Humanity fights for survival against giant humanoid Titans that devour humans without reason.",
-      "genres": ["Action", "Drama", "Fantasy"],
+      "genres": [
+        "Action",
+        "Drama",
+        "Fantasy"
+      ],
       "year": 2013,
-      "slug": "attack-on-titan"
+      "slug": "attack-on-titan",
+      "categories": [
+        "archive"
+      ]
     },
     {
       "id": "2",
@@ -21,9 +36,16 @@
       "episodes": 44,
       "status": "current",
       "synopsis": "Tanjiro becomes a demon slayer to save his sister Nezuko who was turned into a demon.",
-      "genres": ["Action", "Supernatural", "Historical"],
+      "genres": [
+        "Action",
+        "Supernatural",
+        "Historical"
+      ],
       "year": 2019,
-      "slug": "demon-slayer"
+      "slug": "demon-slayer",
+      "categories": [
+        "archive"
+      ]
     },
     {
       "id": "3",
@@ -33,9 +55,16 @@
       "episodes": 47,
       "status": "current",
       "synopsis": "Yuji Itadori swallows a cursed talisman and enters the dangerous world of jujutsu sorcerers.",
-      "genres": ["Action", "Supernatural", "School"],
+      "genres": [
+        "Action",
+        "Supernatural",
+        "School"
+      ],
       "year": 2020,
-      "slug": "jujutsu-kaisen"
+      "slug": "jujutsu-kaisen",
+      "categories": [
+        "archive"
+      ]
     },
     {
       "id": "4",
@@ -45,9 +74,16 @@
       "episodes": 1000,
       "status": "current",
       "synopsis": "Monkey D. Luffy and his Straw Hat Pirates search for the ultimate treasure known as One Piece.",
-      "genres": ["Adventure", "Comedy", "Fantasy"],
+      "genres": [
+        "Adventure",
+        "Comedy",
+        "Fantasy"
+      ],
       "year": 1999,
-      "slug": "one-piece"
+      "slug": "one-piece",
+      "categories": [
+        "archive"
+      ]
     },
     {
       "id": "5",
@@ -57,9 +93,16 @@
       "episodes": 138,
       "status": "current",
       "synopsis": "In a world of superpowers, a quirkless boy dreams of becoming the greatest hero.",
-      "genres": ["Action", "Superhero", "School"],
+      "genres": [
+        "Action",
+        "Superhero",
+        "School"
+      ],
       "year": 2016,
-      "slug": "my-hero-academia"
+      "slug": "my-hero-academia",
+      "categories": [
+        "archive"
+      ]
     },
     {
       "id": "6",
@@ -69,9 +112,16 @@
       "episodes": 12,
       "status": "finished",
       "synopsis": "Denji merges with his chainsaw devil pet Pochita and becomes a devil hunter.",
-      "genres": ["Action", "Horror", "Supernatural"],
+      "genres": [
+        "Action",
+        "Horror",
+        "Supernatural"
+      ],
       "year": 2022,
-      "slug": "chainsaw-man"
+      "slug": "chainsaw-man",
+      "categories": [
+        "archive"
+      ]
     },
     {
       "id": "7",
@@ -81,9 +131,16 @@
       "episodes": 25,
       "status": "current",
       "synopsis": "A spy, an assassin, and a telepath form a fake family for a secret mission.",
-      "genres": ["Comedy", "Action", "Slice of Life"],
+      "genres": [
+        "Comedy",
+        "Action",
+        "Slice of Life"
+      ],
       "year": 2022,
-      "slug": "spy-x-family"
+      "slug": "spy-x-family",
+      "categories": [
+        "archive"
+      ]
     },
     {
       "id": "8",
@@ -93,9 +150,16 @@
       "episodes": 28,
       "status": "finished",
       "synopsis": "An elven mage reflects on her adventures after her human companions have passed away.",
-      "genres": ["Fantasy", "Drama", "Adventure"],
+      "genres": [
+        "Fantasy",
+        "Drama",
+        "Adventure"
+      ],
       "year": 2023,
-      "slug": "frieren-beyond-journeys-end"
+      "slug": "frieren-beyond-journeys-end",
+      "categories": [
+        "archive"
+      ]
     },
     {
       "id": "9",
@@ -105,9 +169,16 @@
       "episodes": 12,
       "status": "finished",
       "synopsis": "The weakest hunter gains a mysterious system that lets him level up infinitely.",
-      "genres": ["Action", "Fantasy", "Adventure"],
+      "genres": [
+        "Action",
+        "Fantasy",
+        "Adventure"
+      ],
       "year": 2024,
-      "slug": "solo-leveling"
+      "slug": "solo-leveling",
+      "categories": [
+        "archive"
+      ]
     },
     {
       "id": "10",
@@ -117,9 +188,16 @@
       "episodes": 24,
       "status": "finished",
       "synopsis": "Saitama, a hero who can defeat any enemy with a single punch, searches for a worthy opponent.",
-      "genres": ["Action", "Comedy", "Superhero"],
+      "genres": [
+        "Action",
+        "Comedy",
+        "Superhero"
+      ],
       "year": 2015,
-      "slug": "one-punch-man"
+      "slug": "one-punch-man",
+      "categories": [
+        "archive"
+      ]
     },
     {
       "id": "11",
@@ -129,9 +207,16 @@
       "episodes": 39,
       "status": "current",
       "synopsis": "Ichigo Kurosaki returns to face the Quincy army led by Yhwach.",
-      "genres": ["Action", "Supernatural", "Adventure"],
+      "genres": [
+        "Action",
+        "Supernatural",
+        "Adventure"
+      ],
       "year": 2022,
-      "slug": "bleach-thousand-year-blood-war"
+      "slug": "bleach-thousand-year-blood-war",
+      "categories": [
+        "archive"
+      ]
     },
     {
       "id": "12",
@@ -141,9 +226,16 @@
       "episodes": 12,
       "status": "current",
       "synopsis": "A boy who believes in ghosts and a girl who believes in aliens face supernatural threats.",
-      "genres": ["Action", "Comedy", "Supernatural"],
+      "genres": [
+        "Action",
+        "Comedy",
+        "Supernatural"
+      ],
       "year": 2024,
-      "slug": "dandadan"
+      "slug": "dandadan",
+      "categories": [
+        "archive"
+      ]
     }
   ]
 }
