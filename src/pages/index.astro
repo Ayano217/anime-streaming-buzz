@@ -26,7 +26,7 @@ const news    = sortedPosts.slice(4, 8);
           <div>
             <div class="arrivals-tag">
               <span class="arrivals-dot"></span>
-              <span>FRESH · UPDATED DAILY</span>
+              <span>FRESH · UPDATED EVERY 3H</span>
             </div>
             <h2 class="arrivals-title"><span class="grad-text">New Arrivals</span></h2>
           </div>
@@ -60,9 +60,9 @@ const news    = sortedPosts.slice(4, 8);
 
       <div class="error-msg" id="errorMsg" style="display:none;">
         <div class="err-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></div>
-        <h3>Loading anime feed...</h3>
-        <p id="errorSub">Trying multiple sources.</p>
-        <button onclick="location.reload()" class="err-retry">Refresh Page</button>
+        <h3>Oops! Something went wrong</h3>
+        <p id="errorSub">We're having trouble loading anime right now.</p>
+        <button onclick="location.reload()" class="err-retry">Try Again</button>
       </div>
     </div>
   </section>
@@ -103,10 +103,32 @@ const news    = sortedPosts.slice(4, 8);
 </BaseLayout>
 
 <style is:global>
-  @keyframes atNaCardIn { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes atNaPlayRing { 0%{transform:scale(1);opacity:.9} 100%{transform:scale(1.7);opacity:0} }
+  /* ═══ FEED CONTAINER ═══ */
+  .feed-wrap {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    min-height: 300px;
+  }
+  .feed-wrap .full-row { grid-column: 1 / -1; }
   
-  /* ═══ NEON — Desktop only, mobile gets static glow ═══ */
+  @media (max-width: 1200px) {
+    .feed-wrap { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 768px) {
+    .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 12px; min-height: 200px; }
+  }
+  @media (max-width: 480px) {
+    .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  }
+  
+  /* ═══ SMOOTH CARD ENTRANCE (no jarring animation on reload) ═══ */
+  @keyframes atCardFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* ═══ Neon Pulse — Desktop only ═══ */
   @keyframes atNeonPulse {
     0%, 100% { 
       box-shadow: 
@@ -123,24 +145,8 @@ const news    = sortedPosts.slice(4, 8);
         0 6px 20px rgba(0, 0, 0, 0.5);
     }
   }
-  
-  /* ═══ FEED CONTAINER ═══ */
-  .feed-wrap {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-  }
-  .feed-wrap .full-row { grid-column: 1 / -1; }
-  
-  @media (max-width: 1200px) {
-    .feed-wrap { grid-template-columns: repeat(3, 1fr); }
-  }
-  @media (max-width: 768px) {
-    .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  }
-  @media (max-width: 480px) {
-    .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  }
+
+  @keyframes atNaPlayRing { 0%{transform:scale(1);opacity:.9} 100%{transform:scale(1.7);opacity:0} }
   
   /* ═══ ANIME CARD ═══ */
   .at-na-card { 
@@ -149,21 +155,21 @@ const news    = sortedPosts.slice(4, 8);
     text-decoration: none;
     color: inherit;
     display: block;
-    animation: atNaCardIn 0.5s ease backwards;
-    /* GPU acceleration hint — smoother scroll */
+    opacity: 0;
+    animation: atCardFadeIn 0.35s ease forwards;
     transform: translateZ(0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    will-change: transform;
   }
   
-  /* Neon thumb — default static glow, animation added by JS only when visible */
   .at-na-thumb {
     position: relative;
     width: 100%;
-    padding-top: 56.25%;
+    padding-top: 140%;
     border-radius: 14px;
     overflow: hidden;
-    background: #0a0517;
+    background: #0d0520;
     border: 1px solid rgba(232, 121, 249, 0.45);
     box-shadow: 
       0 0 15px rgba(232, 121, 249, 0.4),
@@ -173,7 +179,6 @@ const news    = sortedPosts.slice(4, 8);
     transition: transform 0.35s ease, border-color 0.35s ease;
   }
   
-  /* Only animate when JS adds .neon-live class (visible cards on desktop) */
   .at-na-thumb.neon-live {
     animation: atNeonPulse 3s ease-in-out infinite;
   }
@@ -199,25 +204,22 @@ const news    = sortedPosts.slice(4, 8);
     background-clip: text;
   }
   
-  /* ═══ MOBILE: kill all animations, keep static glow only ═══ */
+  /* ═══ MOBILE: static glow only ═══ */
   @media (max-width: 768px) {
     .at-na-thumb.neon-live {
-      animation: none !important; /* NO breathing on mobile */
+      animation: none !important;
     }
     .at-na-thumb {
-      /* Slightly softer static glow to save GPU */
       box-shadow: 
         0 0 10px rgba(232, 121, 249, 0.35),
         0 0 18px rgba(192, 132, 252, 0.22),
         0 0 0 1px rgba(232, 121, 249, 0.4),
         0 4px 12px rgba(0, 0, 0, 0.4) !important;
     }
-    /* Play icon always slightly visible on mobile (no hover) */
     .at-na-card .at-na-play { 
       opacity: 0.85 !important; 
       transform: translate(-50%,-50%) scale(0.75) !important; 
     }
-    /* Remove play icon ring animation on mobile too */
     .at-na-play > div:first-child,
     .at-na-play > div:nth-child(2) {
       animation: none !important;
@@ -225,20 +227,21 @@ const news    = sortedPosts.slice(4, 8);
     }
   }
   
-  /* Reduce motion for accessibility + battery */
   @media (prefers-reduced-motion: reduce) {
     .at-na-thumb.neon-live { animation: none !important; }
+    .at-na-card { animation: none !important; opacity: 1 !important; }
     * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
   
-  /* ═══ INLINE BIG PRODUCT (NO neon) ═══ */
+  /* ═══ INLINE BIG PRODUCT ═══ */
   .at-inline-product {
     position: relative;
     display: block;
     text-decoration: none;
     color: inherit;
     cursor: pointer;
-    animation: atNaCardIn 0.5s ease backwards;
+    opacity: 0;
+    animation: atCardFadeIn 0.35s ease forwards;
     transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
     transform: translateZ(0);
   }
@@ -265,7 +268,8 @@ const news    = sortedPosts.slice(4, 8);
   .mini-strip {
     grid-column: 1 / -1;
     padding: 10px 0;
-    animation: atNaCardIn 0.5s ease backwards;
+    opacity: 0;
+    animation: atCardFadeIn 0.35s ease forwards;
     position: relative;
   }
   .mini-strip-header {
@@ -380,6 +384,47 @@ const news    = sortedPosts.slice(4, 8);
   @media (max-width: 480px) {
     .mini-card { width: 155px; }
   }
+  
+  /* ═══ Initial loading skeleton ═══ */
+  .feed-skeleton {
+    display: contents;
+  }
+  .skel-card {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .skel-thumb {
+    width: 100%;
+    padding-top: 140%;
+    border-radius: 14px;
+    background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%);
+    background-size: 200% 100%;
+    animation: skelShimmer 1.5s ease-in-out infinite;
+  }
+  .skel-title {
+    margin-top: 9px;
+    height: 14px;
+    width: 80%;
+    border-radius: 6px;
+    background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%);
+    background-size: 200% 100%;
+    animation: skelShimmer 1.5s ease-in-out infinite;
+    animation-delay: 0.1s;
+  }
+  .skel-sub {
+    margin-top: 5px;
+    height: 10px;
+    width: 50%;
+    border-radius: 4px;
+    background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%);
+    background-size: 200% 100%;
+    animation: skelShimmer 1.5s ease-in-out infinite;
+    animation-delay: 0.2s;
+  }
+  @keyframes skelShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
 </style>
 
 <script is:inline>
@@ -402,8 +447,20 @@ const news    = sortedPosts.slice(4, 8);
       sdd = document.getElementById('searchDD'),
       siClear = document.getElementById('siClear');
 
-  // ═══ SMART NEON: only animate visible cards on desktop ═══
-  // Mobile detection — no animation at all on mobile
+  // ═══ Show skeleton immediately (no blank screen) ═══
+  function showSkeleton() {
+    var count = window.innerWidth <= 768 ? 6 : 8;
+    var html = '';
+    for (var i = 0; i < count; i++) {
+      html += '<div class="skel-card"><div class="skel-thumb"></div><div class="skel-title"></div><div class="skel-sub"></div></div>';
+    }
+    feed.innerHTML = html;
+  }
+  
+  // Show skeleton immediately on page load
+  showSkeleton();
+
+  // ═══ SMART NEON: only on desktop visible cards ═══
   var IS_MOBILE = window.matchMedia('(max-width: 768px)').matches;
   
   var neonObserver = null;
@@ -459,7 +516,7 @@ const news    = sortedPosts.slice(4, 8);
     return matches >= query.length * 0.7 ? 50 : 0;
   }
 
-  // ─── Anime card (thumb gets static glow; JS adds .neon-live on desktop when visible) ───
+  // ─── Anime card ───
   function animeCard(a, i) {
     var t = a.title || 'Unknown', img = a.image || '', sl = a.slug || 'anime-' + a.id,
         sc = a.score ? Number(a.score).toFixed(1) : '',
@@ -467,7 +524,9 @@ const news    = sortedPosts.slice(4, 8);
         ep = a.episodes && a.episodes > 0 ? a.episodes : '',
         g = (a.genres && a.genres.length) ? a.genres[0] : '',
         nw = a.status === 'current';
-    var animDelay = ((i % 12) * 25) + 'ms';
+    
+    // Stagger delay: small, based on position in current batch
+    var delay = ((i % 8) * 40) + 'ms';
     
     var imgStyle = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.5s ease, filter 0.3s ease;';
     var imgHtml = img
@@ -477,7 +536,7 @@ const news    = sortedPosts.slice(4, 8);
     var el = document.createElement('a');
     el.href = '/anime/' + sl;
     el.className = 'at-na-card';
-    el.style.cssText = 'animation-delay:' + animDelay + ';';
+    el.style.animationDelay = delay;
     
     el.innerHTML =
       '<div class="at-na-thumb">' +
@@ -504,7 +563,6 @@ const news    = sortedPosts.slice(4, 8);
         (g ? '<div style="display:inline-block;margin-top:3px;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:700;color:#c084fc;letter-spacing:0.05em;text-transform:uppercase;">' + esc(g) + '</div>' : '') +
       '</div>';
     
-    // Attach IntersectionObserver only on desktop
     if (neonObserver) {
       neonObserver.observe(el);
     }
@@ -514,20 +572,20 @@ const news    = sortedPosts.slice(4, 8);
 
   // ─── Big product card ───
   function bigProductCard(p, i) {
-    var animDelay = ((i % 12) * 25) + 'ms';
+    var delay = ((i % 8) * 40) + 'ms';
     var badge = p.badge || 'SPONSORED';
     
     var el = document.createElement('a');
     el.href = '/product/' + encodeURIComponent(p.id);
     el.className = 'at-inline-product';
-    el.style.cssText = 'display:block;animation-delay:' + animDelay + ';';
+    el.style.animationDelay = delay;
     
     var imgHtml = p.image
       ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="at-ip-img" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.5s ease, filter 0.3s ease;" onerror="this.style.opacity=\'0.3\';" />'
       : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2.5rem;">🛍️</div>';
     
     el.innerHTML =
-      '<div class="at-ip-thumb" style="position:relative;width:100%;padding-top:56.25%;border-radius:14px;overflow:hidden;background:#0a0517;border:1px solid rgba(232,121,249,0.3);box-shadow:0 6px 15px rgba(0,0,0,0.35);transition:all 0.35s ease;">' +
+      '<div class="at-ip-thumb" style="position:relative;width:100%;padding-top:140%;border-radius:14px;overflow:hidden;background:#0d0520;border:1px solid rgba(232,121,249,0.3);box-shadow:0 6px 15px rgba(0,0,0,0.35);transition:all 0.35s ease;">' +
         imgHtml +
         '<div class="at-ip-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.22),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
         '<div class="at-ip-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(10,5,23,0.9) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
@@ -558,7 +616,7 @@ const news    = sortedPosts.slice(4, 8);
       : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2rem;">🛍️</div>';
     
     return '<a href="/product/' + esc(p.id) + '" class="mini-card">' +
-      '<div class="mini-thumb" style="position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#0a0517;border:1px solid rgba(192,132,252,0.3);box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:all 0.3s ease;">' +
+      '<div class="mini-thumb" style="position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;background:#0d0520;border:1px solid rgba(192,132,252,0.3);box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:all 0.3s ease;">' +
         imgHtml +
         '<div class="mini-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.2),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
         '<div style="position:absolute;top:5px;left:5px;padding:2px 7px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.06em;border-radius:4px;z-index:6;">' + esc(badge) + '</div>' +
@@ -607,7 +665,7 @@ const news    = sortedPosts.slice(4, 8);
       var j = await res.json();
       if (j.success && j.products) productPool = j.products;
     } catch(e) {
-      console.warn('Product pool load failed:', e.message);
+      console.warn('[products] Load failed:', e.message);
     }
   }
   
@@ -629,8 +687,11 @@ const news    = sortedPosts.slice(4, 8);
   async function load(){
     if(loading||!hasMore)return;
     loading=true;
-    if(pg===1){feed.innerHTML='<div style="grid-column:1/-1;display:flex;justify-content:center;padding:2rem;"><div class="ld-spinner"></div></div>';if(errMsg)errMsg.style.display='none';if(endMsg)endMsg.style.display='none';}
-    else{if(loadingEl)loadingEl.style.display='flex';}
+    
+    if(pg > 1){
+      if(loadingEl)loadingEl.style.display='flex';
+    }
+    // Page 1: skeleton is already showing
 
     try{
       var res=await fetch('/api/anime?action=list&category='+cat+'&page='+pg);
@@ -638,7 +699,11 @@ const news    = sortedPosts.slice(4, 8);
       var j=await res.json();
       if(!j.success)throw new Error(j.error||'fail');
       var items=(j.anime||[]).filter(function(a){if(!a.id||ids[a.id])return false;ids[a.id]=true;return true;});
-      if(pg===1)feed.innerHTML='';
+      
+      // First page: replace skeleton with real content
+      if(pg===1) feed.innerHTML='';
+      
+      if(errMsg)errMsg.style.display='none';
       
       items.forEach(function(a,i){
         total++;
@@ -662,10 +727,18 @@ const news    = sortedPosts.slice(4, 8);
       hasMore=j.hasNext!==false&&items.length>0;
       if(loadingEl)loadingEl.style.display='none';
       if(!hasMore && total > 20){if(endMsg)endMsg.style.display='flex';}
+      
+      pg++;
     }catch(e){
-      console.warn('Load fail:',e.message);
+      console.warn('[feed] Load fail:',e.message);
       if(loadingEl)loadingEl.style.display='none';
-      if(total===0){feed.innerHTML='';if(errMsg){errMsg.style.display='block';if(errSub)errSub.textContent='Anime database temporarily unavailable.';}}
+      if(total===0){
+        feed.innerHTML='';
+        if(errMsg){
+          errMsg.style.display='block';
+          if(errSub)errSub.textContent='Anime database temporarily unavailable. Please try again.';
+        }
+      }
     }
     loading=false;
   }
@@ -679,6 +752,7 @@ const news    = sortedPosts.slice(4, 8);
       if(countEl)countEl.textContent='0';
       if(errMsg)errMsg.style.display='none';
       if(endMsg)endMsg.style.display='none';
+      showSkeleton();
       load();
     });
   });
@@ -690,7 +764,7 @@ const news    = sortedPosts.slice(4, 8);
     scrollT=setTimeout(function(){
       var scrollPos = window.scrollY + window.innerHeight;
       var pageHeight = document.body.offsetHeight;
-      if(scrollPos > pageHeight - 1500){ pg++; load(); }
+      if(scrollPos > pageHeight - 1500){ load(); }
     },100);
   },{passive:true});
 
@@ -775,6 +849,7 @@ const news    = sortedPosts.slice(4, 8);
     });
   }
 
+  // ═══ START: load products then anime ═══
   loadProducts().then(load);
 })();
 </script>
