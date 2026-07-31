@@ -230,6 +230,7 @@ const news = sortedPosts.slice(4, 8);
   }
   
   /* PRODUCT CARD 4:3 SMALLER */
+    /* PRODUCT CARD 4:3 SMALLER */
   .at-ip-thumb {
     position: relative;
     width: 100%;
@@ -240,6 +241,138 @@ const news = sortedPosts.slice(4, 8);
     border: 1px solid rgba(232, 121, 249, 0.3);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
     transition: all 0.35s ease;
+  }
+  
+  /* PRODUCT ROW — full width, horizontal scroll */
+  .product-row {
+    grid-column: 1 / -1;
+    margin: 8px 0;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(28,15,61,0.4), rgba(20,10,45,0.3));
+    border: 1px solid rgba(192,132,252,0.2);
+    border-radius: 16px;
+    position: relative;
+    animation: atNaCardIn 0.5s ease backwards;
+  }
+  
+  .product-row-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+  
+  .product-row-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #e879f9;
+    text-transform: uppercase;
+  }
+  
+  .product-row-title::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(232,121,249,0.7);
+  }
+  
+  .product-row-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: rgba(192,132,252,0.6);
+    letter-spacing: 0.05em;
+  }
+  
+  .product-row-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 4px 0 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .product-row-scroll::-webkit-scrollbar { display: none; }
+  
+  .product-row-item {
+    flex: 0 0 auto;
+    width: 180px;
+    scroll-snap-align: start;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  
+  .product-row-item:hover { transform: translateY(-3px); }
+  
+  .product-row-thumb {
+    position: relative;
+    width: 100%;
+    padding-top: 75%;
+    border-radius: 10px;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(232,121,249,0.1));
+    border: 1px solid rgba(192,132,252,0.25);
+    margin-bottom: 6px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+  }
+  
+  .product-row-item:hover .product-row-thumb {
+    border-color: rgba(232,121,249,0.7);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4), 0 0 15px rgba(192,132,252,0.3);
+  }
+  
+  .product-row-img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  
+  .product-row-item:hover .product-row-img { transform: scale(1.06); }
+  
+  .product-row-info {
+    padding: 0 2px;
+  }
+  
+  .product-row-item-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 2px;
+  }
+  
+  .product-row-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #7dd3fc;
+  }
+  
+  @media (max-width: 768px) {
+    .product-row-item { width: 140px; }
+    .product-row { padding: 12px; }
   }
   
   .at-inline-product:hover .at-ip-thumb {
@@ -552,7 +685,7 @@ const news = sortedPosts.slice(4, 8);
   var ids={};
   var videoRowsInBlock = 0; // Track video rows for product placement
   var productPool = [];
-  var productIdx = 0;
+
   var lastAnimePage = 0;
   var loopCount = 0;
   var socialTypeIdx = 0;
@@ -770,31 +903,43 @@ const news = sortedPosts.slice(4, 8);
     return el;
   }
 
-  // ═══ PRODUCT CARD (4:3 smaller) ═══
-  function productCard(p, i) {
-    var delay = ((i % 8) * 40) + 'ms';
-    var badge = p.badge || 'SPONSORED';
-    var el = document.createElement('a');
-    el.href = '/product/' + encodeURIComponent(p.id);
-    el.className = 'at-inline-product';
-    el.style.animationDelay = delay;
+    // ═══ PRODUCT ROW (Full-width, horizontal scroll, 8 items) ═══
+  function productRow(products) {
+    if (!products || products.length === 0) return null;
     
-    var imgHtml = p.image
-      ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="at-ip-img" onerror="this.style.opacity=\'0.3\';" />'
-      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">🛍️</div>';
+    var itemsHtml = products.map(function(p) {
+      var img = p.image
+        ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="product-row-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
+        : '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🛍️</div>';
+      
+      var badge = p.badge ? '<div style="position:absolute;top:5px;left:5px;padding:2px 6px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:3px;z-index:2;">' + esc(p.badge) + '</div>' : '';
+      
+      return '<a href="/product/' + esc(p.id) + '" class="product-row-item">' +
+        '<div class="product-row-thumb">' + img + badge + '</div>' +
+        '<div class="product-row-info">' +
+          '<div class="product-row-item-title">' + esc(trunc(p.title, 40)) + '</div>' +
+          '<div class="product-row-price">' + esc(p.price) + '</div>' +
+        '</div>' +
+      '</a>';
+    }).join('');
     
-    el.innerHTML =
-      '<div class="at-ip-thumb">' +
-        imgHtml +
-        '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.06em;border-radius:4px;z-index:6;box-shadow:0 2px 8px rgba(192,132,252,0.5);">' + esc(badge) + '</div>' +
-        '<div style="position:absolute;top:6px;right:6px;padding:3px 7px;background:rgba(10,5,23,0.9);border:1px solid rgba(125,211,252,0.4);color:#7dd3fc;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:800;border-radius:4px;z-index:6;">' + esc(p.price) + '</div>' +
+    var row = document.createElement('div');
+    row.className = 'product-row';
+    row.innerHTML = 
+      '<div class="product-row-header">' +
+        '<div class="product-row-title">✨ Recommended For You</div>' +
+        '<div class="product-row-hint">← Swipe to explore →</div>' +
       '</div>' +
-      '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
-        '<h3 style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.75rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:1.9em;">' + esc(trunc(p.title, 50)) + '</h3>' +
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:700;color:#e879f9;letter-spacing:0.05em;text-transform:uppercase;">🛒 Shop Now</div>' +
-      '</div>';
+      '<div class="product-row-scroll">' + itemsHtml + '</div>';
     
-    return el;
+    return row;
+  }
+  
+  // Get random 8 products (shuffled each time - never same order)
+  function getRandomProducts() {
+    if (productPool.length < 4) return productPool;
+    var shuffled = shuffle(productPool);
+    return shuffled.slice(0, 8);
   }
 
   async function loadProducts() {
@@ -807,13 +952,7 @@ const news = sortedPosts.slice(4, 8);
     } catch(e) { console.warn('[products]', e.message); }
   }
   
-  function getNextProduct() {
-    if (!productPool.length) return null;
-    var p = productPool[productIdx % productPool.length];
-    productIdx++;
-    return p;
-  }
-
+  
   function updateCount(){
     if(!countEl)return;
     var c=parseInt(countEl.textContent)||0,t=total;
@@ -878,35 +1017,47 @@ const news = sortedPosts.slice(4, 8);
       if(total === 0) feed.innerHTML='';
       if(errMsg)errMsg.style.display='none';
       
-      // ═══ MIX PATTERN: 2 anime, 1 video ROW (repeat), every 4 video rows → 1 product ═══
+            // ═══ MIX PATTERN: 2 anime + 1 video repeats. Every 4 video ROWS = 1 full product ROW ═══
       var socialIdx = 0;
       var cardCount = 0;
+      var videosPlaced = 0;
+      var cardsPerRow = window.innerWidth <= 768 ? 2 : (window.innerWidth <= 1100 ? 3 : (window.innerWidth <= 1400 ? 4 : 5));
+      var videoRowsSinceLastProduct = 0;
       
       animeItems.forEach(function(a){
         total++;
         feed.appendChild(animeCard(a, total-1));
         cardCount++;
         
-        // Every 2 anime = 1 social video (video "row" in feed)
+        // Every 2 anime = 1 video card
         if (cardCount % 2 === 0 && socialIdx < socialItems.length) {
           var vid = socialItems[socialIdx++];
           feed.appendChild(socialCard(vid, total));
           total++;
           cardCount++;
-          videoRowsInBlock++;
-          
-          // Every 4 video rows = 1 product
-          if (videoRowsInBlock >= 4 && productPool.length > 0) {
-            var prod = getNextProduct();
-            if (prod) {
-              feed.appendChild(productCard(prod, total));
-              total++;
-              cardCount++;
+          videosPlaced++;
+        }
+        
+        // After every 4 rows of feed (rows = cards / cardsPerRow), insert product row
+        if (cardCount >= (cardsPerRow * 4) && productPool.length > 0) {
+          var products = getRandomProducts();
+          if (products.length > 0) {
+            var row = productRow(products);
+            if (row) {
+              feed.appendChild(row);
+              total += products.length;
             }
-            videoRowsInBlock = 0;
           }
+          cardCount = 0; // Reset counter
         }
       });
+      
+      // Add remaining social videos
+      while (socialIdx < socialItems.length) {
+        var vid = socialItems[socialIdx++];
+        feed.appendChild(socialCard(vid, total));
+        total++;
+      }
       
       // Add remaining social videos
       while (socialIdx < socialItems.length) {
@@ -935,7 +1086,7 @@ const news = sortedPosts.slice(4, 8);
       tabs.forEach(function(t){t.classList.remove('active');});
       tab.classList.add('active');
       cat=c2; total=0; ids={}; lastAnimePage=0; loopCount=0;
-      videoRowsInBlock=0; productIdx=0; socialTypeIdx=0;
+      videoRowsInBlock=0; socialTypeIdx=0;
       if(countEl)countEl.textContent='0';
       if(errMsg)errMsg.style.display='none';
       showSkeleton();
