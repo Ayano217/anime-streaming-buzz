@@ -47,28 +47,36 @@ const CHANNELS = {
 // ═══ SEARCH QUERIES ═══
 const SEARCH_QUERIES = {
   anime: [
-    'anime full episode english sub 2026',
-    'new anime episode 2026',
-    'anime english dub full episode',
-    'anime episode 1 full english',
+    'anime full episode english sub',
+    'new anime 2026',
+    'anime english dub full',
+    'anime full ep',
+    'chinese anime english sub',
+    'donghua full episode',
   ],
   kdrama: [
-    'korean drama full episode english sub 2026',
-    'k-drama full episode 2026',
-    'kdrama new episode english',
-    'korean drama episode 1 eng sub',
+    'korean drama full episode english',
+    'kdrama new 2026',
+    'k-drama english sub',
+    'korean series full ep',
+    'chinese drama english sub',
+    'asian drama full',
   ],
   donghua: [
-    'donghua full episode english sub 2026',
-    'chinese anime full episode 2026',
-    'donghua new episode',
-    'chinese animation english sub full',
+    'donghua full episode english',
+    'chinese anime full episode',
+    'donghua 2026',
+    'chinese cartoon english sub',
+    'wuxia anime english',
+    'cultivation anime full',
   ],
   movies: [
-    'anime movie full english sub 2026',
-    'korean movie full eng sub 2026',
-    'asian movie full 2026',
-    'chinese movie full english sub',
+    'anime movie full english',
+    'korean movie full english',
+    'chinese movie english sub',
+    'asian movie 2026',
+    'full movie english sub',
+    'romance drama full movie',
   ],
 };
 
@@ -209,7 +217,7 @@ async function searchYouTube(query: string, contentType: string, apiKey: string)
 // ═══ DAILYMOTION ═══
 async function searchDailymotion(query: string, contentType: string): Promise<any[]> {
   try {
-    const url = `https://api.dailymotion.com/videos?search=${encodeURIComponent(query)}&sort=recent&limit=15&fields=id,title,thumbnail_720_url,thumbnail_480_url,duration,owner.screenname,views_total,created_time,allow_embed`;
+    const url = `https://api.dailymotion.com/videos?search=${encodeURIComponent(query)}&sort=recent&limit=25&fields=id,title,thumbnail_720_url,thumbnail_480_url,duration,owner.screenname,views_total,created_time,allow_embed`;
     const res = await fetch(url);
     if (!res.ok) return [];
     const json: any = await res.json();
