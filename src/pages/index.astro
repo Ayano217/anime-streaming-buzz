@@ -26,7 +26,7 @@ const news = sortedPosts.slice(4, 8);
           <div>
             <div class="arrivals-tag">
               <span class="arrivals-dot"></span>
-              <span>FRESH · INFINITE FEED</span>
+              <span>FRESH · UPDATED DAILY</span>
             </div>
             <h2 class="arrivals-title"><span class="grad-text">Discover</span></h2>
           </div>
@@ -55,26 +55,43 @@ const news = sortedPosts.slice(4, 8);
 
       <div class="error-msg" id="errorMsg" style="display:none;">
         <div class="err-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></div>
-        <h3>Loading feed...</h3>
-        <p id="errorSub">Please wait a moment.</p>
+        <h3>Loading...</h3>
+        <p>Please wait a moment.</p>
       </div>
     </div>
   </section>
 
-  <!-- INLINE VIDEO PLAYER (opens when user clicks video card) -->
-  <div id="inlinePlayer" class="inline-player" style="display:none;">
-    <div class="inline-player-backdrop" id="inlinePlayerBackdrop"></div>
-    <div class="inline-player-modal">
-      <div class="inline-player-header">
-        <h3 id="inlinePlayerTitle" class="inline-player-title">Loading...</h3>
-        <button class="inline-player-close" id="inlinePlayerClose" aria-label="Close">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  <!-- ═══ INSTAGRAM REELS-STYLE PLAYER ═══ -->
+  <div id="reelsPlayer" class="reels-player" style="display:none;">
+    <div class="reels-backdrop" id="reelsBackdrop"></div>
+    
+    <div class="reels-container">
+      <!-- Close button -->
+      <button class="reels-close" id="reelsClose" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      
+      <!-- Video area (16:9 fills nicely) -->
+      <div class="reels-video-wrap">
+        <div id="reelsVideoFrame" class="reels-video-frame"></div>
+      </div>
+      
+      <!-- Info bar (title, no source mentioned) -->
+      <div class="reels-info">
+        <div class="reels-avatar">
+          <div class="reels-avatar-icon">▶</div>
+        </div>
+        <div class="reels-info-text">
+          <div id="reelsTitle" class="reels-title">Loading...</div>
+          <div id="reelsChannel" class="reels-channel">Video</div>
+        </div>
+        <button class="reels-like" id="reelsLike" aria-label="Like">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </button>
       </div>
-      <div class="inline-player-video">
-        <div id="inlinePlayerFrame" class="inline-player-frame"></div>
-      </div>
-      <div id="inlinePlayerInfo" class="inline-player-info"></div>
+      
+      <!-- Related product ads below (not intrusive) -->
+      <div class="reels-ads" id="reelsAds"></div>
     </div>
   </div>
 
@@ -115,9 +132,7 @@ const news = sortedPosts.slice(4, 8);
 
 <style is:global>
   @keyframes atNaCardIn { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes atNaPlayRing { 0%{transform:scale(1);opacity:.9} 100%{transform:scale(1.7);opacity:0} }
   
-  /* ═══ FEED GRID — 5 columns for smaller cards ═══ */
   .feed-wrap {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -129,39 +144,32 @@ const news = sortedPosts.slice(4, 8);
   @media (max-width: 1100px) { .feed-wrap { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
   @media (max-width: 768px) { .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
   
-  /* ═══ UNIVERSAL CARD (16:9 for anime/video, 4:3 for product) ═══ */
   .at-na-card { 
     transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1); 
     cursor: pointer;
     text-decoration: none;
     color: inherit;
     display: block;
-    animation: atNaCardIn 0.5s ease backwards;
+    animation: atNaCardIn 0.4s ease backwards;
   }
   
-  .at-na-card:hover { transform: translateY(-6px); }
+  .at-na-card:hover { transform: translateY(-4px); }
   
-  /* ANIME + VIDEO CARDS — 16:9 */
   .at-na-thumb {
     position: relative;
     width: 100%;
-    padding-top: 56.25%; /* 16:9 */
+    padding-top: 56.25%;
     border-radius: 12px;
     overflow: hidden;
     background: #0d0520;
     border: 1px solid rgba(232, 121, 249, 0.35);
-    box-shadow: 
-      0 4px 12px rgba(0, 0, 0, 0.4),
-      0 0 0 1px rgba(232, 121, 249, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     transition: all 0.35s ease;
   }
   
   .at-na-card:hover .at-na-thumb {
     border-color: rgba(232, 121, 249, 0.9);
-    box-shadow: 
-      0 15px 35px rgba(0, 0, 0, 0.5),
-      0 0 25px rgba(192, 132, 252, 0.5),
-      0 0 0 2px rgba(232, 121, 249, 0.8);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(192, 132, 252, 0.5);
   }
   
   .at-na-img {
@@ -221,11 +229,11 @@ const news = sortedPosts.slice(4, 8);
     background-clip: text;
   }
   
-  /* PRODUCT CARD — 4:3 smaller */
+  /* PRODUCT CARD 4:3 SMALLER */
   .at-ip-thumb {
     position: relative;
     width: 100%;
-    padding-top: 75%; /* 4:3 */
+    padding-top: 75%;
     border-radius: 12px;
     overflow: hidden;
     background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(232,121,249,0.1));
@@ -252,19 +260,19 @@ const news = sortedPosts.slice(4, 8);
     color: inherit;
     display: block;
     cursor: pointer;
-    animation: atNaCardIn 0.5s ease backwards;
+    animation: atNaCardIn 0.4s ease backwards;
     transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
   }
-  .at-inline-product:hover { transform: translateY(-6px); }
+  .at-inline-product:hover { transform: translateY(-4px); }
   .at-inline-product:hover .at-ip-img { transform: scale(1.08); filter: brightness(0.65); }
   
   @media (max-width: 768px) {
-    .at-na-card:hover { transform: translateY(-3px); }
+    .at-na-card:hover { transform: translateY(-2px); }
     .at-na-play { opacity: 0.75 !important; transform: translate(-50%,-50%) scale(0.7) !important; }
   }
   
-  /* INLINE VIDEO PLAYER MODAL */
-  .inline-player {
+  /* ═══ INSTAGRAM REELS PLAYER ═══ */
+  .reels-player {
     position: fixed;
     inset: 0;
     z-index: 10000;
@@ -272,66 +280,149 @@ const news = sortedPosts.slice(4, 8);
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    animation: playerFadeIn 0.3s ease;
+    animation: reelsFadeIn 0.3s ease;
   }
   
-  @keyframes playerFadeIn {
+  @keyframes reelsFadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
   }
   
-  .inline-player-backdrop {
+  .reels-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(10, 5, 23, 0.9);
-    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(15px);
     cursor: pointer;
   }
   
-  .inline-player-modal {
+  .reels-container {
     position: relative;
     width: 100%;
-    max-width: 1000px;
-    background: linear-gradient(135deg, rgba(28, 15, 61, 0.98), rgba(20, 10, 45, 0.98));
-    border: 1px solid rgba(192, 132, 252, 0.3);
+    max-width: 480px;
+    max-height: 90vh;
+    background: linear-gradient(180deg, #1a0b35, #0d0520);
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 40px rgba(192, 132, 252, 0.2);
-    animation: playerSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), 0 0 60px rgba(192, 132, 252, 0.3);
+    animation: reelsSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    flex-direction: column;
   }
   
-  @keyframes playerSlideUp {
+  @keyframes reelsSlideUp {
     from { opacity: 0; transform: translateY(30px) scale(0.95); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
   
-  .inline-player-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 20px;
-    border-bottom: 1px solid rgba(192, 132, 252, 0.2);
-    gap: 12px;
-  }
-  
-  .inline-player-title {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: #fff;
-    margin: 0;
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .inline-player-close {
+  .reels-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: rgba(192, 132, 252, 0.15);
-    border: 1px solid rgba(192, 132, 252, 0.3);
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 20;
+    backdrop-filter: blur(10px);
+  }
+  
+  .reels-close:hover {
+    background: rgba(239, 68, 68, 0.4);
+    transform: rotate(90deg);
+  }
+  
+  .reels-video-wrap {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    background: #000;
+  }
+  
+  .reels-video-frame {
+    position: absolute;
+    inset: 0;
+  }
+  
+  .reels-video-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+  
+  .reels-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: linear-gradient(180deg, rgba(28, 15, 61, 0.9), rgba(20, 10, 45, 0.95));
+    border-top: 1px solid rgba(192, 132, 252, 0.15);
+  }
+  
+  .reels-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 2px;
+    box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
+  }
+  
+  .reels-avatar-icon {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #0d0520;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #e879f9;
+    font-size: 1.2rem;
+    padding-left: 2px;
+  }
+  
+  .reels-info-text {
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .reels-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 3px;
+  }
+  
+  .reels-channel {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+  
+  .reels-like {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
     color: #fff;
     cursor: pointer;
     display: flex;
@@ -341,109 +432,150 @@ const news = sortedPosts.slice(4, 8);
     flex-shrink: 0;
   }
   
-  .inline-player-close:hover {
+  .reels-like:hover, .reels-like.liked {
     background: rgba(239, 68, 68, 0.3);
-    transform: rotate(90deg);
+    color: #ef4444;
+    transform: scale(1.1);
   }
   
-  .inline-player-video {
+  .reels-like.liked svg {
+    fill: #ef4444;
+    stroke: #ef4444;
+  }
+  
+  /* Reels product ads (below video, minimal) */
+  .reels-ads {
+    padding: 8px 12px 12px;
+    background: rgba(10, 5, 23, 0.6);
+    max-height: 200px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
+  }
+  
+  .reels-ads::-webkit-scrollbar { width: 4px; }
+  .reels-ads::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.3); border-radius: 4px; }
+  
+  .reels-ads-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    font-weight: 700;
+    color: rgba(192, 132, 252, 0.7);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    padding: 0 2px;
+  }
+  
+  .reels-ads-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+  
+  .reels-ad-item {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.2s ease;
+  }
+  
+  .reels-ad-item:hover {
+    transform: translateY(-2px);
+  }
+  
+  .reels-ad-thumb {
     position: relative;
     width: 100%;
-    padding-top: 56.25%;
-    background: #000;
+    padding-top: 75%;
+    border-radius: 6px;
+    overflow: hidden;
+    background: rgba(192, 132, 252, 0.15);
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    margin-bottom: 4px;
   }
   
-  .inline-player-frame {
+  .reels-ad-thumb img {
     position: absolute;
-    inset: 0;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
   }
   
-  .inline-player-frame iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
-  }
-  
-  .inline-player-info {
-    padding: 14px 20px;
-    color: rgba(255, 255, 255, 0.75);
+  .reels-ad-price {
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    padding: 2px 5px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #7dd3fc;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
+    font-size: 0.55rem;
+    font-weight: 800;
+    border-radius: 3px;
+  }
+  
+  .reels-ad-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  @media (max-width: 480px) {
+    .reels-container { max-width: 100%; max-height: 100vh; border-radius: 0; }
   }
   
   /* Skeleton */
   .skel-card { border-radius: 12px; }
   .skel-thumb { 
-    width: 100%; 
-    padding-top: 56.25%; 
-    border-radius: 12px; 
+    width: 100%; padding-top: 56.25%; border-radius: 12px; 
     background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%); 
     background-size: 200% 100%; 
     animation: skelShimmer 1.5s ease-in-out infinite; 
   }
-  .skel-title { 
-    margin-top: 8px; 
-    height: 12px; 
-    width: 80%; 
-    border-radius: 6px; 
-    background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%); 
-    background-size: 200% 100%; 
-    animation: skelShimmer 1.5s ease-in-out infinite; 
-    animation-delay: 0.1s; 
-  }
-  .skel-sub { 
-    margin-top: 5px; 
-    height: 8px; 
-    width: 50%; 
-    border-radius: 4px; 
-    background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%); 
-    background-size: 200% 100%; 
-    animation: skelShimmer 1.5s ease-in-out infinite; 
-    animation-delay: 0.2s; 
-  }
-  @keyframes skelShimmer { 
-    0% { background-position: 200% 0; } 
-    100% { background-position: -200% 0; } 
-  }
+  .skel-title { margin-top: 8px; height: 12px; width: 80%; border-radius: 6px; background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%); background-size: 200% 100%; animation: skelShimmer 1.5s ease-in-out infinite; animation-delay: 0.1s; }
+  .skel-sub { margin-top: 5px; height: 8px; width: 50%; border-radius: 4px; background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%); background-size: 200% 100%; animation: skelShimmer 1.5s ease-in-out infinite; animation-delay: 0.2s; }
+  @keyframes skelShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 </style>
 
 <script is:inline>
 (function(){
   var cat='airing';
-  var pg=1;
   var loading=false;
   var total=0;
   var ids={};
-  var cardsInBlock = 0;
+  var videoRowsInBlock = 0; // Track video rows for product placement
   var productPool = [];
   var productIdx = 0;
-  var socialPool = []; // Store fetched videos for shuffling
-  var animePool = []; // Store fetched anime for reshuffling on loop
-  var loopCount = 0; // Track how many times we've looped
   var lastAnimePage = 0;
+  var loopCount = 0;
   var socialTypeIdx = 0;
-  var SOCIAL_TYPES = ['movies', 'kdrama', 'donghua', 'anime'];
+  var SOCIAL_TYPES = ['donghua', 'movies', 'kdrama', 'anime']; // Bilibili priority (donghua first)
+  var lastKeyword = ''; // Track for related products
   
   var feed = document.getElementById('arrivalsFeed');
   var loadingEl = document.getElementById('loadingMore');
   var errMsg = document.getElementById('errorMsg');
-  var errSub = document.getElementById('errorSub');
   var countEl = document.getElementById('arrivalsCount');
   var tabs = document.querySelectorAll('.cat-tab');
   var searchIn = document.getElementById('quickSearch');
   var sdd = document.getElementById('searchDD');
   var siClear = document.getElementById('siClear');
   
-  // Inline player
-  var inlinePlayer = document.getElementById('inlinePlayer');
-  var inlinePlayerFrame = document.getElementById('inlinePlayerFrame');
-  var inlinePlayerTitle = document.getElementById('inlinePlayerTitle');
-  var inlinePlayerInfo = document.getElementById('inlinePlayerInfo');
-  var inlinePlayerClose = document.getElementById('inlinePlayerClose');
-  var inlinePlayerBackdrop = document.getElementById('inlinePlayerBackdrop');
+  var reelsPlayer = document.getElementById('reelsPlayer');
+  var reelsFrame = document.getElementById('reelsVideoFrame');
+  var reelsTitle = document.getElementById('reelsTitle');
+  var reelsChannel = document.getElementById('reelsChannel');
+  var reelsClose = document.getElementById('reelsClose');
+  var reelsBackdrop = document.getElementById('reelsBackdrop');
+  var reelsLike = document.getElementById('reelsLike');
+  var reelsAds = document.getElementById('reelsAds');
 
   function showSkeleton() {
     var count = window.innerWidth <= 768 ? 6 : 10;
@@ -459,7 +591,6 @@ const news = sortedPosts.slice(4, 8);
   function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})}
   function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n).trim()+'…':s;}
   
-  // Shuffle array (Fisher-Yates)
   function shuffle(arr) {
     var a = arr.slice();
     for (var i = a.length - 1; i > 0; i--) {
@@ -469,47 +600,84 @@ const news = sortedPosts.slice(4, 8);
     return a;
   }
 
-  // ═══ INLINE VIDEO PLAYER ═══
-  function openVideoPlayer(video) {
-    if (!inlinePlayer) return;
+  // ═══ REELS PLAYER (Instagram style, NO source mention) ═══
+  function openReelsPlayer(video) {
+    if (!reelsPlayer) return;
     
-    inlinePlayerTitle.textContent = video.title || 'Video';
-    inlinePlayerFrame.innerHTML = '';
+    reelsTitle.textContent = video.title || 'Video';
+    reelsChannel.textContent = video.channel || 'Channel';
+    reelsFrame.innerHTML = '';
+    
+    // Modify embed URL to hide platform branding as much as possible
+    var embedUrl = video.embedUrl;
+    // For Dailymotion, add params to hide UI
+    if (video.source === 'dailymotion') {
+      embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'ui-logo=0&ui-start-screen-info=0&sharing-enable=0';
+    }
+    // For YouTube, hide branding
+    if (video.source === 'youtube' && !embedUrl.includes('modestbranding')) {
+      embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'modestbranding=1&showinfo=0&controls=1';
+    }
     
     var iframe = document.createElement('iframe');
-    iframe.src = video.embedUrl;
+    iframe.src = embedUrl;
     iframe.setAttribute('frameborder', '0');
     iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen');
     iframe.setAttribute('allowfullscreen', '');
     iframe.style.cssText = 'width:100%;height:100%;border:0;position:absolute;top:0;left:0;';
-    inlinePlayerFrame.appendChild(iframe);
+    reelsFrame.appendChild(iframe);
     
-    var typeLabel = { movies: '🎬 Movie', kdrama: '🇰🇷 K-Drama', donghua: '🐼 Donghua', anime: '🎌 Anime' }[video.type] || '📺 Video';
-    var sourceLabel = { youtube: 'YouTube', dailymotion: 'Dailymotion', bilibili: 'Bilibili', odysee: 'Odysee' }[video.source] || 'Video';
+    // Load related products (based on video type)
+    loadRelatedAds(video);
     
-    inlinePlayerInfo.innerHTML = 
-      '<span>' + typeLabel + '</span>' +
-      '<span>· ' + esc(sourceLabel) + '</span>' +
-      '<span>· 👤 ' + esc(video.channel || 'Unknown') + '</span>';
-    
-    inlinePlayer.style.display = 'flex';
+    reelsPlayer.style.display = 'flex';
     document.body.style.overflow = 'hidden';
   }
   
-  function closeVideoPlayer() {
-    if (!inlinePlayer) return;
-    inlinePlayer.style.display = 'none';
-    inlinePlayerFrame.innerHTML = ''; // Stop video
+  function closeReelsPlayer() {
+    if (!reelsPlayer) return;
+    reelsPlayer.style.display = 'none';
+    reelsFrame.innerHTML = '';
     document.body.style.overflow = '';
+    if (reelsLike) reelsLike.classList.remove('liked');
   }
   
-  if (inlinePlayerClose) inlinePlayerClose.addEventListener('click', closeVideoPlayer);
-  if (inlinePlayerBackdrop) inlinePlayerBackdrop.addEventListener('click', closeVideoPlayer);
+  function loadRelatedAds(video) {
+    if (!reelsAds || !productPool.length) {
+      if (reelsAds) reelsAds.innerHTML = '';
+      return;
+    }
+    
+    // Pick 3 relevant products (shuffled from pool)
+    var relevant = shuffle(productPool).slice(0, 3);
+    
+    var html = '<div class="reels-ads-label">✨ You Might Like</div>' +
+      '<div class="reels-ads-list">' +
+      relevant.map(function(p) {
+        var img = p.image 
+          ? '<img src="' + esc(p.image) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'" />'
+          : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🛍️</div>';
+        return '<a href="/product/' + esc(p.id) + '" class="reels-ad-item" target="_blank">' +
+          '<div class="reels-ad-thumb">' + img + 
+            '<div class="reels-ad-price">' + esc(p.price) + '</div>' +
+          '</div>' +
+          '<div class="reels-ad-title">' + esc(trunc(p.title, 40)) + '</div>' +
+        '</a>';
+      }).join('') + '</div>';
+    
+    reelsAds.innerHTML = html;
+  }
+  
+  if (reelsClose) reelsClose.addEventListener('click', closeReelsPlayer);
+  if (reelsBackdrop) reelsBackdrop.addEventListener('click', closeReelsPlayer);
+  if (reelsLike) reelsLike.addEventListener('click', function() {
+    reelsLike.classList.toggle('liked');
+  });
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && inlinePlayer && inlinePlayer.style.display !== 'none') closeVideoPlayer();
+    if (e.key === 'Escape' && reelsPlayer && reelsPlayer.style.display !== 'none') closeReelsPlayer();
   });
 
-  // ═══ ANIME CARD (16:9) ═══
+  // ═══ ANIME CARD ═══
   function animeCard(a, i) {
     var t = a.title || 'Unknown';
     var img = a.image || '';
@@ -557,20 +725,20 @@ const news = sortedPosts.slice(4, 8);
     return el;
   }
 
-  // ═══ SOCIAL VIDEO CARD (16:9, opens inline player) ═══
+  // ═══ VIDEO CARD (NO SOURCE MENTIONED - SECRET!) ═══
   function socialCard(v, i) {
     var t = v.title || 'Video';
     var img = v.thumbnail || '';
     var delay = ((i % 8) * 40) + 'ms';
-    var typeLabel = { movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA', donghua: '🐼 DONGHUA', anime: '🎌 ANIME' }[v.type] || '📺';
-    var sourceColor = { youtube: '#ff0000', dailymotion: '#0066dc', bilibili: '#00a1d6', odysee: '#ee44aa', rumble: '#85c742' }[v.source] || '#c084fc';
-    var sourceLabel = { youtube: 'YT', dailymotion: 'DM', bilibili: 'BILI', odysee: 'OD', rumble: 'RMB' }[v.source] || 'V';
+    
+    // ONLY show content type badge — NO platform (YT, DM, etc.)
+    var typeLabel = { movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA', donghua: '🐼 DONGHUA', anime: '🎌 ANIME' }[v.type] || '';
     
     var imgHtml = img
       ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="at-na-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
       : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>';
     
-    var el = document.createElement('div'); // div instead of <a>
+    var el = document.createElement('div');
     el.className = 'at-na-card';
     el.style.animationDelay = delay;
     el.style.cursor = 'pointer';
@@ -586,24 +754,23 @@ const news = sortedPosts.slice(4, 8);
           '</div>' +
         '</div>' +
         (v.isNew ? '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">NEW</div>' : '') +
-        '<div style="position:absolute;top:6px;right:6px;padding:3px 7px;background:' + sourceColor + ';color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:4px;z-index:6;">' + sourceLabel + '</div>' +
         '<div style="position:absolute;bottom:6px;left:6px;padding:2px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:4px;z-index:6;">' + typeLabel + '</div>' +
       '</div>' +
       '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
         '<h3 class="at-na-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(t, 55)) + '</h3>' +
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;">' + esc(v.channel || 'Unknown') + '</div>' +
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;">' + esc(v.channel || 'Channel') + '</div>' +
       '</div>';
     
-    // Click opens inline player
+    // Click opens reels-style player
     el.addEventListener('click', function(e) {
       e.preventDefault();
-      openVideoPlayer(v);
+      openReelsPlayer(v);
     });
     
     return el;
   }
 
-  // ═══ PRODUCT CARD (4:3, smaller) ═══
+  // ═══ PRODUCT CARD (4:3 smaller) ═══
   function productCard(p, i) {
     var delay = ((i % 8) * 40) + 'ms';
     var badge = p.badge || 'SPONSORED';
@@ -630,15 +797,14 @@ const news = sortedPosts.slice(4, 8);
     return el;
   }
 
-  // ═══ LOAD PRODUCTS ═══
   async function loadProducts() {
     try {
       var res = await fetch('/api/products?limit=50');
       var j = await res.json();
       if (j.success && j.products) {
-        productPool = shuffle(j.products); // Randomize order
+        productPool = shuffle(j.products);
       }
-    } catch(e) { console.warn('[products] Load failed:', e.message); }
+    } catch(e) { console.warn('[products]', e.message); }
   }
   
   function getNextProduct() {
@@ -656,14 +822,12 @@ const news = sortedPosts.slice(4, 8);
     (function f(){c=Math.min(c+step,t);countEl.textContent=c;if(c<t)requestAnimationFrame(f);})();
   }
 
-  // ═══ INFINITE LOOP LOAD ═══
   async function load(){
     if(loading)return;
     loading=true;
     if(total > 0){ if(loadingEl)loadingEl.style.display='flex'; }
 
     try{
-      // Fetch anime
       var animeItems = [];
       lastAnimePage++;
       var animeRes = await fetch('/api/anime?action=list&category='+cat+'&page='+lastAnimePage);
@@ -679,24 +843,24 @@ const news = sortedPosts.slice(4, 8);
         });
       }
       
-      // If no new anime (page exhausted), start over — INFINITE LOOP
+      // Infinite loop
       if (animeItems.length === 0) {
         loopCount++;
         lastAnimePage = 1;
-        ids = {}; // Reset dedup
+        ids = {};
         var retryRes = await fetch('/api/anime?action=list&category='+cat+'&page=1');
         var retryData = await retryRes.json();
         if (retryData.success && retryData.anime) {
-          animeItems = shuffle(retryData.anime); // Reshuffled for variety!
+          animeItems = shuffle(retryData.anime);
         }
       }
       
-      // Fetch social videos (rotate types for variety)
+      // Fetch social videos - Bilibili priority for USA users
       var socialType = SOCIAL_TYPES[socialTypeIdx % SOCIAL_TYPES.length];
       socialTypeIdx++;
       var socialItems = [];
       try {
-        var socialRes = await fetch('/api/social-feed?type=' + socialType + '&page=' + (lastAnimePage % 5 + 1) + '&limit=10');
+        var socialRes = await fetch('/api/social-feed?type=' + socialType + '&page=' + (lastAnimePage % 5 + 1) + '&limit=8');
         var socialData = await socialRes.json();
         if(socialData.success && socialData.videos) {
           socialItems = socialData.videos.filter(function(v){
@@ -708,14 +872,13 @@ const news = sortedPosts.slice(4, 8);
         }
       } catch(e) { console.warn('social fail', e); }
       
-      // Shuffle both for variety
       animeItems = shuffle(animeItems);
       socialItems = shuffle(socialItems);
       
       if(total === 0) feed.innerHTML='';
       if(errMsg)errMsg.style.display='none';
       
-      // ═══ MIX PATTERN: 2 anime, 1 video, 2 anime, 1 video, 1 product, repeat ═══
+      // ═══ MIX PATTERN: 2 anime, 1 video ROW (repeat), every 4 video rows → 1 product ═══
       var socialIdx = 0;
       var cardCount = 0;
       
@@ -723,25 +886,25 @@ const news = sortedPosts.slice(4, 8);
         total++;
         feed.appendChild(animeCard(a, total-1));
         cardCount++;
-        cardsInBlock++;
         
-        // Every 2 anime = add 1 social video
+        // Every 2 anime = 1 social video (video "row" in feed)
         if (cardCount % 2 === 0 && socialIdx < socialItems.length) {
           var vid = socialItems[socialIdx++];
           feed.appendChild(socialCard(vid, total));
           total++;
           cardCount++;
-        }
-        
-        // Every 6 cards = add 1 product
-        if (cardsInBlock >= 6 && productPool.length > 0) {
-          var prod = getNextProduct();
-          if (prod) {
-            feed.appendChild(productCard(prod, total));
-            total++;
-            cardCount++;
+          videoRowsInBlock++;
+          
+          // Every 4 video rows = 1 product
+          if (videoRowsInBlock >= 4 && productPool.length > 0) {
+            var prod = getNextProduct();
+            if (prod) {
+              feed.appendChild(productCard(prod, total));
+              total++;
+              cardCount++;
+            }
+            videoRowsInBlock = 0;
           }
-          cardsInBlock = 0;
         }
       });
       
@@ -755,14 +918,11 @@ const news = sortedPosts.slice(4, 8);
       updateCount();
       if(loadingEl)loadingEl.style.display='none';
     }catch(e){
-      console.warn('[feed] Load fail:',e.message);
+      console.warn('[feed]',e.message);
       if(loadingEl)loadingEl.style.display='none';
       if(total===0){
         feed.innerHTML='';
-        if(errMsg){
-          errMsg.style.display='block';
-          if(errSub)errSub.textContent='Please refresh the page.';
-        }
+        if(errMsg) errMsg.style.display='block';
       }
     }
     loading=false;
@@ -774,8 +934,8 @@ const news = sortedPosts.slice(4, 8);
       if(c2===cat)return;
       tabs.forEach(function(t){t.classList.remove('active');});
       tab.classList.add('active');
-      cat=c2; pg=1; total=0; ids={}; lastAnimePage=0; loopCount=0;
-      cardsInBlock=0; productIdx=0; socialTypeIdx=0;
+      cat=c2; total=0; ids={}; lastAnimePage=0; loopCount=0;
+      videoRowsInBlock=0; productIdx=0; socialTypeIdx=0;
       if(countEl)countEl.textContent='0';
       if(errMsg)errMsg.style.display='none';
       showSkeleton();
@@ -783,7 +943,6 @@ const news = sortedPosts.slice(4, 8);
     });
   });
 
-  // ═══ INFINITE SCROLL — never ends! ═══
   var scrollTimer;
   window.addEventListener('scroll',function(){
     if(loading)return;
@@ -838,7 +997,6 @@ const news = sortedPosts.slice(4, 8);
     document.addEventListener('click', function(e) { if (sdd && !e.target.closest('.search-inline')) sdd.classList.remove('open'); });
   }
 
-  // Start: load products first, then feed
   loadProducts().then(load);
 })();
 </script>
@@ -854,7 +1012,7 @@ const news = sortedPosts.slice(4, 8);
   @keyframes lb{0%,100%{opacity:1}50%{opacity:.4}}
   .arrivals-title{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(1.5rem,2.8vw,2.2rem);font-weight:800;margin:0;letter-spacing:-.03em;line-height:1}
   .arrivals-actions{display:flex;align-items:center;gap:12px}
-  .sdd{position:absolute;top:calc(100% + 10px);left:0;right:0;background:rgba(15,8,35,.98);border:1px solid rgba(192,132,252,.3);border-radius:16px;padding:8px;max-height:500px;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.6),0 0 30px rgba(192,132,252,.15);backdrop-filter:blur(20px);z-index:100;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .25s ease}
+  .sdd{position:absolute;top:calc(100% + 10px);left:0;right:0;background:rgba(15,8,35,.98);border:1px solid rgba(192,132,252,.3);border-radius:16px;padding:8px;max-height:500px;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.6);backdrop-filter:blur(20px);z-index:100;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .25s ease}
   .sdd.open{opacity:1;visibility:visible;transform:translateY(0)}
   .sdd-loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:2rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:.75rem}
   .arrivals-count{display:flex;align-items:baseline;gap:6px;padding:7px 14px;background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.25);border-radius:999px;backdrop-filter:blur(10px)}
@@ -893,7 +1051,6 @@ const news = sortedPosts.slice(4, 8);
   .nw-cat{font-family:'Bricolage Grotesque',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.4rem}
   .nw-t{font-family:'Bricolage Grotesque',sans-serif;font-size:.95rem;font-weight:700;color:var(--text-primary);margin:0 0 .4rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .nw-e{font-size:.78rem;color:var(--text-muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  
   .sd-i{display:grid !important;grid-template-columns:40px 1fr auto !important;align-items:center !important;gap:10px !important;padding:8px 10px !important;border-radius:10px !important;text-decoration:none !important;color:var(--text-primary) !important;transition:all 0.2s ease !important;margin-bottom:2px !important}
   .sd-i:hover{background:rgba(192,132,252,0.12) !important;transform:translateX(4px) !important}
   .sd-th{width:40px !important;height:52px !important;min-width:40px !important;border-radius:5px !important;overflow:hidden !important;background:rgba(192,132,252,0.15) !important;position:relative !important}
@@ -902,7 +1059,6 @@ const news = sortedPosts.slice(4, 8);
   .sd-t{font-family:'Bricolage Grotesque',sans-serif !important;font-size:0.82rem !important;font-weight:700 !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important;margin:0 0 2px 0 !important;color:var(--text-primary) !important}
   .sd-m{font-size:0.65rem !important;color:var(--text-muted) !important;font-family:'JetBrains Mono',monospace !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important}
   .sd-badge{padding:2px 6px !important;background:linear-gradient(135deg,#ef4444,#f97316) !important;color:#fff !important;font-family:'JetBrains Mono',monospace !important;font-size:0.5rem !important;font-weight:800 !important;border-radius:3px !important;align-self:center !important;flex-shrink:0 !important}
-  
   @media(max-width:1024px){.novelty-grid{grid-template-columns:repeat(2,1fr)}.news-grid{grid-template-columns:1fr}}
   @media(max-width:640px){.arrivals-header{flex-direction:column;align-items:flex-start}.arrivals-actions{width:100%}.novelty-grid{grid-template-columns:repeat(2,1fr);gap:.75rem}.news-card{padding:.75rem}.nw-img{width:90px;min-width:90px}}
 </style>
