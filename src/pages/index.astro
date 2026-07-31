@@ -151,7 +151,7 @@ const news    = sortedPosts.slice(4, 8);
   .at-na-thumb {
     position: relative;
     width: 100%;
-    padding-top: 140%;
+    padding-top: 56.25%;
     border-radius: 14px;
     overflow: hidden;
     background: #0a0517;
@@ -376,7 +376,7 @@ const news    = sortedPosts.slice(4, 8);
     return el;
   }
 
-  function bigProductCard(p, i) {
+    function bigProductCard(p, i) {
     var delay = ((i % 8) * 40) + 'ms';
     var badge = p.badge || 'SPONSORED';
     var el = document.createElement('a');
@@ -386,26 +386,25 @@ const news    = sortedPosts.slice(4, 8);
     
     var imgHtml = p.image
       ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="at-ip-img" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.5s ease, filter 0.3s ease;" onerror="this.style.opacity=\'0.3\';" />'
-      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2.5rem;">🛍️</div>';
+      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2rem;">🛍️</div>';
     
     el.innerHTML =
-      '<div class="at-ip-thumb" style="position:relative;width:100%;padding-top:140%;border-radius:14px;overflow:hidden;background:#0d0520;border:1px solid rgba(232,121,249,0.3);box-shadow:0 6px 15px rgba(0,0,0,0.35);transition:all 0.35s ease;">' +
+      '<div class="at-ip-thumb" style="position:relative;width:100%;padding-top:75%;border-radius:14px;overflow:hidden;background:#0d0520;border:1px solid rgba(232,121,249,0.3);box-shadow:0 6px 15px rgba(0,0,0,0.35);transition:all 0.35s ease;">' +
         imgHtml +
         '<div class="at-ip-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.22),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
         '<div class="at-ip-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(10,5,23,0.9) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
-        '<div style="position:absolute;top:7px;left:7px;padding:3px 8px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:800;letter-spacing:0.08em;border-radius:5px;z-index:6;box-shadow:0 2px 10px rgba(192,132,252,0.5);">' + esc(badge) + '</div>' +
-        '<div style="position:absolute;top:7px;right:7px;padding:3px 8px;background:rgba(10,5,23,0.9);border:1px solid rgba(125,211,252,0.4);color:#7dd3fc;font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;font-weight:800;border-radius:5px;z-index:6;">' + esc(p.price) + '</div>' +
+        '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.06em;border-radius:4px;z-index:6;box-shadow:0 2px 8px rgba(192,132,252,0.5);">' + esc(badge) + '</div>' +
+        '<div style="position:absolute;top:6px;right:6px;padding:3px 7px;background:rgba(10,5,23,0.9);border:1px solid rgba(125,211,252,0.4);color:#7dd3fc;font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;font-weight:800;border-radius:4px;z-index:6;">' + esc(p.price) + '</div>' +
         '<div class="at-ip-cta" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.6);z-index:5;opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;">' +
-          '<div style="display:inline-flex;align-items:center;gap:5px;padding:8px 14px;background:linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);color:#fff;font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.72rem;font-weight:800;border-radius:999px;box-shadow:0 8px 25px rgba(192,132,252,0.6),0 0 30px rgba(232,121,249,0.4);white-space:nowrap;">' +
-            '<span>View Details</span>' +
-            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
+          '<div style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;background:linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);color:#fff;font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.65rem;font-weight:800;border-radius:999px;box-shadow:0 6px 20px rgba(192,132,252,0.6);white-space:nowrap;">' +
+            '<span>View</span>' +
+            '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>' +
           '</div>' +
         '</div>' +
       '</div>' +
-      '<div style="padding:9px 3px 4px;position:relative;z-index:1;">' +
-        '<h3 class="at-ip-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2.1em;">' + esc(trunc(p.title, 55)) + '</h3>' +
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.62rem;color:var(--text-muted);opacity:0.75;">' + esc(trunc(p.subtitle || '', 45)) + '</div>' +
-        '<div style="display:inline-block;margin-top:3px;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:700;color:#e879f9;letter-spacing:0.05em;text-transform:uppercase;">FROM OUR STORE</div>' +
+      '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
+        '<h3 class="at-ip-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(p.title, 55)) + '</h3>' +
+        '<div style="display:inline-block;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:700;color:#e879f9;letter-spacing:0.05em;text-transform:uppercase;">🛒 SHOP NOW</div>' +
       '</div>';
     
     return el;
@@ -479,19 +478,24 @@ const news    = sortedPosts.slice(4, 8);
     (function f(){c=Math.min(c+step,t);countEl.textContent=c;if(c<t)requestAnimationFrame(f);})();
   }
 
-    async function load(){
+      async function load(){
     if(loading||!hasMore)return;
     loading=true;
     if(pg > 1){ if(loadingEl)loadingEl.style.display='flex'; }
 
     try{
       // Fetch anime + social videos in parallel
-      var animeRes = fetch('/api/anime?action=list&category='+cat+'&page='+pg);
-      var socialRes = pg === 1 ? fetch('/api/social-feed?type=all&page=1&limit=15') : Promise.resolve(null);
+      var animeRes = await fetch('/api/anime?action=list&category='+cat+'&page='+pg);
+      var animeData = await animeRes.json();
       
-      var results = await Promise.all([animeRes, socialRes]);
-      var animeData = await results[0].json();
-      var socialData = results[1] ? await results[1].json() : null;
+      // Fetch social videos every page (rotate through types)
+      var socialTypes = ['movies', 'kdrama', 'donghua', 'anime'];
+      var socialType = socialTypes[(pg - 1) % socialTypes.length];
+      var socialData = null;
+      try {
+        var socialRes = await fetch('/api/social-feed?type=' + socialType + '&page=' + pg + '&limit=8');
+        socialData = await socialRes.json();
+      } catch(e) { console.warn('social fetch fail', e); }
       
       if(!animeData.success)throw new Error(animeData.error||'fail');
       
@@ -513,33 +517,39 @@ const news    = sortedPosts.slice(4, 8);
       if(pg===1) feed.innerHTML='';
       if(errMsg)errMsg.style.display='none';
       
-      // Mix: 3 anime, 1 social video, 3 anime, 1 product...
+      // Mix pattern: 2 anime, 1 social, 2 anime, 1 social, 2 anime, 1 product...
       var socialIdx = 0;
+      var cardCount = 0;
+      
       animeItems.forEach(function(a,i){
         total++;
         allAnime.push(a);
         feed.appendChild(animeCard(a, total-1));
+        cardCount++;
         animeInBlock++;
         
-        // Every 3 anime, add 1 social video (movie/kdrama/donghua)
-        if (animeInBlock === 3 && socialIdx < socialItems.length) {
+        // Every 2 anime, add 1 social video
+        if (cardCount % 2 === 0 && socialIdx < socialItems.length) {
           var vid = socialItems[socialIdx++];
           feed.appendChild(socialCard(vid, total));
           total++;
+          cardCount++;
         }
         
-        // Every 6 cards, add 1 product
-        if (animeInBlock === 6 && productPool.length > 0) {
+        // Every 8 cards, add 1 product
+        if (cardCount % 8 === 0 && productPool.length > 0) {
           var big = getNextBigProduct();
           if (big) feed.appendChild(bigProductCard(big, total));
-        }
-        
-        if (animeInBlock === 6 && productPool.length >= 6) {
-          var strip = buildMiniStrip();
-          if (strip) feed.appendChild(strip);
           animeInBlock = 0;
         }
       });
+      
+      // Add remaining social videos at end of page
+      while (socialIdx < socialItems.length) {
+        var vid = socialItems[socialIdx++];
+        feed.appendChild(socialCard(vid, total));
+        total++;
+      }
       
       updateCount();
       hasMore=animeData.hasNext!==false&&animeItems.length>0;
@@ -549,23 +559,23 @@ const news    = sortedPosts.slice(4, 8);
     }catch(e){
       console.warn('[feed] Load fail:',e.message);
       if(loadingEl)loadingEl.style.display='none';
-      if(total===0){feed.innerHTML='';if(errMsg){errMsg.style.display='block';if(errSub)errSub.textContent='Loading anime database...';}}
+      if(total===0){feed.innerHTML='';if(errMsg){errMsg.style.display='block';if(errSub)errSub.textContent='Loading database...';}}
     }
     loading=false;
   }
   
-  // Social video card (movies, kdrama, donghua)
+  // Social video card — 16:9 with platform badge
   function socialCard(v, i) {
     var t = v.title || 'Unknown';
     var img = v.thumbnail || '';
     var delay = ((i % 8) * 40) + 'ms';
-    var typeLabel = { movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA', donghua: '🐼 DONGHUA', anime: '🎌 ANIME' }[v.type] || '📺 VIDEO';
+    var typeLabel = { movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA', donghua: '🐼 DONGHUA', anime: '🎌 ANIME' }[v.type] || '📺';
     var sourceColor = { youtube: '#ff0000', dailymotion: '#0066dc', bilibili: '#00a1d6', odysee: '#ee44aa' }[v.source] || '#c084fc';
     var sourceLabel = { youtube: 'YT', dailymotion: 'DM', bilibili: 'BILI', odysee: 'OD' }[v.source] || 'V';
     
     var imgHtml = img
-      ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="at-na-img" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.5s ease,filter 0.3s ease;" />'
-      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;">📺</div>';
+      ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="at-na-img" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.5s ease,filter 0.3s ease;" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
+      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>';
     
     var el = document.createElement('a');
     el.href = '/watch/' + encodeURIComponent(v.id);
@@ -573,7 +583,7 @@ const news    = sortedPosts.slice(4, 8);
     el.style.animationDelay = delay;
     
     el.innerHTML =
-      '<div class="at-na-thumb" style="padding-top:56.25% !important;">' +
+      '<div class="at-na-thumb">' +
         imgHtml +
         '<div class="at-na-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.2),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
         '<div class="at-na-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,5,23,0.85) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
@@ -583,7 +593,7 @@ const news    = sortedPosts.slice(4, 8);
           '</div>' +
         '</div>' +
         (v.isNew ? '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">NEW</div>' : '') +
-        '<div style="position:absolute;top:6px;right:6px;padding:3px 7px;background:' + sourceColor + ';color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:4px;z-index:6;box-shadow:0 2px 6px rgba(0,0,0,0.4);">' + sourceLabel + '</div>' +
+        '<div style="position:absolute;top:6px;right:6px;padding:3px 7px;background:' + sourceColor + ';color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:4px;z-index:6;">' + sourceLabel + '</div>' +
         '<div style="position:absolute;bottom:6px;left:6px;padding:2px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:4px;z-index:6;">' + typeLabel + '</div>' +
       '</div>' +
       '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
