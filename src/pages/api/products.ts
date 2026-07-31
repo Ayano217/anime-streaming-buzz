@@ -1,3 +1,14 @@
+// ═══════════════════════════════════════════════════════════════
+// AniTube Buzz — Products API
+// Path: src/pages/api/products.ts
+//
+// IMAGE STRATEGY:
+// - Unsplash CDN for reliable product photography
+// - Works globally, especially USA (target audience)
+// - Users click "Buy" → Amazon with affiliate tag anitubebuzz-20
+// - 24-hour cookie = user buys ANYTHING on Amazon → we earn commission
+// ═══════════════════════════════════════════════════════════════
+
 import type { APIRoute } from 'astro';
 
 export const prerender = false;
@@ -38,6 +49,7 @@ type ProductCategory =
   | 'accessories' | 'games' | 'bluray' | 'cosplay'
   | 'collectibles' | 'snacks';
 
+// ═══ Affiliate Configuration ═══
 const AMAZON_TAG = 'anitubebuzz-20';
 const PLAYASIA_REF = '6797065';
 
@@ -68,14 +80,25 @@ function calculateTrendScore(product: any): number {
   return Math.round(baseScore + recencyBonus + ratingBonus + featuredBonus);
 }
 
+// ═══════════════════════════════════════════════════════════════
+// PRODUCT DATABASE
+// ═══════════════════════════════════════════════════════════════
 const PRODUCTS: Product[] = [
+
+  // ═══ FIGURES ═══
   {
     id: 'fig-csm-power-01',
     title: 'Chainsaw Man Power Figure - Premium',
     subtitle: 'Banpresto — Official Anime Figure',
     description: 'High-quality Power figure from Chainsaw Man with signature horns.',
-    longDescription: 'Premium Power figure by Banpresto. Meticulously sculpted with hand-painted details.',
-    features: ['6.7 inch premium PVC', 'Hand-painted details', 'Official release', 'Display base', 'Collector piece'],
+    longDescription: 'Premium Power figure by Banpresto. Meticulously sculpted with hand-painted details on horns and Blood Devil accessories. Standing 6.7 inches tall, perfect for collectors.',
+    features: [
+      '6.7 inch (17cm) premium PVC figure',
+      'Hand-painted details on horns',
+      'Official Banpresto release',
+      'Includes themed display base',
+      'Perfect for Chainsaw Man fans',
+    ],
     image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -103,9 +126,15 @@ const PRODUCTS: Product[] = [
     id: 'fig-jjk-gojo-01',
     title: 'Gojo Satoru Figure - Jujutsu Kaisen',
     subtitle: 'Bandai Spirits — Official Merchandise',
-    description: 'The strongest sorcerer in iconic pose with blindfold detail.',
-    longDescription: 'Stunning Gojo Satoru figure with detailed blindfold sculpting.',
-    features: ['8 inch premium figure', 'Detailed blindfold', 'Official Bandai', 'Themed base', 'JJK collector'],
+    description: 'The strongest sorcerer in iconic pose with detailed blindfold.',
+    longDescription: 'Stunning Gojo Satoru figure with detailed blindfold sculpting, flowing Jujutsu High uniform, and dynamic pose. 8 inches tall on themed base.',
+    features: [
+      '8 inch premium figure',
+      'Detailed blindfold sculpt',
+      'Official Bandai Spirits',
+      'Cursed energy themed base',
+      'Perfect JJK collector piece',
+    ],
     image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -131,9 +160,15 @@ const PRODUCTS: Product[] = [
     id: 'fig-sl-sung-01',
     title: 'Sung Jin-Woo Shadow Monarch Figure',
     subtitle: 'Solo Leveling — Premium Statue',
-    description: 'The Shadow Monarch in full battle glory with daggers.',
-    longDescription: 'Premium Sung Jin-Woo figure at his most powerful moment.',
-    features: ['9 inch statue', 'Dagger accessories', 'Kasaka armor', 'Shadow base', 'Collector piece'],
+    description: 'The Shadow Monarch in full battle glory with dagger accessories.',
+    longDescription: 'Premium Sung Jin-Woo figure at his most powerful moment. Complete with signature daggers, dark aura effects, and iconic Kasaka armor.',
+    features: [
+      '9 inch premium statue',
+      'Dagger accessories included',
+      'Detailed Kasaka armor',
+      'Shadow effect base',
+      'Solo Leveling collector piece',
+    ],
     image: 'https://images.unsplash.com/photo-1605106702734-205df224ecce?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1605106702734-205df224ecce?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -158,13 +193,19 @@ const PRODUCTS: Product[] = [
   {
     id: 'fig-op-luffy-gear5',
     title: 'Luffy Gear 5 Nika Form Figure - One Piece',
-    subtitle: 'Bandai — Official One Piece',
+    subtitle: 'Bandai — Official One Piece Figure',
     description: 'Gear 5 Sun God Nika Luffy with white hair and joyful pose.',
-    longDescription: 'Luffy in ultimate Gear 5 transformation. Cartoon-like Sun God Nika power.',
-    features: ['7 inch figure', 'Gear 5 design', 'Cloud base', 'Official Bandai', 'Wano arc'],
+    longDescription: 'Luffy in ultimate Gear 5 transformation. Captures the cartoon-like Sun God Nika power with white hair and playful smile.',
+    features: [
+      '7 inch DXF figure',
+      'Gear 5 Nika design',
+      'Cloud-style base',
+      'Official Bandai release',
+      'Wano arc collector',
+    ],
     image: 'https://images.unsplash.com/photo-1608889825205-eebdb9fc5806?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1608889825205-eebdb9fc5806?w=800&auto=format&fit=crop&q=80'],
-    video: null,
+    video: 'https://www.youtube.com/embed/eNxO9MKmtZA',
     category: 'figures',
     price: '$36.99',
     priceNum: 36.99,
@@ -188,8 +229,14 @@ const PRODUCTS: Product[] = [
     title: 'Nezuko Kamado Figure - Demon Slayer',
     subtitle: 'Blood Demon Art Edition',
     description: 'Nezuko in Blood Demon Art form with pink flame effects.',
-    longDescription: 'Stunning Nezuko figure with Blood Demon Art flame effects.',
-    features: ['6 inch figure', 'Pink flame effects', 'Blood Demon pose', 'Banpresto', 'Collection favorite'],
+    longDescription: 'Stunning Nezuko figure with Blood Demon Art flame effects, bamboo muzzle, and demon-form features.',
+    features: [
+      '6 inch Vibration Stars figure',
+      'Pink flame effect parts',
+      'Blood Demon Art pose',
+      'Official Banpresto',
+      'Collection favorite',
+    ],
     image: 'https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -215,9 +262,15 @@ const PRODUCTS: Product[] = [
     id: 'fig-spy-anya-01',
     title: 'Anya Forger Figure - Spy x Family Waku Waku',
     subtitle: 'SPY x FAMILY — Puchieete Series',
-    description: 'Anya in iconic "Waku Waku" excited pose.',
-    longDescription: 'Adorable Anya Puchieete figure in legendary reaction pose.',
-    features: ['4.7 inch figure', 'Waku Waku pose', 'Eden uniform', 'Taito release', 'Desk companion'],
+    description: 'Anya in iconic "Waku Waku" excited pose with sparkling eyes.',
+    longDescription: 'Adorable Anya Puchieete figure in her legendary reaction pose. Perfect desk companion.',
+    features: [
+      '4.7 inch Puchieete figure',
+      'Iconic Waku Waku pose',
+      'Eden Academy uniform',
+      'Official Taito release',
+      'Adorable desk companion',
+    ],
     image: 'https://images.unsplash.com/photo-1590736969955-71cc94901144?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1590736969955-71cc94901144?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -244,8 +297,14 @@ const PRODUCTS: Product[] = [
     title: 'Levi Ackerman Figure - Attack on Titan',
     subtitle: 'Final Season Special Edition',
     description: 'Captain Levi with dual ODM blades and Survey Corps cape.',
-    longDescription: 'Levi mid-swing with dual ODM blades and flowing cape.',
-    features: ['7.5 inch figure', 'Dual ODM blades', 'Flowing cape', 'Final Season design', 'Rotating base'],
+    longDescription: 'Humanity\'s strongest soldier captured mid-swing with dual ODM blades and flowing Survey Corps cape.',
+    features: [
+      '7.5 inch premium figure',
+      'Dual ODM blades included',
+      'Flowing cape sculpt',
+      'Final Season design',
+      'Rotating base',
+    ],
     image: 'https://images.unsplash.com/photo-1568378378-1b0f9e0f11f4?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1568378378-1b0f9e0f11f4?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -267,13 +326,21 @@ const PRODUCTS: Product[] = [
     shipping: 'Free shipping with Prime',
     brand: 'Kotobukiya',
   },
+
+  // ═══ MANGA ═══
   {
     id: 'manga-csm-box',
     title: 'Chainsaw Man Box Set Vol 1-11 - Complete',
     subtitle: 'VIZ Media — Tatsuki Fujimoto',
     description: 'Complete Part 1 of Chainsaw Man in premium collector\'s box.',
-    longDescription: 'All 11 volumes plus exclusive booklet and poster.',
-    features: ['11 volumes', 'Collector box', 'Exclusive booklet', 'Bonus poster', 'VIZ Media'],
+    longDescription: 'All 11 volumes of Chainsaw Man Part 1 plus exclusive booklet and poster in premium box.',
+    features: [
+      '11 volumes complete',
+      'Premium collector box',
+      'Exclusive booklet',
+      'Bonus poster',
+      'VIZ Media official',
+    ],
     image: 'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -301,9 +368,15 @@ const PRODUCTS: Product[] = [
     id: 'manga-jjk-01',
     title: 'Jujutsu Kaisen Volume 1 - Manga',
     subtitle: 'VIZ Media — Gege Akutami',
-    description: 'Volume 1 of Jujutsu Kaisen manga.',
-    longDescription: 'The manga that started the phenomenon.',
-    features: ['Volume 1', 'Gege Akutami', 'VIZ Media', 'Starting point', 'Full color cover'],
+    description: 'Volume 1 of Jujutsu Kaisen manga - where it all begins.',
+    longDescription: 'The manga that started the phenomenon. Volume 1 introduces Yuji Itadori as he swallows a cursed talisman.',
+    features: [
+      'Volume 1 of series',
+      'By Gege Akutami',
+      'VIZ Media English release',
+      'Perfect starting point',
+      'Full color cover',
+    ],
     image: 'https://images.unsplash.com/photo-1560807707-8cc77767d783?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1560807707-8cc77767d783?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -329,9 +402,15 @@ const PRODUCTS: Product[] = [
     id: 'manga-sl-01',
     title: 'Solo Leveling Vol 1 Manhwa - Full Color',
     subtitle: 'Yen Press — #1 Manhwa Worldwide',
-    description: 'Solo Leveling in stunning full-color print.',
-    longDescription: 'Experience Solo Leveling exactly as originally published in full color.',
-    features: ['Full color', 'Volume 1 hardcover', 'Yen Press', 'Premium print', 'Starting point'],
+    description: 'Solo Leveling in stunning full-color print - Volume 1.',
+    longDescription: 'Experience Solo Leveling in gorgeous full color, exactly as originally published. Volume 1 begins Sung Jin-Woo\'s legendary journey.',
+    features: [
+      'Full color manhwa',
+      'Volume 1 hardcover',
+      'Yen Press release',
+      'Premium print quality',
+      'Perfect starting point',
+    ],
     image: 'https://images.unsplash.com/photo-1621784563330-caee0b138a00?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1621784563330-caee0b138a00?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -353,13 +432,21 @@ const PRODUCTS: Product[] = [
     shipping: 'Free shipping with Prime',
     brand: 'Yen Press',
   },
+
+  // ═══ GAMES ═══
   {
     id: 'game-dbz-sparking',
     title: 'Dragon Ball Sparking ZERO - PS5',
     subtitle: 'Bandai Namco — Fighting Game',
-    description: '180+ characters, explosive Dragon Ball combat returns.',
-    longDescription: 'Budokai Tenkaichi is back with the ultimate Dragon Ball fighting experience.',
-    features: ['180+ characters', 'Destructible arenas', 'Online multiplayer', 'Story mode', 'Full DB coverage'],
+    description: 'The return of Budokai Tenkaichi with 180+ playable characters.',
+    longDescription: 'Budokai Tenkaichi is back! Ultimate Dragon Ball fighting experience with 180+ characters, destructible arenas.',
+    features: [
+      '180+ playable characters',
+      'Destructible environments',
+      'Online multiplayer',
+      'Story mode',
+      'Full DB series coverage',
+    ],
     image: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800&auto=format&fit=crop&q=80'],
     video: 'https://www.youtube.com/embed/o1UrKfUMYyQ',
@@ -382,12 +469,54 @@ const PRODUCTS: Product[] = [
     brand: 'Bandai Namco',
   },
   {
+    id: 'game-naruto-storm',
+    title: 'Naruto x Boruto Ninja Storm Connections',
+    subtitle: 'PS5 — 130+ Playable Characters',
+    description: '130+ playable ninja. Relive the entire Naruto saga plus Boruto.',
+    longDescription: 'Over 130 playable ninja. Complete Naruto and Boruto experience with iconic battles and jutsu.',
+    features: [
+      '130+ characters',
+      'Complete Naruto saga',
+      'Online battle mode',
+      'PS5 graphics',
+      'Perfect for fans',
+    ],
+    image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80',
+    images: ['https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80'],
+    video: null,
+    category: 'games',
+    price: '$49.99',
+    priceNum: 49.99,
+    currency: 'USD',
+    store: 'amazon',
+    rawUrl: 'https://www.amazon.com/s?k=naruto+ninja+storm+connections',
+    animeTag: ['naruto'],
+    tags: ['naruto', 'boruto', 'game', 'ps5'],
+    badge: null,
+    rating: 4.5,
+    reviews: 3421,
+    releaseDate: '2024-11-01',
+    trendScore: 72,
+    inStock: true,
+    featured: false,
+    shipping: 'Free shipping with Prime',
+    brand: 'Bandai Namco',
+  },
+
+  // ═══ APPAREL ═══
+  {
     id: 'apparel-aot-hoodie',
     title: 'Attack on Titan Survey Corps Hoodie',
     subtitle: 'Wings of Freedom — Premium Quality',
     description: 'Premium AOT hoodie with embroidered Wings of Freedom logo.',
-    longDescription: 'Join the Survey Corps with this premium quality hoodie.',
-    features: ['Embroidered logo', 'Cotton blend', 'Fleece lining', 'S-3XL sizes', 'Licensed'],
+    longDescription: 'Join the Survey Corps with this premium quality hoodie. Cotton blend with fleece lining.',
+    features: [
+      'Embroidered Wings logo',
+      'Cotton blend fabric',
+      'Fleece lining',
+      'Sizes S-3XL',
+      'Officially licensed',
+    ],
     image: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -398,7 +527,7 @@ const PRODUCTS: Product[] = [
     store: 'amazon',
     rawUrl: 'https://www.amazon.com/s?k=attack+on+titan+survey+corps+hoodie',
     animeTag: ['attack-on-titan'],
-    tags: ['aot', 'hoodie', 'survey corps'],
+    tags: ['attack on titan', 'hoodie', 'survey corps'],
     badge: null,
     rating: 4.4,
     reviews: 2345,
@@ -412,10 +541,16 @@ const PRODUCTS: Product[] = [
   {
     id: 'apparel-naruto-akatsuki',
     title: 'Akatsuki Cloud Jacket - Naruto Cosplay',
-    subtitle: 'Cosplay Grade Zip-Up Jacket',
+    subtitle: 'Cosplay Grade Zip-Up',
     description: 'Iconic Akatsuki red cloud design on premium jacket.',
-    longDescription: 'Wear the mark of Akatsuki with premium zip-up jacket.',
-    features: ['Full cloud pattern', 'High-quality zipper', 'Cotton-polyester', 'XS-4XL', 'Cosplay ready'],
+    longDescription: 'Premium Akatsuki jacket with full red cloud pattern. Perfect for cosplay or everyday wear.',
+    features: [
+      'Full cloud pattern',
+      'High-quality zipper',
+      'Cotton-polyester blend',
+      'Sizes XS-4XL',
+      'Perfect for cosplay',
+    ],
     image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -437,13 +572,21 @@ const PRODUCTS: Product[] = [
     shipping: 'Free shipping with Prime',
     brand: 'AnimeTown',
   },
+
+  // ═══ ACCESSORIES ═══
   {
     id: 'acc-anime-lamp',
     title: 'Anime 3D LED Illusion Night Light',
     subtitle: '16 Colors — Remote Control',
     description: '3D anime illusion lamp with 16 color modes.',
-    longDescription: 'Mesmerizing 3D LED anime lamp with remote control.',
-    features: ['16 colors', 'USB powered', '3D effect', 'Remote control', 'Perfect night light'],
+    longDescription: 'Mesmerizing 3D LED anime lamp. USB powered with remote control. Perfect room decoration.',
+    features: [
+      '16 color modes',
+      'USB powered',
+      '3D illusion effect',
+      'Remote control',
+      'Perfect night light',
+    ],
     image: 'https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -470,8 +613,14 @@ const PRODUCTS: Product[] = [
     title: 'Jujutsu Kaisen Keychain Set - 6 Pack',
     subtitle: 'Metal Character Keychains',
     description: '6 JJK character keychains - Gojo, Yuji, Megumi and more.',
-    longDescription: 'Premium metal keychains featuring 6 JJK characters.',
-    features: ['6 characters', 'Premium metal', 'Enamel paint', 'Sturdy keyring', 'Great gift'],
+    longDescription: 'Premium metal keychains featuring 6 JJK characters. Great gift for anime fans.',
+    features: [
+      '6 unique characters',
+      'Premium metal',
+      'Enamel paint',
+      'Sturdy keyring',
+      'Great gift',
+    ],
     image: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -493,13 +642,21 @@ const PRODUCTS: Product[] = [
     shipping: 'Free shipping with Prime',
     brand: 'AnimeCharm',
   },
+
+  // ═══ POSTERS ═══
   {
     id: 'poster-anime-pack',
     title: 'Anime Poster Pack - 8 Popular Series',
     subtitle: 'Premium Wall Art Collection',
     description: '8 different popular anime posters, high-resolution prints.',
-    longDescription: 'Transform your room with 8-poster mega pack of popular series.',
-    features: ['8 posters', '11.5x16.5 inches', 'Matte paper', 'Fade-resistant', 'Perfect decor'],
+    longDescription: 'Transform your room with 8-poster mega pack of Demon Slayer, JJK, AOT, MHA and more.',
+    features: [
+      '8 posters',
+      '11.5 x 16.5 inches each',
+      'Matte paper',
+      'Fade-resistant inks',
+      'Perfect for bedroom',
+    ],
     image: 'https://images.unsplash.com/photo-1600107832879-de0ecc84c07d?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1600107832879-de0ecc84c07d?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -510,7 +667,7 @@ const PRODUCTS: Product[] = [
     store: 'amazon',
     rawUrl: 'https://www.amazon.com/s?k=anime+poster+pack',
     animeTag: ['demon-slayer', 'jujutsu-kaisen'],
-    tags: ['poster', 'wall art'],
+    tags: ['poster', 'wall art', 'anime decor'],
     badge: 'BEST VALUE',
     rating: 4.5,
     reviews: 7834,
@@ -521,13 +678,21 @@ const PRODUCTS: Product[] = [
     shipping: 'Free shipping with Prime',
     brand: 'AniPoster',
   },
+
+  // ═══ SNACKS ═══
   {
     id: 'food-ramen',
     title: 'Japanese Ramen Variety Pack - 10 Bowls',
     subtitle: 'Nissin, Maruchan & Sapporo Ichiban',
     description: '10 authentic Japanese ramen bowls from top brands.',
-    longDescription: 'Slurp your way through Japan with 10-bowl ramen variety pack.',
-    features: ['10 authentic bowls', 'Top brands', '5+ flavors', '3 min ready', 'Anime marathon'],
+    longDescription: '10-bowl ramen variety pack. Authentic flavors from Nissin, Maruchan, and Sapporo Ichiban.',
+    features: [
+      '10 authentic bowls',
+      'Top brands',
+      '5+ flavors',
+      'Ready in 3 minutes',
+      'Perfect for anime marathons',
+    ],
     image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -554,8 +719,14 @@ const PRODUCTS: Product[] = [
     title: 'Pocky Variety Pack - 10 Flavors',
     subtitle: 'Glico — Japanese Chocolate Sticks',
     description: 'Iconic Pocky chocolate sticks in 10 flavors.',
-    longDescription: 'Legendary Pocky sticks - Chocolate, Strawberry, Matcha and more.',
-    features: ['10 flavors', 'Made by Glico', 'Perfect for parties', 'Individual boxes', 'Anime favorite'],
+    longDescription: 'Legendary Pocky sticks in variety pack. Chocolate, Strawberry, Matcha and more.',
+    features: [
+      '10 different flavors',
+      'Made by Glico',
+      'Perfect for parties',
+      'Individual boxes',
+      'Anime snack favorite',
+    ],
     image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -566,7 +737,7 @@ const PRODUCTS: Product[] = [
     store: 'amazon',
     rawUrl: 'https://www.amazon.com/s?k=pocky+variety+pack',
     animeTag: [],
-    tags: ['pocky', 'chocolate'],
+    tags: ['pocky', 'chocolate', 'japanese snack'],
     badge: '🍫 FAN LOVED',
     rating: 4.8,
     reviews: 12543,
@@ -582,8 +753,14 @@ const PRODUCTS: Product[] = [
     title: 'Japanese Kit Kat Assortment - 30 Bars',
     subtitle: 'Matcha, Sakura & Exotic Flavors',
     description: '30 Japan-exclusive Kit Kat flavors.',
-    longDescription: 'Try 30 rare Japan-exclusive Kit Kat flavors including Matcha and Sakura.',
-    features: ['30 flavors', 'Rare Matcha & Sakura', 'Gift packaging', 'Adventurous', 'From Japan'],
+    longDescription: 'Try 30 rare Japan-exclusive Kit Kat flavors including Matcha, Sakura, Wasabi.',
+    features: [
+      '30 exclusive flavors',
+      'Rare Matcha & Sakura',
+      'Gift-ready packaging',
+      'Adventurous flavors',
+      'Direct from Japan',
+    ],
     image: 'https://images.unsplash.com/photo-1581798459219-306e14cb1631?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1581798459219-306e14cb1631?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -594,7 +771,7 @@ const PRODUCTS: Product[] = [
     store: 'amazon',
     rawUrl: 'https://www.amazon.com/s?k=japanese+kit+kat+assortment',
     animeTag: [],
-    tags: ['kit kat', 'matcha'],
+    tags: ['kit kat', 'matcha', 'japanese chocolate'],
     badge: '🎁 GIFT IDEA',
     rating: 4.9,
     reviews: 6721,
@@ -610,8 +787,14 @@ const PRODUCTS: Product[] = [
     title: 'Japanese Mochi Box - 24 Pieces',
     subtitle: 'Daifuku Assortment',
     description: 'Authentic Japanese mochi in 6+ flavors.',
-    longDescription: 'Premium mochi assortment in strawberry, matcha, red bean and more.',
-    features: ['24 pieces', '6+ flavors', 'Premium rice', 'Beautifully packaged', 'Perfect gift'],
+    longDescription: '24-piece mochi assortment in strawberry, red bean, matcha, mango and more.',
+    features: [
+      '24 pieces',
+      '6+ flavors',
+      'Premium glutinous rice',
+      'Beautiful packaging',
+      'Perfect gift',
+    ],
     image: 'https://images.unsplash.com/photo-1631206753348-db44968fd440?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1631206753348-db44968fd440?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -622,7 +805,7 @@ const PRODUCTS: Product[] = [
     store: 'amazon',
     rawUrl: 'https://www.amazon.com/s?k=japanese+mochi+box',
     animeTag: [],
-    tags: ['mochi', 'dessert'],
+    tags: ['mochi', 'daifuku', 'japanese dessert'],
     badge: '🌸 PREMIUM',
     rating: 4.7,
     reviews: 4567,
@@ -638,8 +821,14 @@ const PRODUCTS: Product[] = [
     title: 'Japanese Matcha Tea Set - Ceremonial',
     subtitle: 'Chawan, Whisk, Scoop + Matcha',
     description: 'Complete traditional Japanese matcha kit.',
-    longDescription: 'Master Japanese tea ceremony with complete kit from Uji, Kyoto.',
-    features: ['Chawan bowl', 'Bamboo whisk', 'Ceremonial matcha 30g', 'From Uji', 'Instruction guide'],
+    longDescription: 'Master Japanese tea ceremony with complete kit including ceremonial matcha from Uji, Kyoto.',
+    features: [
+      'Chawan tea bowl',
+      'Handcrafted bamboo whisk',
+      'Ceremonial matcha (30g)',
+      'From Uji, Kyoto',
+      'Instruction guide',
+    ],
     image: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1536256263959-770b48d82b0a?w=800&auto=format&fit=crop&q=80'],
     video: null,
@@ -648,9 +837,9 @@ const PRODUCTS: Product[] = [
     priceNum: 49.99,
     currency: 'USD',
     store: 'amazon',
-    rawUrl: 'https://www.amazon.com/s?k=matcha+tea+set',
+    rawUrl: 'https://www.amazon.com/s?k=matcha+tea+set+ceremonial',
     animeTag: [],
-    tags: ['matcha', 'tea'],
+    tags: ['matcha', 'tea', 'japanese tea'],
     badge: '🍵 AUTHENTIC',
     rating: 4.8,
     reviews: 3892,
@@ -661,13 +850,21 @@ const PRODUCTS: Product[] = [
     shipping: 'Free shipping with Prime',
     brand: 'Jade Leaf',
   },
+
+  // ═══ COLLECTIBLES ═══
   {
     id: 'col-pokemon',
     title: 'Pokemon TCG Ultra Premium Collection',
     subtitle: 'Scarlet & Violet Gold Etched',
     description: 'Ultimate Pokemon card collection with gold-etched promos.',
-    longDescription: 'Peak Pokemon TCG collecting with booster packs and gold cards.',
-    features: ['15 booster packs', '3 gold cards', 'Playmat', 'Deck box', 'Collector guide'],
+    longDescription: 'Peak Pokemon TCG collecting. 15 booster packs, 3 gold-etched foil cards, playmat and more.',
+    features: [
+      '15 booster packs',
+      '3 gold-etched cards',
+      'Full-art playmat',
+      'Premium deck box',
+      'Collector guide',
+    ],
     image: 'https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=800&auto=format&fit=crop&q=80',
     images: ['https://images.unsplash.com/photo-1613771404784-3a5686aa2be3?w=800&auto=format&fit=crop&q=80'],
     video: 'https://www.youtube.com/embed/QJnT9pMYjJY',
@@ -691,6 +888,7 @@ const PRODUCTS: Product[] = [
   },
 ];
 
+// ═══ Category Metadata ═══
 const CATEGORY_META: Record<string, { label: string; icon: string; description: string }> = {
   figures:      { label: 'Figures & Statues', icon: '🗿', description: 'Premium anime figures' },
   manga:        { label: 'Manga & Manhwa',    icon: '📚', description: 'Read the source material' },
@@ -704,6 +902,7 @@ const CATEGORY_META: Record<string, { label: string; icon: string; description: 
   snacks:       { label: 'Japanese Snacks',    icon: '🍜', description: 'Taste Japan at home' },
 };
 
+// ═══ Related Products Helper ═══
 function findRelatedProducts(product: Product, allProducts: Product[], limit: number = 6): Product[] {
   const scored = allProducts
     .filter(p => p.id !== product.id)
@@ -724,6 +923,7 @@ function findRelatedProducts(product: Product, allProducts: Product[], limit: nu
   return scored.map(x => x.product);
 }
 
+// ═══ MAIN API HANDLER ═══
 export const GET: APIRoute = async ({ url }) => {
   try {
     const params = url.searchParams;
@@ -739,6 +939,7 @@ export const GET: APIRoute = async ({ url }) => {
     
     let results = [...PRODUCTS];
     
+    // Single product lookup
     if (id) {
       const product = results.find(p => p.id === id);
       if (!product) {
@@ -756,15 +957,25 @@ export const GET: APIRoute = async ({ url }) => {
       }
       return new Response(JSON.stringify(response), {
         status: 200,
-        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=600' }
+        headers: { 
+          'Content-Type': 'application/json', 
+          'Cache-Control': 'public, max-age=600' 
+        }
       });
     }
     
+    // Filter by category
     if (category) results = results.filter(p => p.category === category);
+    
+    // Filter by anime
     if (anime) {
       const slug = anime.toLowerCase().replace(/\s+/g, '-');
-      results = results.filter(p => p.animeTag.some(tag => tag === slug || tag.includes(slug) || slug.includes(tag)));
+      results = results.filter(p => 
+        p.animeTag.some(tag => tag === slug || tag.includes(slug) || slug.includes(tag))
+      );
     }
+    
+    // Search query
     if (query) {
       const q = query.toLowerCase();
       results = results.filter(p => {
@@ -772,22 +983,35 @@ export const GET: APIRoute = async ({ url }) => {
         return searchable.includes(q);
       });
     }
+    
+    // Featured filter
     if (featured === 'true') results = results.filter(p => p.featured);
+    
+    // Trending filter
     if (trending === 'true') results = results.filter(p => p.trendScore >= 75);
     
+    // Enrich with affiliate URLs + trend scores
     const scored = results.map(p => ({
       ...p,
       affiliateUrl: buildAffiliateUrl(p),
       liveTrendScore: calculateTrendScore(p),
     }));
+    
+    // Sort by trend score
     scored.sort((a, b) => b.liveTrendScore - a.liveTrendScore);
     
+    // Paginate
     const total = scored.length;
     const paginated = scored.slice(offset, offset + limit);
     
     return new Response(JSON.stringify({
-      success: true, products: paginated, total, categories: CATEGORY_META,
-      hasMore: offset + limit < total, offset, limit,
+      success: true,
+      products: paginated,
+      total,
+      categories: CATEGORY_META,
+      hasMore: offset + limit < total,
+      offset,
+      limit,
     }), {
       status: 200,
       headers: {
@@ -798,8 +1022,12 @@ export const GET: APIRoute = async ({ url }) => {
     });
   } catch (error) {
     console.error('[Products API Error]', error);
-    return new Response(JSON.stringify({ success: false, error: 'Internal server error' }), {
-      status: 500, headers: { 'Content-Type': 'application/json' }
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: 'Internal server error' 
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
     });
   }
 };
