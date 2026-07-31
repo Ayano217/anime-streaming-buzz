@@ -291,19 +291,24 @@ const news = sortedPosts.slice(4, 8);
     letter-spacing: 0.05em;
   }
   
-  .product-row-scroll {
+    .product-row-scroll {
     display: flex;
     gap: 10px;
     overflow-x: auto;
     overflow-y: hidden;
     scroll-behavior: smooth;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    padding: 4px 0 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(192, 132, 252, 0.4) transparent;
+    padding: 4px 0 12px;
     -webkit-overflow-scrolling: touch;
+    cursor: grab;
+    user-select: none;
   }
-  .product-row-scroll::-webkit-scrollbar { display: none; }
+  .product-row-scroll:active { cursor: grabbing; }
+  .product-row-scroll::-webkit-scrollbar { height: 6px; background: transparent; }
+  .product-row-scroll::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.4); border-radius: 3px; }
+  .product-row-scroll::-webkit-scrollbar-thumb:hover { background: rgba(192, 132, 252, 0.7); }
+  .product-row-scroll::-webkit-scrollbar-track { background: transparent; }
   
   .product-row-item {
     flex: 0 0 auto;
@@ -894,10 +899,10 @@ const news = sortedPosts.slice(4, 8);
         '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;">' + esc(v.channel || 'Channel') + '</div>' +
       '</div>';
     
-    // Click opens reels-style player
+        // Click opens Reels page (Instagram-style)
     el.addEventListener('click', function(e) {
       e.preventDefault();
-      openReelsPlayer(v);
+      window.location.href = '/reels/' + encodeURIComponent(v.id);
     });
     
     return el;
@@ -941,7 +946,50 @@ const news = sortedPosts.slice(4, 8);
     var shuffled = shuffle(productPool);
     return shuffled.slice(0, 8);
   }
-
+    // Enable mouse-drag scroll for product rows
+  function enableDragScroll() {
+    document.querySelectorAll('.product-row-scroll').forEach(function(el) {
+      if (el.dataset.dragEnabled) return;
+      el.dataset.dragEnabled = '1';
+      
+      var isDown = false;
+      var startX;
+      var scrollLeft;
+      
+      el.addEventListener('mousedown', function(e) {
+        isDown = true;
+        el.style.cursor = 'grabbing';
+        startX = e.pageX - el.offsetLeft;
+        scrollLeft = el.scrollLeft;
+      });
+      el.addEventListener('mouseleave', function() {
+        isDown = false;
+        el.style.cursor = 'grab';
+      });
+      el.addEventListener('mouseup', function() {
+        isDown = false;
+        el.style.cursor = 'grab';
+      });
+      el.addEventListener('mousemove', function(e) {
+        if (!isDown) return;
+        e.preventDefault();
+        var x = e.pageX - el.offsetLeft;
+        var walk = (x - startX) * 2;
+        el.scrollLeft = scrollLeft - walk;
+      });
+      
+      // Mouse wheel horizontal scroll
+      el.addEventListener('wheel', function(e) {
+        if (e.deltaY !== 0) {
+          e.preventDefault();
+          el.scrollLeft += e.deltaY;
+        }
+      }, { passive: false });
+    });
+  }
+  
+  // Run after each product row is added
+  var enableInterval = setInterval(enableDragScroll, 1000);
   async function loadProducts() {
     try {
       var res = await fetch('/api/products?limit=50');
