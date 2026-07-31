@@ -563,8 +563,8 @@ const news = sortedPosts.slice(4, 8);
     var img = v.thumbnail || '';
     var delay = ((i % 8) * 40) + 'ms';
     var typeLabel = { movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA', donghua: '🐼 DONGHUA', anime: '🎌 ANIME' }[v.type] || '📺';
-    var sourceColor = { youtube: '#ff0000', dailymotion: '#0066dc', bilibili: '#00a1d6', odysee: '#ee44aa' }[v.source] || '#c084fc';
-    var sourceLabel = { youtube: 'YT', dailymotion: 'DM', bilibili: 'BILI', odysee: 'OD' }[v.source] || 'V';
+    var sourceColor = { youtube: '#ff0000', dailymotion: '#0066dc', bilibili: '#00a1d6', odysee: '#ee44aa', rumble: '#85c742' }[v.source] || '#c084fc';
+    var sourceLabel = { youtube: 'YT', dailymotion: 'DM', bilibili: 'BILI', odysee: 'OD', rumble: 'RMB' }[v.source] || 'V';
     
     var imgHtml = img
       ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="at-na-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
