@@ -1,17 +1,13 @@
 // ═══════════════════════════════════════════════════════════════
-// AniTube Buzz — Social Media Feed API (Multi-Platform)
+// AniTube Buzz — Multi-Platform Social Feed API
 // Path: src/pages/api/social-feed.ts
-// 
-// Fetches LATEST full anime, K-drama, donghua, movies from:
+//
+// AGGRESSIVE FETCH from all platforms:
 // - YouTube (official channels + search)
-// - Dailymotion (public search)
-// - Bilibili (donghua public)
-// - VK Video (Russian dubs, huge library)
-// - Rumble (alternative platform)
-// - Odysee (decentralized)
-// - Vimeo (professional content)
-// 
-// New uploads = automatic in feed
+// - Dailymotion (public API)
+// - Bilibili (public search — donghua king)
+// - Rumble (RSS + search scraping)
+// - Odysee (public API)
 // ═══════════════════════════════════════════════════════════════
 
 export const prerender = false;
@@ -19,10 +15,10 @@ export const prerender = false;
 import type { APIRoute } from 'astro';
 
 const CACHE: Record<string, { data: any; time: number }> = {};
-const CACHE_TTL = 15 * 60 * 1000;
+const CACHE_TTL = 10 * 60 * 1000; // 10 min
 
 // ═══ OFFICIAL YOUTUBE CHANNELS ═══
-const CHANNELS = {
+const YOUTUBE_CHANNELS = {
   anime: [
     { name: 'Muse Asia', id: 'UCxxnxya_32jcKj4yN1_kD7A' },
     { name: 'Ani-One Asia', id: 'UC0wNSTMWIL3qaorLx0jie6A' },
@@ -32,7 +28,6 @@ const CHANNELS = {
   kdrama: [
     { name: 'KOCOWA TV', id: 'UCbfCJov7NKI9Xa2VBpQTLLA' },
     { name: 'Viki', id: 'UCXtvsWkoK-YbcgH14LDcxKw' },
-    { name: 'K-Content by CJ ENM', id: 'UCPmqkGtqxN5Yss2Vk_5ZDpg' },
   ],
   donghua: [
     { name: 'Bilibili Chinese Anime', id: 'UCoENhZmFbnAvXwABQYNiE7Q' },
@@ -48,45 +43,38 @@ const CHANNELS = {
 const SEARCH_QUERIES = {
   anime: [
     'anime full episode english sub',
-    'new anime 2026',
+    'new anime 2026 full',
     'anime english dub full',
-    'anime full ep',
-    'chinese anime english sub',
-    'donghua full episode',
+    'anime episode full',
   ],
   kdrama: [
     'korean drama full episode english',
-    'kdrama new 2026',
-    'k-drama english sub',
-    'korean series full ep',
-    'chinese drama english sub',
-    'asian drama full',
+    'kdrama new 2026 full',
+    'k-drama english sub full',
+    'korean series full episode',
   ],
   donghua: [
     'donghua full episode english',
-    'chinese anime full episode',
-    'donghua 2026',
-    'chinese cartoon english sub',
-    'wuxia anime english',
-    'cultivation anime full',
+    'chinese anime full 2026',
+    'donghua english sub',
+    'chinese animation full',
   ],
   movies: [
     'anime movie full english',
     'korean movie full english',
     'chinese movie english sub',
-    'asian movie 2026',
-    'full movie english sub',
-    'romance drama full movie',
+    'asian movie 2026 full',
   ],
 };
 
 // ═══ HELPERS ═══
+
 function jsonRes(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=900, stale-while-revalidate=1800',
+      'Cache-Control': 'public, max-age=600, stale-while-revalidate=1200',
       'Access-Control-Allow-Origin': '*'
     }
   });
@@ -115,21 +103,14 @@ function isFullContent(title: string): boolean {
   const t = title.toLowerCase();
   const badSignals = [
     'trailer', 'preview', 'reaction', 'review', 'analysis', 'explained',
-    'top 10', 'ranked', 'amv', ' edit ', 'compilation', 'moments',
+    'top 10', 'ranked', ' amv ', ' edit ', 'compilation', 'moments',
     'best scene', 'shorts', 'tiktok', 'meme', 'funny moments',
-    'recap', 'summary in', 'in 5 minutes', 'in 10 minutes',
+    'recap', 'in 5 minutes', 'in 10 minutes',
     'behind the scenes', 'making of',
   ];
   const hasBad = badSignals.some(sig => t.includes(sig));
   if (hasBad) return false;
-  
-  const goodSignals = [
-    'full episode', 'full ep', 'episode', 'ep 1', 'ep 2', 'ep 3',
-    'full movie', 'full film', 'complete', 'english sub', 'eng sub',
-    'english dub', 'sub indo', 'season', 'chapter', 'part',
-  ];
-  const hasGood = goodSignals.some(sig => t.includes(sig));
-  return hasGood;
+  return true; // Be permissive — reject only obvious junk
 }
 
 function extractEpNumber(title: string): number | null {
@@ -175,7 +156,7 @@ async function fetchYouTubeChannelUploads(channelId: string, channelName: string
       };
     }).filter((v: any) => isFullContent(v.title));
   } catch (e) {
-    console.warn(`[YT ${channelName}] Error:`, e);
+    console.warn(`[YT ${channelName}]`, e);
     return [];
   }
 }
@@ -209,7 +190,7 @@ async function searchYouTube(query: string, contentType: string, apiKey: string)
       };
     }).filter((v: any) => isFullContent(v.title));
   } catch (e) {
-    console.warn(`[YT Search] Error:`, e);
+    console.warn(`[YT Search]`, e);
     return [];
   }
 }
@@ -217,14 +198,14 @@ async function searchYouTube(query: string, contentType: string, apiKey: string)
 // ═══ DAILYMOTION ═══
 async function searchDailymotion(query: string, contentType: string): Promise<any[]> {
   try {
-    const url = `https://api.dailymotion.com/videos?search=${encodeURIComponent(query)}&sort=recent&limit=25&fields=id,title,thumbnail_720_url,thumbnail_480_url,duration,owner.screenname,views_total,created_time,allow_embed`;
+    const url = `https://api.dailymotion.com/videos?search=${encodeURIComponent(query)}&sort=recent&limit=25&fields=id,title,thumbnail_720_url,thumbnail_480_url,duration,owner.screenname,created_time,allow_embed`;
     const res = await fetch(url);
     if (!res.ok) return [];
     const json: any = await res.json();
     if (!json.list) return [];
     
     return json.list
-      .filter((v: any) => v.allow_embed !== false && v.duration > 600)
+      .filter((v: any) => v.allow_embed !== false && v.duration > 300)
       .map((v: any) => {
         const title = v.title || '';
         const publishedAt = v.created_time ? new Date(v.created_time * 1000).toISOString() : '';
@@ -247,41 +228,45 @@ async function searchDailymotion(query: string, contentType: string): Promise<an
         };
       }).filter((v: any) => isFullContent(v.title));
   } catch (e) {
-    console.warn(`[DM Search] Error:`, e);
+    console.warn(`[DM]`, e);
     return [];
   }
 }
 
-// ═══ BILIBILI (Donghua king - Chinese) ═══
-// Note: Bilibili has some CORS restrictions but public search works
+// ═══ BILIBILI (Donghua/Chinese anime king) ═══
 async function searchBilibili(query: string, contentType: string): Promise<any[]> {
   try {
-    // Bilibili's public search API
-    const url = `https://api.bilibili.com/x/web-interface/search/type?search_type=video&keyword=${encodeURIComponent(query)}&order=pubdate&page=1`;
+    // Bilibili public search API
+    const url = `https://api.bilibili.com/x/web-interface/search/type?search_type=video&keyword=${encodeURIComponent(query)}&order=pubdate&page=1&pagesize=20`;
     const res = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'application/json',
+        'Referer': 'https://www.bilibili.com/',
       }
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      console.warn(`[Bilibili] Status ${res.status}`);
+      return [];
+    }
     const json: any = await res.json();
     if (!json.data || !json.data.result) return [];
     
-    return json.data.result.slice(0, 10).map((v: any) => {
-      const title = (v.title || '').replace(/<[^>]+>/g, ''); // Strip HTML
+    return json.data.result.slice(0, 15).map((v: any) => {
+      const title = (v.title || '').replace(/<[^>]+>/g, ''); // Strip HTML tags
       const publishedAt = v.pubdate ? new Date(v.pubdate * 1000).toISOString() : '';
       const daysSincePublish = publishedAt ? (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24) : 999;
       const bvid = v.bvid || '';
+      const pic = v.pic ? (v.pic.startsWith('//') ? 'https:' + v.pic : v.pic) : '';
       
       return {
         id: `bili_${bvid}`,
         title,
         channel: v.author || 'Bilibili',
-        thumbnail: v.pic ? (v.pic.startsWith('//') ? 'https:' + v.pic : v.pic) : '',
+        thumbnail: pic,
         publishedAt,
         type: contentType,
-        embedUrl: `https://player.bilibili.com/player.html?bvid=${bvid}&high_quality=1&danmaku=0`,
+        embedUrl: `https://player.bilibili.com/player.html?bvid=${bvid}&high_quality=1&danmaku=0&autoplay=0`,
         source: 'bilibili',
         slug: slugify(title),
         episodeNumber: extractEpNumber(title),
@@ -291,28 +276,15 @@ async function searchBilibili(query: string, contentType: string): Promise<any[]
       };
     }).filter((v: any) => v.videoId);
   } catch (e) {
-    console.warn(`[Bilibili] Error:`, e);
+    console.warn(`[Bilibili]`, e);
     return [];
   }
 }
 
-// ═══ RUMBLE (Public embeds via search page) ═══
-// Rumble doesn't have easy public API, but we can construct embeds from known video IDs
-// We'll do a lighter integration — via their public JSON feed
-async function searchRumble(query: string, contentType: string): Promise<any[]> {
-  try {
-    // Rumble doesn't have public search API — skip for now, we can add oEmbed later
-    // Return empty for now — placeholder for future
-    return [];
-  } catch (e) {
-    return [];
-  }
-}
-
-// ═══ ODYSEE (Public API) ═══
+// ═══ ODYSEE ═══
 async function searchOdysee(query: string, contentType: string): Promise<any[]> {
   try {
-    const url = `https://lighthouse.odysee.com/search?s=${encodeURIComponent(query)}&size=10&from=0&mediaType=video`;
+    const url = `https://lighthouse.odysee.com/search?s=${encodeURIComponent(query)}&size=20&from=0&mediaType=video&sort_by=release_time`;
     const res = await fetch(url);
     if (!res.ok) return [];
     const results: any = await res.json();
@@ -343,30 +315,63 @@ async function searchOdysee(query: string, contentType: string): Promise<any[]> 
       };
     }).filter((v: any) => v && isFullContent(v.title));
   } catch (e) {
-    console.warn(`[Odysee] Error:`, e);
+    console.warn(`[Odysee]`, e);
     return [];
   }
 }
 
-// ═══ VIMEO (Public search) ═══
-async function searchVimeo(query: string, contentType: string): Promise<any[]> {
+// ═══ RUMBLE (via RSS/scraping) ═══
+async function searchRumble(query: string, contentType: string): Promise<any[]> {
   try {
-    // Vimeo requires OAuth for search — using their public unofficial JSON
-    // Skip for now — return empty (can add with Bearer token later)
-    return [];
+    // Rumble doesn't have a public search API, but we can use their public search HTML
+    // We scrape the search page and extract video IDs
+    const url = `https://rumble.com/search/video?q=${encodeURIComponent(query)}&sort=recent`;
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml',
+      }
+    });
+    if (!res.ok) {
+      console.warn(`[Rumble] Status ${res.status}`);
+      return [];
+    }
+    const html = await res.text();
+    
+    // Extract video data from Rumble's HTML
+    // Pattern: <a class="videostream__link" href="/v-xxxxx.html">
+    const videoPattern = /href="\/(v[a-z0-9]+)-([^"]+)\.html"[^>]*>[\s\S]*?<img[^>]+src="([^"]+)"[^>]*alt="([^"]+)"/gi;
+    const results: any[] = [];
+    let match;
+    let count = 0;
+    
+    while ((match = videoPattern.exec(html)) !== null && count < 10) {
+      const videoId = match[1];
+      const slug = match[2];
+      const thumbnail = match[3];
+      const title = match[4].replace(/&#039;/g, "'").replace(/&amp;/g, '&').replace(/&quot;/g, '"');
+      
+      results.push({
+        id: `rmb_${videoId}`,
+        title,
+        channel: 'Rumble',
+        thumbnail: thumbnail.startsWith('//') ? 'https:' + thumbnail : thumbnail,
+        publishedAt: '',
+        type: contentType,
+        embedUrl: `https://rumble.com/embed/${videoId}/?pub=anon`,
+        source: 'rumble',
+        slug: slugify(title),
+        episodeNumber: extractEpNumber(title),
+        isNew: false,
+        videoId,
+        isOfficial: false,
+      });
+      count++;
+    }
+    
+    return results.filter(v => isFullContent(v.title));
   } catch (e) {
-    return [];
-  }
-}
-
-// ═══ VK VIDEO (Russian, huge anime library) ═══
-async function searchVK(query: string, contentType: string): Promise<any[]> {
-  try {
-    // VK requires access token — skip direct API
-    // Alternative: use VK's public oEmbed for known video URLs
-    // For now, return empty — placeholder
-    return [];
-  } catch (e) {
+    console.warn(`[Rumble]`, e);
     return [];
   }
 }
@@ -400,38 +405,37 @@ export const GET: APIRoute = async ({ url, locals }) => {
     const promises: Promise<any[]>[] = [];
     
     for (const contentType of typesToFetch) {
-      // YouTube (official channels + search)
+      const queries = SEARCH_QUERIES[contentType as keyof typeof SEARCH_QUERIES] || [];
+      const query = queries[page % queries.length] || queries[0];
+      
+      // YouTube: official channels + search
       if (usePlatform('youtube') && YT_KEY) {
-        const channels = CHANNELS[contentType as keyof typeof CHANNELS] || [];
-        const channelsToFetch = channels.slice(0, 2);
-        for (const ch of channelsToFetch) {
-          promises.push(fetchYouTubeChannelUploads(ch.id, ch.name, contentType, YT_KEY));
+        const channels = YOUTUBE_CHANNELS[contentType as keyof typeof YOUTUBE_CHANNELS] || [];
+        const chanIdx = (page - 1) % Math.max(1, channels.length);
+        if (channels[chanIdx]) {
+          promises.push(fetchYouTubeChannelUploads(channels[chanIdx].id, channels[chanIdx].name, contentType, YT_KEY));
         }
-        
-        const queries = SEARCH_QUERIES[contentType as keyof typeof SEARCH_QUERIES] || [];
-        const query = queries[page % queries.length];
         if (query) promises.push(searchYouTube(query, contentType, YT_KEY));
       }
       
-      // Dailymotion
-      if (usePlatform('dailymotion')) {
-        const queries = SEARCH_QUERIES[contentType as keyof typeof SEARCH_QUERIES] || [];
-        const query = queries[page % queries.length];
-        if (query) promises.push(searchDailymotion(query, contentType));
+      // Dailymotion (always — no key needed)
+      if (usePlatform('dailymotion') && query) {
+        promises.push(searchDailymotion(query, contentType));
       }
       
-      // Bilibili (best for donghua)
-      if (usePlatform('bilibili') && (contentType === 'donghua' || contentType === 'anime')) {
-        const queries = SEARCH_QUERIES[contentType as keyof typeof SEARCH_QUERIES] || [];
-        const query = queries[page % queries.length];
+      // Bilibili (best for donghua/anime)
+      if (usePlatform('bilibili') && (contentType === 'donghua' || contentType === 'anime' || contentType === 'movies')) {
         if (query) promises.push(searchBilibili(query, contentType));
       }
       
       // Odysee
-      if (usePlatform('odysee')) {
-        const queries = SEARCH_QUERIES[contentType as keyof typeof SEARCH_QUERIES] || [];
-        const query = queries[page % queries.length];
-        if (query) promises.push(searchOdysee(query, contentType));
+      if (usePlatform('odysee') && query) {
+        promises.push(searchOdysee(query, contentType));
+      }
+      
+      // Rumble
+      if (usePlatform('rumble') && query) {
+        promises.push(searchRumble(query, contentType));
       }
     }
     
@@ -442,7 +446,6 @@ export const GET: APIRoute = async ({ url, locals }) => {
     const seen = new Set<string>();
     const unique = allVideos.filter(v => {
       if (seen.has(v.id)) return false;
-      // Also dedupe by very similar titles
       const cleanTitle = v.title.toLowerCase().replace(/[^\w]/g, '').substring(0, 40);
       if (seen.has(cleanTitle)) return false;
       seen.add(v.id);
@@ -450,7 +453,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
       return true;
     });
     
-    // Sort: official channels first, then by date (newest first)
+    // Sort: official first, then by date
     unique.sort((a, b) => {
       if (a.isOfficial !== b.isOfficial) return a.isOfficial ? -1 : 1;
       const da = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
@@ -481,7 +484,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     return jsonRes({ success: true, ...result });
     
   } catch (err: any) {
-    console.error('[social-feed] Error:', err);
+    console.error('[social-feed]', err);
     return jsonRes({ 
       success: false, 
       error: err.message || 'Unknown error',
