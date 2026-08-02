@@ -68,7 +68,7 @@ const { id } = Astro.params;
 
     <!-- ═══ SCROLL HINT ═══ -->
     <div id="reelsHint" class="reels-hint">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 5v14M5 12l7 7 7-7"/>
       </svg>
       <span>Scroll for next</span>
@@ -95,18 +95,89 @@ const { id } = Astro.params;
 
   var allVideos = [];
   var currentIdx = 0;
-  var isScrolling = false;
   var hintTimeout = null;
+  var STATE_KEY = 'reels_state_v1';
 
   function esc(s) { return String(s || '').replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
-  // ═══ BACK BUTTON ═══
-  back.addEventListener('click', function() {
-    if (window.history.length > 1) window.history.back();
-    else window.location.href = '/';
+  // ═══════════════════════════════════════════════
+  // 🎯 SMART ASPECT RATIO DETECTION
+  // ═══════════════════════════════════════════════
+  function detectAspect(video) {
+    // Content type-based hints (most reliable)
+    var type = (video.type || '').toLowerCase();
+    var source = (video.source || '').toLowerCase();
+    var title = (video.title || '').toLowerCase();
+
+    // TikTok, Instagram Reels, YouTube Shorts = portrait
+    if (source === 'tiktok' || source === 'reels' || source === 'shorts') return 'portrait';
+    if (/#shorts?\b|\bshorts?\b|vertical|reel/i.test(title)) return 'portrait';
+
+    // Movies, k-drama, donghua, anime = landscape (widescreen cinematic)
+    if (type === 'movies' || type === 'movie' || type === 'kdrama' || type === 'k-drama' ||
+        type === 'donghua' || type === 'anime' || type === 'series' || type === 'episode') {
+      return 'landscape';
+    }
+
+    // Check embed URL hints
+    var url = (video.embedUrl || '').toLowerCase();
+    if (/shorts/.test(url)) return 'portrait';
+
+    // Default: landscape (most content is 16:9)
+    return 'landscape';
+  }
+
+  // ═══════════════════════════════════════════════
+  // 🔙 SMART BACK NAVIGATION
+  // ═══════════════════════════════════════════════
+  function saveNavState() {
+    try {
+      sessionStorage.setItem(STATE_KEY, JSON.stringify({
+        fromReelId: id,
+        currentReelId: allVideos[currentIdx] ? allVideos[currentIdx].id : id,
+        currentIdx: currentIdx,
+        timestamp: Date.now()
+      }));
+    } catch(e) {}
+  }
+
+  function smartGoBack() {
+    saveNavState();
+    // Priority 1: Real history back if we came from within site
+    var ref = document.referrer;
+    var thisOrigin = window.location.origin;
+
+    if (ref && ref.indexOf(thisOrigin) === 0 && ref !== window.location.href) {
+      // Came from same site → history.back preserves position
+      window.history.back();
+    } else if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      // Direct visit → go home
+      window.location.href = '/';
+    }
+  }
+
+  back.addEventListener('click', smartGoBack);
+
+  // Also handle keyboard Esc as back
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      smartGoBack();
+    } else if (e.key === 'ArrowDown' || e.key === 'j') {
+      e.preventDefault();
+      scrollToSlot(currentIdx + 1);
+    } else if (e.key === 'ArrowUp' || e.key === 'k') {
+      e.preventDefault();
+      scrollToSlot(currentIdx - 1);
+    }
   });
 
-  // ═══ MENU TOGGLE ═══
+  // ═══════════════════════════════════════════════
+  // 📱 MENU
+  // ═══════════════════════════════════════════════
   menuBtn.addEventListener('click', function(e) {
     e.stopPropagation();
     menu.classList.toggle('reels-menu-open');
@@ -117,7 +188,6 @@ const { id } = Astro.params;
     }
   });
 
-  // ═══ MENU ACTIONS ═══
   menu.addEventListener('click', function(e) {
     var btn = e.target.closest('.reels-menu-item');
     if (!btn) return;
@@ -159,16 +229,14 @@ const { id } = Astro.params;
     setTimeout(function() { toast.classList.remove('reels-toast-show'); }, 2200);
   }
 
-  // ═══ SAFIYA INTEGRATION ═══
+  // ═══════════════════════════════════════════════
+  // 💜 SAFIYA INTEGRATION
+  // ═══════════════════════════════════════════════
   function notifySafiya(type, video) {
     try {
-      // 1. Update Safiya's memory
-      var memoryKey = null;
-      var deviceId = null;
-      try {
-        deviceId = localStorage.getItem('safiya_v13:device_id') || '';
-        if (deviceId) memoryKey = 'safiya_v13:memory:' + deviceId;
-      } catch(e) {}
+      var deviceId = '';
+      try { deviceId = localStorage.getItem('safiya_v13:device_id') || ''; } catch(e) {}
+      var memoryKey = deviceId ? 'safiya_v13:memory:' + deviceId : null;
 
       var memRaw = null;
       if (memoryKey) memRaw = localStorage.getItem(memoryKey);
@@ -180,13 +248,9 @@ const { id } = Astro.params;
       if (!memory.behavior.savedVideos) memory.behavior.savedVideos = [];
 
       var record = {
-        id: video.id,
-        title: video.title,
-        type: video.type || 'video',
-        channel: video.channel || '',
-        source: video.source || '',
-        time: Date.now(),
-        action: type
+        id: video.id, title: video.title, type: video.type || 'video',
+        channel: video.channel || '', source: video.source || '',
+        time: Date.now(), action: type
       };
 
       if (type === 'save') {
@@ -196,35 +260,26 @@ const { id } = Astro.params;
         memory.behavior.watchHistory.unshift(record);
         memory.behavior.watchHistory = memory.behavior.watchHistory.slice(0, 40);
       }
-
       memory.behavior.currentlyWatching = record;
 
       if (memoryKey) localStorage.setItem(memoryKey, JSON.stringify(memory));
       localStorage.setItem('safiya_memory', JSON.stringify(memory));
 
-      // 2. Dispatch event
       window.dispatchEvent(new CustomEvent('safiya:video-event', {
         detail: { action: type, video: video, title: video.title, type: video.type }
       }));
-
-      // 3. Reels-specific event (for future granular listener)
       window.dispatchEvent(new CustomEvent('reels:' + type, {
         detail: { id: video.id, title: video.title, type: video.type }
       }));
 
-      // 4. Optional: use Safiya's say() to comment
       if (window.Safiya && typeof window.Safiya.say === 'function') {
         var lines = {
-          save: [
-            'saved that? nice pick',
-            'good taste ✨',
-            'adding to your library 💜'
-          ],
+          save: ['saved that? nice pick', 'good taste ✨', 'adding to your library 💜'],
           watch: {
             movies: ['movie mode activated 🍿', 'peak cinema right here', 'good taste bestie'],
-            kdrama: ['omg k-drama? im so here for this 💕', 'the plot better be crazy', 'the leads better have chemistry'],
-            donghua: ['ooh donghua? underrated fr', 'the animation slaps', 'cultivation arcs hit different'],
-            anime: ['not you with elite taste 👀', 'bestie im invested', 'the vibes ✨']
+            kdrama: ['k-drama? im so here 💕', 'plot better be crazy', 'leads better have chemistry'],
+            donghua: ['ooh donghua? underrated fr', 'animation slaps', 'cultivation arcs hit'],
+            anime: ['elite taste 👀', 'im invested bestie', 'the vibes ✨']
           }
         };
         var msgList = type === 'save' ? lines.save : (lines.watch[video.type] || lines.watch.anime);
@@ -234,21 +289,27 @@ const { id } = Astro.params;
     } catch(err) { console.warn('Safiya notify failed:', err); }
   }
 
-  // ═══ BUILD SLOT ═══
+  // ═══════════════════════════════════════════════
+  // 🎬 BUILD SLOT (aspect-aware)
+  // ═══════════════════════════════════════════════
   function buildSlot(video, idx) {
+    var aspect = detectAspect(video);
     var slot = document.createElement('div');
-    slot.className = 'reels-slot';
+    slot.className = 'reels-slot reels-slot-' + aspect;
     slot.dataset.idx = idx;
     slot.dataset.vid = video.id;
+    slot.dataset.aspect = aspect;
 
     var thumb = video.thumbnail ? '<img src="' + esc(video.thumbnail) + '" alt="" class="reels-slot-bg" loading="lazy" />' : '';
 
     slot.innerHTML =
       thumb +
       '<div class="reels-slot-tint"></div>' +
-      '<div class="reels-slot-video" data-video-slot="' + idx + '"></div>' +
-      '<div class="reels-slot-loading" data-loading="' + idx + '">' +
-        '<div class="reels-slot-spinner"></div>' +
+      '<div class="reels-slot-frame">' +
+        '<div class="reels-slot-video" data-video-slot="' + idx + '"></div>' +
+        '<div class="reels-slot-loading" data-loading="' + idx + '">' +
+          '<div class="reels-slot-spinner"></div>' +
+        '</div>' +
       '</div>' +
       '<div class="reels-slot-gradient"></div>' +
       '<div class="reels-slot-info">' +
@@ -267,7 +328,9 @@ const { id } = Astro.params;
     return slot;
   }
 
-  // ═══ LOAD IFRAME ═══
+  // ═══════════════════════════════════════════════
+  // 🎥 LOAD / UNLOAD IFRAME
+  // ═══════════════════════════════════════════════
   function loadVideoInSlot(idx) {
     var slot = scroller.querySelector('[data-idx="' + idx + '"]');
     if (!slot) return;
@@ -297,8 +360,6 @@ const { id } = Astro.params;
       if (loading) loading.style.opacity = '0';
       setTimeout(function() {
         if (loading) loading.style.display = 'none';
-        var bg = slot.querySelector('.reels-slot-bg');
-        if (bg) bg.style.opacity = '0.3';
       }, 400);
     };
 
@@ -318,20 +379,18 @@ const { id } = Astro.params;
       loading.style.display = 'flex';
       loading.style.opacity = '1';
     }
-    var bg = slot.querySelector('.reels-slot-bg');
-    if (bg) bg.style.opacity = '1';
   }
 
-  // ═══ SET CURRENT ═══
+  // ═══════════════════════════════════════════════
+  // 📍 SET CURRENT
+  // ═══════════════════════════════════════════════
   var currentSetTimeout = null;
   function setCurrentIdx(newIdx) {
     if (newIdx < 0 || newIdx >= allVideos.length) return;
     if (newIdx === currentIdx) return;
 
-    var oldIdx = currentIdx;
     currentIdx = newIdx;
 
-    // URL & title update
     try {
       var v = allVideos[newIdx];
       if (v) {
@@ -340,16 +399,11 @@ const { id } = Astro.params;
       }
     } catch(e) {}
 
-    // Load nearby, unload far
     for (var i = 0; i < allVideos.length; i++) {
-      if (Math.abs(i - newIdx) <= 1) {
-        loadVideoInSlot(i);
-      } else if (Math.abs(i - newIdx) > 2) {
-        unloadVideoInSlot(i);
-      }
+      if (Math.abs(i - newIdx) <= 1) loadVideoInSlot(i);
+      else if (Math.abs(i - newIdx) > 2) unloadVideoInSlot(i);
     }
 
-    // Notify Safiya (debounced — only after user stops scrolling for 2s)
     clearTimeout(currentSetTimeout);
     currentSetTimeout = setTimeout(function() {
       var video = allVideos[newIdx];
@@ -357,6 +411,7 @@ const { id } = Astro.params;
     }, 2000);
 
     updateProgress();
+    saveNavState();
   }
 
   function updateProgress() {
@@ -366,14 +421,14 @@ const { id } = Astro.params;
     if (progressCount) progressCount.textContent = (currentIdx + 1) + ' / ' + allVideos.length;
   }
 
-  // ═══ INTERSECTION OBSERVER (Auto scroll detection) ═══
+  // ═══════════════════════════════════════════════
+  // 👁️ INTERSECTION OBSERVER
+  // ═══════════════════════════════════════════════
   var slotObserver = null;
   function setupObserver() {
     if (slotObserver) slotObserver.disconnect();
-
     slotObserver = new IntersectionObserver(function(entries) {
-      var mostVisible = null;
-      var maxRatio = 0;
+      var mostVisible = null, maxRatio = 0;
       entries.forEach(function(entry) {
         if (entry.intersectionRatio > maxRatio) {
           maxRatio = entry.intersectionRatio;
@@ -382,33 +437,14 @@ const { id } = Astro.params;
       });
       if (mostVisible && maxRatio > 0.6) {
         var idx = parseInt(mostVisible.dataset.idx);
-        if (!isNaN(idx) && idx !== currentIdx) {
-          setCurrentIdx(idx);
-        }
+        if (!isNaN(idx) && idx !== currentIdx) setCurrentIdx(idx);
       }
-    }, {
-      root: scroller,
-      threshold: [0.3, 0.6, 0.9]
-    });
+    }, { root: scroller, threshold: [0.3, 0.6, 0.9] });
 
     scroller.querySelectorAll('.reels-slot').forEach(function(slot) {
       slotObserver.observe(slot);
     });
   }
-
-  // ═══ KEYBOARD NAV ═══
-  document.addEventListener('keydown', function(e) {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-    if (e.key === 'ArrowDown' || e.key === 'j') {
-      e.preventDefault();
-      scrollToSlot(currentIdx + 1);
-    } else if (e.key === 'ArrowUp' || e.key === 'k') {
-      e.preventDefault();
-      scrollToSlot(currentIdx - 1);
-    } else if (e.key === 'Escape') {
-      window.history.back();
-    }
-  });
 
   function scrollToSlot(idx) {
     if (idx < 0 || idx >= allVideos.length) return;
@@ -417,7 +453,6 @@ const { id } = Astro.params;
     slot.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // ═══ HIDE HINT ON FIRST SCROLL ═══
   function scheduleHintHide() {
     hintTimeout = setTimeout(function() {
       if (hint) hint.classList.add('reels-hint-hide');
@@ -429,9 +464,20 @@ const { id } = Astro.params;
       hint.classList.add('reels-hint-hide');
       clearTimeout(hintTimeout);
     }
-  }, { passive: true, once: false });
+  }, { passive: true });
 
-  // ═══ INIT ═══
+  // Handle browser back button (popstate)
+  window.addEventListener('popstate', function() {
+    saveNavState();
+  });
+
+  // Save state on page unload
+  window.addEventListener('beforeunload', saveNavState);
+  window.addEventListener('pagehide', saveNavState);
+
+  // ═══════════════════════════════════════════════
+  // 🚀 INIT
+  // ═══════════════════════════════════════════════
   async function init() {
     try {
       var fetched = [];
@@ -444,9 +490,7 @@ const { id } = Astro.params;
           var data = await res.json();
           if (data.success && data.videos) {
             fetched = fetched.concat(data.videos);
-            if (!found) {
-              found = data.videos.find(function(v) { return v.id === id; });
-            }
+            if (!found) found = data.videos.find(function(v) { return v.id === id; });
           }
         } catch(e) {}
       }
@@ -462,7 +506,6 @@ const { id } = Astro.params;
         return;
       }
 
-      // Dedupe
       var seen = {};
       allVideos = fetched.filter(function(v) {
         if (!v || !v.id || seen[v.id]) return false;
@@ -470,7 +513,6 @@ const { id } = Astro.params;
         return true;
       });
 
-      // Move found to top
       var foundIdx = allVideos.findIndex(function(v) { return v.id === found.id; });
       if (foundIdx > 0) {
         var arr = allVideos.splice(foundIdx, 1);
@@ -479,13 +521,11 @@ const { id } = Astro.params;
         allVideos.unshift(found);
       }
 
-      // Build slots
       scroller.innerHTML = '';
       allVideos.forEach(function(v, i) {
         scroller.appendChild(buildSlot(v, i));
       });
 
-      // Reveal
       loader.style.opacity = '0';
       setTimeout(function() { loader.style.display = 'none'; }, 400);
       scroller.style.display = 'block';
@@ -493,7 +533,6 @@ const { id } = Astro.params;
       if (hint) hint.classList.add('reels-hint-show');
       scheduleHintHide();
 
-      // Init current
       currentIdx = -1;
       setCurrentIdx(0);
       setupObserver();
@@ -509,24 +548,19 @@ const { id } = Astro.params;
 </script>
 
 <style is:global>
-  /* ═══════════════════════════════════════════════
-     FULL DARK PAGE — no site chrome
-  ═══════════════════════════════════════════════ */
   html, body {
     background: #000 !important;
     overflow: hidden !important;
     margin: 0 !important;
     padding: 0 !important;
     height: 100vh !important;
+    height: 100dvh !important;
   }
-
   #app, main {
     background: #000 !important;
     padding: 0 !important;
     margin: 0 !important;
   }
-
-  /* Hide all site chrome on reels page */
   body:has(.reels-page) .site-header,
   body:has(.reels-page) header:not(.reels-page header),
   body:has(.reels-page) footer,
@@ -541,7 +575,7 @@ const { id } = Astro.params;
 
 <style>
   /* ═══════════════════════════════════════════════
-     🎬 REELS PAGE — TIKTOK TIER
+     🎬 REELS PAGE
   ═══════════════════════════════════════════════ */
   .reels-page {
     position: fixed;
@@ -592,9 +626,7 @@ const { id } = Astro.params;
     background: rgba(255, 255, 255, 0.18);
     transform: scale(1.06);
   }
-  .reels-icon-btn:active {
-    transform: scale(0.94);
-  }
+  .reels-icon-btn:active { transform: scale(0.94); }
 
   .reels-brand {
     text-align: center;
@@ -605,8 +637,6 @@ const { id } = Astro.params;
     text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
     pointer-events: none;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     line-height: 1;
   }
   .reels-brand-grad {
@@ -617,13 +647,12 @@ const { id } = Astro.params;
   }
   .reels-brand-white { color: #fff; }
 
-  /* ═══ MENU DROPDOWN ═══ */
+  /* ═══ MENU ═══ */
   .reels-menu-wrap {
     position: relative;
     pointer-events: auto;
     justify-self: end;
   }
-
   .reels-menu {
     position: absolute;
     top: calc(100% + 10px);
@@ -638,7 +667,6 @@ const { id } = Astro.params;
       0 0 30px rgba(192, 132, 252, 0.18),
       inset 0 1px 0 rgba(255, 255, 255, 0.06);
     backdrop-filter: blur(24px) saturate(1.3);
-    -webkit-backdrop-filter: blur(24px) saturate(1.3);
     opacity: 0;
     visibility: hidden;
     transform: translateY(-8px) scale(0.95);
@@ -651,7 +679,6 @@ const { id } = Astro.params;
     visibility: visible;
     transform: translateY(0) scale(1);
   }
-
   .reels-menu-item {
     display: flex;
     align-items: center;
@@ -740,7 +767,9 @@ const { id } = Astro.params;
     margin: 0;
   }
 
-  /* ═══ SCROLLER (The Magic) ═══ */
+  /* ═══════════════════════════════════════════════
+     🎥 SCROLLER — TIKTOK STYLE
+  ═══════════════════════════════════════════════ */
   .reels-scroller {
     position: absolute;
     inset: 0;
@@ -752,12 +781,16 @@ const { id } = Astro.params;
     -ms-overflow-style: none;
     -webkit-overflow-scrolling: touch;
     scroll-snap-stop: always;
+    /* prevent chunk of previous slot showing */
+    contain: strict;
   }
   .reels-scroller::-webkit-scrollbar { display: none; }
 
+  /* Each slot = EXACT 100vh with STRICT snap */
   .reels-slot {
     position: relative;
     height: 100vh;
+    height: 100dvh;
     width: 100%;
     scroll-snap-align: start;
     scroll-snap-stop: always;
@@ -766,6 +799,8 @@ const { id } = Astro.params;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    /* Prevent slot content from bleeding into next */
+    contain: layout paint;
   }
 
   /* Blurred BG image */
@@ -776,35 +811,56 @@ const { id } = Astro.params;
     height: 100%;
     object-fit: cover;
     z-index: 1;
-    filter: blur(30px) brightness(0.4) saturate(1.3);
-    transform: scale(1.1);
+    filter: blur(40px) brightness(0.35) saturate(1.4);
+    transform: scale(1.15);
     transition: opacity 0.6s ease;
   }
   .reels-slot-tint {
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at center, transparent 20%, rgba(0, 0, 0, 0.6) 100%);
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.7) 100%);
     z-index: 2;
     pointer-events: none;
   }
 
-  /* Video container (9:16 aspect) */
-  .reels-slot-video {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    max-width: min(500px, calc(100vh * 9 / 16));
-    aspect-ratio: 9 / 16;
-    max-height: calc(100vh - 20px);
+  /* ═══ FRAME — Aspect-aware container ═══ */
+  .reels-slot-frame {
+    position: relative;
+    z-index: 5;
     background: #000;
     border-radius: 14px;
     overflow: hidden;
     box-shadow:
       0 30px 80px rgba(0, 0, 0, 0.9),
       0 0 60px rgba(192, 132, 252, 0.08);
-    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* PORTRAIT videos (TikTok / Shorts) — 9:16 tall */
+  .reels-slot-portrait .reels-slot-frame {
+    width: min(500px, calc((100vh - 40px) * 9 / 16));
+    width: min(500px, calc((100dvh - 40px) * 9 / 16));
+    aspect-ratio: 9 / 16;
+    max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - 40px);
+  }
+
+  /* LANDSCAPE videos (Movies / K-Drama / Anime) — 16:9 wide */
+  .reels-slot-landscape .reels-slot-frame {
+    width: min(calc(100vw - 40px), calc((100vh - 40px) * 16 / 9));
+    width: min(calc(100vw - 40px), calc((100dvh - 40px) * 16 / 9));
+    aspect-ratio: 16 / 9;
+    max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - 40px);
+  }
+
+  .reels-slot-video {
+    width: 100%;
+    height: 100%;
+    background: #000;
+    position: relative;
   }
   .reels-slot-video iframe {
     width: 100%;
@@ -814,7 +870,7 @@ const { id } = Astro.params;
     display: block;
   }
 
-  /* Loading spinner overlay */
+  /* Loading spinner */
   .reels-slot-loading {
     position: absolute;
     top: 50%;
@@ -834,14 +890,14 @@ const { id } = Astro.params;
     animation: reelsRingSpin 0.9s linear infinite;
   }
 
-  /* Bottom gradient */
+  /* Bottom gradient (only over frame area, not full slot) */
   .reels-slot-gradient {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 240px;
-    background: linear-gradient(0deg, rgba(0, 0, 0, 0.85) 10%, rgba(0, 0, 0, 0.3) 60%, transparent);
+    height: 180px;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 20%, rgba(0, 0, 0, 0.4) 60%, transparent);
     pointer-events: none;
     z-index: 8;
   }
@@ -851,7 +907,7 @@ const { id } = Astro.params;
     position: absolute;
     left: 20px;
     right: 80px;
-    bottom: 34px;
+    bottom: 28px;
     z-index: 10;
     max-width: 500px;
     pointer-events: none;
@@ -863,7 +919,6 @@ const { id } = Astro.params;
     gap: 12px;
     margin-bottom: 12px;
   }
-
   .reels-slot-avatar {
     width: 38px;
     height: 38px;
@@ -885,12 +940,7 @@ const { id } = Astro.params;
     font-size: 0.85rem;
     padding-left: 2px;
   }
-
-  .reels-slot-user-text {
-    flex: 1;
-    min-width: 0;
-  }
-
+  .reels-slot-user-text { flex: 1; min-width: 0; }
   .reels-slot-username {
     font-family: 'Inter', sans-serif;
     font-size: 0.92rem;
@@ -903,7 +953,6 @@ const { id } = Astro.params;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-
   .reels-slot-type {
     font-family: 'Inter', sans-serif;
     font-size: 0.62rem;
@@ -914,7 +963,6 @@ const { id } = Astro.params;
     margin-top: 3px;
     line-height: 1;
   }
-
   .reels-slot-caption {
     font-family: 'Inter', sans-serif;
     font-size: 0.88rem;
@@ -929,7 +977,7 @@ const { id } = Astro.params;
     letter-spacing: -0.005em;
   }
 
-  /* ═══ SIDE PROGRESS ═══ */
+  /* ═══ PROGRESS ═══ */
   .reels-progress {
     position: fixed;
     right: 16px;
@@ -970,7 +1018,7 @@ const { id } = Astro.params;
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
   }
 
-  /* ═══ SCROLL HINT ═══ */
+  /* ═══ HINT ═══ */
   .reels-hint {
     position: fixed;
     bottom: 32px;
@@ -988,7 +1036,6 @@ const { id } = Astro.params;
     font-size: 0.78rem;
     font-weight: 600;
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     opacity: 0;
     visibility: hidden;
@@ -1046,7 +1093,6 @@ const { id } = Astro.params;
     visibility: hidden;
     z-index: 300;
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    letter-spacing: -0.005em;
   }
   .reels-toast-show {
     opacity: 1;
@@ -1076,9 +1122,18 @@ const { id } = Astro.params;
     .reels-icon-btn { width: 36px; height: 36px; }
     .reels-brand { font-size: 0.95rem; }
 
-    .reels-slot-video {
-      max-width: 100%;
+    /* Mobile: portrait fills screen, landscape uses full width */
+    .reels-slot-portrait .reels-slot-frame {
+      width: 100%;
       max-height: 100vh;
+      max-height: 100dvh;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .reels-slot-landscape .reels-slot-frame {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      max-height: none;
       border-radius: 0;
       box-shadow: none;
     }
@@ -1086,14 +1141,12 @@ const { id } = Astro.params;
     .reels-slot-info {
       left: 16px;
       right: 60px;
-      bottom: 28px;
+      bottom: 24px;
     }
     .reels-slot-username { font-size: 0.88rem; }
     .reels-slot-caption { font-size: 0.85rem; }
 
-    .reels-progress {
-      right: 10px;
-    }
+    .reels-progress { right: 10px; }
     .reels-progress-track { height: 80px; }
 
     .reels-hint {
