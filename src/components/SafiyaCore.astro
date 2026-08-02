@@ -1,27 +1,41 @@
 ---
 // ═══════════════════════════════════════════════════════════════
-// SAFIYA CORE v10.2 — CLEAN REBUILD + SILENT LIVE2D
-// Path: src/components/SafiyaCore.astro
+// COMMIT: feat: upgrade Safiya launcher pill, persistent memory,
+// softer progression, and low-spam automation
+// PATH: src/components/SafiyaCore.astro
 // ═══════════════════════════════════════════════════════════════
-// ✅ No duplicate code (fixes SyntaxError)
-// ✅ Silent Live2D (no auto voice)
-// ✅ Touch = only trigger (no idle spam)
-// ✅ Custom voice lines support
-// ✅ Text-based expression sync
+// ✅ Premium rectangular floating pill launcher
+// ✅ Stronger persistent memory with legacy migration
+// ✅ Shy -> warm -> close progression tracking
+// ✅ Girl-user bestie mode tracking
+// ✅ Reduced automation / idle spam
+// ✅ Link parsing + watch/product context memory
+// ✅ Kept existing Live2D/chat features intact
 // ═══════════════════════════════════════════════════════════════
 ---
 
 <div id="safiya-root">
 
   <button id="safiya-head" class="s-head" aria-label="Chat with Safiya">
-    <span class="s-head-icon" id="s-head-icon">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-      </svg>
-    </span>
-    <img id="s-head-dp" class="s-head-dp" src="" alt="Safiya" style="display:none;" />
     <span class="s-head-ring"></span>
-    <span class="s-head-online"></span>
+
+    <span class="s-head-inner">
+      <span class="s-head-avatarbox">
+        <span class="s-head-icon" id="s-head-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </span>
+        <img id="s-head-dp" class="s-head-dp" src="" alt="Safiya" style="display:none;" />
+        <span class="s-head-online"></span>
+      </span>
+
+      <span class="s-head-copy">
+        <span class="s-head-title">💜 Safiya</span>
+        <span class="s-head-sub">online</span>
+      </span>
+    </span>
+
     <span class="s-head-notify" id="safiya-notify">1</span>
   </button>
 
@@ -149,7 +163,7 @@
   ];
 
   // ═══════════════════════════════════════════════
-  // 🎤 VOICE LINES (add MP3 URLs when you want)
+  // 🎤 VOICE LINES (optional)
   // ═══════════════════════════════════════════════
   var VOICE_LINES = {
     touch: [],
@@ -158,6 +172,16 @@
     shy: [],
     angry: [],
   };
+
+  // ═══════════════════════════════════════════════
+  // 🧠 STORAGE / MEMORY
+  // ═══════════════════════════════════════════════
+  var STORAGE_NS = 'safiya_v11';
+  var LEGACY_MEMORY_KEY = 'safiya_memory';
+  var DEVICE_KEY = STORAGE_NS + ':device_id';
+  var MEMORY_PREFIX = STORAGE_NS + ':memory:';
+  var INDEX_KEY = STORAGE_NS + ':index';
+  var CREATOR_KEY = 'safiya_creator';
 
   var $ = function(id) { return document.getElementById(id); };
   var root = $('safiya-root'), head = $('safiya-head'), notify = $('safiya-notify');
@@ -168,35 +192,506 @@
   var avatar = $('safiya-avatar'), avatarCanvas = $('s-avatar-canvas');
   var avatarFallback = $('s-avatar-fallback'), avatarLoader = $('s-avatar-loader');
   var statusText = $('s-chat-status');
-  if (!root || !chat) return;
+  if (!root || !chat || !head || !bubble || !chatBody || !chatInput) return;
+
+  function safeGet(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch(e) {
+      return fallback;
+    }
+  }
+
+  function safeSet(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
+  }
+
+  function safeRemove(key) {
+    try { localStorage.removeItem(key); } catch(e) {}
+  }
+
+  function getCookie(name) {
+    try {
+      var match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/[.$?*|{}()[\]\\/+^]/g, '\\$&') + '=([^;]*)'));
+      return match ? decodeURIComponent(match[1]) : '';
+    } catch(e) {
+      return '';
+    }
+  }
+
+  function setCookie(name, value, days) {
+    try {
+      var maxAge = (days || 3650) * 24 * 60 * 60;
+      document.cookie = name + '=' + encodeURIComponent(value) + '; path=/; max-age=' + maxAge + '; SameSite=Lax';
+    } catch(e) {}
+  }
+
+  function ensureArray(value) {
+    return Array.isArray(value) ? value : [];
+  }
+
+  function trimArray(value, max) {
+    var arr = ensureArray(value);
+    if (arr.length <= max) return arr;
+    return arr.slice(arr.length - max);
+  }
+
+  function createDeviceId() {
+    return 'sf_' + Math.random().toString(36).slice(2, 12) + '_' + Date.now().toString(36);
+  }
+
+  function getDeviceId() {
+    var fromStorage = '';
+    var fromCookie = '';
+    try { fromStorage = localStorage.getItem(DEVICE_KEY) || ''; } catch(e) {}
+    fromCookie = getCookie(DEVICE_KEY);
+
+    var id = fromStorage || fromCookie || '';
+    if (!id) {
+      id = createDeviceId();
+    }
+
+    try { localStorage.setItem(DEVICE_KEY, id); } catch(e) {}
+    setCookie(DEVICE_KEY, id, 3650);
+
+    return id;
+  }
+
+  var deviceId = getDeviceId();
+  var memoryKey = MEMORY_PREFIX + deviceId;
+
+  function normalizeMemory(raw) {
+    var now = Date.now();
+    var m = raw && typeof raw === 'object' ? raw : {};
+
+    m.schemaVersion = 11;
+    m.deviceId = deviceId;
+    m.firstMet = m.firstMet || now;
+    m.lastVisit = typeof m.lastVisit === 'number' ? m.lastVisit : 0;
+    m.pageViews = typeof m.pageViews === 'number' ? m.pageViews : 0;
+    m.visits = typeof m.visits === 'number' ? m.visits : 0;
+    m.currentMood = typeof m.currentMood === 'string' ? m.currentMood : 'rude';
+    m.chatHistory = trimArray(m.chatHistory, 700);
+    m.userName = typeof m.userName === 'string' ? m.userName : '';
+    m.updatedAt = now;
+
+    if (!m.profile || typeof m.profile !== 'object') m.profile = {};
+    if (!m.relationship || typeof m.relationship !== 'object') m.relationship = {};
+    if (!m.behavior || typeof m.behavior !== 'object') m.behavior = {};
+    if (!m.automation || typeof m.automation !== 'object') m.automation = {};
+
+    var p = m.profile;
+    p.userType = typeof p.userType === 'string' ? p.userType : 'unknown';
+    p.prefLanguage = typeof p.prefLanguage === 'string' ? p.prefLanguage : 'en';
+    p.favoriteAnime = typeof p.favoriteAnime === 'string' ? p.favoriteAnime : '';
+    p.favoriteTags = trimArray(p.favoriteTags, 20);
+    p.femaleSignals = typeof p.femaleSignals === 'number' ? p.femaleSignals : 0;
+    p.maleSignals = typeof p.maleSignals === 'number' ? p.maleSignals : 0;
+    p.nameUpdatedAt = typeof p.nameUpdatedAt === 'number' ? p.nameUpdatedAt : 0;
+    p.lastSharedType = typeof p.lastSharedType === 'string' ? p.lastSharedType : '';
+    p.firstSeenPath = typeof p.firstSeenPath === 'string' ? p.firstSeenPath : (location.pathname || '/');
+
+    var r = m.relationship;
+    r.userMessages = typeof r.userMessages === 'number' ? r.userMessages : 0;
+    r.stageKey = typeof r.stageKey === 'string' ? r.stageKey : 'shy';
+    r.stageLabel = typeof r.stageLabel === 'string' ? r.stageLabel : 'New';
+    r.score = typeof r.score === 'number' ? r.score : 1;
+    r.lastInteractionAt = typeof r.lastInteractionAt === 'number' ? r.lastInteractionAt : now;
+
+    var b = m.behavior;
+    b.pagesViewed = trimArray(b.pagesViewed, 80);
+    b.animeClicked = trimArray(b.animeClicked, 50);
+    b.productsClicked = trimArray(b.productsClicked, 50);
+    b.watchHistory = trimArray(b.watchHistory, 40);
+    b.savedVideos = trimArray(b.savedVideos, 40);
+    b.sharedLinks = trimArray(b.sharedLinks, 40);
+    b.scrollDepth = typeof b.scrollDepth === 'number' ? b.scrollDepth : 0;
+    b.lastPage = typeof b.lastPage === 'string' ? b.lastPage : '';
+    b.currentProduct = b.currentProduct && typeof b.currentProduct === 'object' ? b.currentProduct : null;
+    b.currentAnime = b.currentAnime && typeof b.currentAnime === 'object' ? b.currentAnime : null;
+    b.currentlyWatching = b.currentlyWatching && typeof b.currentlyWatching === 'object' ? b.currentlyWatching : null;
+
+    var a = m.automation;
+    a.chatOpen = typeof a.chatOpen === 'boolean' ? a.chatOpen : false;
+    a.chatMinimized = typeof a.chatMinimized === 'boolean' ? a.chatMinimized : false;
+    a.nudgesSentLifetime = typeof a.nudgesSentLifetime === 'number' ? a.nudgesSentLifetime : 0;
+    a.lastNudgeAt = typeof a.lastNudgeAt === 'number' ? a.lastNudgeAt : 0;
+
+    m.pageViews += 1;
+    if (!m.lastVisit || now - m.lastVisit > 20 * 60 * 1000) {
+      m.visits += 1;
+    }
+    m.lastVisit = now;
+
+    return m;
+  }
+
+  function loadMemory() {
+    var current = safeGet(memoryKey, null);
+    var legacy = safeGet(LEGACY_MEMORY_KEY, null);
+    var base = current || legacy || {};
+    return normalizeMemory(base);
+  }
+
+  var memory = loadMemory();
+
+  function persistMemory() {
+    memory.updatedAt = Date.now();
+    safeSet(memoryKey, memory);
+    safeSet(LEGACY_MEMORY_KEY, memory);
+
+    var index = safeGet(INDEX_KEY, []);
+    if (!Array.isArray(index)) index = [];
+    var exists = false;
+    for (var i = 0; i < index.length; i++) {
+      if (index[i] && index[i].deviceId === deviceId) {
+        index[i].updatedAt = memory.updatedAt;
+        exists = true;
+        break;
+      }
+    }
+    if (!exists) {
+      index.push({ deviceId: deviceId, updatedAt: memory.updatedAt });
+    }
+    safeSet(INDEX_KEY, trimArray(index, 30));
+
+    try { localStorage.setItem(DEVICE_KEY, deviceId); } catch(e) {}
+    setCookie(DEVICE_KEY, deviceId, 3650);
+  }
+
+  var isCreator = false;
+  try { isCreator = localStorage.getItem(CREATOR_KEY) === 'ayano-217'; } catch(e) {}
+
+  var session = {
+    startedAt: Date.now(),
+    nudgesSent: 0,
+    lastActiveAt: Date.now(),
+    lastScrollAt: Date.now(),
+    lastAutoAt: 0,
+    didWelcome: false,
+    productBubbleShown: false,
+    saveBubbleShown: false
+  };
+
+  function countUserMessages() {
+    var count = 0;
+    for (var i = 0; i < memory.chatHistory.length; i++) {
+      if (memory.chatHistory[i] && memory.chatHistory[i].sender === 'me') count++;
+    }
+    return count;
+  }
+
+  function getRelationshipStage() {
+    var msgCount = countUserMessages();
+    memory.relationship.userMessages = msgCount;
+
+    var score = memory.visits + Math.floor(msgCount / 4) + Math.floor(memory.pageViews / 8);
+    if (memory.behavior.productsClicked.length > 0) score += 1;
+    if (memory.behavior.watchHistory.length > 2) score += 1;
+    if (score < 1) score = 1;
+
+    var isGirlUser = memory.profile.userType === 'girl';
+    var key = 'shy';
+    var label = 'New';
+
+    if (isGirlUser) {
+      if (score <= 3) { key = 'shy'; label = 'Getting comfy'; }
+      else if (score <= 10) { key = 'warm'; label = 'Warm'; }
+      else if (score <= 20) { key = 'friend'; label = 'Bestie mode'; }
+      else if (score <= 50) { key = 'bestie'; label = 'Close bestie'; }
+      else { key = 'ride'; label = 'Ride or die'; }
+    } else {
+      if (score <= 3) { key = 'shy'; label = 'New'; }
+      else if (score <= 10) { key = 'warm'; label = 'Comfortable'; }
+      else if (score <= 20) { key = 'friend'; label = 'Friendly'; }
+      else if (score <= 50) { key = 'close'; label = 'Close'; }
+      else { key = 'attached'; label = 'Very close'; }
+    }
+
+    memory.relationship.score = score;
+    memory.relationship.stageKey = key;
+    memory.relationship.stageLabel = label;
+    memory.relationship.lastInteractionAt = Date.now();
+    persistMemory();
+
+    return {
+      key: key,
+      label: label,
+      score: score,
+      isGirlUser: isGirlUser,
+      userMessages: msgCount
+    };
+  }
+
+  function setMood(m) {
+    memory.currentMood = m || 'rude';
+    persistMemory();
+    triggerMoodMotion(memory.currentMood);
+  }
+
+  function rememberLanguageFromText(text) {
+    if (!text) return;
+    var hasBanglaUnicode = /[\u0980-\u09FF]/.test(text);
+    var romanBangla = /\b(ami|amar|tumi|tomar|kemon|acho|bhalo|na|ki|keno|hobe|lagche|valo|dekho|achi|bolo)\b/i.test(text);
+    if (hasBanglaUnicode || romanBangla) memory.profile.prefLanguage = 'bn';
+    else memory.profile.prefLanguage = 'en';
+  }
+
+  function detectUserType(text) {
+    if (!text) return;
+    var low = text.toLowerCase();
+
+    if (/\b(i am a girl|i'm a girl|i am girl|i'm girl|i am female|i'm female|as a girl|ami meye|ami girl)\b/i.test(low)) {
+      memory.profile.userType = 'girl';
+      memory.profile.femaleSignals += 1;
+    } else if (/\b(i am a boy|i'm a boy|i am male|i'm male|ami chele|ami boy)\b/i.test(low)) {
+      if (memory.profile.userType !== 'girl') memory.profile.userType = 'boy';
+      memory.profile.maleSignals += 1;
+    }
+  }
+
+  function detectName(text) {
+    if (!text) return '';
+
+    var patterns = [
+      /(?:my\s+name\s+is|i\s+am|i'm|call\s+me|name'?s|the\s+name'?s)\s+([a-z][a-zA-Z0-9_-]{1,19})/i,
+      /(?:amar\s+nam\s+|ami\s+)([a-z][a-zA-Z0-9_-]{1,19})/i
+    ];
+
+    var blockList = /^(tumi|tomar|amar|ami|apni|apnar|here|home|going|coming|good|bad|fine|ok|okay|sure|the|and|but|from|will|would|could|should|maybe|really|very|too|yes|no|not|nice|cool|great|awesome|thank|hello|hi|hey|bye|safiya|ayano|user|test|kemon|acho|kotha|bolchi|jano|jani|dekho|bhalo|kharap|khub|onek|sob|kisu|kichu|eta|ota|ki|kina|hobe|hoye|hoyeche|korbo|korchi|korche|kore|korte|dhonnobad|please|thanks)$/i;
+
+    for (var i = 0; i < patterns.length; i++) {
+      var match = text.match(patterns[i]);
+      if (match && match[1]) {
+        var rawName = match[1].replace(/[_-]+/g, ' ').trim();
+        if (!rawName || rawName.length < 2 || rawName.length > 20) continue;
+        if (blockList.test(rawName)) continue;
+
+        var parts = rawName.split(/\s+/);
+        var normalized = [];
+        for (var p = 0; p < parts.length; p++) {
+          var part = parts[p];
+          if (!part) continue;
+          normalized.push(part.charAt(0).toUpperCase() + part.slice(1).toLowerCase());
+        }
+        var finalName = normalized.join(' ').slice(0, 24);
+        if (!finalName) continue;
+
+        memory.userName = finalName;
+        memory.profile.nameUpdatedAt = Date.now();
+        persistMemory();
+        return finalName;
+      }
+    }
+
+    return '';
+  }
+
+  function detectFavoriteAnime(text) {
+    if (!text) return;
+    var match = text.match(/(?:my\s+favou?rite\s+anime\s+is|favorite\s+anime\s+is|favourite\s+anime\s+is|amar\s+favorite\s+anime\s+)([a-zA-Z0-9 .:'!?\-]{2,60})/i);
+    if (match && match[1]) {
+      var fav = match[1].replace(/[.,!?]+$/, '').trim();
+      if (fav.length >= 2 && fav.length <= 60) {
+        memory.profile.favoriteAnime = fav;
+      }
+    }
+  }
+
+  function extractUrls(text) {
+    if (!text) return [];
+    var matches = text.match(/https?:\/\/[^\s<>"']+/gi) || [];
+    return matches.slice(0, 5);
+  }
+
+  function extractRelativeSiteLinks(text) {
+    if (!text) return [];
+    var matches = text.match(/\/(?:anime|product|reels)\/[a-zA-Z0-9._~:/?#[\]@!$&'()*+,;=%-]+/g) || [];
+    return matches.slice(0, 5);
+  }
+
+  function parseSharedLink(url) {
+    try {
+      var full = url;
+      if (url.indexOf('/') === 0) full = location.origin + url;
+      var u = new URL(full);
+      var host = (u.hostname || '').replace(/^www\./, '').toLowerCase();
+      var path = u.pathname || '/';
+      var info = {
+        url: url,
+        host: host,
+        path: path,
+        type: 'link',
+        internalType: '',
+        label: 'shared link',
+        id: '',
+        slug: ''
+      };
+
+      var thisHost = (location.hostname || '').replace(/^www\./, '').toLowerCase();
+      if (!host || host === thisHost) {
+        if (path.indexOf('/product/') === 0) {
+          info.type = 'product';
+          info.internalType = 'product';
+          info.label = 'shared product';
+          info.id = path.replace('/product/', '').replace(/\/+$/, '');
+        } else if (path.indexOf('/anime/') === 0) {
+          info.type = 'anime';
+          info.internalType = 'anime';
+          info.label = 'shared anime';
+          info.slug = path.replace('/anime/', '').replace(/\/+$/, '');
+        } else if (path.indexOf('/reels/') === 0) {
+          info.type = 'video';
+          info.internalType = 'reels';
+          info.label = 'shared reel';
+          info.id = path.replace('/reels/', '').replace(/\/+$/, '');
+        }
+        return info;
+      }
+
+      if (/youtube\.com|youtu\.be/.test(host)) {
+        info.type = 'video';
+        info.label = 'shared video';
+        info.id = u.searchParams.get('v') || (host.indexOf('youtu.be') !== -1 ? path.replace(/\//g, '') : '');
+      } else if (/facebook\.com|fb\.watch/.test(host)) {
+        info.type = 'social';
+        info.label = 'shared social video';
+      } else if (/amazon\./.test(host)) {
+        info.type = 'product';
+        info.label = 'shared product';
+      } else if (/instagram\.com|tiktok\.com|x\.com|twitter\.com/.test(host)) {
+        info.type = 'social';
+        info.label = 'shared social link';
+      }
+
+      return info;
+    } catch(e) {
+      return {
+        url: url,
+        host: '',
+        path: '',
+        type: 'link',
+        internalType: '',
+        label: 'shared link',
+        id: '',
+        slug: ''
+      };
+    }
+  }
+
+  function rememberSharedLinks(text) {
+    var urls = extractUrls(text);
+    var rel = extractRelativeSiteLinks(text);
+    var combined = urls.concat(rel);
+    if (!combined.length) return [];
+
+    var parsed = [];
+    for (var i = 0; i < combined.length; i++) {
+      var info = parseSharedLink(combined[i]);
+      parsed.push(info);
+      memory.behavior.sharedLinks.push({
+        url: info.url,
+        type: info.type,
+        internalType: info.internalType,
+        id: info.id,
+        slug: info.slug,
+        time: Date.now()
+      });
+      memory.profile.lastSharedType = info.type;
+    }
+
+    memory.behavior.sharedLinks = trimArray(memory.behavior.sharedLinks, 40);
+    persistMemory();
+    return parsed;
+  }
+
+  function analyzeUserText(text) {
+    rememberLanguageFromText(text);
+    detectUserType(text);
+    detectName(text);
+    detectFavoriteAnime(text);
+    return rememberSharedLinks(text);
+  }
+
+  function getStageBasedGreeting() {
+    var stage = getRelationshipStage();
+    var name = memory.userName ? memory.userName : (stage.isGirlUser ? 'bestie' : 'you');
+
+    if (isCreator) return 'Ayano-sama... you came back 💜';
+
+    if (stage.isGirlUser) {
+      if (stage.key === 'shy') return 'hey... hi i guess';
+      if (stage.key === 'warm') return 'oh hey ' + name + ' ✨';
+      if (stage.key === 'friend') return 'bestieee finally';
+      if (stage.key === 'bestie') return 'there you are, i have thoughts 💅';
+      return 'girl where have you been??';
+    }
+
+    if (stage.key === 'shy') return memory.userName ? ('hi ' + name + '...') : 'hi...';
+    if (stage.key === 'warm') return memory.userName ? ('oh hey ' + name) : 'you came back?';
+    if (stage.key === 'friend') return memory.userName ? ('hey ' + name + ' ✨') : 'you again?';
+    if (stage.key === 'close') return memory.userName ? ('took you long enough, ' + name) : 'finally';
+    return memory.userName ? ('there you are, ' + name + ' 💜') : 'missed this chat a little';
+  }
+
+  function getSubtleNudge() {
+    var stage = getRelationshipStage();
+    if (isCreator) return 'Ayano... still here?';
+
+    if (stage.isGirlUser) {
+      if (stage.key === 'shy') return 'umm... you still there?';
+      if (stage.key === 'warm') return 'bestie, you vanished';
+      if (stage.key === 'friend') return 'girl come back, i was talking';
+      if (stage.key === 'bestie') return 'hello?? i literally have opinions';
+      return 'you cannot leave me mid-convo like that 😭';
+    }
+
+    if (stage.key === 'shy') return 'you still there?';
+    if (stage.key === 'warm') return 'wow, left me on read';
+    if (stage.key === 'friend') return 'so... what are you watching rn?';
+    if (stage.key === 'close') return 'you disappear a lot, yk that?';
+    return 'rude. i was waiting 💜';
+  }
+
+  function getTouchLines(area) {
+    var stage = getRelationshipStage();
+    var isGirlUser = stage.isGirlUser;
+
+    if (isGirlUser) {
+      if (/head|face/i.test(area || '')) return ['hey— face card protected 😌', 'girl be nice to my face'];
+      if (/body/i.test(area || '')) return ['rudee 😭', 'okay personal space pls'];
+      return ['you are so dramatic', 'bestie behave'];
+    }
+
+    if (/head|face/i.test(area || '')) {
+      if (stage.key === 'shy') return ['h-hey! not the face 😳', 'stop looking at me like that'];
+      if (stage.key === 'warm') return ['oi— face card, careful', 'you are annoying... a little'];
+      if (stage.key === 'friend') return ['wow, bold today huh', 'you really have no fear'];
+      if (stage.key === 'close') return ['okay okay i felt that', 'you are getting way too comfortable 😏'];
+      return ['you always do that on purpose', 'hopeless. kinda cute tho'];
+    }
+
+    if (/body/i.test(area || '')) {
+      if (stage.key === 'shy') return ['hey! watch it 😤', 'too close, weirdo'];
+      if (stage.key === 'warm') return ['oi, boundaries', 'you are testing me'];
+      if (stage.key === 'friend') return ['bold move lol', 'you are impossible'];
+      if (stage.key === 'close') return ['you really love being trouble', 'hmm... annoying'];
+      return ['you are so clingy', 'and what exactly was that?'];
+    }
+
+    if (stage.key === 'shy') return ['hey...', 'um. rude'];
+    if (stage.key === 'warm') return ['you are extra today', 'seriously?'];
+    if (stage.key === 'friend') return ['wow, okay', 'you are weird lol'];
+    if (stage.key === 'close') return ['again? predictable', 'you want attention that bad?'];
+    return ['there it is', 'you only do that for my reaction'];
+  }
+
+  persistMemory();
 
   // ═══ AUTO DP LOADER ═══
   var DP_URL = null;
-  function tryLoadDP() {
-    var candidates = ['/safiya/avatar.png', '/safiya/avatar.jpg', '/safiya/avatar.webp'];
-    var idx = 0;
-    function tryNext() {
-      if (idx >= candidates.length) return;
-      var url = candidates[idx++];
-      var img = new Image();
-      img.onload = function() { DP_URL = url; applyDPEverywhere(url); };
-      img.onerror = tryNext;
-      img.src = url;
-    }
-    tryNext();
-  }
-  function applyDPEverywhere(url) {
-    var headDp = $('s-head-dp'), headIcon = $('s-head-icon');
-    if (headDp && headIcon) { headDp.src = url; headDp.style.display = 'block'; headIcon.style.display = 'none'; }
-    var bubbleDp = $('s-bubble-dp');
-    if (bubbleDp) { bubbleDp.src = url; bubbleDp.style.display = 'block'; }
-    var chatHeadDp = $('s-chat-head-dp'), chatHeadLetter = $('s-chat-head-letter');
-    if (chatHeadDp && chatHeadLetter) { chatHeadDp.src = url; chatHeadDp.style.display = 'block'; chatHeadLetter.style.display = 'none'; }
-    var miniDp = $('s-mini-dp'), miniLetter = $('s-mini-letter');
-    if (miniDp && miniLetter) { miniDp.src = url; miniDp.style.display = 'block'; miniLetter.style.display = 'none'; }
-    var msgAvatars = document.querySelectorAll('#safiya-root .s-msg-avatar');
-    for (var i = 0; i < msgAvatars.length; i++) applyDPToMsgAvatar(msgAvatars[i], url);
-  }
+
   function applyDPToMsgAvatar(el, url) {
     if (!el || el.dataset.hasDp === '1') return;
     el.dataset.hasDp = '1';
@@ -204,227 +699,340 @@
     el.style.backgroundSize = 'cover';
     el.style.backgroundPosition = 'center';
   }
+
+  function applyDPEverywhere(url) {
+    var headDp = $('s-head-dp'), headIcon = $('s-head-icon');
+    if (headDp && headIcon) {
+      headDp.src = url;
+      headDp.style.display = 'block';
+      headIcon.style.display = 'none';
+    }
+
+    var bubbleDp = $('s-bubble-dp');
+    if (bubbleDp) {
+      bubbleDp.src = url;
+      bubbleDp.style.display = 'block';
+    }
+
+    var chatHeadDp = $('s-chat-head-dp'), chatHeadLetter = $('s-chat-head-letter');
+    if (chatHeadDp && chatHeadLetter) {
+      chatHeadDp.src = url;
+      chatHeadDp.style.display = 'block';
+      chatHeadLetter.style.display = 'none';
+    }
+
+    var miniDp = $('s-mini-dp'), miniLetter = $('s-mini-letter');
+    if (miniDp && miniLetter) {
+      miniDp.src = url;
+      miniDp.style.display = 'block';
+      miniLetter.style.display = 'none';
+    }
+
+    var msgAvatars = document.querySelectorAll('#safiya-root .s-msg-avatar');
+    for (var i = 0; i < msgAvatars.length; i++) applyDPToMsgAvatar(msgAvatars[i], url);
+  }
+
+  function tryLoadDP() {
+    var candidates = ['/safiya/avatar.png', '/safiya/avatar.jpg', '/safiya/avatar.webp'];
+    var idx = 0;
+
+    function tryNext() {
+      if (idx >= candidates.length) return;
+      var url = candidates[idx++];
+      var img = new Image();
+      img.onload = function() {
+        DP_URL = url;
+        applyDPEverywhere(url);
+      };
+      img.onerror = tryNext;
+      img.src = url;
+    }
+
+    tryNext();
+  }
+
   tryLoadDP();
 
-  // ═══ MEMORY ═══
-  function safeGet(k, f) {
-    try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : f; } catch(e) { return f; }
-  }
-  function safeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
-  var deviceId = localStorage.getItem('safiya_device_id');
-  if (!deviceId) {
-    deviceId = 'sf_' + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
-    try { localStorage.setItem('safiya_device_id', deviceId); } catch(e) {}
-  }
-  var isCreator = false;
-  try { isCreator = localStorage.getItem('safiya_creator') === 'ayano-217'; } catch(e) {}
-
-  var memory = safeGet('safiya_memory', {});
-  memory.visits = (memory.visits || 0) + 1;
-  memory.lastVisit = Date.now();
-  if (!memory.firstMet) memory.firstMet = Date.now();
-  if (!memory.currentMood) memory.currentMood = 'rude';
-  if (!memory.chatHistory) memory.chatHistory = [];
-  if (!memory.userName) memory.userName = '';
-  if (!memory.behavior) memory.behavior = {};
-  if (typeof memory.chatOpen !== 'boolean') memory.chatOpen = false;
-  if (typeof memory.chatMinimized !== 'boolean') memory.chatMinimized = false;
-  var b = memory.behavior;
-  if (!Array.isArray(b.pagesViewed)) b.pagesViewed = [];
-  if (!Array.isArray(b.animeClicked)) b.animeClicked = [];
-  if (!Array.isArray(b.productsClicked)) b.productsClicked = [];
-  if (typeof b.scrollDepth !== 'number') b.scrollDepth = 0;
-  if (typeof b.lastPage !== 'string') b.lastPage = '';
-  safeSet('safiya_memory', memory);
-
+  // ═══ UI STATE ═══
   var mood = memory.currentMood || 'rude';
-  function setMood(m) { mood = m; memory.currentMood = m; safeSet('safiya_memory', memory); triggerMoodMotion(m); }
+  var chatOpen = false;
+  var isMinimized = false;
+  var chatInited = false;
+  var newMessageCount = 0;
+  var bubbleT = null;
 
-  // ═══ NAME DETECTION ═══
-  function detectName(text) {
-    if (memory.userName) return;
-    var patterns = [
-      /(?:my\s+name\s+is|i\s+am|i'm|call\s+me|name['']?s|the\s+name['']?s)\s+([A-Z][a-zA-Z]{2,15})(?:\s|$|[.,!?])/,
-      /(?:amar\s+nam\s+|ami\s+)([A-Z][a-zA-Z]{2,15})(?:\s|$|[.,!?])/,
-    ];
-    var blockList = /^(tumi|tomar|amar|ami|apni|apnar|here|home|going|coming|good|bad|fine|ok|okay|sure|the|and|but|from|will|would|could|should|maybe|really|very|too|yes|no|not|nice|cool|great|awesome|thank|hello|hi|hey|bye|safiya|ayano|user|test|kemon|acho|kotha|bolchi|jano|jani|dekho|bhalo|kharap|khub|onek|sob|kisu|kichu|eta|ota|ki|kina|hobe|hoye|hoyeche|korbo|korchi|korche|kore|korte|dhonnobad|please|thanks)$/i;
-    for (var i = 0; i < patterns.length; i++) {
-      var m = text.match(patterns[i]);
-      if (m && m[1]) {
-        var name = m[1].charAt(0).toUpperCase() + m[1].slice(1).toLowerCase();
-        if (blockList.test(name)) continue;
-        if (name.length < 3 || name.length > 15) continue;
-        if (!/^[A-Z][a-z]+$/.test(name)) continue;
-        memory.userName = name;
-        safeSet('safiya_memory', memory);
-        console.log('%c💜 Safiya learned your name: ' + name, 'color:#e879f9;font-weight:bold');
-        return name;
-      }
-    }
+  function pulseLauncher() {
+    if (!head) return;
+    head.classList.add('s-head-hot');
+    setTimeout(function() {
+      head.classList.remove('s-head-hot');
+    }, 2400);
   }
 
-  // ═══ FALLBACK LINES ═══
-  var lines = {
-    rude: ["hey. try not to bore me 🙄", "you again? ✨", "cool story bro"],
-    teasing: ["aww miss me already? 😏", "predictable~"],
-    flirty: ["you're... okay i guess 💜", "shut up don't say weird stuff 💕"],
-    manipulative: ["btw the merch drops are 🔥", "real fans support what they love~"],
-    creator: ["Ayano-sama 💜", "master, welcome back~"],
-    touchFace: ["h-hey! not the face! 😳", "s-stop! baka! 💜"],
-    touchBody: ["oi! watch the hands! 😤", "pervert!! 💕"],
-    touchHead: ["don't pat me like a kid! 😤", "hmph... that felt nice 😳"]
-  };
-  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
-  function pickLine() {
-    if (isCreator && Math.random() < 0.6) return pick(lines.creator);
-    var r = Math.random();
-    if (r < 0.35) return pick(lines.rude);
-    if (r < 0.60) return pick(lines.manipulative);
-    if (r < 0.80) return pick(lines.teasing);
-    return pick(lines.flirty);
+  function showNotify() {
+    if (!notify) return;
+    notify.style.display = 'flex';
+    pulseLauncher();
   }
 
-  var bubbleT;
+  function hideNotify() {
+    if (!notify) return;
+    notify.style.display = 'none';
+  }
+
   function showBubble(text, ms) {
     if (chatOpen) return;
     ms = ms || 6000;
     clearTimeout(bubbleT);
     bubbleText.textContent = text;
     bubble.classList.add('s-bubble-show');
-    if (notify) notify.style.display = 'flex';
-    bubbleT = setTimeout(function() { bubble.classList.remove('s-bubble-show'); }, ms);
+    showNotify();
+    bubbleT = setTimeout(function() {
+      bubble.classList.remove('s-bubble-show');
+    }, ms);
   }
-  function hideBubble() { clearTimeout(bubbleT); bubble.classList.remove('s-bubble-show'); }
+
+  function hideBubble() {
+    clearTimeout(bubbleT);
+    bubble.classList.remove('s-bubble-show');
+  }
+
   bubbleX.addEventListener('click', function(e) {
-    e.stopPropagation(); hideBubble();
-    if (notify) notify.style.display = 'none';
+    e.stopPropagation();
+    hideBubble();
+    hideNotify();
   });
+
   bubble.addEventListener('click', openChat);
 
-  // ═══ MESSAGES ═══
+  // ═══════════════════════════════════════════════
+  // 💬 MESSAGE HELPERS
+  // ═══════════════════════════════════════════════
   function fmtTime(ts) {
-    var d = new Date(ts), days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    var d = new Date(ts);
+    var days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     var h = d.getHours(), m = d.getMinutes();
-    var ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; m = m < 10 ? '0' + m : m;
+    var ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    m = m < 10 ? '0' + m : m;
     return days[d.getDay()] + ' AT ' + h + ':' + m + ' ' + ap;
   }
+
   function addTimestampEl(ts) {
     var d = document.createElement('div');
-    d.className = 's-msg-time'; d.textContent = fmtTime(ts);
+    d.className = 's-msg-time';
+    d.textContent = fmtTime(ts);
     chatBody.appendChild(d);
   }
+
   function addMessage(text, sender, opts) {
     opts = opts || {};
+
     var row = document.createElement('div');
     row.className = 's-msg-row s-msg-' + sender;
+
     if (sender === 'her') {
       var av = document.createElement('div');
       av.className = 's-msg-avatar';
       if (DP_URL) applyDPToMsgAvatar(av, DP_URL);
       row.appendChild(av);
     }
+
     var bub = document.createElement('div');
-    bub.className = 's-msg-bubble'; bub.textContent = text;
+    bub.className = 's-msg-bubble';
+    bub.textContent = text;
     row.appendChild(bub);
     chatBody.appendChild(row);
-    requestAnimationFrame(function() { chatBody.scrollTop = chatBody.scrollHeight; });
+
+    requestAnimationFrame(function() {
+      chatBody.scrollTop = chatBody.scrollHeight;
+    });
+
     if (!opts.skipSave) {
-      try {
-        memory.chatHistory.push({ sender: sender, text: text, time: Date.now() });
-        if (memory.chatHistory.length > 500) memory.chatHistory = memory.chatHistory.slice(-500);
-        safeSet('safiya_memory', memory);
-      } catch(e) {}
+      memory.chatHistory.push({ sender: sender, text: text, time: Date.now() });
+      memory.chatHistory = trimArray(memory.chatHistory, 700);
+      if (sender === 'me') {
+        memory.relationship.userMessages = countUserMessages() + 1;
+      }
+      persistMemory();
+      getRelationshipStage();
     }
+
     if (sender === 'her' && !opts.skipSave) {
       triggerMotionFromText(text);
-    }
-    if (sender === 'her' && isMinimized) {
-      newMessageCount++; miniNew.textContent = newMessageCount; miniNew.style.display = 'flex';
+      if (isMinimized) {
+        newMessageCount++;
+        miniNew.textContent = String(newMessageCount);
+        miniNew.style.display = 'flex';
+      }
     }
   }
+
   function addTyping() {
     var row = document.createElement('div');
-    row.className = 's-msg-row s-msg-her'; row.id = 's-typing';
+    row.className = 's-msg-row s-msg-her';
+    row.id = 's-typing';
+
     var av = document.createElement('div');
     av.className = 's-msg-avatar';
     if (DP_URL) applyDPToMsgAvatar(av, DP_URL);
     row.appendChild(av);
+
     var t = document.createElement('div');
     t.className = 's-msg-typing';
     t.innerHTML = '<span></span><span></span><span></span>';
     row.appendChild(t);
+
     chatBody.appendChild(row);
-    requestAnimationFrame(function() { chatBody.scrollTop = chatBody.scrollHeight; });
+    requestAnimationFrame(function() {
+      chatBody.scrollTop = chatBody.scrollHeight;
+    });
+
     return row;
   }
-  function removeTyping() { var t = $('s-typing'); if (t) t.remove(); }
 
-  var chatOpen = false, isMinimized = false, chatInited = false, newMessageCount = 0;
+  function removeTyping() {
+    var t = $('s-typing');
+    if (t) t.remove();
+  }
 
   function restoreChatHistory() {
     if (chatInited) return;
-    chatInited = true; chatBody.innerHTML = '';
+    chatInited = true;
+    chatBody.innerHTML = '';
+
     var history = memory.chatHistory || [];
     if (history.length === 0) {
       addTimestampEl(Date.now());
-      var greet;
-      if (isCreator) greet = "Ayano-sama... you're here 💜";
-      else if (memory.userName) greet = "hey " + memory.userName + " ✨";
-      else if (memory.visits === 1) greet = "hey. try not to bore me 🙄";
-      else if (memory.visits < 5) greet = "you're back? persistent 😏";
-      else greet = "oh you again~ ✨";
-      addMessage(greet, 'her');
-    } else {
-      var lastTs = 0;
-      for (var i = 0; i < history.length; i++) {
-        var msg = history[i];
-        if (msg.time - lastTs > 30 * 60 * 1000) addTimestampEl(msg.time);
-        addMessage(msg.text, msg.sender, { skipSave: true });
-        lastTs = msg.time;
-      }
-      var timeSince = Date.now() - lastTs;
-      if (timeSince > 60000) {
-        setTimeout(function() {
-          var back = memory.userName ? "back so soon " + memory.userName + "? 💜" : "back for more? 😏";
-          addMessage(back, 'her');
-        }, 500);
-      }
+      addMessage(getStageBasedGreeting(), 'her');
+      return;
+    }
+
+    var lastTs = 0;
+    for (var i = 0; i < history.length; i++) {
+      var msg = history[i];
+      if (msg.time - lastTs > 30 * 60 * 1000) addTimestampEl(msg.time);
+      addMessage(msg.text, msg.sender, { skipSave: true });
+      lastTs = msg.time;
+    }
+
+    var timeSince = Date.now() - lastTs;
+    if (timeSince > 90 * 1000) {
+      setTimeout(function() {
+        var stage = getRelationshipStage();
+        var name = memory.userName ? memory.userName : (stage.isGirlUser ? 'bestie' : 'you');
+        var backLine = '';
+
+        if (isCreator) backLine = 'Ayano... back already?';
+        else if (stage.isGirlUser) {
+          if (stage.key === 'shy') backLine = 'oh. hi again';
+          else if (stage.key === 'warm') backLine = 'hey ' + name;
+          else if (stage.key === 'friend') backLine = 'there you are bestie';
+          else if (stage.key === 'bestie') backLine = 'okay good, you are back';
+          else backLine = 'finally omg';
+        } else {
+          if (stage.key === 'shy') backLine = memory.userName ? ('hi ' + name) : 'hi again';
+          else if (stage.key === 'warm') backLine = 'you came back?';
+          else if (stage.key === 'friend') backLine = memory.userName ? ('hey ' + name) : 'back for more?';
+          else if (stage.key === 'close') backLine = memory.userName ? ('there you are, ' + name) : 'took you long enough';
+          else backLine = memory.userName ? ('miss me, ' + name + '?') : 'missed me?';
+        }
+
+        addMessage(backLine, 'her');
+      }, 500);
     }
   }
 
+  function updateStatusLabel() {
+    if (!statusText) return;
+    var stage = getRelationshipStage();
+    if (isCreator) {
+      statusText.textContent = 'Ayano mode';
+      return;
+    }
+    if (stage.isGirlUser) {
+      if (stage.key === 'bestie' || stage.key === 'ride') statusText.textContent = 'Bestie energy';
+      else statusText.textContent = 'Active now';
+      return;
+    }
+    if (stage.key === 'shy') statusText.textContent = 'Active now';
+    else if (stage.key === 'warm') statusText.textContent = 'Comfortable';
+    else if (stage.key === 'friend') statusText.textContent = 'Feels chatty';
+    else if (stage.key === 'close') statusText.textContent = 'Close vibe';
+    else statusText.textContent = 'Always around';
+  }
+
   function openChat() {
-    if (isMinimized) { unminimize(); return; }
+    if (isMinimized) {
+      unminimize();
+      return;
+    }
+
     chatOpen = true;
-    memory.chatOpen = true; memory.chatMinimized = false; safeSet('safiya_memory', memory);
-    chat.classList.add('s-chat-open'); chat.setAttribute('aria-hidden', 'false');
-    avatar.classList.add('s-avatar-show'); avatar.setAttribute('aria-hidden', 'false');
+    memory.automation.chatOpen = true;
+    memory.automation.chatMinimized = false;
+    persistMemory();
+
+    chat.classList.add('s-chat-open');
+    chat.setAttribute('aria-hidden', 'false');
+    avatar.classList.add('s-avatar-show');
+    avatar.setAttribute('aria-hidden', 'false');
     head.classList.add('s-head-hide');
+
     hideBubble();
-    if (notify) notify.style.display = 'none';
+    hideNotify();
     restoreChatHistory();
+    updateStatusLabel();
     loadLive2D();
   }
+
   function closeChat() {
-    chatOpen = false; isMinimized = false;
-    memory.chatOpen = false; memory.chatMinimized = false; safeSet('safiya_memory', memory);
-    chat.classList.remove('s-chat-open'); chat.setAttribute('aria-hidden', 'true');
-    avatar.classList.remove('s-avatar-show'); avatar.setAttribute('aria-hidden', 'true');
-    head.classList.remove('s-head-hide'); mini.classList.remove('s-mini-show');
-  }
-  function minimizeChat() {
-    chatOpen = false; isMinimized = true;
-    memory.chatOpen = false; memory.chatMinimized = true; safeSet('safiya_memory', memory);
-    chat.classList.remove('s-chat-open'); chat.setAttribute('aria-hidden', 'true');
-    avatar.classList.remove('s-avatar-show'); avatar.setAttribute('aria-hidden', 'true');
-    mini.classList.add('s-mini-show'); head.classList.add('s-head-hide');
-  }
-  function unminimize() {
-    isMinimized = false; newMessageCount = 0; miniNew.style.display = 'none';
+    chatOpen = false;
+    isMinimized = false;
+    memory.automation.chatOpen = false;
+    memory.automation.chatMinimized = false;
+    persistMemory();
+
+    chat.classList.remove('s-chat-open');
+    chat.setAttribute('aria-hidden', 'true');
+    avatar.classList.remove('s-avatar-show');
+    avatar.setAttribute('aria-hidden', 'true');
+    head.classList.remove('s-head-hide');
     mini.classList.remove('s-mini-show');
+  }
+
+  function minimizeChat() {
+    chatOpen = false;
+    isMinimized = true;
+    memory.automation.chatOpen = false;
+    memory.automation.chatMinimized = true;
+    persistMemory();
+
+    chat.classList.remove('s-chat-open');
+    chat.setAttribute('aria-hidden', 'true');
+    avatar.classList.remove('s-avatar-show');
+    avatar.setAttribute('aria-hidden', 'true');
+
+    mini.classList.add('s-mini-show');
+    head.classList.add('s-head-hide');
+  }
+
+  function unminimize() {
+    isMinimized = false;
+    newMessageCount = 0;
+    miniNew.style.display = 'none';
+    mini.classList.remove('s-mini-show');
+
     chatOpen = true;
-    memory.chatOpen = true; memory.chatMinimized = false; safeSet('safiya_memory', memory);
-    chat.classList.add('s-chat-open'); chat.setAttribute('aria-hidden', 'false');
-    avatar.classList.add('s-avatar-show'); avatar.setAttribute('aria-hidden', 'false');
+    memory.automation.chatOpen = true;
+    memory.automation.chatMinimized = false;
+    persistMemory();
+
+    chat.classList.add('s-chat-open');
+    chat.setAttribute('aria-hidden', 'false');
+    avatar.classList.add('s-avatar-show');
+    avatar.setAttribute('aria-hidden', 'false');
+    updateStatusLabel();
   }
 
   head.addEventListener('click', openChat);
@@ -432,69 +1040,207 @@
   closeBtn.addEventListener('click', closeChat);
   minBtn.addEventListener('click', minimizeChat);
   mini.addEventListener('click', unminimize);
-  miniX.addEventListener('click', function(e) { e.stopPropagation(); closeChat(); });
+  miniX.addEventListener('click', function(e) {
+    e.stopPropagation();
+    closeChat();
+  });
+
+  function localReply(input, parsedLinks) {
+    var l = (input || '').toLowerCase();
+    var stage = getRelationshipStage();
+    var name = memory.userName ? memory.userName : (stage.isGirlUser ? 'bestie' : 'you');
+
+    if (parsedLinks && parsedLinks.length) {
+      var first = parsedLinks[0];
+
+      if (first.internalType === 'product' && first.id) {
+        return stage.isGirlUser
+          ? ('that product link is on our site already. open /product/' + first.id + ' and let me judge it 💅')
+          : ('oh that product is already here. open /product/' + first.id + ' and i\'ll rate your taste 😏');
+      }
+
+      if (first.internalType === 'anime' && first.slug) {
+        return stage.isGirlUser
+          ? ('that anime is already on the site bestie. try /anime/' + first.slug)
+          : ('that one\'s already on the site. go /anime/' + first.slug + ' ✨');
+      }
+
+      if (first.internalType === 'reels' && first.id) {
+        return stage.isGirlUser
+          ? ('that reel is literally ours lol. /reels/' + first.id)
+          : ('you just sent me our own reel? cute. /reels/' + first.id);
+      }
+
+      if (first.type === 'product') {
+        return stage.isGirlUser
+          ? 'that looks like a product link. send me the name too and i can be way more useful'
+          : 'that looks like a product link. send the product name too and i can narrow it down better';
+      }
+
+      if (first.type === 'video' || first.type === 'social') {
+        return stage.isGirlUser
+          ? 'video link huh. send the title or anime name too, bestie'
+          : 'you dropped a video link. give me the title too and i can connect it faster';
+      }
+    }
+
+    if (/^(hi|hello|hey|yo)\b/i.test(l)) {
+      if (stage.isGirlUser) {
+        if (stage.key === 'shy') return 'hey... hi';
+        if (stage.key === 'warm') return 'oh hey bestie ✨';
+        if (stage.key === 'friend') return 'hiii bestie';
+        if (stage.key === 'bestie') return 'finally. hey girl';
+        return 'there u are bestie 💅';
+      }
+      if (stage.key === 'shy') return memory.userName ? ('hi ' + name + '...') : 'hi...';
+      if (stage.key === 'warm') return 'hey. you came back?';
+      if (stage.key === 'friend') return memory.userName ? ('hey ' + name + ' ✨') : 'hey you';
+      if (stage.key === 'close') return memory.userName ? ('hey ' + name + ', took u long enough') : 'about time';
+      return memory.userName ? ('hey ' + name + ' 💜') : 'hey. missed this chat a little';
+    }
+
+    if (/what.*name|who.*am i/.test(l)) {
+      if (memory.userName) return stage.isGirlUser ? ('you\'re ' + memory.userName + ', obviously') : ('you\'re ' + memory.userName + '. i remember');
+      return stage.isGirlUser ? 'you never told me properly bestie' : 'you still haven\'t told me your name properly';
+    }
+
+    if (/your name|who are you/.test(l)) {
+      return stage.isGirlUser ? 'safiya. try to keep up 💅' : 'safiya. try to remember it';
+    }
+
+    if (/how are you|what.?s up/.test(l)) {
+      if (stage.isGirlUser) return 'lowkey bored. entertain me';
+      if (stage.key === 'shy') return 'fine... i guess';
+      if (stage.key === 'warm') return 'bored. you?';
+      if (stage.key === 'friend') return 'okay now that you\'re here, better';
+      if (stage.key === 'close') return 'better now, don\'t make it weird';
+      return 'i was bored. now i\'m less bored 💜';
+    }
+
+    if (/love|cute|pretty|sweet|adorable/.test(l)) {
+      if (stage.isGirlUser) return 'aww stop, you\'re being cute now';
+      if (stage.key === 'shy') return 'w-what? weird';
+      if (stage.key === 'warm') return 'ugh. stop being nice';
+      if (stage.key === 'friend') return 'okay... that was kinda sweet';
+      if (stage.key === 'close') return 'you say stuff like that way too easily';
+      return 'you really know what to say huh 💜';
+    }
+
+    if (/buy|shop|figure|merch|product/.test(l)) {
+      var recentAnime = memory.behavior.animeClicked.length ? memory.behavior.animeClicked[memory.behavior.animeClicked.length - 1].slug : '';
+      if (stage.isGirlUser) {
+        if (recentAnime) return 'bestie if you liked ' + recentAnime + ', merch for that would actually eat';
+        return 'tell me what vibe you want and i\'ll help you pick';
+      }
+      if (recentAnime) return 'if you liked ' + recentAnime + ', merch for that would go hard ngl';
+      return 'tell me the anime and i\'ll judge the merch';
+    }
+
+    if (/anime|manga|watch/.test(l)) {
+      if (memory.profile.favoriteAnime) return 'you still give ' + memory.profile.favoriteAnime + ' energy tbh';
+      if (stage.isGirlUser) return 'girl tell me the trope first';
+      return 'depends. you want peak or comfort?';
+    }
+
+    if (/thank/.test(l)) {
+      return stage.isGirlUser ? 'obviously. i got you' : 'yeah yeah, you\'re welcome';
+    }
+
+    if (/bye|leaving|gn|goodnight/.test(l)) {
+      if (stage.isGirlUser) return 'bye bestie. don\'t vanish too long';
+      if (stage.key === 'shy') return 'oh... okay bye';
+      if (stage.key === 'warm') return 'fine. bye';
+      if (stage.key === 'friend') return 'bye. come back with better stories';
+      if (stage.key === 'close') return 'bye. text me later... or don\'t';
+      return 'bye. don\'t disappear on me too long 💜';
+    }
+
+    return stage.isGirlUser
+      ? 'hmm. say more, bestie'
+      : (stage.key === 'shy' ? '...okay' : stage.key === 'warm' ? 'go on' : stage.key === 'friend' ? 'hmm okay, keep talking' : stage.key === 'close' ? 'you have my attention now' : 'keep going. i\'m listening');
+  }
 
   function sendMsg() {
     var text = chatInput.value.trim();
     if (!text) return;
-    detectName(text);
+
+    session.lastActiveAt = Date.now();
+
+    var parsedLinks = analyzeUserText(text);
     addMessage(text, 'me');
     chatInput.value = '';
+
     triggerMotionByKeyword('listen');
+
     setTimeout(function() {
       addTyping();
       statusText.textContent = 'typing...';
-      var reply = null;
+
+      var stage = getRelationshipStage();
       var ctx = {
-        message: text, isCreator: isCreator, visits: memory.visits, mood: mood,
+        message: text,
+        isCreator: isCreator,
+        visits: memory.visits,
+        mood: mood,
         userName: memory.userName || '',
-        history: memory.chatHistory.slice(-15),
-        pagesViewed: b.pagesViewed.slice(-5).map(function(p) { return p.path; }),
-        animeClicked: b.animeClicked.slice(-3).map(function(a) { return a.slug; }),
-        productsClicked: b.productsClicked.length
+        history: memory.chatHistory.slice(-18),
+        pagesViewed: memory.behavior.pagesViewed.slice(-8).map(function(p) { return p.path; }),
+        animeClicked: memory.behavior.animeClicked.slice(-5).map(function(a) { return a.slug; }),
+        productsClicked: memory.behavior.productsClicked.length,
+
+        relationshipStage: memory.relationship.stageKey,
+        relationshipLabel: memory.relationship.stageLabel,
+        relationshipScore: memory.relationship.score,
+        userType: memory.profile.userType,
+        favoriteAnime: memory.profile.favoriteAnime || '',
+        preferredLanguage: memory.profile.prefLanguage || 'en',
+        pageViews: memory.pageViews,
+
+        currentlyWatching: memory.behavior.currentlyWatching || null,
+        watchHistory: memory.behavior.watchHistory.slice(-5),
+        savedVideos: memory.behavior.savedVideos.slice(-5),
+        currentProduct: memory.behavior.currentProduct || null,
+        currentAnime: memory.behavior.currentAnime || null,
+        sharedLinks: memory.behavior.sharedLinks.slice(-3),
+        recentParsedLinks: parsedLinks || [],
+
+        stageHint: stage.key,
+        deviceId: deviceId
       };
+
       fetch('/api/safiya-chat', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(ctx)
       }).then(function(res) {
         if (res.ok) return res.json();
         throw new Error('AI failed');
       }).then(function(data) {
-        reply = data.reply;
-        if (data.mood) setMood(data.mood);
-        finishReply(reply);
+        var reply = data && data.reply ? data.reply : '';
+        if (data && data.mood) {
+          mood = data.mood;
+          setMood(data.mood);
+        }
+        finishReply(reply, parsedLinks);
       }).catch(function() {
-        finishReply(localReply(text));
+        finishReply(localReply(text, parsedLinks), parsedLinks);
       });
-    }, 400);
+    }, 350);
   }
+
   function finishReply(reply) {
-    if (!reply) reply = "hmph.";
+    if (!reply) reply = '...';
     removeTyping();
-    statusText.textContent = 'Active now';
+    updateStatusLabel();
     addMessage(reply, 'her');
   }
-  function localReply(input) {
-    var l = input.toLowerCase();
-    var namePart = memory.userName ? memory.userName : "you";
-    if (/^(hi|hello|hey|yo)/i.test(l)) return "hey " + namePart + ". try not to be boring 🙄";
-    if (/love|cute|kawaii|pretty/.test(l)) return "w-what? shut up 💕 you're weird";
-    if (/buy|shop|merch/.test(l)) return "oh you want me to pick? go to /shop 😏";
-    if (/anime|manga|watch/.test(l)) return "chainsaw man if you have taste, jjk if basic 🙄";
-    if (/what.*name|who.*am i/.test(l)) {
-      if (memory.userName) return "you're " + memory.userName + "~ i remember 💜";
-      return "idk your name yet, weirdo 😒";
-    }
-    if (/your name|who.*you/.test(l)) return "safiya. try to remember it 💅";
-    if (/ayano|creator|master/.test(l)) return "ayano made me. he's basically everything 💜";
-    if (/bye|leaving/.test(l)) return "fine, leave. as if i care 🙄";
-    if (/how are you/.test(l)) return "bored. entertain me ✨";
-    if (/thank/.test(l)) return "you're welcome i guess 💜";
-    return pick(["hmph. is that all?", "try harder ✨", "you're weird. i like it 😏💜"]);
-  }
+
   sendBtn.addEventListener('click', sendMsg);
   chatInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMsg();
+    }
   });
 
   // ═══════════════════════════════════════════════
@@ -507,6 +1253,8 @@
   var lastMotionTime = 0;
   var idleMotionInterval = null;
   var currentAudio = null;
+
+  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
 
   function playCustomVoice(category) {
     if (!VOICE_LINES[category] || VOICE_LINES[category].length === 0) return;
@@ -546,11 +1294,15 @@
       'https://cdn.jsdelivr.net/npm/pixi.js@7.3.2/dist/pixi.min.js',
       'https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js'
     ];
+
     function loadScript(src) {
       return new Promise(function(res, rej) {
         if (document.querySelector('script[src="' + src + '"]')) return res();
         var s = document.createElement('script');
-        s.src = src; s.async = true; s.onload = res; s.onerror = rej;
+        s.src = src;
+        s.async = true;
+        s.onload = res;
+        s.onerror = rej;
         document.head.appendChild(s);
       });
     }
@@ -561,9 +1313,11 @@
         return PIXI.live2d.Live2DModel.from(path, {
           autoInteract: false,
           autoUpdate: true,
-          motionPreload: 'NONE',
+          motionPreload: 'NONE'
         });
-      }).catch(function() { return null; });
+      }).catch(function() {
+        return null;
+      });
     }
 
     (function() {
@@ -575,7 +1329,6 @@
       loadChain.then(function() {
         if (typeof PIXI === 'undefined' || !PIXI.live2d) throw new Error('libs missing');
 
-        // Disable sound globally
         if (PIXI.live2d.SoundManager) PIXI.live2d.SoundManager.volume = 0;
         if (PIXI.live2d.config) PIXI.live2d.config.sound = false;
 
@@ -584,23 +1337,23 @@
         var h = isMobile ? 170 : 340;
 
         var app = new PIXI.Application({
-          view: avatarCanvas, width: w, height: h,
-          backgroundAlpha: 0, antialias: true,
-          resolution: window.devicePixelRatio || 1, autoDensity: true
+          view: avatarCanvas,
+          width: w,
+          height: h,
+          backgroundAlpha: 0,
+          antialias: true,
+          resolution: window.devicePixelRatio || 1,
+          autoDensity: true
         });
         live2dApp = app;
 
-        // Try model paths sequentially
         var pathsToTry = [MODEL_PATH].concat(MODEL_FALLBACKS.filter(function(p) { return p !== MODEL_PATH; }));
         var modelChain = Promise.resolve(null);
+
         pathsToTry.forEach(function(p) {
           modelChain = modelChain.then(function(m) {
             if (m) return m;
-            console.log('%c🔍 Trying: ' + p, 'color:#c084fc');
-            return tryLoadModel(p).then(function(loaded) {
-              if (loaded) console.log('%c✅ Loaded: ' + p, 'color:#22c55e;font-weight:bold');
-              return loaded;
-            });
+            return tryLoadModel(p);
           });
         });
 
@@ -610,7 +1363,8 @@
           var scale = (h / model.height) * 0.95;
           model.scale.set(scale);
           model.anchor.set(0.5, 0.5);
-          model.x = w / 2; model.y = h / 2;
+          model.x = w / 2;
+          model.y = h / 2;
 
           app.stage.addChild(model);
           live2dModel = model;
@@ -620,7 +1374,6 @@
           if (avatarFallback) avatarFallback.style.display = 'none';
           avatarCanvas.style.display = 'block';
 
-          // Disable model's built-in sound
           try {
             var mm = model.internalModel && model.internalModel.motionManager;
             if (mm) {
@@ -629,10 +1382,8 @@
               if (mm.on) mm.on('motionStart', function() { stopAllAudio(); });
             }
             if (model.volume !== undefined) model.volume = 0;
-            console.log('%c🔇 Live2D sounds disabled', 'color:#22c55e;font-weight:bold');
           } catch(e) {}
 
-          // Detect motions
           try {
             var settings = model.internalModel && model.internalModel.settings;
             if (settings && settings.motions) {
@@ -641,54 +1392,47 @@
                 var count = (settings.motions[group] || []).length;
                 availableMotions.push({ groupName: group, count: count });
               });
-              console.log('%c🎭 Motion groups (' + availableMotions.length + '):', 'color:#e879f9;font-weight:bold');
-              availableMotions.forEach(function(m, i) {
-                console.log('%c  [' + i + '] "' + m.groupName + '" → ' + m.count + ' motion(s)', 'color:#c084fc');
-              });
             }
             if (settings && settings.expressions) {
-              availableExpressions = settings.expressions.map(function(e) { return e.Name || e.name; }).filter(Boolean);
-              console.log('%c😊 Expressions (' + availableExpressions.length + '):', 'color:#e879f9;font-weight:bold', availableExpressions);
+              availableExpressions = settings.expressions.map(function(e) {
+                return e.Name || e.name;
+              }).filter(Boolean);
             }
-          } catch(e) { console.warn('[Safiya] Motion detection error:', e); }
+          } catch(e) {}
 
-          // Cursor tracking
           var tracking = { x: 0, y: 0 };
           document.addEventListener('mousemove', function(e) {
             if (!chatOpen) return;
             var rect = avatar.getBoundingClientRect();
-            var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+            var cx = rect.left + rect.width / 2;
+            var cy = rect.top + rect.height / 2;
             tracking.x = (e.clientX - cx) / (window.innerWidth / 2);
             tracking.y = (e.clientY - cy) / (window.innerHeight / 2);
           }, { passive: true });
+
           app.ticker.add(function() {
             if (model && model.internalModel) {
               try { model.focus(tracking.x, tracking.y); } catch(e) {}
             }
           });
 
-          // Hit detection
           model.on('hit', function(hitAreas) {
             try {
               if (!hitAreas || !hitAreas.length) return;
-              var area = hitAreas[0] || '';
-              console.log('%c👆 Hit: ' + area, 'color:#22d3ee;font-weight:bold');
-              handleTouch(area);
+              handleTouch(hitAreas[0] || '');
             } catch(e) {}
           });
 
           startIdleMotions();
           setTimeout(function() { playRandomMotion(); }, 800);
         });
-      }).catch(function(err) {
-        console.error('[Safiya] Live2D FAILED:', err);
+      }).catch(function() {
         if (avatarLoader) avatarLoader.style.display = 'none';
         live2dLoading = false;
       });
     })();
   }
 
-  // ═══ MOTION CONTROL ═══
   function playMotion(groupName, index, priority) {
     if (!live2dModel) return false;
     priority = priority || 2;
@@ -700,11 +1444,14 @@
         live2dModel.motion(groupName, undefined, priority);
       }
       lastMotionTime = Date.now();
-      setTimeout(stopAllAudio, 50);
+      setTimeout(stopAllAudio, 60);
       setTimeout(stopAllAudio, 200);
       return true;
-    } catch(e) { return false; }
+    } catch(e) {
+      return false;
+    }
   }
+
   function playRandomMotion() {
     if (!live2dModel || !availableMotions.length) return;
     var nonIdle = availableMotions.filter(function(m) { return !/idle/i.test(m.groupName); });
@@ -712,10 +1459,17 @@
     var chosen = pick(pool);
     playMotion(chosen.groupName, undefined, 2);
   }
+
   function playExpression(name) {
     if (!live2dModel) return false;
-    try { live2dModel.expression(name); return true; } catch(e) { return false; }
+    try {
+      live2dModel.expression(name);
+      return true;
+    } catch(e) {
+      return false;
+    }
   }
+
   function playRandomExpression() {
     if (!availableExpressions.length) return;
     playExpression(pick(availableExpressions));
@@ -736,30 +1490,36 @@
   function triggerMotionByKeyword(context) {
     if (!live2dModel) return;
     var groupMap = {
-      greet:    ['greet', 'hello', 'hi', 'wave', 'tap_body'],
-      happy:    ['happy', 'smile', 'joy', 'laugh'],
-      sad:      ['sad', 'cry', 'down'],
-      angry:    ['angry', 'mad', 'flick'],
-      shy:      ['shy', 'blush', 'flick_head', 'head'],
+      greet: ['greet', 'hello', 'hi', 'wave', 'tap_body'],
+      happy: ['happy', 'smile', 'joy', 'laugh'],
+      sad: ['sad', 'cry', 'down'],
+      angry: ['angry', 'mad', 'flick'],
+      shy: ['shy', 'blush', 'flick_head', 'head'],
       surprise: ['surprise', 'shock', 'gasp'],
-      listen:   ['idle', 'listen', 'wait'],
-      love:     ['love', 'heart', 'flirt'],
-      dance:    ['dance', 'body'],
+      listen: ['idle', 'listen', 'wait'],
+      love: ['love', 'heart', 'flirt'],
+      dance: ['dance', 'body']
     };
     var keywords = groupMap[context] || [context];
     var group = findMotionGroup(keywords);
-    if (group) { playMotion(group, undefined, 2); return true; }
+    if (group) {
+      playMotion(group, undefined, 2);
+      return true;
+    }
     playRandomMotion();
     return false;
   }
 
   function tryExpression(keywords) {
-    if (!availableExpressions.length) return;
+    if (!availableExpressions.length) return false;
     for (var i = 0; i < keywords.length; i++) {
       var found = availableExpressions.find(function(e) {
         return e.toLowerCase().indexOf(keywords[i].toLowerCase()) !== -1;
       });
-      if (found) { playExpression(found); return true; }
+      if (found) {
+        playExpression(found);
+        return true;
+      }
     }
     return false;
   }
@@ -767,37 +1527,42 @@
   function triggerMotionFromText(text) {
     if (!live2dModel || !text) return;
     var t = text.toLowerCase();
-    if (/💜|💕|love|cute|shy|blush|w-what|shut up/.test(t)) {
+
+    if (/💜|💕|cute|sweet|blush|shy|missed|stop being nice/.test(t)) {
       triggerMotionByKeyword('shy');
       tryExpression(['shy', 'blush', 'happy']);
-    }
-    else if (/😤|angry|mad|hmph|ugh|stop|baka/.test(t)) {
+    } else if (/😤|angry|mad|hmph|ugh|stop|baka|boundaries/.test(t)) {
       triggerMotionByKeyword('angry');
       tryExpression(['angry', 'mad']);
-    }
-    else if (/hi|hey|hello|welcome|back/.test(t)) {
+    } else if (/hi|hey|hello|welcome|back/.test(t)) {
       triggerMotionByKeyword('greet');
       tryExpression(['happy', 'smile']);
-    }
-    else if (/😏|✨|😊|nice|good|great|yay|lol/.test(t)) {
+    } else if (/✨|😊|nice|good|great|yay|lol|bestie/.test(t)) {
       triggerMotionByKeyword('happy');
       tryExpression(['happy', 'smile']);
-    }
-    else if (/😳|surprise|really|omg|wow/.test(t)) {
+    } else if (/😳|really|omg|wow/.test(t)) {
       triggerMotionByKeyword('surprise');
       tryExpression(['surprise', 'shock']);
-    }
-    else if (Math.random() < 0.4) {
+    } else if (Math.random() < 0.35) {
       playRandomMotion();
     }
   }
 
   function triggerMoodMotion(newMood) {
     if (!live2dModel) return;
-    if (newMood === 'flirty')      { triggerMotionByKeyword('shy'); tryExpression(['shy', 'blush']); }
-    else if (newMood === 'angry')  { triggerMotionByKeyword('angry'); tryExpression(['angry']); }
-    else if (newMood === 'caring') { triggerMotionByKeyword('happy'); tryExpression(['happy']); }
-    else if (newMood === 'rude')   { triggerMotionByKeyword('angry'); tryExpression(['angry']); }
+    if (newMood === 'flirty') {
+      triggerMotionByKeyword('shy');
+      tryExpression(['shy', 'blush']);
+    } else if (newMood === 'angry') {
+      triggerMotionByKeyword('angry');
+      tryExpression(['angry']);
+    } else if (newMood === 'caring') {
+      triggerMotionByKeyword('happy');
+      tryExpression(['happy']);
+    } else if (newMood === 'rude') {
+      triggerMotionByKeyword('angry');
+      tryExpression(['angry']);
+    }
   }
 
   function startIdleMotions() {
@@ -805,13 +1570,24 @@
     idleMotionInterval = setInterval(function() {
       if (!live2dModel || !chatOpen) return;
       if (Date.now() - lastMotionTime < 12000) return;
-      if (Math.random() < 0.35) playRandomMotion();
+      if (Math.random() < 0.32) playRandomMotion();
     }, 8000);
   }
 
-  // ═══ TOUCH HANDLER (unified) ═══
+  // ═══ TOUCH HANDLER ═══
   var lastTouchLine = '';
   var lastTouchAt = 0;
+
+  function reactToTouch(line) {
+    if (!chatOpen) return;
+    setTimeout(function() {
+      addTyping();
+      setTimeout(function() {
+        removeTyping();
+        addMessage(line, 'her');
+      }, 420);
+    }, 140);
+  }
 
   function handleTouch(area) {
     var now = Date.now();
@@ -822,86 +1598,221 @@
     if (Math.random() < 0.5 && availableExpressions.length) playRandomExpression();
     playCustomVoice('touch');
 
-    var reactLines;
-    if (/head|face/i.test(area || '')) reactLines = lines.touchHead;
-    else if (/body/i.test(area || '')) reactLines = lines.touchBody;
-    else reactLines = [].concat(lines.touchFace, lines.touchBody, lines.touchHead);
-
-    var line;
+    var reactLines = getTouchLines(area || '');
+    var line = '';
     var tries = 0;
     do {
       line = pick(reactLines);
       tries++;
     } while (line === lastTouchLine && tries < 5);
-    lastTouchLine = line;
 
+    lastTouchLine = line;
     reactToTouch(line);
+
     if (navigator.vibrate) navigator.vibrate(20);
     avatar.classList.remove('s-avatar-tap');
     void avatar.offsetWidth;
     avatar.classList.add('s-avatar-tap');
   }
 
-  avatar.addEventListener('click', function() { handleTouch('body'); });
+  avatar.addEventListener('click', function() {
+    handleTouch('body');
+  });
 
-  function reactToTouch(line) {
-    if (!chatOpen) return;
-    setTimeout(function() {
-      addTyping();
-      setTimeout(function() { removeTyping(); addMessage(line, 'her'); }, 500);
-    }, 150);
+  // ═══════════════════════════════════════════════
+  // 📡 WATCH / PRODUCT / PAGE CONTEXT MEMORY
+  // ═══════════════════════════════════════════════
+  function setCurrentPageContext() {
+    var path = window.location.pathname || '/';
+
+    if (path.indexOf('/product/') === 0) {
+      memory.behavior.currentProduct = {
+        id: path.replace('/product/', '').replace(/\/+$/, ''),
+        path: path,
+        time: Date.now()
+      };
+    } else if (path.indexOf('/anime/') === 0) {
+      memory.behavior.currentAnime = {
+        slug: path.replace('/anime/', '').replace(/\/+$/, ''),
+        path: path,
+        time: Date.now()
+      };
+    } else if (path.indexOf('/reels/') === 0) {
+      memory.behavior.currentlyWatching = memory.behavior.currentlyWatching || {
+        id: path.replace('/reels/', '').replace(/\/+$/, ''),
+        path: path,
+        time: Date.now()
+      };
+    }
+
+    persistMemory();
   }
 
-  // ═══ IDLE NUDGES ═══
-  var lastAct = Date.now(), nudges = 0;
-  function resetIdle() { lastAct = Date.now(); }
-  function tickIdle() {
-    if (document.hidden || chatOpen || isMinimized) return;
-    if (Date.now() - lastAct > 40000 && nudges < 5) {
-      showBubble(pickLine(), 6000); lastAct = Date.now(); nudges++;
+  function pushWatchHistory(item) {
+    if (!item) return;
+
+    var clean = {
+      id: item.id || item.videoId || item.slug || '',
+      title: item.title || item.caption || item.name || '',
+      type: item.type || 'video',
+      path: item.path || location.pathname,
+      time: Date.now()
+    };
+
+    memory.behavior.currentlyWatching = clean;
+
+    var list = memory.behavior.watchHistory || [];
+    var duplicate = false;
+    for (var i = list.length - 1; i >= 0; i--) {
+      if (list[i] && list[i].id && clean.id && list[i].id === clean.id) {
+        duplicate = true;
+        break;
+      }
+    }
+    if (!duplicate) {
+      list.push(clean);
+      memory.behavior.watchHistory = trimArray(list, 40);
+    }
+
+    persistMemory();
+  }
+
+  function pushSavedVideo(item) {
+    if (!item) return;
+
+    var clean = {
+      id: item.id || item.videoId || '',
+      title: item.title || item.caption || item.name || '',
+      path: item.path || location.pathname,
+      time: Date.now()
+    };
+
+    memory.behavior.savedVideos.push(clean);
+    memory.behavior.savedVideos = trimArray(memory.behavior.savedVideos, 40);
+    persistMemory();
+
+    if (!chatOpen && !session.saveBubbleShown) {
+      session.saveBubbleShown = true;
+      showBubble('saved that one for later? smart 💜', 4200);
     }
   }
-  ['mousemove','scroll','touchstart','click'].forEach(function(e) {
-    window.addEventListener(e, resetIdle, { passive: true });
-  });
-  setInterval(tickIdle, 8000);
 
-  var cp = window.location.pathname;
-  if (b.lastPage !== cp) {
-    b.pagesViewed.push({ path: cp, time: Date.now() });
-    if (b.pagesViewed.length > 50) b.pagesViewed = b.pagesViewed.slice(-50);
-    b.lastPage = cp; safeSet('safiya_memory', memory);
+  window.addEventListener('safiya:watching', function(ev) {
+    var detail = ev && ev.detail ? ev.detail : {};
+    pushWatchHistory(detail);
+
+    if (!chatOpen && Math.random() < 0.35) {
+      var title = detail.title || detail.caption || '';
+      showBubble(title ? ('ooh "' + title.slice(0, 38) + '"? nice taste') : 'ooh, nice taste ✨', 4300);
+    }
+  });
+
+  window.addEventListener('reels:watch', function(ev) {
+    var detail = ev && ev.detail ? ev.detail : {};
+    pushWatchHistory(detail);
+  });
+
+  window.addEventListener('video:watch', function(ev) {
+    var detail = ev && ev.detail ? ev.detail : {};
+    pushWatchHistory(detail);
+  });
+
+  window.addEventListener('safiya:videoSaved', function(ev) {
+    var detail = ev && ev.detail ? ev.detail : {};
+    pushSavedVideo(detail);
+  });
+
+  window.addEventListener('reels:saved', function(ev) {
+    var detail = ev && ev.detail ? ev.detail : {};
+    pushSavedVideo(detail);
+  });
+
+  var cp = window.location.pathname || '/';
+  if (memory.behavior.lastPage !== cp) {
+    memory.behavior.pagesViewed.push({ path: cp, time: Date.now() });
+    memory.behavior.pagesViewed = trimArray(memory.behavior.pagesViewed, 80);
+    memory.behavior.lastPage = cp;
+    persistMemory();
   }
+
+  setCurrentPageContext();
+
   document.addEventListener('click', function(e) {
-    var a = e.target.closest && e.target.closest('a');
+    var a = e.target && e.target.closest ? e.target.closest('a') : null;
     if (!a) return;
+
     var h = a.getAttribute('href') || '';
     if (h.indexOf('/anime/') === 0) {
-      b.animeClicked.push({ slug: h.replace('/anime/',''), time: Date.now() });
-      if (b.animeClicked.length > 30) b.animeClicked = b.animeClicked.slice(-30);
+      memory.behavior.animeClicked.push({
+        slug: h.replace('/anime/', '').replace(/\/+$/, ''),
+        time: Date.now()
+      });
+      memory.behavior.animeClicked = trimArray(memory.behavior.animeClicked, 50);
+      persistMemory();
     } else if (h.indexOf('/product/') === 0 || a.dataset.productId) {
-      var id = a.dataset.productId || h.replace('/product/','');
-      b.productsClicked.push({ id: id, time: Date.now() });
-      if (b.productsClicked.length > 30) b.productsClicked = b.productsClicked.slice(-30);
+      var id = a.dataset.productId || h.replace('/product/', '').replace(/\/+$/, '');
+      memory.behavior.productsClicked.push({ id: id, time: Date.now() });
+      memory.behavior.productsClicked = trimArray(memory.behavior.productsClicked, 50);
+      memory.behavior.currentProduct = { id: id, path: h, time: Date.now() };
+      persistMemory();
       setMood('flirty');
-      setTimeout(function() { showBubble("oh~ good taste 💜", 5000); }, 500);
+
+      if (!chatOpen && !session.productBubbleShown) {
+        session.productBubbleShown = true;
+        showBubble('oh~ good taste', 3800);
+      }
     }
   }, { passive: true });
 
-  var btt = $('btt');
-  if (btt) {
-    btt.style.right = '90px';
-    var updateBtt = function() {
-      btt.style.display = (window.innerWidth <= 720) ? 'none' : '';
-    };
-    updateBtt();
-    window.addEventListener('resize', updateBtt);
+  // ═══════════════════════════════════════════════
+  // 💤 LOW-SPAM AUTOMATION
+  // ═══════════════════════════════════════════════
+  function resetIdle() {
+    session.lastActiveAt = Date.now();
   }
 
-  // Auto-restore
-  if (memory.chatOpen) {
+  window.addEventListener('mousemove', resetIdle, { passive: true });
+  window.addEventListener('click', resetIdle, { passive: true });
+  window.addEventListener('touchstart', resetIdle, { passive: true });
+
+  window.addEventListener('scroll', function() {
+    session.lastActiveAt = Date.now();
+    session.lastScrollAt = Date.now();
+    var doc = document.documentElement;
+    var body = document.body;
+    var scrollTop = window.scrollY || doc.scrollTop || body.scrollTop || 0;
+    var height = Math.max(body.scrollHeight, doc.scrollHeight) - window.innerHeight;
+    var depth = height > 0 ? Math.round((scrollTop / height) * 100) : 0;
+    if (depth > memory.behavior.scrollDepth) {
+      memory.behavior.scrollDepth = depth;
+      persistMemory();
+    }
+  }, { passive: true });
+
+  function tickIdle() {
+    if (document.hidden || chatOpen || isMinimized) return;
+    if (session.nudgesSent >= 2) return;
+    if (Date.now() - session.lastActiveAt < 60000) return;
+    if (Date.now() - session.lastScrollAt < 15000) return;
+    if (Date.now() - session.lastAutoAt < 60000) return;
+
+    session.nudgesSent += 1;
+    session.lastAutoAt = Date.now();
+    memory.automation.nudgesSentLifetime += 1;
+    memory.automation.lastNudgeAt = Date.now();
+    persistMemory();
+
+    showBubble(getSubtleNudge(), 5200);
+  }
+
+  setInterval(tickIdle, 10000);
+
+  // ═══════════════════════════════════════════════
+  // 🔁 AUTO RESTORE
+  // ═══════════════════════════════════════════════
+  if (memory.automation.chatOpen) {
     setTimeout(function() { openChat(); }, 300);
-  } else if (memory.chatMinimized) {
+  } else if (memory.automation.chatMinimized) {
     setTimeout(function() {
       isMinimized = true;
       mini.classList.add('s-mini-show');
@@ -909,53 +1820,96 @@
     }, 300);
   } else {
     setTimeout(function() {
-      if (!chatOpen && !isMinimized) {
-        var g = isCreator ? "Ayano-sama... back? 💜" :
-                memory.userName ? "hey " + memory.userName + " ✨" :
-                memory.visits === 1 ? "a newbie? 🙄" : pickLine();
-        showBubble(g, 7000);
+      if (!chatOpen && !isMinimized && !session.didWelcome) {
+        session.didWelcome = true;
+        showBubble(getStageBasedGreeting(), 6500);
       }
-    }, 3500);
+    }, 3200);
   }
 
-  // Secret shortcut
+  // ═══════════════════════════════════════════════
+  // ⌨️ SECRET SHORTCUT
+  // ═══════════════════════════════════════════════
   document.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
       e.preventDefault();
-      try { localStorage.setItem('safiya_creator', 'ayano-217'); } catch(err) {}
+      try { localStorage.setItem(CREATOR_KEY, 'ayano-217'); } catch(err) {}
       isCreator = true;
       memory.userName = 'Ayano';
-      safeSet('safiya_memory', memory);
-      showBubble("Ayano-sama! 💜 Welcome back~", 7000);
-      setTimeout(function() { location.reload(); }, 2000);
+      memory.profile.nameUpdatedAt = Date.now();
+      persistMemory();
+      showBubble('Ayano-sama! 💜 Welcome back~', 7000);
+      setTimeout(function() { location.reload(); }, 1800);
     }
   });
 
-  // Global API
+  // ═══════════════════════════════════════════════
+  // ↕️ BACK-TO-TOP SAFETY OFFSET
+  // ═══════════════════════════════════════════════
+  var btt = $('btt');
+  if (btt) {
+    function updateBtt() {
+      if (window.innerWidth <= 720) {
+        btt.style.display = 'none';
+        return;
+      }
+      btt.style.display = '';
+      var w = head ? head.offsetWidth : 160;
+      btt.style.right = Math.max(96, w + 34) + 'px';
+    }
+    updateBtt();
+    window.addEventListener('resize', updateBtt);
+    setTimeout(updateBtt, 600);
+  }
+
+  // ═══════════════════════════════════════════════
+  // 🌐 GLOBAL API
+  // ═══════════════════════════════════════════════
   window.Safiya = {
-    open: openChat, close: closeChat, minimize: minimizeChat, say: showBubble,
-    memory: function() { return safeGet('safiya_memory', {}); },
-    name: function() { return memory.userName; },
-    setName: function(n) { memory.userName = n; safeSet('safiya_memory', memory); },
-    history: function() { return memory.chatHistory; },
+    open: openChat,
+    close: closeChat,
+    minimize: minimizeChat,
+    say: showBubble,
+    memory: function() {
+      return safeGet(memoryKey, safeGet(LEGACY_MEMORY_KEY, {}));
+    },
+    name: function() {
+      return memory.userName;
+    },
+    setName: function(n) {
+      memory.userName = String(n || '').trim().slice(0, 24);
+      memory.profile.nameUpdatedAt = Date.now();
+      persistMemory();
+    },
+    history: function() {
+      return memory.chatHistory;
+    },
+    stage: function() {
+      return getRelationshipStage();
+    },
     clearHistory: function() {
-      memory.chatHistory = []; safeSet('safiya_memory', memory);
-      chatBody.innerHTML = ''; chatInited = false;
+      memory.chatHistory = [];
+      persistMemory();
+      chatBody.innerHTML = '';
+      chatInited = false;
     },
     reset: function() {
       try {
-        localStorage.removeItem('safiya_memory');
-        localStorage.removeItem('safiya_device_id');
-        localStorage.removeItem('safiya_creator');
+        safeRemove(memoryKey);
+        safeRemove(LEGACY_MEMORY_KEY);
+        safeRemove(DEVICE_KEY);
+        safeRemove(CREATOR_KEY);
       } catch(e) {}
+      setCookie(DEVICE_KEY, '', -1);
       location.reload();
     },
     claimCreator: function() {
-      try { localStorage.setItem('safiya_creator', 'ayano-217'); } catch(e) {}
+      try { localStorage.setItem(CREATOR_KEY, 'ayano-217'); } catch(e) {}
       isCreator = true;
       memory.userName = 'Ayano';
-      safeSet('safiya_memory', memory);
-      showBubble("Ayano-sama! 💜", 7000);
+      memory.profile.nameUpdatedAt = Date.now();
+      persistMemory();
+      showBubble('Ayano-sama! 💜', 7000);
     },
     motion: function(nameOrIndex) {
       if (typeof nameOrIndex === 'number') {
@@ -969,10 +1923,6 @@
     randomMotion: playRandomMotion,
     trigger: triggerMotionByKeyword,
     listMotions: function() {
-      console.log('%c🎭 Motions:', 'color:#e879f9;font-weight:bold');
-      availableMotions.forEach(function(m, i) {
-        console.log('%c  [' + i + '] ' + m.groupName + ' (' + m.count + ')', 'color:#c084fc');
-      });
       return availableMotions;
     },
     expression: function(name) {
@@ -980,296 +1930,750 @@
       return playExpression(name);
     },
     listExpressions: function() {
-      console.log('%c😊 Expressions:', 'color:#e879f9;font-weight:bold', availableExpressions);
       return availableExpressions;
-    },
-    testAllMotions: function() {
-      var i = 0;
-      var iv = setInterval(function() {
-        if (i >= availableMotions.length) {
-          clearInterval(iv);
-          console.log('%c✅ Done!', 'color:#22c55e;font-weight:bold');
-          return;
-        }
-        console.log('%c▶ ' + availableMotions[i].groupName, 'color:#e879f9');
-        playMotion(availableMotions[i].groupName);
-        i++;
-      }, 3000);
     },
     stopAudio: stopAllAudio,
     reloadDP: tryLoadDP,
-    dpUrl: function() { return DP_URL; }
+    dpUrl: function() {
+      return DP_URL;
+    }
   };
 
-  console.log('%c💜 Safiya v10.2 | Name: ' + (memory.userName || 'unknown') + ' | Msgs: ' + memory.chatHistory.length, 'color:#e879f9;font-weight:bold');
-  console.log('%c🔧 Model: ' + MODEL_PATH, 'color:#a78bfa');
+  getRelationshipStage();
 })();
 </script>
 
 <style is:global>
-  #safiya-root { font-family: 'DM Sans', -apple-system, sans-serif !important; user-select: none; -webkit-user-select: none; }
-  #safiya-root svg { display: block; flex-shrink: 0; }
+  #safiya-root {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    user-select: none;
+    -webkit-user-select: none;
+  }
 
+  #safiya-root svg {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  /* ═══════════════════════════════════════════════
+     LAUNCHER PILL
+  ═══════════════════════════════════════════════ */
   #safiya-root .s-head {
-    position: fixed; bottom: 20px; right: 20px; z-index: 9997;
-    width: 58px; height: 58px; border-radius: 50%; padding: 0; border: none;
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 9997;
+    border: none;
+    padding: 1px;
+    min-width: 162px;
+    height: 58px;
+    border-radius: 999px;
     cursor: pointer;
-    background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
-    box-shadow: 0 6px 24px rgba(192, 132, 252, 0.4), 0 0 32px rgba(232, 121, 249, 0.2);
-    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
-    -webkit-tap-highlight-color: transparent; outline: none;
-    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    background: transparent;
+    overflow: hidden;
+    transition: transform 0.28s ease, opacity 0.25s ease, filter 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
   }
-  #safiya-root .s-head:hover { transform: scale(1.1); }
-  #safiya-root .s-head-hide { opacity: 0; pointer-events: none; transform: scale(0.3); }
-  #safiya-root .s-head-icon { color: #fff; display: flex; align-items: center; justify-content: center; }
-  #safiya-root .s-head-dp { width: 100% !important; height: 100% !important; object-fit: cover !important; border-radius: 50%; }
+
+  #safiya-root .s-head:hover {
+    transform: translateY(-2px) scale(1.015);
+  }
+
+  #safiya-root .s-head-hide {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(12px) scale(0.92);
+  }
+
   #safiya-root .s-head-ring {
-    position: absolute; inset: -4px; border-radius: 50%;
-    background: conic-gradient(from 0deg, #c084fc, #e879f9, #7dd3fc, #c084fc);
-    z-index: -1; opacity: 0.4; animation: sRingSpin 8s linear infinite; filter: blur(6px);
+    position: absolute;
+    inset: -45%;
+    background:
+      conic-gradient(
+        from 0deg,
+        #c084fc 0deg,
+        #e879f9 120deg,
+        #7dd3fc 240deg,
+        #c084fc 360deg
+      );
+    animation: sRingSpin 9s linear infinite;
+    filter: blur(14px) saturate(1.15);
+    opacity: 0.95;
   }
-  @keyframes sRingSpin { to { transform: rotate(360deg); } }
+
+  #safiya-root .s-head-inner {
+    position: relative;
+    z-index: 2;
+    height: 56px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px 0 8px;
+    background:
+      linear-gradient(180deg, rgba(25, 15, 42, 0.92), rgba(12, 8, 23, 0.9));
+    backdrop-filter: blur(18px) saturate(1.3);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      0 10px 32px rgba(0, 0, 0, 0.42),
+      0 0 24px rgba(192, 132, 252, 0.18);
+    animation: sHeadFloat 3.6s ease-in-out infinite;
+  }
+
+  #safiya-root .s-head-hot {
+    filter:
+      drop-shadow(0 0 10px rgba(232, 121, 249, 0.42))
+      drop-shadow(0 0 20px rgba(125, 211, 252, 0.18));
+  }
+
+  #safiya-root .s-head-hot .s-head-inner {
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      0 10px 32px rgba(0, 0, 0, 0.42),
+      0 0 24px rgba(192, 132, 252, 0.26),
+      0 0 34px rgba(232, 121, 249, 0.2);
+  }
+
+  @keyframes sRingSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes sHeadFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  #safiya-root .s-head-avatarbox {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      linear-gradient(135deg, rgba(192, 132, 252, 0.94), rgba(232, 121, 249, 0.92), rgba(125, 211, 252, 0.94));
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.25),
+      0 4px 14px rgba(192, 132, 252, 0.35);
+    flex-shrink: 0;
+  }
+
+  #safiya-root .s-head-icon {
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #safiya-root .s-head-dp {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50%;
+  }
+
+  #safiya-root .s-head-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    text-align: left;
+  }
+
+  #safiya-root .s-head-title {
+    display: block;
+    font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif !important;
+    color: #f7ecff !important;
+    font-size: 0.88rem;
+    line-height: 1.05;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  #safiya-root .s-head-sub {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(243, 232, 255, 0.72) !important;
+    font-size: 0.69rem;
+    font-weight: 600;
+    margin-top: 4px;
+    white-space: nowrap;
+  }
+
+  #safiya-root .s-head-sub::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+    flex-shrink: 0;
+  }
+
   #safiya-root .s-head-online {
-    position: absolute; bottom: 2px; right: 2px; width: 13px; height: 13px;
-    background: #22c55e; border: 2.5px solid #0a0517; border-radius: 50%;
-    box-shadow: 0 0 8px #22c55e; z-index: 3;
+    position: absolute;
+    right: 1px;
+    bottom: 1px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: #22c55e;
+    border: 2px solid rgba(10, 5, 23, 0.92);
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.82);
+    z-index: 3;
   }
+
   #safiya-root .s-head-notify {
-    position: absolute; top: -4px; right: -4px;
-    min-width: 20px; height: 20px; padding: 0 6px;
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 19px;
+    height: 19px;
+    padding: 0 5px;
+    border-radius: 999px;
     background: linear-gradient(135deg, #ef4444, #f97316);
-    color: #fff; border-radius: 999px;
-    display: none; align-items: center; justify-content: center;
-    font-size: 0.65rem; font-weight: 800;
-    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.5); border: 2px solid #0a0517;
-    animation: sNBounce 1.5s ease-in-out infinite; z-index: 4;
+    color: #fff !important;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.63rem;
+    font-weight: 800;
+    z-index: 4;
+    border: 2px solid rgba(10, 5, 23, 0.95);
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.42);
+    animation: sNBounce 1.6s ease-in-out infinite;
   }
-  @keyframes sNBounce { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
 
+  @keyframes sNBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.13); }
+  }
+
+  /* ═══════════════════════════════════════════════
+     BUBBLE
+  ═══════════════════════════════════════════════ */
   #safiya-root .s-bubble {
-    position: fixed; bottom: 92px; right: 20px; z-index: 9997;
-    width: 280px; padding: 12px 40px 12px 12px;
+    position: fixed;
+    right: 20px;
+    bottom: 92px;
+    z-index: 9997;
+    width: 290px;
+    padding: 12px 40px 12px 12px;
     background: rgba(20, 12, 40, 0.94) !important;
-    border: 1px solid rgba(232, 121, 249, 0.35); border-radius: 18px;
+    border: 1px solid rgba(232, 121, 249, 0.35);
+    border-radius: 18px;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    display: flex; gap: 10px; align-items: flex-start;
-    opacity: 0; visibility: hidden;
-    transform: translateY(10px) scale(0.9); transform-origin: bottom right;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px) scale(0.92);
+    transform-origin: bottom right;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
   }
-  #safiya-root .s-bubble-show { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
-  #safiya-root .s-bubble-avatar {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #f0abfc, #c084fc 60%, #7c3aed);
-    flex-shrink: 0; box-shadow: 0 2px 8px rgba(192, 132, 252, 0.35);
-    position: relative; overflow: hidden;
-  }
-  #safiya-root .s-bubble-dp { width: 100% !important; height: 100% !important; object-fit: cover !important; border-radius: 50%; }
-  #safiya-root .s-bubble-body { flex: 1; min-width: 0; }
-  #safiya-root .s-bubble-name {
-    font-weight: 700; font-size: 0.76rem; color: #e879f9 !important; margin-bottom: 2px;
-  }
-  #safiya-root .s-bubble-text { font-size: 0.86rem; line-height: 1.4; color: #f3e8ff !important; font-weight: 500; }
-  #safiya-root .s-bubble-x {
-    position: absolute; top: 6px; right: 8px;
-    background: rgba(255,255,255,0.06); border: none; color: rgba(243,232,255,0.55); cursor: pointer;
-    width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
-    border-radius: 50%; padding: 0;
-  }
-  #safiya-root .s-bubble-x:hover { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
 
+  #safiya-root .s-bubble-show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+  }
+
+  #safiya-root .s-bubble-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #f0abfc, #c084fc 60%, #7c3aed);
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(192, 132, 252, 0.35);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #safiya-root .s-bubble-dp {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50%;
+  }
+
+  #safiya-root .s-bubble-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  #safiya-root .s-bubble-name {
+    font-weight: 700;
+    font-size: 0.76rem;
+    color: #e879f9 !important;
+    margin-bottom: 2px;
+  }
+
+  #safiya-root .s-bubble-text {
+    font-size: 0.86rem;
+    line-height: 1.4;
+    color: #f3e8ff !important;
+    font-weight: 500;
+  }
+
+  #safiya-root .s-bubble-x {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: rgba(255,255,255,0.06);
+    border: none;
+    color: rgba(243,232,255,0.55);
+    cursor: pointer;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    padding: 0;
+  }
+
+  #safiya-root .s-bubble-x:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+  }
+
+  /* ═══════════════════════════════════════════════
+     AVATAR
+  ═══════════════════════════════════════════════ */
   #safiya-root .s-avatar {
-    position: fixed; bottom: 30px; right: 430px; z-index: 9996;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    cursor: pointer; opacity: 0; visibility: hidden;
+    position: fixed;
+    bottom: 30px;
+    right: 430px;
+    z-index: 9996;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
     transform: translateX(20px) scale(0.9);
     transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
+
   #safiya-root .s-avatar-show {
-    opacity: 1; visibility: visible; transform: translateX(0) scale(1);
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0) scale(1);
     animation: sFloat 5s ease-in-out infinite;
   }
-  @keyframes sFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
-  #safiya-root .s-avatar-tap { animation: sTap 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
-  @keyframes sTap { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+  @keyframes sFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  #safiya-root .s-avatar-tap {
+    animation: sTap 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes sTap {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
   #safiya-root .s-avatar-glow {
-    position: absolute; top: 50%; left: 50%; width: 260px; height: 260px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 260px;
+    height: 260px;
     transform: translate(-50%, -50%);
     background: radial-gradient(circle, rgba(232,121,249,0.28) 0%, rgba(192,132,252,0.12) 40%, transparent 70%);
-    filter: blur(25px); pointer-events: none;
-    animation: sGlow 3s ease-in-out infinite; z-index: -1;
+    filter: blur(25px);
+    pointer-events: none;
+    animation: sGlow 3s ease-in-out infinite;
+    z-index: -1;
   }
+
   @keyframes sGlow {
     0%,100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
     50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.1); }
   }
+
   #safiya-root .s-avatar-inner {
-    position: relative; width: 240px; height: 340px;
-    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    width: 240px;
+    height: 340px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
+
   #safiya-root #s-avatar-canvas {
-    position: absolute; inset: 0;
-    width: 100% !important; height: 100% !important;
-    display: none; z-index: 2;
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    display: none;
+    z-index: 2;
   }
+
   #safiya-root .s-avatar-fallback {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 18px; z-index: 1;
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    z-index: 1;
   }
+
   #safiya-root .s-avatar-fb-orb {
-    position: relative; width: 160px; height: 160px; border-radius: 50%;
+    position: relative;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), rgba(232,121,249,0.55) 30%, rgba(192,132,252,0.85) 60%, rgba(125,74,208,0.95));
     box-shadow: 0 15px 50px rgba(192,132,252,0.5), inset -18px -18px 50px rgba(74,27,138,0.45);
     animation: sBreathe 3s ease-in-out infinite;
   }
-  @keyframes sBreathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-  #safiya-root .s-avatar-fb-face {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -40%); width: 100px; height: 60px;
+
+  @keyframes sBreathe {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
   }
+
+  #safiya-root .s-avatar-fb-face {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -40%);
+    width: 100px;
+    height: 60px;
+  }
+
   #safiya-root .s-avatar-fb-eye {
-    position: absolute; top: 0; width: 12px; height: 18px;
-    background: #1a0a2e; border-radius: 50%;
+    position: absolute;
+    top: 0;
+    width: 12px;
+    height: 18px;
+    background: #1a0a2e;
+    border-radius: 50%;
     animation: sBlink 4s ease-in-out infinite;
   }
+
   #safiya-root .s-avatar-fb-eye-l { left: 15px; }
   #safiya-root .s-avatar-fb-eye-r { right: 15px; }
-  @keyframes sBlink { 0%, 92%, 100% { transform: scaleY(1); } 94% { transform: scaleY(0.1); } }
+
+  @keyframes sBlink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    94% { transform: scaleY(0.1); }
+  }
+
   #safiya-root .s-avatar-fb-mouth {
-    position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
-    width: 30px; height: 15px; border: 3px solid #1a0a2e; border-top: none; border-radius: 0 0 30px 30px;
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 15px;
+    border: 3px solid #1a0a2e;
+    border-top: none;
+    border-radius: 0 0 30px 30px;
   }
+
   #safiya-root .s-avatar-fb-name {
-    font-weight: 800; font-size: 1.2rem; color: #e879f9 !important;
-    letter-spacing: 0.15em; text-shadow: 0 2px 15px rgba(232,121,249,0.4);
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: #e879f9 !important;
+    letter-spacing: 0.15em;
+    text-shadow: 0 2px 15px rgba(232,121,249,0.4);
   }
+
   #safiya-root .s-avatar-loader {
-    position: absolute; inset: 0; display: none;
-    align-items: center; justify-content: center; z-index: 4;
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 4;
   }
+
   #safiya-root .s-avatar-spinner {
-    width: 36px; height: 36px;
+    width: 36px;
+    height: 36px;
     border: 3px solid rgba(192,132,252,0.2);
-    border-top-color: #e879f9; border-radius: 50%;
+    border-top-color: #e879f9;
+    border-radius: 50%;
     animation: sSpin 0.8s linear infinite;
   }
-  @keyframes sSpin { to { transform: rotate(360deg); } }
-  #safiya-root .s-avatar-hint {
-    margin-top: 6px; background: rgba(20,12,40,0.9);
-    border: 1px solid rgba(232,121,249,0.35); color: #f3e8ff !important;
-    padding: 5px 12px; border-radius: 999px;
-    font-size: 0.68rem; font-weight: 600; white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.35); backdrop-filter: blur(10px);
-    animation: sHint 2s ease-in-out infinite; pointer-events: none;
-  }
-  @keyframes sHint { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 
+  @keyframes sSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  #safiya-root .s-avatar-hint {
+    margin-top: 6px;
+    background: rgba(20,12,40,0.9);
+    border: 1px solid rgba(232,121,249,0.35);
+    color: #f3e8ff !important;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    backdrop-filter: blur(10px);
+    animation: sHint 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes sHint {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  /* ═══════════════════════════════════════════════
+     CHAT WINDOW
+  ═══════════════════════════════════════════════ */
   #safiya-root .s-chat {
-    position: fixed; bottom: 20px; right: 20px; z-index: 9998;
-    width: 380px; height: 600px; max-height: calc(100vh - 40px);
-    display: flex; flex-direction: column;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9998;
+    width: 380px;
+    height: 600px;
+    max-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
     background: rgba(18, 10, 36, 0.92) !important;
-    border: 1px solid rgba(192, 132, 252, 0.2); border-radius: 20px;
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(192,132,252,0.15);
     backdrop-filter: blur(30px) saturate(1.4);
     -webkit-backdrop-filter: blur(30px) saturate(1.4);
     overflow: hidden;
-    opacity: 0; visibility: hidden;
-    transform: translateY(20px) scale(0.95); transform-origin: bottom right;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px) scale(0.95);
+    transform-origin: bottom right;
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  #safiya-root .s-chat-open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+
+  #safiya-root .s-chat-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+  }
+
   #safiya-root .s-chat-head {
-    display: flex; align-items: center; gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     padding: 12px 14px;
     background: rgba(30, 18, 55, 0.6) !important;
     border-bottom: 1px solid rgba(192, 132, 252, 0.15);
-    flex-shrink: 0; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    flex-shrink: 0;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
+
   #safiya-root .s-chat-btn {
-    background: rgba(192,132,252,0.08) !important; border: none;
-    color: #c084fc !important; width: 32px; height: 32px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: all 0.2s;
-    -webkit-tap-highlight-color: transparent; padding: 0; flex-shrink: 0;
+    background: rgba(192,132,252,0.08) !important;
+    border: none;
+    color: #c084fc !important;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+    flex-shrink: 0;
   }
-  #safiya-root .s-chat-btn:hover { background: rgba(192,132,252,0.2) !important; color: #e879f9 !important; }
-  #safiya-root .s-chat-btn-close:hover { background: rgba(239,68,68,0.2) !important; color: #ef4444 !important; }
-  #safiya-root .s-chat-head-info { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+
+  #safiya-root .s-chat-btn:hover {
+    background: rgba(192,132,252,0.2) !important;
+    color: #e879f9 !important;
+  }
+
+  #safiya-root .s-chat-btn-close:hover {
+    background: rgba(239,68,68,0.2) !important;
+    color: #ef4444 !important;
+  }
+
+  #safiya-root .s-chat-head-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+
   #safiya-root .s-chat-head-avatar {
-    position: relative; width: 38px; height: 38px; border-radius: 50%;
+    position: relative;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff !important; flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff !important;
+    flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(192,132,252,0.4);
-    font-weight: 800; font-size: 1.05rem; overflow: hidden;
+    font-weight: 800;
+    font-size: 1.05rem;
+    overflow: hidden;
   }
+
   #safiya-root .s-chat-head-avatar-letter {
-    color: #fff !important; text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    color: #fff !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
     font-family: 'Bricolage Grotesque', sans-serif;
-    position: relative; z-index: 2;
+    position: relative;
+    z-index: 2;
   }
+
   #safiya-root .s-chat-head-dp {
-    position: absolute; inset: 0;
-    width: 100% !important; height: 100% !important;
-    object-fit: cover !important; border-radius: 50%; z-index: 1;
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50%;
+    z-index: 1;
   }
+
   #safiya-root .s-chat-head-online {
-    position: absolute; bottom: 0; right: 0;
-    width: 10px; height: 10px; background: #22c55e;
-    border: 2px solid #1e1237; border-radius: 50%; z-index: 3;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    background: #22c55e;
+    border: 2px solid #1e1237;
+    border-radius: 50%;
+    z-index: 3;
   }
-  #safiya-root .s-chat-head-text { flex: 1; min-width: 0; }
+
+  #safiya-root .s-chat-head-text {
+    flex: 1;
+    min-width: 0;
+  }
+
   #safiya-root .s-chat-head-name {
-    font-weight: 700; font-size: 0.98rem; color: #f3e8ff !important; line-height: 1.2;
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: #f3e8ff !important;
+    line-height: 1.2;
   }
+
   #safiya-root .s-chat-head-status {
-    font-size: 0.7rem; color: rgba(192,132,252,0.8) !important;
-    margin-top: 2px; font-weight: 500;
+    font-size: 0.7rem;
+    color: rgba(192,132,252,0.8) !important;
+    margin-top: 2px;
+    font-weight: 500;
   }
-  #safiya-root .s-chat-head-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+  #safiya-root .s-chat-head-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
 
   #safiya-root .s-chat-body {
-    flex: 1; overflow-y: auto; padding: 16px 14px;
-    display: flex; flex-direction: column; gap: 6px;
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     background: transparent !important;
-    scrollbar-width: thin; scrollbar-color: rgba(192,132,252,0.3) transparent;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(192,132,252,0.3) transparent;
     scroll-behavior: smooth;
   }
-  #safiya-root .s-chat-body::-webkit-scrollbar { width: 4px; }
-  #safiya-root .s-chat-body::-webkit-scrollbar-thumb { background: rgba(192,132,252,0.4); border-radius: 3px; }
-  #safiya-root .s-msg-time {
-    text-align: center; font-size: 0.62rem;
-    color: rgba(192,132,252,0.5) !important;
-    font-weight: 700; letter-spacing: 0.15em;
-    margin: 14px 0 8px; text-transform: uppercase;
+
+  #safiya-root .s-chat-body::-webkit-scrollbar {
+    width: 4px;
   }
+
+  #safiya-root .s-chat-body::-webkit-scrollbar-thumb {
+    background: rgba(192,132,252,0.4);
+    border-radius: 3px;
+  }
+
+  #safiya-root .s-msg-time {
+    text-align: center;
+    font-size: 0.62rem;
+    color: rgba(192,132,252,0.5) !important;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    margin: 14px 0 8px;
+    text-transform: uppercase;
+  }
+
   #safiya-root .s-msg-row {
-    display: flex !important; align-items: flex-end !important;
-    gap: 6px !important; margin: 1px 0 !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    gap: 6px !important;
+    margin: 1px 0 !important;
     animation: sMsgIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  @keyframes sMsgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  @keyframes sMsgIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   #safiya-root .s-msg-her { justify-content: flex-start !important; }
   #safiya-root .s-msg-me { justify-content: flex-end !important; }
+
   #safiya-root .s-msg-avatar {
-    width: 26px !important; height: 26px !important; border-radius: 50% !important;
+    width: 26px !important;
+    height: 26px !important;
+    border-radius: 50% !important;
     background: radial-gradient(circle at 30% 30%, #f0abfc 0%, #c084fc 60%, #a855f7 100%);
-    background-size: cover !important; background-position: center !important;
+    background-size: cover !important;
+    background-position: center !important;
     flex-shrink: 0 !important;
     box-shadow: 0 2px 6px rgba(192,132,252,0.35) !important;
   }
+
   #safiya-root .s-msg-bubble {
-    max-width: 72% !important; padding: 9px 14px !important;
-    border-radius: 20px !important; font-size: 0.9rem !important;
-    line-height: 1.4 !important; word-wrap: break-word !important;
+    max-width: 72% !important;
+    padding: 9px 14px !important;
+    border-radius: 20px !important;
+    font-size: 0.9rem !important;
+    line-height: 1.4 !important;
+    word-wrap: break-word !important;
     font-family: 'DM Sans', -apple-system, sans-serif !important;
-    font-weight: 500 !important; overflow-wrap: break-word !important;
+    font-weight: 500 !important;
+    overflow-wrap: break-word !important;
     letter-spacing: -0.005em !important;
   }
+
   #safiya-root .s-msg-her .s-msg-bubble {
     background: rgba(139, 92, 246, 0.15) !important;
     color: #f3e8ff !important;
@@ -1277,6 +2681,7 @@
     border-bottom-left-radius: 6px !important;
     box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1) !important;
   }
+
   #safiya-root .s-msg-me .s-msg-bubble {
     background: rgba(34, 211, 238, 0.15) !important;
     color: #ecfeff !important;
@@ -1284,114 +2689,224 @@
     border-bottom-right-radius: 6px !important;
     box-shadow: 0 2px 8px rgba(34, 211, 238, 0.12) !important;
   }
+
   #safiya-root .s-msg-typing {
     background: rgba(139, 92, 246, 0.15) !important;
     border: 1px solid rgba(192, 132, 252, 0.35) !important;
-    padding: 11px 15px !important; border-radius: 20px !important;
+    padding: 11px 15px !important;
+    border-radius: 20px !important;
     border-bottom-left-radius: 6px !important;
-    display: flex !important; gap: 4px !important;
+    display: flex !important;
+    gap: 4px !important;
   }
+
   #safiya-root .s-msg-typing span {
-    width: 6px; height: 6px;
+    width: 6px;
+    height: 6px;
     background: linear-gradient(135deg, #c084fc, #e879f9);
-    border-radius: 50%; animation: sTBounce 1.3s ease-in-out infinite;
+    border-radius: 50%;
+    animation: sTBounce 1.3s ease-in-out infinite;
   }
+
   #safiya-root .s-msg-typing span:nth-child(2) { animation-delay: 0.15s; }
   #safiya-root .s-msg-typing span:nth-child(3) { animation-delay: 0.3s; }
+
   @keyframes sTBounce {
     0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
     30% { transform: translateY(-5px); opacity: 1; }
   }
 
   #safiya-root .s-chat-input-bar {
-    display: flex; align-items: center; gap: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     padding: 10px 12px;
     background: rgba(30, 18, 55, 0.6) !important;
-    border-top: 1px solid rgba(192, 132, 252, 0.15); flex-shrink: 0;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(192, 132, 252, 0.15);
+    flex-shrink: 0;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
+
   #safiya-root .s-input-icon {
-    background: none; border: none; color: #c084fc !important;
-    width: 32px; height: 32px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; border-radius: 50%; padding: 0;
-    -webkit-tap-highlight-color: transparent; flex-shrink: 0;
+    background: none;
+    border: none;
+    color: #c084fc !important;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 50%;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
   }
-  #safiya-root .s-input-icon:hover { background: rgba(192,132,252,0.12); }
+
+  #safiya-root .s-input-icon:hover {
+    background: rgba(192,132,252,0.12);
+  }
+
   #safiya-root .s-input-wrap {
-    flex: 1; display: flex; align-items: center;
+    flex: 1;
+    display: flex;
+    align-items: center;
     background: rgba(45, 27, 78, 0.4) !important;
-    border: 1px solid rgba(192, 132, 252, 0.2); border-radius: 22px;
-    padding: 0 6px 0 14px; min-width: 0; transition: all 0.2s;
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    border-radius: 22px;
+    padding: 0 6px 0 14px;
+    min-width: 0;
+    transition: all 0.2s;
   }
+
   #safiya-root .s-input-wrap:focus-within {
     border-color: rgba(232,121,249,0.5);
     background: rgba(45,27,78,0.6) !important;
   }
+
   #safiya-root #s-input {
-    flex: 1; background: none !important; border: none !important;
+    flex: 1;
+    background: none !important;
+    border: none !important;
     color: #f3e8ff !important;
     font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.9rem; padding: 9px 0; outline: none;
-    min-width: 0; font-weight: 500;
+    font-size: 0.9rem;
+    padding: 9px 0;
+    outline: none;
+    min-width: 0;
+    font-weight: 500;
   }
-  #safiya-root #s-input::placeholder { color: rgba(192,132,252,0.5) !important; }
+
+  #safiya-root #s-input::placeholder {
+    color: rgba(192,132,252,0.5) !important;
+  }
+
   #safiya-root .s-input-emoji {
-    background: none; border: none; color: #c084fc !important;
-    padding: 5px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; -webkit-tap-highlight-color: transparent; border-radius: 50%;
+    background: none;
+    border: none;
+    color: #c084fc !important;
+    padding: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+    border-radius: 50%;
   }
+
   #safiya-root .s-send {
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc) !important;
-    border: none; color: #fff !important;
-    width: 36px; height: 36px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; flex-shrink: 0; transition: all 0.3s;
+    border: none;
+    color: #fff !important;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.3s;
     box-shadow: 0 3px 12px rgba(192,132,252,0.4);
-    -webkit-tap-highlight-color: transparent; padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
   }
-  #safiya-root .s-send:hover { transform: scale(1.1); }
 
+  #safiya-root .s-send:hover {
+    transform: scale(1.08);
+  }
+
+  /* ═══════════════════════════════════════════════
+     MINI
+  ═══════════════════════════════════════════════ */
   #safiya-root .s-mini {
-    position: fixed; bottom: 20px; right: 20px; z-index: 9998;
-    display: flex; align-items: center; gap: 10px;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     padding: 7px 14px 7px 7px;
     background: rgba(20, 12, 40, 0.94) !important;
-    border: 1px solid rgba(232, 121, 249, 0.35); border-radius: 100px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5); backdrop-filter: blur(20px);
+    border: 1px solid rgba(232, 121, 249, 0.35);
+    border-radius: 100px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    backdrop-filter: blur(20px);
     cursor: pointer;
-    opacity: 0; visibility: hidden; transform: translateY(20px);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  #safiya-root .s-mini-show { opacity: 1; visibility: visible; transform: translateY(0); }
+
+  #safiya-root .s-mini-show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
   #safiya-root .s-mini-avatar {
-    width: 34px; height: 34px; border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff !important; flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff !important;
+    flex-shrink: 0;
     box-shadow: 0 2px 8px rgba(192,132,252,0.4);
-    font-weight: 800; font-size: 0.85rem; overflow: hidden; position: relative;
+    font-weight: 800;
+    font-size: 0.85rem;
+    overflow: hidden;
+    position: relative;
   }
+
   #safiya-root .s-mini-dp {
-    position: absolute; inset: 0;
-    width: 100% !important; height: 100% !important;
-    object-fit: cover !important; border-radius: 50%;
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 50%;
   }
-  #safiya-root .s-mini-name { font-weight: 700; color: #f3e8ff !important; font-size: 0.86rem; }
+
+  #safiya-root .s-mini-name {
+    font-weight: 700;
+    color: #f3e8ff !important;
+    font-size: 0.86rem;
+  }
+
   #safiya-root .s-mini-new {
-    min-width: 20px; height: 20px; padding: 0 6px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
     background: linear-gradient(135deg, #ef4444, #f97316);
-    color: #fff !important; border-radius: 999px;
-    display: none; align-items: center; justify-content: center;
-    font-size: 0.65rem; font-weight: 800;
+    color: #fff !important;
+    border-radius: 999px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 800;
   }
+
   #safiya-root .s-mini-x {
-    background: rgba(255,255,255,0.05); border: none;
+    background: rgba(255,255,255,0.05);
+    border: none;
     color: rgba(243,232,255,0.6) !important;
-    width: 22px; height: 22px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; -webkit-tap-highlight-color: transparent; padding: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
   }
 
   @media (max-width: 1024px) {
@@ -1400,37 +2915,103 @@
   }
 
   @media (max-width: 720px) {
-    #safiya-root .s-head { bottom: 14px; right: 14px; width: 52px; height: 52px; }
-    #safiya-root .s-bubble { bottom: 78px; right: 10px; left: 10px; width: auto; }
-    #safiya-root .s-chat {
-      bottom: 12px !important; right: 12px !important; left: auto !important;
-      width: 82vw !important; max-width: 380px !important;
-      height: 82vh !important; max-height: 82vh !important;
+    #safiya-root .s-head {
+      right: 14px;
+      bottom: 14px;
+      min-width: 148px;
+      height: 52px;
     }
+
+    #safiya-root .s-head-inner {
+      height: 50px;
+      padding: 0 12px 0 7px;
+      gap: 9px;
+    }
+
+    #safiya-root .s-head-avatarbox {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+    }
+
+    #safiya-root .s-head-title {
+      font-size: 0.82rem;
+    }
+
+    #safiya-root .s-head-sub {
+      font-size: 0.64rem;
+      margin-top: 3px;
+    }
+
+    #safiya-root .s-bubble {
+      bottom: 74px;
+      right: 10px;
+      left: 10px;
+      width: auto;
+    }
+
+    #safiya-root .s-chat {
+      bottom: 12px !important;
+      right: 12px !important;
+      left: auto !important;
+      width: 82vw !important;
+      max-width: 380px !important;
+      height: 82vh !important;
+      max-height: 82vh !important;
+    }
+
     #safiya-root .s-avatar {
-      display: flex !important; position: fixed !important;
-      bottom: auto !important; top: 76px !important;
-      left: 8px !important; right: auto !important;
+      display: flex !important;
+      position: fixed !important;
+      bottom: auto !important;
+      top: 76px !important;
+      left: 8px !important;
+      right: auto !important;
       z-index: 10000 !important;
     }
+
     #safiya-root .s-avatar-inner { width: 120px !important; height: 170px !important; }
     #safiya-root .s-avatar-glow { width: 160px !important; height: 160px !important; }
     #safiya-root .s-avatar-fb-orb { width: 90px !important; height: 90px !important; }
     #safiya-root .s-avatar-fb-name { font-size: 0.85rem !important; }
+
     #safiya-root .s-avatar-fb-face {
-      width: 60px !important; height: 40px !important;
+      width: 60px !important;
+      height: 40px !important;
       transform: translate(-50%, -40%) scale(0.6) !important;
     }
-    #safiya-root .s-avatar-hint { font-size: 0.6rem !important; padding: 3px 8px !important; }
-    #safiya-root #s-input { font-size: 0.95rem; padding: 11px 0; }
-    #safiya-root .s-send { width: 38px; height: 38px; }
-    #safiya-root .s-mini { bottom: 12px; right: 12px; left: 12px; justify-content: flex-start; }
+
+    #safiya-root .s-avatar-hint {
+      font-size: 0.6rem !important;
+      padding: 3px 8px !important;
+    }
+
+    #safiya-root #s-input {
+      font-size: 0.95rem;
+      padding: 11px 0;
+    }
+
+    #safiya-root .s-send {
+      width: 38px;
+      height: 38px;
+    }
+
+    #safiya-root .s-mini {
+      bottom: 12px;
+      right: 12px;
+      left: 12px;
+      justify-content: flex-start;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    #safiya-root .s-head-ring, #safiya-root .s-head-notify,
-    #safiya-root .s-avatar-glow, #safiya-root .s-avatar-show,
-    #safiya-root .s-avatar-fb-orb, #safiya-root .s-avatar-fb-eye,
+    #safiya-root .s-head-ring,
+    #safiya-root .s-head-inner,
+    #safiya-root .s-head-notify,
+    #safiya-root .s-avatar-glow,
+    #safiya-root .s-avatar-show,
+    #safiya-root .s-avatar-fb-orb,
+    #safiya-root .s-avatar-fb-eye,
     #safiya-root .s-avatar-hint {
       animation: none !important;
     }
