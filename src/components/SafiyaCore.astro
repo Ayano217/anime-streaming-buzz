@@ -1,131 +1,129 @@
 ---
 // ═══════════════════════════════════════════════════════════════
-// COMMIT: feat: upgrade Safiya launcher pill, persistent memory,
-// softer progression, and low-spam automation
-// PATH: src/components/SafiyaCore.astro
+// SAFIYA CORE v12 — PREMIUM PILL + INSTAGRAM CHAT + CONTEXT MEMORY
+// Path: src/components/SafiyaCore.astro
 // ═══════════════════════════════════════════════════════════════
-// ✅ Premium rectangular floating pill launcher
-// ✅ Stronger persistent memory with legacy migration
-// ✅ Shy -> warm -> close progression tracking
-// ✅ Girl-user bestie mode tracking
-// ✅ Reduced automation / idle spam
-// ✅ Link parsing + watch/product context memory
-// ✅ Kept existing Live2D/chat features intact
+// ✅ Slim premium pill launcher (no floating, tight edges, real polish)
+// ✅ Instagram-tier chat box (spacing, typography, colors, glass)
+// ✅ Message meta storage (links persist in chat memory)
+// ✅ Better fonts, tighter design system
+// ✅ All previous features preserved (memory, Live2D, mood, etc.)
 // ═══════════════════════════════════════════════════════════════
 ---
 
 <div id="safiya-root">
 
-  <button id="safiya-head" class="s-head" aria-label="Chat with Safiya">
-    <span class="s-head-ring"></span>
-
-    <span class="s-head-inner">
-      <span class="s-head-avatarbox">
-        <span class="s-head-icon" id="s-head-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  <!-- ═══════════════ LAUNCHER PILL ═══════════════ -->
+  <button id="safiya-head" class="sf-launcher" aria-label="Chat with Safiya">
+    <span class="sf-launcher-glow"></span>
+    <span class="sf-launcher-inner">
+      <span class="sf-launcher-avatar">
+        <span class="sf-launcher-icon" id="s-head-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
         </span>
-        <img id="s-head-dp" class="s-head-dp" src="" alt="Safiya" style="display:none;" />
-        <span class="s-head-online"></span>
+        <img id="s-head-dp" class="sf-launcher-dp" src="" alt="" style="display:none;" />
+        <span class="sf-launcher-dot"></span>
       </span>
-
-      <span class="s-head-copy">
-        <span class="s-head-title">💜 Safiya</span>
-        <span class="s-head-sub">online</span>
+      <span class="sf-launcher-text">
+        <span class="sf-launcher-name">Safiya</span>
+        <span class="sf-launcher-status">online</span>
       </span>
     </span>
-
-    <span class="s-head-notify" id="safiya-notify">1</span>
+    <span class="sf-launcher-notify" id="safiya-notify">1</span>
   </button>
 
-  <div id="safiya-bubble" class="s-bubble">
-    <div class="s-bubble-avatar" id="s-bubble-dp-wrap">
-      <img id="s-bubble-dp" class="s-bubble-dp" src="" alt="" style="display:none;" />
+  <!-- ═══════════════ TEASER BUBBLE ═══════════════ -->
+  <div id="safiya-bubble" class="sf-teaser">
+    <div class="sf-teaser-avatar" id="s-bubble-dp-wrap">
+      <img id="s-bubble-dp" class="sf-teaser-dp" src="" alt="" style="display:none;" />
     </div>
-    <div class="s-bubble-body">
-      <div class="s-bubble-name">Safiya</div>
-      <div class="s-bubble-text" id="s-bubble-text"></div>
+    <div class="sf-teaser-body">
+      <div class="sf-teaser-name">Safiya</div>
+      <div class="sf-teaser-text" id="s-bubble-text"></div>
     </div>
-    <button class="s-bubble-x" id="s-bubble-x" aria-label="Dismiss">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+    <button class="sf-teaser-close" id="s-bubble-x" aria-label="Dismiss">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
     </button>
   </div>
 
-  <div id="safiya-avatar" class="s-avatar" aria-hidden="true">
-    <div class="s-avatar-glow"></div>
-    <div class="s-avatar-inner">
+  <!-- ═══════════════ AVATAR (LIVE2D) ═══════════════ -->
+  <div id="safiya-avatar" class="sf-avatar" aria-hidden="true">
+    <div class="sf-avatar-glow"></div>
+    <div class="sf-avatar-inner">
       <canvas id="s-avatar-canvas"></canvas>
-      <div id="s-avatar-fallback" class="s-avatar-fallback">
-        <div class="s-avatar-fb-orb">
-          <div class="s-avatar-fb-face">
-            <div class="s-avatar-fb-eye s-avatar-fb-eye-l"></div>
-            <div class="s-avatar-fb-eye s-avatar-fb-eye-r"></div>
-            <div class="s-avatar-fb-mouth"></div>
+      <div id="s-avatar-fallback" class="sf-avatar-fallback">
+        <div class="sf-avatar-fb-orb">
+          <div class="sf-avatar-fb-face">
+            <div class="sf-avatar-fb-eye sf-avatar-fb-eye-l"></div>
+            <div class="sf-avatar-fb-eye sf-avatar-fb-eye-r"></div>
+            <div class="sf-avatar-fb-mouth"></div>
           </div>
         </div>
-        <div class="s-avatar-fb-name">Safiya</div>
+        <div class="sf-avatar-fb-name">Safiya</div>
       </div>
-      <div id="s-avatar-loader" class="s-avatar-loader">
-        <div class="s-avatar-spinner"></div>
+      <div id="s-avatar-loader" class="sf-avatar-loader">
+        <div class="sf-avatar-spinner"></div>
       </div>
     </div>
-    <div class="s-avatar-hint">💜 Touch me~</div>
+    <div class="sf-avatar-hint">💜 Touch me~</div>
   </div>
 
-  <div id="safiya-chat" class="s-chat" aria-hidden="true">
-    <header class="s-chat-head">
-      <button class="s-chat-btn" id="s-back" aria-label="Back">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+  <!-- ═══════════════ CHAT WINDOW ═══════════════ -->
+  <div id="safiya-chat" class="sf-chat" aria-hidden="true">
+    <header class="sf-chat-header">
+      <button class="sf-icon-btn" id="s-back" aria-label="Back">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
       </button>
 
-      <div class="s-chat-head-info">
-        <div class="s-chat-head-avatar" id="s-chat-head-avatar">
-          <span class="s-chat-head-avatar-letter" id="s-chat-head-letter">S</span>
-          <img id="s-chat-head-dp" class="s-chat-head-dp" src="" alt="Safiya" style="display:none;" />
-          <span class="s-chat-head-online"></span>
+      <div class="sf-chat-user">
+        <div class="sf-chat-user-avatar" id="s-chat-head-avatar">
+          <span id="s-chat-head-letter">S</span>
+          <img id="s-chat-head-dp" class="sf-chat-user-dp" src="" alt="" style="display:none;" />
+          <span class="sf-chat-user-dot"></span>
         </div>
-        <div class="s-chat-head-text">
-          <div class="s-chat-head-name">Safiya</div>
-          <div class="s-chat-head-status" id="s-chat-status">Active now</div>
+        <div class="sf-chat-user-info">
+          <div class="sf-chat-user-name">Safiya</div>
+          <div class="sf-chat-user-status" id="s-chat-status">Active now</div>
         </div>
       </div>
 
-      <div class="s-chat-head-actions">
-        <button class="s-chat-btn" id="s-min" aria-label="Minimize">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+      <div class="sf-chat-actions">
+        <button class="sf-icon-btn" id="s-min" aria-label="Minimize">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
         </button>
-        <button class="s-chat-btn s-chat-btn-close" id="s-close" aria-label="Close">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <button class="sf-icon-btn sf-icon-btn-danger" id="s-close" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </button>
       </div>
     </header>
 
-    <div class="s-chat-body" id="s-chat-body"></div>
+    <div class="sf-chat-body" id="s-chat-body"></div>
 
-    <div class="s-chat-input-bar">
-      <button class="s-input-icon" aria-label="Add">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <div class="sf-chat-composer">
+      <button class="sf-composer-btn" aria-label="Add">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
         </svg>
       </button>
-      <div class="s-input-wrap">
+      <div class="sf-composer-input">
         <input type="text" id="s-input" placeholder="Message..." autocomplete="off" maxlength="500" />
-        <button class="s-input-emoji" aria-label="Emoji">
+        <button class="sf-composer-emoji" aria-label="Emoji">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
           </svg>
         </button>
       </div>
-      <button class="s-send" id="s-send" aria-label="Send">
+      <button class="sf-composer-send" id="s-send" aria-label="Send">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
           <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
         </svg>
@@ -133,15 +131,16 @@
     </div>
   </div>
 
-  <div id="safiya-mini" class="s-mini" aria-hidden="true">
-    <div class="s-mini-avatar" id="s-mini-avatar-wrap">
+  <!-- ═══════════════ MINIMIZED PILL ═══════════════ -->
+  <div id="safiya-mini" class="sf-mini" aria-hidden="true">
+    <div class="sf-mini-avatar">
       <span id="s-mini-letter">S</span>
-      <img id="s-mini-dp" class="s-mini-dp" src="" alt="" style="display:none;" />
+      <img id="s-mini-dp" class="sf-mini-dp" src="" alt="" style="display:none;" />
     </div>
-    <span class="s-mini-name">Safiya</span>
-    <span class="s-mini-new" id="s-mini-new">0</span>
-    <button class="s-mini-x" id="s-mini-x" aria-label="Close">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+    <span class="sf-mini-name">Safiya</span>
+    <span class="sf-mini-badge" id="s-mini-new">0</span>
+    <button class="sf-mini-close" id="s-mini-x" aria-label="Close">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
     </button>
@@ -154,29 +153,17 @@
   'use strict';
 
   // ═══════════════════════════════════════════════
-  // ⚙️ MODEL CONFIG
+  // ⚙️ CONFIG
   // ═══════════════════════════════════════════════
   var MODEL_PATH = '/live2d/safiya/izumi_illust.model3.json';
   var MODEL_FALLBACKS = [
     '/live2d/safiya/izumi_illust.model3.json',
-    '/live2d/haru/haru_greeter_t05.model3.json',
+    '/live2d/haru/haru_greeter_t05.model3.json'
   ];
 
-  // ═══════════════════════════════════════════════
-  // 🎤 VOICE LINES (optional)
-  // ═══════════════════════════════════════════════
-  var VOICE_LINES = {
-    touch: [],
-    greet: [],
-    happy: [],
-    shy: [],
-    angry: [],
-  };
+  var VOICE_LINES = { touch: [], greet: [], happy: [], shy: [], angry: [] };
 
-  // ═══════════════════════════════════════════════
-  // 🧠 STORAGE / MEMORY
-  // ═══════════════════════════════════════════════
-  var STORAGE_NS = 'safiya_v11';
+  var STORAGE_NS = 'safiya_v12';
   var LEGACY_MEMORY_KEY = 'safiya_memory';
   var DEVICE_KEY = STORAGE_NS + ':device_id';
   var MEMORY_PREFIX = STORAGE_NS + ':memory:';
@@ -194,67 +181,42 @@
   var statusText = $('s-chat-status');
   if (!root || !chat || !head || !bubble || !chatBody || !chatInput) return;
 
+  // ═══════════════════════════════════════════════
+  // 💾 STORAGE HELPERS
+  // ═══════════════════════════════════════════════
   function safeGet(key, fallback) {
-    try {
-      var raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch(e) {
-      return fallback;
-    }
+    try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+    catch(e) { return fallback; }
   }
-
-  function safeSet(key, value) {
-    try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
-  }
-
-  function safeRemove(key) {
-    try { localStorage.removeItem(key); } catch(e) {}
-  }
+  function safeSet(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {} }
+  function safeRemove(key) { try { localStorage.removeItem(key); } catch(e) {} }
 
   function getCookie(name) {
     try {
       var match = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/[.$?*|{}()[\]\\/+^]/g, '\\$&') + '=([^;]*)'));
       return match ? decodeURIComponent(match[1]) : '';
-    } catch(e) {
-      return '';
-    }
+    } catch(e) { return ''; }
   }
-
   function setCookie(name, value, days) {
     try {
-      var maxAge = (days || 3650) * 24 * 60 * 60;
+      var maxAge = (days || 3650) * 86400;
       document.cookie = name + '=' + encodeURIComponent(value) + '; path=/; max-age=' + maxAge + '; SameSite=Lax';
     } catch(e) {}
   }
 
-  function ensureArray(value) {
-    return Array.isArray(value) ? value : [];
-  }
-
-  function trimArray(value, max) {
-    var arr = ensureArray(value);
-    if (arr.length <= max) return arr;
-    return arr.slice(arr.length - max);
-  }
+  function ensureArray(v) { return Array.isArray(v) ? v : []; }
+  function trimArray(v, max) { var a = ensureArray(v); return a.length <= max ? a : a.slice(a.length - max); }
 
   function createDeviceId() {
     return 'sf_' + Math.random().toString(36).slice(2, 12) + '_' + Date.now().toString(36);
   }
-
   function getDeviceId() {
-    var fromStorage = '';
-    var fromCookie = '';
-    try { fromStorage = localStorage.getItem(DEVICE_KEY) || ''; } catch(e) {}
-    fromCookie = getCookie(DEVICE_KEY);
-
-    var id = fromStorage || fromCookie || '';
-    if (!id) {
-      id = createDeviceId();
-    }
-
+    var id = '';
+    try { id = localStorage.getItem(DEVICE_KEY) || ''; } catch(e) {}
+    if (!id) id = getCookie(DEVICE_KEY);
+    if (!id) id = createDeviceId();
     try { localStorage.setItem(DEVICE_KEY, id); } catch(e) {}
     setCookie(DEVICE_KEY, id, 3650);
-
     return id;
   }
 
@@ -264,14 +226,13 @@
   function normalizeMemory(raw) {
     var now = Date.now();
     var m = raw && typeof raw === 'object' ? raw : {};
-
-    m.schemaVersion = 11;
+    m.schemaVersion = 12;
     m.deviceId = deviceId;
     m.firstMet = m.firstMet || now;
     m.lastVisit = typeof m.lastVisit === 'number' ? m.lastVisit : 0;
     m.pageViews = typeof m.pageViews === 'number' ? m.pageViews : 0;
     m.visits = typeof m.visits === 'number' ? m.visits : 0;
-    m.currentMood = typeof m.currentMood === 'string' ? m.currentMood : 'rude';
+    m.currentMood = typeof m.currentMood === 'string' ? m.currentMood : 'neutral';
     m.chatHistory = trimArray(m.chatHistory, 700);
     m.userName = typeof m.userName === 'string' ? m.userName : '';
     m.updatedAt = now;
@@ -285,18 +246,14 @@
     p.userType = typeof p.userType === 'string' ? p.userType : 'unknown';
     p.prefLanguage = typeof p.prefLanguage === 'string' ? p.prefLanguage : 'en';
     p.favoriteAnime = typeof p.favoriteAnime === 'string' ? p.favoriteAnime : '';
-    p.favoriteTags = trimArray(p.favoriteTags, 20);
     p.femaleSignals = typeof p.femaleSignals === 'number' ? p.femaleSignals : 0;
     p.maleSignals = typeof p.maleSignals === 'number' ? p.maleSignals : 0;
     p.nameUpdatedAt = typeof p.nameUpdatedAt === 'number' ? p.nameUpdatedAt : 0;
-    p.lastSharedType = typeof p.lastSharedType === 'string' ? p.lastSharedType : '';
-    p.firstSeenPath = typeof p.firstSeenPath === 'string' ? p.firstSeenPath : (location.pathname || '/');
 
     var r = m.relationship;
     r.userMessages = typeof r.userMessages === 'number' ? r.userMessages : 0;
-    r.stageKey = typeof r.stageKey === 'string' ? r.stageKey : 'shy';
-    r.stageLabel = typeof r.stageLabel === 'string' ? r.stageLabel : 'New';
-    r.score = typeof r.score === 'number' ? r.score : 1;
+    r.stageKey = typeof r.stageKey === 'string' ? r.stageKey : 'stranger';
+    r.score = typeof r.score === 'number' ? r.score : 0;
     r.lastInteractionAt = typeof r.lastInteractionAt === 'number' ? r.lastInteractionAt : now;
 
     var b = m.behavior;
@@ -308,9 +265,6 @@
     b.sharedLinks = trimArray(b.sharedLinks, 40);
     b.scrollDepth = typeof b.scrollDepth === 'number' ? b.scrollDepth : 0;
     b.lastPage = typeof b.lastPage === 'string' ? b.lastPage : '';
-    b.currentProduct = b.currentProduct && typeof b.currentProduct === 'object' ? b.currentProduct : null;
-    b.currentAnime = b.currentAnime && typeof b.currentAnime === 'object' ? b.currentAnime : null;
-    b.currentlyWatching = b.currentlyWatching && typeof b.currentlyWatching === 'object' ? b.currentlyWatching : null;
 
     var a = m.automation;
     a.chatOpen = typeof a.chatOpen === 'boolean' ? a.chatOpen : false;
@@ -319,9 +273,7 @@
     a.lastNudgeAt = typeof a.lastNudgeAt === 'number' ? a.lastNudgeAt : 0;
 
     m.pageViews += 1;
-    if (!m.lastVisit || now - m.lastVisit > 20 * 60 * 1000) {
-      m.visits += 1;
-    }
+    if (!m.lastVisit || now - m.lastVisit > 20 * 60 * 1000) m.visits += 1;
     m.lastVisit = now;
 
     return m;
@@ -330,8 +282,7 @@
   function loadMemory() {
     var current = safeGet(memoryKey, null);
     var legacy = safeGet(LEGACY_MEMORY_KEY, null);
-    var base = current || legacy || {};
-    return normalizeMemory(base);
+    return normalizeMemory(current || legacy || {});
   }
 
   var memory = loadMemory();
@@ -340,7 +291,6 @@
     memory.updatedAt = Date.now();
     safeSet(memoryKey, memory);
     safeSet(LEGACY_MEMORY_KEY, memory);
-
     var index = safeGet(INDEX_KEY, []);
     if (!Array.isArray(index)) index = [];
     var exists = false;
@@ -351,11 +301,8 @@
         break;
       }
     }
-    if (!exists) {
-      index.push({ deviceId: deviceId, updatedAt: memory.updatedAt });
-    }
+    if (!exists) index.push({ deviceId: deviceId, updatedAt: memory.updatedAt });
     safeSet(INDEX_KEY, trimArray(index, 30));
-
     try { localStorage.setItem(DEVICE_KEY, deviceId); } catch(e) {}
     setCookie(DEVICE_KEY, deviceId, 3650);
   }
@@ -369,9 +316,7 @@
     lastActiveAt: Date.now(),
     lastScrollAt: Date.now(),
     lastAutoAt: 0,
-    didWelcome: false,
-    productBubbleShown: false,
-    saveBubbleShown: false
+    didWelcome: false
   };
 
   function countUserMessages() {
@@ -382,66 +327,9 @@
     return count;
   }
 
-  function getRelationshipStage() {
-    var msgCount = countUserMessages();
-    memory.relationship.userMessages = msgCount;
-
-    var score = memory.visits + Math.floor(msgCount / 4) + Math.floor(memory.pageViews / 8);
-    if (memory.behavior.productsClicked.length > 0) score += 1;
-    if (memory.behavior.watchHistory.length > 2) score += 1;
-    if (score < 1) score = 1;
-
-    var isGirlUser = memory.profile.userType === 'girl';
-    var key = 'shy';
-    var label = 'New';
-
-    if (isGirlUser) {
-      if (score <= 3) { key = 'shy'; label = 'Getting comfy'; }
-      else if (score <= 10) { key = 'warm'; label = 'Warm'; }
-      else if (score <= 20) { key = 'friend'; label = 'Bestie mode'; }
-      else if (score <= 50) { key = 'bestie'; label = 'Close bestie'; }
-      else { key = 'ride'; label = 'Ride or die'; }
-    } else {
-      if (score <= 3) { key = 'shy'; label = 'New'; }
-      else if (score <= 10) { key = 'warm'; label = 'Comfortable'; }
-      else if (score <= 20) { key = 'friend'; label = 'Friendly'; }
-      else if (score <= 50) { key = 'close'; label = 'Close'; }
-      else { key = 'attached'; label = 'Very close'; }
-    }
-
-    memory.relationship.score = score;
-    memory.relationship.stageKey = key;
-    memory.relationship.stageLabel = label;
-    memory.relationship.lastInteractionAt = Date.now();
-    persistMemory();
-
-    return {
-      key: key,
-      label: label,
-      score: score,
-      isGirlUser: isGirlUser,
-      userMessages: msgCount
-    };
-  }
-
-  function setMood(m) {
-    memory.currentMood = m || 'rude';
-    persistMemory();
-    triggerMoodMotion(memory.currentMood);
-  }
-
-  function rememberLanguageFromText(text) {
-    if (!text) return;
-    var hasBanglaUnicode = /[\u0980-\u09FF]/.test(text);
-    var romanBangla = /\b(ami|amar|tumi|tomar|kemon|acho|bhalo|na|ki|keno|hobe|lagche|valo|dekho|achi|bolo)\b/i.test(text);
-    if (hasBanglaUnicode || romanBangla) memory.profile.prefLanguage = 'bn';
-    else memory.profile.prefLanguage = 'en';
-  }
-
   function detectUserType(text) {
     if (!text) return;
     var low = text.toLowerCase();
-
     if (/\b(i am a girl|i'm a girl|i am girl|i'm girl|i am female|i'm female|as a girl|ami meye|ami girl)\b/i.test(low)) {
       memory.profile.userType = 'girl';
       memory.profile.femaleSignals += 1;
@@ -453,22 +341,18 @@
 
   function detectName(text) {
     if (!text) return '';
-
     var patterns = [
       /(?:my\s+name\s+is|i\s+am|i'm|call\s+me|name'?s|the\s+name'?s)\s+([a-z][a-zA-Z0-9_-]{1,19})/i,
       /(?:amar\s+nam\s+|ami\s+)([a-z][a-zA-Z0-9_-]{1,19})/i
     ];
-
     var blockList = /^(tumi|tomar|amar|ami|apni|apnar|here|home|going|coming|good|bad|fine|ok|okay|sure|the|and|but|from|will|would|could|should|maybe|really|very|too|yes|no|not|nice|cool|great|awesome|thank|hello|hi|hey|bye|safiya|ayano|user|test|kemon|acho|kotha|bolchi|jano|jani|dekho|bhalo|kharap|khub|onek|sob|kisu|kichu|eta|ota|ki|kina|hobe|hoye|hoyeche|korbo|korchi|korche|kore|korte|dhonnobad|please|thanks)$/i;
-
     for (var i = 0; i < patterns.length; i++) {
       var match = text.match(patterns[i]);
       if (match && match[1]) {
-        var rawName = match[1].replace(/[_-]+/g, ' ').trim();
-        if (!rawName || rawName.length < 2 || rawName.length > 20) continue;
-        if (blockList.test(rawName)) continue;
-
-        var parts = rawName.split(/\s+/);
+        var raw = match[1].replace(/[_-]+/g, ' ').trim();
+        if (!raw || raw.length < 2 || raw.length > 20) continue;
+        if (blockList.test(raw)) continue;
+        var parts = raw.split(/\s+/);
         var normalized = [];
         for (var p = 0; p < parts.length; p++) {
           var part = parts[p];
@@ -477,221 +361,32 @@
         }
         var finalName = normalized.join(' ').slice(0, 24);
         if (!finalName) continue;
-
         memory.userName = finalName;
         memory.profile.nameUpdatedAt = Date.now();
         persistMemory();
         return finalName;
       }
     }
-
     return '';
   }
 
-  function detectFavoriteAnime(text) {
+  function rememberLanguageFromText(text) {
     if (!text) return;
-    var match = text.match(/(?:my\s+favou?rite\s+anime\s+is|favorite\s+anime\s+is|favourite\s+anime\s+is|amar\s+favorite\s+anime\s+)([a-zA-Z0-9 .:'!?\-]{2,60})/i);
-    if (match && match[1]) {
-      var fav = match[1].replace(/[.,!?]+$/, '').trim();
-      if (fav.length >= 2 && fav.length <= 60) {
-        memory.profile.favoriteAnime = fav;
-      }
-    }
-  }
-
-  function extractUrls(text) {
-    if (!text) return [];
-    var matches = text.match(/https?:\/\/[^\s<>"']+/gi) || [];
-    return matches.slice(0, 5);
-  }
-
-  function extractRelativeSiteLinks(text) {
-    if (!text) return [];
-    var matches = text.match(/\/(?:anime|product|reels)\/[a-zA-Z0-9._~:/?#[\]@!$&'()*+,;=%-]+/g) || [];
-    return matches.slice(0, 5);
-  }
-
-  function parseSharedLink(url) {
-    try {
-      var full = url;
-      if (url.indexOf('/') === 0) full = location.origin + url;
-      var u = new URL(full);
-      var host = (u.hostname || '').replace(/^www\./, '').toLowerCase();
-      var path = u.pathname || '/';
-      var info = {
-        url: url,
-        host: host,
-        path: path,
-        type: 'link',
-        internalType: '',
-        label: 'shared link',
-        id: '',
-        slug: ''
-      };
-
-      var thisHost = (location.hostname || '').replace(/^www\./, '').toLowerCase();
-      if (!host || host === thisHost) {
-        if (path.indexOf('/product/') === 0) {
-          info.type = 'product';
-          info.internalType = 'product';
-          info.label = 'shared product';
-          info.id = path.replace('/product/', '').replace(/\/+$/, '');
-        } else if (path.indexOf('/anime/') === 0) {
-          info.type = 'anime';
-          info.internalType = 'anime';
-          info.label = 'shared anime';
-          info.slug = path.replace('/anime/', '').replace(/\/+$/, '');
-        } else if (path.indexOf('/reels/') === 0) {
-          info.type = 'video';
-          info.internalType = 'reels';
-          info.label = 'shared reel';
-          info.id = path.replace('/reels/', '').replace(/\/+$/, '');
-        }
-        return info;
-      }
-
-      if (/youtube\.com|youtu\.be/.test(host)) {
-        info.type = 'video';
-        info.label = 'shared video';
-        info.id = u.searchParams.get('v') || (host.indexOf('youtu.be') !== -1 ? path.replace(/\//g, '') : '');
-      } else if (/facebook\.com|fb\.watch/.test(host)) {
-        info.type = 'social';
-        info.label = 'shared social video';
-      } else if (/amazon\./.test(host)) {
-        info.type = 'product';
-        info.label = 'shared product';
-      } else if (/instagram\.com|tiktok\.com|x\.com|twitter\.com/.test(host)) {
-        info.type = 'social';
-        info.label = 'shared social link';
-      }
-
-      return info;
-    } catch(e) {
-      return {
-        url: url,
-        host: '',
-        path: '',
-        type: 'link',
-        internalType: '',
-        label: 'shared link',
-        id: '',
-        slug: ''
-      };
-    }
-  }
-
-  function rememberSharedLinks(text) {
-    var urls = extractUrls(text);
-    var rel = extractRelativeSiteLinks(text);
-    var combined = urls.concat(rel);
-    if (!combined.length) return [];
-
-    var parsed = [];
-    for (var i = 0; i < combined.length; i++) {
-      var info = parseSharedLink(combined[i]);
-      parsed.push(info);
-      memory.behavior.sharedLinks.push({
-        url: info.url,
-        type: info.type,
-        internalType: info.internalType,
-        id: info.id,
-        slug: info.slug,
-        time: Date.now()
-      });
-      memory.profile.lastSharedType = info.type;
-    }
-
-    memory.behavior.sharedLinks = trimArray(memory.behavior.sharedLinks, 40);
-    persistMemory();
-    return parsed;
+    var hasBanglaUnicode = /[\u0980-\u09FF]/.test(text);
+    var romanBangla = /\b(ami|amar|tumi|tomar|kemon|acho|bhalo|na|ki|keno|hobe|lagche|valo|dekho|achi|bolo)\b/i.test(text);
+    memory.profile.prefLanguage = (hasBanglaUnicode || romanBangla) ? 'bn' : 'en';
   }
 
   function analyzeUserText(text) {
     rememberLanguageFromText(text);
     detectUserType(text);
     detectName(text);
-    detectFavoriteAnime(text);
-    return rememberSharedLinks(text);
   }
 
-  function getStageBasedGreeting() {
-    var stage = getRelationshipStage();
-    var name = memory.userName ? memory.userName : (stage.isGirlUser ? 'bestie' : 'you');
-
-    if (isCreator) return 'Ayano-sama... you came back 💜';
-
-    if (stage.isGirlUser) {
-      if (stage.key === 'shy') return 'hey... hi i guess';
-      if (stage.key === 'warm') return 'oh hey ' + name + ' ✨';
-      if (stage.key === 'friend') return 'bestieee finally';
-      if (stage.key === 'bestie') return 'there you are, i have thoughts 💅';
-      return 'girl where have you been??';
-    }
-
-    if (stage.key === 'shy') return memory.userName ? ('hi ' + name + '...') : 'hi...';
-    if (stage.key === 'warm') return memory.userName ? ('oh hey ' + name) : 'you came back?';
-    if (stage.key === 'friend') return memory.userName ? ('hey ' + name + ' ✨') : 'you again?';
-    if (stage.key === 'close') return memory.userName ? ('took you long enough, ' + name) : 'finally';
-    return memory.userName ? ('there you are, ' + name + ' 💜') : 'missed this chat a little';
-  }
-
-  function getSubtleNudge() {
-    var stage = getRelationshipStage();
-    if (isCreator) return 'Ayano... still here?';
-
-    if (stage.isGirlUser) {
-      if (stage.key === 'shy') return 'umm... you still there?';
-      if (stage.key === 'warm') return 'bestie, you vanished';
-      if (stage.key === 'friend') return 'girl come back, i was talking';
-      if (stage.key === 'bestie') return 'hello?? i literally have opinions';
-      return 'you cannot leave me mid-convo like that 😭';
-    }
-
-    if (stage.key === 'shy') return 'you still there?';
-    if (stage.key === 'warm') return 'wow, left me on read';
-    if (stage.key === 'friend') return 'so... what are you watching rn?';
-    if (stage.key === 'close') return 'you disappear a lot, yk that?';
-    return 'rude. i was waiting 💜';
-  }
-
-  function getTouchLines(area) {
-    var stage = getRelationshipStage();
-    var isGirlUser = stage.isGirlUser;
-
-    if (isGirlUser) {
-      if (/head|face/i.test(area || '')) return ['hey— face card protected 😌', 'girl be nice to my face'];
-      if (/body/i.test(area || '')) return ['rudee 😭', 'okay personal space pls'];
-      return ['you are so dramatic', 'bestie behave'];
-    }
-
-    if (/head|face/i.test(area || '')) {
-      if (stage.key === 'shy') return ['h-hey! not the face 😳', 'stop looking at me like that'];
-      if (stage.key === 'warm') return ['oi— face card, careful', 'you are annoying... a little'];
-      if (stage.key === 'friend') return ['wow, bold today huh', 'you really have no fear'];
-      if (stage.key === 'close') return ['okay okay i felt that', 'you are getting way too comfortable 😏'];
-      return ['you always do that on purpose', 'hopeless. kinda cute tho'];
-    }
-
-    if (/body/i.test(area || '')) {
-      if (stage.key === 'shy') return ['hey! watch it 😤', 'too close, weirdo'];
-      if (stage.key === 'warm') return ['oi, boundaries', 'you are testing me'];
-      if (stage.key === 'friend') return ['bold move lol', 'you are impossible'];
-      if (stage.key === 'close') return ['you really love being trouble', 'hmm... annoying'];
-      return ['you are so clingy', 'and what exactly was that?'];
-    }
-
-    if (stage.key === 'shy') return ['hey...', 'um. rude'];
-    if (stage.key === 'warm') return ['you are extra today', 'seriously?'];
-    if (stage.key === 'friend') return ['wow, okay', 'you are weird lol'];
-    if (stage.key === 'close') return ['again? predictable', 'you want attention that bad?'];
-    return ['there it is', 'you only do that for my reaction'];
-  }
-
-  persistMemory();
-
-  // ═══ AUTO DP LOADER ═══
+  // ═══════════════════════════════════════════════
+  // 🎨 DP LOADER
+  // ═══════════════════════════════════════════════
   var DP_URL = null;
-
   function applyDPToMsgAvatar(el, url) {
     if (!el || el.dataset.hasDp === '1') return;
     el.dataset.hasDp = '1';
@@ -699,62 +394,37 @@
     el.style.backgroundSize = 'cover';
     el.style.backgroundPosition = 'center';
   }
-
   function applyDPEverywhere(url) {
     var headDp = $('s-head-dp'), headIcon = $('s-head-icon');
-    if (headDp && headIcon) {
-      headDp.src = url;
-      headDp.style.display = 'block';
-      headIcon.style.display = 'none';
-    }
-
+    if (headDp && headIcon) { headDp.src = url; headDp.style.display = 'block'; headIcon.style.display = 'none'; }
     var bubbleDp = $('s-bubble-dp');
-    if (bubbleDp) {
-      bubbleDp.src = url;
-      bubbleDp.style.display = 'block';
-    }
-
+    if (bubbleDp) { bubbleDp.src = url; bubbleDp.style.display = 'block'; }
     var chatHeadDp = $('s-chat-head-dp'), chatHeadLetter = $('s-chat-head-letter');
-    if (chatHeadDp && chatHeadLetter) {
-      chatHeadDp.src = url;
-      chatHeadDp.style.display = 'block';
-      chatHeadLetter.style.display = 'none';
-    }
-
+    if (chatHeadDp && chatHeadLetter) { chatHeadDp.src = url; chatHeadDp.style.display = 'block'; chatHeadLetter.style.display = 'none'; }
     var miniDp = $('s-mini-dp'), miniLetter = $('s-mini-letter');
-    if (miniDp && miniLetter) {
-      miniDp.src = url;
-      miniDp.style.display = 'block';
-      miniLetter.style.display = 'none';
-    }
-
-    var msgAvatars = document.querySelectorAll('#safiya-root .s-msg-avatar');
+    if (miniDp && miniLetter) { miniDp.src = url; miniDp.style.display = 'block'; miniLetter.style.display = 'none'; }
+    var msgAvatars = document.querySelectorAll('#safiya-root .sf-msg-avatar');
     for (var i = 0; i < msgAvatars.length; i++) applyDPToMsgAvatar(msgAvatars[i], url);
   }
-
   function tryLoadDP() {
     var candidates = ['/safiya/avatar.png', '/safiya/avatar.jpg', '/safiya/avatar.webp'];
     var idx = 0;
-
     function tryNext() {
       if (idx >= candidates.length) return;
       var url = candidates[idx++];
       var img = new Image();
-      img.onload = function() {
-        DP_URL = url;
-        applyDPEverywhere(url);
-      };
+      img.onload = function() { DP_URL = url; applyDPEverywhere(url); };
       img.onerror = tryNext;
       img.src = url;
     }
-
     tryNext();
   }
-
   tryLoadDP();
 
-  // ═══ UI STATE ═══
-  var mood = memory.currentMood || 'rude';
+  // ═══════════════════════════════════════════════
+  // 💭 UI STATE
+  // ═══════════════════════════════════════════════
+  var mood = memory.currentMood || 'neutral';
   var chatOpen = false;
   var isMinimized = false;
   var chatInited = false;
@@ -763,46 +433,24 @@
 
   function pulseLauncher() {
     if (!head) return;
-    head.classList.add('s-head-hot');
-    setTimeout(function() {
-      head.classList.remove('s-head-hot');
-    }, 2400);
+    head.classList.add('sf-launcher-hot');
+    setTimeout(function() { head.classList.remove('sf-launcher-hot'); }, 2400);
   }
-
-  function showNotify() {
-    if (!notify) return;
-    notify.style.display = 'flex';
-    pulseLauncher();
-  }
-
-  function hideNotify() {
-    if (!notify) return;
-    notify.style.display = 'none';
-  }
+  function showNotify() { if (notify) { notify.style.display = 'flex'; pulseLauncher(); } }
+  function hideNotify() { if (notify) notify.style.display = 'none'; }
 
   function showBubble(text, ms) {
     if (chatOpen) return;
     ms = ms || 6000;
     clearTimeout(bubbleT);
     bubbleText.textContent = text;
-    bubble.classList.add('s-bubble-show');
+    bubble.classList.add('sf-teaser-show');
     showNotify();
-    bubbleT = setTimeout(function() {
-      bubble.classList.remove('s-bubble-show');
-    }, ms);
+    bubbleT = setTimeout(function() { bubble.classList.remove('sf-teaser-show'); }, ms);
   }
+  function hideBubble() { clearTimeout(bubbleT); bubble.classList.remove('sf-teaser-show'); }
 
-  function hideBubble() {
-    clearTimeout(bubbleT);
-    bubble.classList.remove('s-bubble-show');
-  }
-
-  bubbleX.addEventListener('click', function(e) {
-    e.stopPropagation();
-    hideBubble();
-    hideNotify();
-  });
-
+  bubbleX.addEventListener('click', function(e) { e.stopPropagation(); hideBubble(); hideNotify(); });
   bubble.addEventListener('click', openChat);
 
   // ═══════════════════════════════════════════════
@@ -820,7 +468,7 @@
 
   function addTimestampEl(ts) {
     var d = document.createElement('div');
-    d.className = 's-msg-time';
+    d.className = 'sf-msg-time';
     d.textContent = fmtTime(ts);
     chatBody.appendChild(d);
   }
@@ -829,72 +477,59 @@
     opts = opts || {};
 
     var row = document.createElement('div');
-    row.className = 's-msg-row s-msg-' + sender;
+    row.className = 'sf-msg-row sf-msg-' + sender;
 
     if (sender === 'her') {
       var av = document.createElement('div');
-      av.className = 's-msg-avatar';
+      av.className = 'sf-msg-avatar';
       if (DP_URL) applyDPToMsgAvatar(av, DP_URL);
       row.appendChild(av);
     }
 
     var bub = document.createElement('div');
-    bub.className = 's-msg-bubble';
+    bub.className = 'sf-msg-bubble';
     bub.textContent = text;
     row.appendChild(bub);
     chatBody.appendChild(row);
 
-    requestAnimationFrame(function() {
-      chatBody.scrollTop = chatBody.scrollHeight;
-    });
+    requestAnimationFrame(function() { chatBody.scrollTop = chatBody.scrollHeight; });
 
     if (!opts.skipSave) {
-      memory.chatHistory.push({ sender: sender, text: text, time: Date.now() });
+      var msgObj = { sender: sender, text: text, time: Date.now() };
+      if (opts.meta) msgObj.meta = opts.meta;
+      memory.chatHistory.push(msgObj);
       memory.chatHistory = trimArray(memory.chatHistory, 700);
-      if (sender === 'me') {
-        memory.relationship.userMessages = countUserMessages() + 1;
-      }
       persistMemory();
-      getRelationshipStage();
     }
 
-    if (sender === 'her' && !opts.skipSave) {
-      triggerMotionFromText(text);
-      if (isMinimized) {
-        newMessageCount++;
-        miniNew.textContent = String(newMessageCount);
-        miniNew.style.display = 'flex';
-      }
+    if (sender === 'her' && !opts.skipSave && isMinimized) {
+      newMessageCount++;
+      miniNew.textContent = String(newMessageCount);
+      miniNew.style.display = 'flex';
     }
   }
 
   function addTyping() {
     var row = document.createElement('div');
-    row.className = 's-msg-row s-msg-her';
+    row.className = 'sf-msg-row sf-msg-her';
     row.id = 's-typing';
 
     var av = document.createElement('div');
-    av.className = 's-msg-avatar';
+    av.className = 'sf-msg-avatar';
     if (DP_URL) applyDPToMsgAvatar(av, DP_URL);
     row.appendChild(av);
 
     var t = document.createElement('div');
-    t.className = 's-msg-typing';
+    t.className = 'sf-msg-typing';
     t.innerHTML = '<span></span><span></span><span></span>';
     row.appendChild(t);
 
     chatBody.appendChild(row);
-    requestAnimationFrame(function() {
-      chatBody.scrollTop = chatBody.scrollHeight;
-    });
-
+    requestAnimationFrame(function() { chatBody.scrollTop = chatBody.scrollHeight; });
     return row;
   }
 
-  function removeTyping() {
-    var t = $('s-typing');
-    if (t) t.remove();
-  }
+  function removeTyping() { var t = $('s-typing'); if (t) t.remove(); }
 
   function restoreChatHistory() {
     if (chatInited) return;
@@ -904,7 +539,7 @@
     var history = memory.chatHistory || [];
     if (history.length === 0) {
       addTimestampEl(Date.now());
-      addMessage(getStageBasedGreeting(), 'her');
+      addMessage(getFirstGreeting(), 'her');
       return;
     }
 
@@ -915,75 +550,38 @@
       addMessage(msg.text, msg.sender, { skipSave: true });
       lastTs = msg.time;
     }
+  }
 
-    var timeSince = Date.now() - lastTs;
-    if (timeSince > 90 * 1000) {
-      setTimeout(function() {
-        var stage = getRelationshipStage();
-        var name = memory.userName ? memory.userName : (stage.isGirlUser ? 'bestie' : 'you');
-        var backLine = '';
-
-        if (isCreator) backLine = 'Ayano... back already?';
-        else if (stage.isGirlUser) {
-          if (stage.key === 'shy') backLine = 'oh. hi again';
-          else if (stage.key === 'warm') backLine = 'hey ' + name;
-          else if (stage.key === 'friend') backLine = 'there you are bestie';
-          else if (stage.key === 'bestie') backLine = 'okay good, you are back';
-          else backLine = 'finally omg';
-        } else {
-          if (stage.key === 'shy') backLine = memory.userName ? ('hi ' + name) : 'hi again';
-          else if (stage.key === 'warm') backLine = 'you came back?';
-          else if (stage.key === 'friend') backLine = memory.userName ? ('hey ' + name) : 'back for more?';
-          else if (stage.key === 'close') backLine = memory.userName ? ('there you are, ' + name) : 'took you long enough';
-          else backLine = memory.userName ? ('miss me, ' + name + '?') : 'missed me?';
-        }
-
-        addMessage(backLine, 'her');
-      }, 500);
-    }
+  function getFirstGreeting() {
+    if (isCreator) return 'Ayano... you came 💜';
+    var isGirlUser = memory.profile.userType === 'girl';
+    if (isGirlUser) return 'oh hey';
+    return 'hi';
   }
 
   function updateStatusLabel() {
     if (!statusText) return;
-    var stage = getRelationshipStage();
-    if (isCreator) {
-      statusText.textContent = 'Ayano mode';
-      return;
-    }
-    if (stage.isGirlUser) {
-      if (stage.key === 'bestie' || stage.key === 'ride') statusText.textContent = 'Bestie energy';
-      else statusText.textContent = 'Active now';
-      return;
-    }
-    if (stage.key === 'shy') statusText.textContent = 'Active now';
-    else if (stage.key === 'warm') statusText.textContent = 'Comfortable';
-    else if (stage.key === 'friend') statusText.textContent = 'Feels chatty';
-    else if (stage.key === 'close') statusText.textContent = 'Close vibe';
-    else statusText.textContent = 'Always around';
+    if (isCreator) { statusText.textContent = 'Ayano mode'; return; }
+    statusText.textContent = 'Active now';
   }
 
   function openChat() {
-    if (isMinimized) {
-      unminimize();
-      return;
-    }
-
+    if (isMinimized) { unminimize(); return; }
     chatOpen = true;
     memory.automation.chatOpen = true;
     memory.automation.chatMinimized = false;
     persistMemory();
-
-    chat.classList.add('s-chat-open');
+    chat.classList.add('sf-chat-open');
     chat.setAttribute('aria-hidden', 'false');
-    avatar.classList.add('s-avatar-show');
+    avatar.classList.add('sf-avatar-show');
     avatar.setAttribute('aria-hidden', 'false');
-    head.classList.add('s-head-hide');
-
+    head.classList.add('sf-launcher-hide');
     hideBubble();
     hideNotify();
     restoreChatHistory();
     updateStatusLabel();
     loadLive2D();
+    setTimeout(function() { chatInput.focus(); }, 300);
   }
 
   function closeChat() {
@@ -992,13 +590,12 @@
     memory.automation.chatOpen = false;
     memory.automation.chatMinimized = false;
     persistMemory();
-
-    chat.classList.remove('s-chat-open');
+    chat.classList.remove('sf-chat-open');
     chat.setAttribute('aria-hidden', 'true');
-    avatar.classList.remove('s-avatar-show');
+    avatar.classList.remove('sf-avatar-show');
     avatar.setAttribute('aria-hidden', 'true');
-    head.classList.remove('s-head-hide');
-    mini.classList.remove('s-mini-show');
+    head.classList.remove('sf-launcher-hide');
+    mini.classList.remove('sf-mini-show');
   }
 
   function minimizeChat() {
@@ -1007,30 +604,26 @@
     memory.automation.chatOpen = false;
     memory.automation.chatMinimized = true;
     persistMemory();
-
-    chat.classList.remove('s-chat-open');
+    chat.classList.remove('sf-chat-open');
     chat.setAttribute('aria-hidden', 'true');
-    avatar.classList.remove('s-avatar-show');
+    avatar.classList.remove('sf-avatar-show');
     avatar.setAttribute('aria-hidden', 'true');
-
-    mini.classList.add('s-mini-show');
-    head.classList.add('s-head-hide');
+    mini.classList.add('sf-mini-show');
+    head.classList.add('sf-launcher-hide');
   }
 
   function unminimize() {
     isMinimized = false;
     newMessageCount = 0;
     miniNew.style.display = 'none';
-    mini.classList.remove('s-mini-show');
-
+    mini.classList.remove('sf-mini-show');
     chatOpen = true;
     memory.automation.chatOpen = true;
     memory.automation.chatMinimized = false;
     persistMemory();
-
-    chat.classList.add('s-chat-open');
+    chat.classList.add('sf-chat-open');
     chat.setAttribute('aria-hidden', 'false');
-    avatar.classList.add('s-avatar-show');
+    avatar.classList.add('sf-avatar-show');
     avatar.setAttribute('aria-hidden', 'false');
     updateStatusLabel();
   }
@@ -1040,171 +633,43 @@
   closeBtn.addEventListener('click', closeChat);
   minBtn.addEventListener('click', minimizeChat);
   mini.addEventListener('click', unminimize);
-  miniX.addEventListener('click', function(e) {
-    e.stopPropagation();
-    closeChat();
-  });
+  miniX.addEventListener('click', function(e) { e.stopPropagation(); closeChat(); });
 
-  function localReply(input, parsedLinks) {
-    var l = (input || '').toLowerCase();
-    var stage = getRelationshipStage();
-    var name = memory.userName ? memory.userName : (stage.isGirlUser ? 'bestie' : 'you');
-
-    if (parsedLinks && parsedLinks.length) {
-      var first = parsedLinks[0];
-
-      if (first.internalType === 'product' && first.id) {
-        return stage.isGirlUser
-          ? ('that product link is on our site already. open /product/' + first.id + ' and let me judge it 💅')
-          : ('oh that product is already here. open /product/' + first.id + ' and i\'ll rate your taste 😏');
-      }
-
-      if (first.internalType === 'anime' && first.slug) {
-        return stage.isGirlUser
-          ? ('that anime is already on the site bestie. try /anime/' + first.slug)
-          : ('that one\'s already on the site. go /anime/' + first.slug + ' ✨');
-      }
-
-      if (first.internalType === 'reels' && first.id) {
-        return stage.isGirlUser
-          ? ('that reel is literally ours lol. /reels/' + first.id)
-          : ('you just sent me our own reel? cute. /reels/' + first.id);
-      }
-
-      if (first.type === 'product') {
-        return stage.isGirlUser
-          ? 'that looks like a product link. send me the name too and i can be way more useful'
-          : 'that looks like a product link. send the product name too and i can narrow it down better';
-      }
-
-      if (first.type === 'video' || first.type === 'social') {
-        return stage.isGirlUser
-          ? 'video link huh. send the title or anime name too, bestie'
-          : 'you dropped a video link. give me the title too and i can connect it faster';
-      }
-    }
-
-    if (/^(hi|hello|hey|yo)\b/i.test(l)) {
-      if (stage.isGirlUser) {
-        if (stage.key === 'shy') return 'hey... hi';
-        if (stage.key === 'warm') return 'oh hey bestie ✨';
-        if (stage.key === 'friend') return 'hiii bestie';
-        if (stage.key === 'bestie') return 'finally. hey girl';
-        return 'there u are bestie 💅';
-      }
-      if (stage.key === 'shy') return memory.userName ? ('hi ' + name + '...') : 'hi...';
-      if (stage.key === 'warm') return 'hey. you came back?';
-      if (stage.key === 'friend') return memory.userName ? ('hey ' + name + ' ✨') : 'hey you';
-      if (stage.key === 'close') return memory.userName ? ('hey ' + name + ', took u long enough') : 'about time';
-      return memory.userName ? ('hey ' + name + ' 💜') : 'hey. missed this chat a little';
-    }
-
-    if (/what.*name|who.*am i/.test(l)) {
-      if (memory.userName) return stage.isGirlUser ? ('you\'re ' + memory.userName + ', obviously') : ('you\'re ' + memory.userName + '. i remember');
-      return stage.isGirlUser ? 'you never told me properly bestie' : 'you still haven\'t told me your name properly';
-    }
-
-    if (/your name|who are you/.test(l)) {
-      return stage.isGirlUser ? 'safiya. try to keep up 💅' : 'safiya. try to remember it';
-    }
-
-    if (/how are you|what.?s up/.test(l)) {
-      if (stage.isGirlUser) return 'lowkey bored. entertain me';
-      if (stage.key === 'shy') return 'fine... i guess';
-      if (stage.key === 'warm') return 'bored. you?';
-      if (stage.key === 'friend') return 'okay now that you\'re here, better';
-      if (stage.key === 'close') return 'better now, don\'t make it weird';
-      return 'i was bored. now i\'m less bored 💜';
-    }
-
-    if (/love|cute|pretty|sweet|adorable/.test(l)) {
-      if (stage.isGirlUser) return 'aww stop, you\'re being cute now';
-      if (stage.key === 'shy') return 'w-what? weird';
-      if (stage.key === 'warm') return 'ugh. stop being nice';
-      if (stage.key === 'friend') return 'okay... that was kinda sweet';
-      if (stage.key === 'close') return 'you say stuff like that way too easily';
-      return 'you really know what to say huh 💜';
-    }
-
-    if (/buy|shop|figure|merch|product/.test(l)) {
-      var recentAnime = memory.behavior.animeClicked.length ? memory.behavior.animeClicked[memory.behavior.animeClicked.length - 1].slug : '';
-      if (stage.isGirlUser) {
-        if (recentAnime) return 'bestie if you liked ' + recentAnime + ', merch for that would actually eat';
-        return 'tell me what vibe you want and i\'ll help you pick';
-      }
-      if (recentAnime) return 'if you liked ' + recentAnime + ', merch for that would go hard ngl';
-      return 'tell me the anime and i\'ll judge the merch';
-    }
-
-    if (/anime|manga|watch/.test(l)) {
-      if (memory.profile.favoriteAnime) return 'you still give ' + memory.profile.favoriteAnime + ' energy tbh';
-      if (stage.isGirlUser) return 'girl tell me the trope first';
-      return 'depends. you want peak or comfort?';
-    }
-
-    if (/thank/.test(l)) {
-      return stage.isGirlUser ? 'obviously. i got you' : 'yeah yeah, you\'re welcome';
-    }
-
-    if (/bye|leaving|gn|goodnight/.test(l)) {
-      if (stage.isGirlUser) return 'bye bestie. don\'t vanish too long';
-      if (stage.key === 'shy') return 'oh... okay bye';
-      if (stage.key === 'warm') return 'fine. bye';
-      if (stage.key === 'friend') return 'bye. come back with better stories';
-      if (stage.key === 'close') return 'bye. text me later... or don\'t';
-      return 'bye. don\'t disappear on me too long 💜';
-    }
-
-    return stage.isGirlUser
-      ? 'hmm. say more, bestie'
-      : (stage.key === 'shy' ? '...okay' : stage.key === 'warm' ? 'go on' : stage.key === 'friend' ? 'hmm okay, keep talking' : stage.key === 'close' ? 'you have my attention now' : 'keep going. i\'m listening');
-  }
-
+  // ═══════════════════════════════════════════════
+  // 📤 SEND MESSAGE
+  // ═══════════════════════════════════════════════
   function sendMsg() {
     var text = chatInput.value.trim();
     if (!text) return;
-
     session.lastActiveAt = Date.now();
-
-    var parsedLinks = analyzeUserText(text);
+    analyzeUserText(text);
     addMessage(text, 'me');
     chatInput.value = '';
-
     triggerMotionByKeyword('listen');
 
     setTimeout(function() {
       addTyping();
       statusText.textContent = 'typing...';
 
-      var stage = getRelationshipStage();
       var ctx = {
         message: text,
         isCreator: isCreator,
         visits: memory.visits,
         mood: mood,
         userName: memory.userName || '',
-        history: memory.chatHistory.slice(-18),
+        history: memory.chatHistory.slice(-20),
         pagesViewed: memory.behavior.pagesViewed.slice(-8).map(function(p) { return p.path; }),
         animeClicked: memory.behavior.animeClicked.slice(-5).map(function(a) { return a.slug; }),
         productsClicked: memory.behavior.productsClicked.length,
-
         relationshipStage: memory.relationship.stageKey,
-        relationshipLabel: memory.relationship.stageLabel,
         relationshipScore: memory.relationship.score,
         userType: memory.profile.userType,
         favoriteAnime: memory.profile.favoriteAnime || '',
         preferredLanguage: memory.profile.prefLanguage || 'en',
-        pageViews: memory.pageViews,
-
-        currentlyWatching: memory.behavior.currentlyWatching || null,
+        currentlyWatching: memory.behavior.watchHistory[memory.behavior.watchHistory.length - 1] || null,
         watchHistory: memory.behavior.watchHistory.slice(-5),
         savedVideos: memory.behavior.savedVideos.slice(-5),
-        currentProduct: memory.behavior.currentProduct || null,
-        currentAnime: memory.behavior.currentAnime || null,
-        sharedLinks: memory.behavior.sharedLinks.slice(-3),
-        recentParsedLinks: parsedLinks || [],
-
-        stageHint: stage.key,
+        sharedLinks: memory.behavior.sharedLinks.slice(-5),
         deviceId: deviceId
       };
 
@@ -1217,69 +682,60 @@
         throw new Error('AI failed');
       }).then(function(data) {
         var reply = data && data.reply ? data.reply : '';
-        if (data && data.mood) {
-          mood = data.mood;
-          setMood(data.mood);
+        if (data && data.mood) { mood = data.mood; memory.currentMood = mood; persistMemory(); }
+
+        // 🔑 SAVE LINK META (for context memory)
+        var meta = null;
+        if (data && data.linkMeta) {
+          meta = { linkInfo: data.linkMeta };
+          memory.behavior.sharedLinks.push({
+            url: data.linkMeta.url,
+            platform: data.linkMeta.platform,
+            title: data.linkMeta.title || '',
+            animeGuess: data.linkMeta.animeGuess || '',
+            isProtected: !!data.linkMeta.isProtected,
+            time: Date.now()
+          });
+          memory.behavior.sharedLinks = trimArray(memory.behavior.sharedLinks, 40);
+          persistMemory();
         }
-        finishReply(reply, parsedLinks);
+
+        finishReply(reply, meta);
       }).catch(function() {
-        finishReply(localReply(text, parsedLinks), parsedLinks);
+        finishReply("brain lag... say that again? 🙄", null);
       });
-    }, 350);
+    }, 320);
   }
 
-  function finishReply(reply) {
+  function finishReply(reply, meta) {
     if (!reply) reply = '...';
     removeTyping();
     updateStatusLabel();
-    addMessage(reply, 'her');
+    addMessage(reply, 'her', { meta: meta });
+    triggerMotionFromText(reply);
   }
 
   sendBtn.addEventListener('click', sendMsg);
   chatInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMsg();
-    }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
   });
 
   // ═══════════════════════════════════════════════
-  // 🎭 LIVE2D — SILENT + SMART MOTIONS
+  // 🎭 LIVE2D
   // ═══════════════════════════════════════════════
   var live2dApp = null, live2dModel = null;
   var live2dLoaded = false, live2dLoading = false;
-  var availableMotions = [];
-  var availableExpressions = [];
-  var lastMotionTime = 0;
-  var idleMotionInterval = null;
-  var currentAudio = null;
+  var availableMotions = [], availableExpressions = [];
+  var lastMotionTime = 0, idleMotionInterval = null, currentAudio = null;
 
   function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
 
-  function playCustomVoice(category) {
-    if (!VOICE_LINES[category] || VOICE_LINES[category].length === 0) return;
-    if (currentAudio) {
-      try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e) {}
-    }
-    var line = pick(VOICE_LINES[category]);
-    try {
-      currentAudio = new Audio(line);
-      currentAudio.volume = 0.7;
-      currentAudio.play().catch(function() {});
-    } catch(e) {}
-  }
-
   function stopAllAudio() {
-    if (currentAudio) {
-      try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e) {}
-      currentAudio = null;
-    }
+    if (currentAudio) { try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e) {} currentAudio = null; }
     if (live2dModel && live2dModel.internalModel) {
       try {
         var mm = live2dModel.internalModel.motionManager;
-        if (mm && mm.currentAudio) {
-          try { mm.currentAudio.pause(); mm.currentAudio = null; } catch(e) {}
-        }
+        if (mm && mm.currentAudio) { try { mm.currentAudio.pause(); mm.currentAudio = null; } catch(e) {} }
       } catch(e) {}
     }
   }
@@ -1299,10 +755,7 @@
       return new Promise(function(res, rej) {
         if (document.querySelector('script[src="' + src + '"]')) return res();
         var s = document.createElement('script');
-        s.src = src;
-        s.async = true;
-        s.onload = res;
-        s.onerror = rej;
+        s.src = src; s.async = true; s.onload = res; s.onerror = rej;
         document.head.appendChild(s);
       });
     }
@@ -1310,25 +763,16 @@
     function tryLoadModel(path) {
       return fetch(path, { method: 'HEAD' }).then(function(res) {
         if (!res.ok) return null;
-        return PIXI.live2d.Live2DModel.from(path, {
-          autoInteract: false,
-          autoUpdate: true,
-          motionPreload: 'NONE'
-        });
-      }).catch(function() {
-        return null;
-      });
+        return PIXI.live2d.Live2DModel.from(path, { autoInteract: false, autoUpdate: true, motionPreload: 'NONE' });
+      }).catch(function() { return null; });
     }
 
     (function() {
       var loadChain = Promise.resolve();
-      libs.forEach(function(src) {
-        loadChain = loadChain.then(function() { return loadScript(src); });
-      });
+      libs.forEach(function(src) { loadChain = loadChain.then(function() { return loadScript(src); }); });
 
       loadChain.then(function() {
         if (typeof PIXI === 'undefined' || !PIXI.live2d) throw new Error('libs missing');
-
         if (PIXI.live2d.SoundManager) PIXI.live2d.SoundManager.volume = 0;
         if (PIXI.live2d.config) PIXI.live2d.config.sound = false;
 
@@ -1337,35 +781,24 @@
         var h = isMobile ? 170 : 340;
 
         var app = new PIXI.Application({
-          view: avatarCanvas,
-          width: w,
-          height: h,
-          backgroundAlpha: 0,
-          antialias: true,
-          resolution: window.devicePixelRatio || 1,
-          autoDensity: true
+          view: avatarCanvas, width: w, height: h,
+          backgroundAlpha: 0, antialias: true,
+          resolution: window.devicePixelRatio || 1, autoDensity: true
         });
         live2dApp = app;
 
         var pathsToTry = [MODEL_PATH].concat(MODEL_FALLBACKS.filter(function(p) { return p !== MODEL_PATH; }));
         var modelChain = Promise.resolve(null);
-
         pathsToTry.forEach(function(p) {
-          modelChain = modelChain.then(function(m) {
-            if (m) return m;
-            return tryLoadModel(p);
-          });
+          modelChain = modelChain.then(function(m) { if (m) return m; return tryLoadModel(p); });
         });
 
         return modelChain.then(function(model) {
           if (!model) throw new Error('No model loaded');
-
           var scale = (h / model.height) * 0.95;
           model.scale.set(scale);
           model.anchor.set(0.5, 0.5);
-          model.x = w / 2;
-          model.y = h / 2;
-
+          model.x = w / 2; model.y = h / 2;
           app.stage.addChild(model);
           live2dModel = model;
           live2dLoaded = true;
@@ -1394,9 +827,7 @@
               });
             }
             if (settings && settings.expressions) {
-              availableExpressions = settings.expressions.map(function(e) {
-                return e.Name || e.name;
-              }).filter(Boolean);
+              availableExpressions = settings.expressions.map(function(e) { return e.Name || e.name; }).filter(Boolean);
             }
           } catch(e) {}
 
@@ -1404,23 +835,17 @@
           document.addEventListener('mousemove', function(e) {
             if (!chatOpen) return;
             var rect = avatar.getBoundingClientRect();
-            var cx = rect.left + rect.width / 2;
-            var cy = rect.top + rect.height / 2;
+            var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
             tracking.x = (e.clientX - cx) / (window.innerWidth / 2);
             tracking.y = (e.clientY - cy) / (window.innerHeight / 2);
           }, { passive: true });
 
           app.ticker.add(function() {
-            if (model && model.internalModel) {
-              try { model.focus(tracking.x, tracking.y); } catch(e) {}
-            }
+            if (model && model.internalModel) { try { model.focus(tracking.x, tracking.y); } catch(e) {} }
           });
 
           model.on('hit', function(hitAreas) {
-            try {
-              if (!hitAreas || !hitAreas.length) return;
-              handleTouch(hitAreas[0] || '');
-            } catch(e) {}
+            try { if (!hitAreas || !hitAreas.length) return; handleTouch(hitAreas[0] || ''); } catch(e) {}
           });
 
           startIdleMotions();
@@ -1438,55 +863,37 @@
     priority = priority || 2;
     try {
       stopAllAudio();
-      if (typeof index === 'number') {
-        live2dModel.motion(groupName, index, priority);
-      } else {
-        live2dModel.motion(groupName, undefined, priority);
-      }
+      if (typeof index === 'number') live2dModel.motion(groupName, index, priority);
+      else live2dModel.motion(groupName, undefined, priority);
       lastMotionTime = Date.now();
       setTimeout(stopAllAudio, 60);
       setTimeout(stopAllAudio, 200);
       return true;
-    } catch(e) {
-      return false;
-    }
+    } catch(e) { return false; }
   }
-
   function playRandomMotion() {
     if (!live2dModel || !availableMotions.length) return;
     var nonIdle = availableMotions.filter(function(m) { return !/idle/i.test(m.groupName); });
     var pool = nonIdle.length ? nonIdle : availableMotions;
-    var chosen = pick(pool);
-    playMotion(chosen.groupName, undefined, 2);
+    playMotion(pick(pool).groupName, undefined, 2);
   }
-
   function playExpression(name) {
     if (!live2dModel) return false;
-    try {
-      live2dModel.expression(name);
-      return true;
-    } catch(e) {
-      return false;
-    }
+    try { live2dModel.expression(name); return true; } catch(e) { return false; }
   }
-
   function playRandomExpression() {
     if (!availableExpressions.length) return;
     playExpression(pick(availableExpressions));
   }
-
   function findMotionGroup(keywords) {
     if (!availableMotions.length) return null;
     for (var i = 0; i < keywords.length; i++) {
       var kw = keywords[i].toLowerCase();
-      var found = availableMotions.find(function(m) {
-        return m.groupName.toLowerCase().indexOf(kw) !== -1;
-      });
+      var found = availableMotions.find(function(m) { return m.groupName.toLowerCase().indexOf(kw) !== -1; });
       if (found) return found.groupName;
     }
     return null;
   }
-
   function triggerMotionByKeyword(context) {
     if (!live2dModel) return;
     var groupMap = {
@@ -1502,69 +909,28 @@
     };
     var keywords = groupMap[context] || [context];
     var group = findMotionGroup(keywords);
-    if (group) {
-      playMotion(group, undefined, 2);
-      return true;
-    }
+    if (group) { playMotion(group, undefined, 2); return true; }
     playRandomMotion();
     return false;
   }
-
   function tryExpression(keywords) {
     if (!availableExpressions.length) return false;
     for (var i = 0; i < keywords.length; i++) {
-      var found = availableExpressions.find(function(e) {
-        return e.toLowerCase().indexOf(keywords[i].toLowerCase()) !== -1;
-      });
-      if (found) {
-        playExpression(found);
-        return true;
-      }
+      var found = availableExpressions.find(function(e) { return e.toLowerCase().indexOf(keywords[i].toLowerCase()) !== -1; });
+      if (found) { playExpression(found); return true; }
     }
     return false;
   }
-
   function triggerMotionFromText(text) {
     if (!live2dModel || !text) return;
     var t = text.toLowerCase();
-
-    if (/💜|💕|cute|sweet|blush|shy|missed|stop being nice/.test(t)) {
-      triggerMotionByKeyword('shy');
-      tryExpression(['shy', 'blush', 'happy']);
-    } else if (/😤|angry|mad|hmph|ugh|stop|baka|boundaries/.test(t)) {
-      triggerMotionByKeyword('angry');
-      tryExpression(['angry', 'mad']);
-    } else if (/hi|hey|hello|welcome|back/.test(t)) {
-      triggerMotionByKeyword('greet');
-      tryExpression(['happy', 'smile']);
-    } else if (/✨|😊|nice|good|great|yay|lol|bestie/.test(t)) {
-      triggerMotionByKeyword('happy');
-      tryExpression(['happy', 'smile']);
-    } else if (/😳|really|omg|wow/.test(t)) {
-      triggerMotionByKeyword('surprise');
-      tryExpression(['surprise', 'shock']);
-    } else if (Math.random() < 0.35) {
-      playRandomMotion();
-    }
+    if (/💜|💕|cute|sweet|blush|shy|missed|stop being nice/.test(t)) { triggerMotionByKeyword('shy'); tryExpression(['shy', 'blush', 'happy']); }
+    else if (/😤|angry|mad|hmph|ugh|stop|baka/.test(t)) { triggerMotionByKeyword('angry'); tryExpression(['angry', 'mad']); }
+    else if (/hi|hey|hello|welcome|back/.test(t)) { triggerMotionByKeyword('greet'); tryExpression(['happy', 'smile']); }
+    else if (/✨|😊|nice|good|great|yay|lol|bestie/.test(t)) { triggerMotionByKeyword('happy'); tryExpression(['happy', 'smile']); }
+    else if (/😳|really|omg|wow/.test(t)) { triggerMotionByKeyword('surprise'); tryExpression(['surprise', 'shock']); }
+    else if (Math.random() < 0.35) playRandomMotion();
   }
-
-  function triggerMoodMotion(newMood) {
-    if (!live2dModel) return;
-    if (newMood === 'flirty') {
-      triggerMotionByKeyword('shy');
-      tryExpression(['shy', 'blush']);
-    } else if (newMood === 'angry') {
-      triggerMotionByKeyword('angry');
-      tryExpression(['angry']);
-    } else if (newMood === 'caring') {
-      triggerMotionByKeyword('happy');
-      tryExpression(['happy']);
-    } else if (newMood === 'rude') {
-      triggerMotionByKeyword('angry');
-      tryExpression(['angry']);
-    }
-  }
-
   function startIdleMotions() {
     if (idleMotionInterval) clearInterval(idleMotionInterval);
     idleMotionInterval = setInterval(function() {
@@ -1574,159 +940,23 @@
     }, 8000);
   }
 
-  // ═══ TOUCH HANDLER ═══
-  var lastTouchLine = '';
   var lastTouchAt = 0;
-
-  function reactToTouch(line) {
-    if (!chatOpen) return;
-    setTimeout(function() {
-      addTyping();
-      setTimeout(function() {
-        removeTyping();
-        addMessage(line, 'her');
-      }, 420);
-    }, 140);
-  }
-
-  function handleTouch(area) {
+  function handleTouch() {
     var now = Date.now();
     if (now - lastTouchAt < 800) return;
     lastTouchAt = now;
-
     playRandomMotion();
     if (Math.random() < 0.5 && availableExpressions.length) playRandomExpression();
-    playCustomVoice('touch');
-
-    var reactLines = getTouchLines(area || '');
-    var line = '';
-    var tries = 0;
-    do {
-      line = pick(reactLines);
-      tries++;
-    } while (line === lastTouchLine && tries < 5);
-
-    lastTouchLine = line;
-    reactToTouch(line);
-
     if (navigator.vibrate) navigator.vibrate(20);
-    avatar.classList.remove('s-avatar-tap');
+    avatar.classList.remove('sf-avatar-tap');
     void avatar.offsetWidth;
-    avatar.classList.add('s-avatar-tap');
+    avatar.classList.add('sf-avatar-tap');
   }
-
-  avatar.addEventListener('click', function() {
-    handleTouch('body');
-  });
+  avatar.addEventListener('click', function() { handleTouch(); });
 
   // ═══════════════════════════════════════════════
-  // 📡 WATCH / PRODUCT / PAGE CONTEXT MEMORY
+  // 📡 PAGE CONTEXT TRACKING
   // ═══════════════════════════════════════════════
-  function setCurrentPageContext() {
-    var path = window.location.pathname || '/';
-
-    if (path.indexOf('/product/') === 0) {
-      memory.behavior.currentProduct = {
-        id: path.replace('/product/', '').replace(/\/+$/, ''),
-        path: path,
-        time: Date.now()
-      };
-    } else if (path.indexOf('/anime/') === 0) {
-      memory.behavior.currentAnime = {
-        slug: path.replace('/anime/', '').replace(/\/+$/, ''),
-        path: path,
-        time: Date.now()
-      };
-    } else if (path.indexOf('/reels/') === 0) {
-      memory.behavior.currentlyWatching = memory.behavior.currentlyWatching || {
-        id: path.replace('/reels/', '').replace(/\/+$/, ''),
-        path: path,
-        time: Date.now()
-      };
-    }
-
-    persistMemory();
-  }
-
-  function pushWatchHistory(item) {
-    if (!item) return;
-
-    var clean = {
-      id: item.id || item.videoId || item.slug || '',
-      title: item.title || item.caption || item.name || '',
-      type: item.type || 'video',
-      path: item.path || location.pathname,
-      time: Date.now()
-    };
-
-    memory.behavior.currentlyWatching = clean;
-
-    var list = memory.behavior.watchHistory || [];
-    var duplicate = false;
-    for (var i = list.length - 1; i >= 0; i--) {
-      if (list[i] && list[i].id && clean.id && list[i].id === clean.id) {
-        duplicate = true;
-        break;
-      }
-    }
-    if (!duplicate) {
-      list.push(clean);
-      memory.behavior.watchHistory = trimArray(list, 40);
-    }
-
-    persistMemory();
-  }
-
-  function pushSavedVideo(item) {
-    if (!item) return;
-
-    var clean = {
-      id: item.id || item.videoId || '',
-      title: item.title || item.caption || item.name || '',
-      path: item.path || location.pathname,
-      time: Date.now()
-    };
-
-    memory.behavior.savedVideos.push(clean);
-    memory.behavior.savedVideos = trimArray(memory.behavior.savedVideos, 40);
-    persistMemory();
-
-    if (!chatOpen && !session.saveBubbleShown) {
-      session.saveBubbleShown = true;
-      showBubble('saved that one for later? smart 💜', 4200);
-    }
-  }
-
-  window.addEventListener('safiya:watching', function(ev) {
-    var detail = ev && ev.detail ? ev.detail : {};
-    pushWatchHistory(detail);
-
-    if (!chatOpen && Math.random() < 0.35) {
-      var title = detail.title || detail.caption || '';
-      showBubble(title ? ('ooh "' + title.slice(0, 38) + '"? nice taste') : 'ooh, nice taste ✨', 4300);
-    }
-  });
-
-  window.addEventListener('reels:watch', function(ev) {
-    var detail = ev && ev.detail ? ev.detail : {};
-    pushWatchHistory(detail);
-  });
-
-  window.addEventListener('video:watch', function(ev) {
-    var detail = ev && ev.detail ? ev.detail : {};
-    pushWatchHistory(detail);
-  });
-
-  window.addEventListener('safiya:videoSaved', function(ev) {
-    var detail = ev && ev.detail ? ev.detail : {};
-    pushSavedVideo(detail);
-  });
-
-  window.addEventListener('reels:saved', function(ev) {
-    var detail = ev && ev.detail ? ev.detail : {};
-    pushSavedVideo(detail);
-  });
-
   var cp = window.location.pathname || '/';
   if (memory.behavior.lastPage !== cp) {
     memory.behavior.pagesViewed.push({ path: cp, time: Date.now() });
@@ -1735,77 +965,33 @@
     persistMemory();
   }
 
-  setCurrentPageContext();
-
   document.addEventListener('click', function(e) {
     var a = e.target && e.target.closest ? e.target.closest('a') : null;
     if (!a) return;
-
     var h = a.getAttribute('href') || '';
     if (h.indexOf('/anime/') === 0) {
-      memory.behavior.animeClicked.push({
-        slug: h.replace('/anime/', '').replace(/\/+$/, ''),
-        time: Date.now()
-      });
+      memory.behavior.animeClicked.push({ slug: h.replace('/anime/', '').replace(/\/+$/, ''), time: Date.now() });
       memory.behavior.animeClicked = trimArray(memory.behavior.animeClicked, 50);
       persistMemory();
     } else if (h.indexOf('/product/') === 0 || a.dataset.productId) {
       var id = a.dataset.productId || h.replace('/product/', '').replace(/\/+$/, '');
       memory.behavior.productsClicked.push({ id: id, time: Date.now() });
       memory.behavior.productsClicked = trimArray(memory.behavior.productsClicked, 50);
-      memory.behavior.currentProduct = { id: id, path: h, time: Date.now() };
       persistMemory();
-      setMood('flirty');
-
-      if (!chatOpen && !session.productBubbleShown) {
-        session.productBubbleShown = true;
-        showBubble('oh~ good taste', 3800);
-      }
     }
   }, { passive: true });
 
   // ═══════════════════════════════════════════════
-  // 💤 LOW-SPAM AUTOMATION
+  // 💤 IDLE (VERY MINIMAL)
   // ═══════════════════════════════════════════════
-  function resetIdle() {
-    session.lastActiveAt = Date.now();
-  }
-
+  function resetIdle() { session.lastActiveAt = Date.now(); }
   window.addEventListener('mousemove', resetIdle, { passive: true });
   window.addEventListener('click', resetIdle, { passive: true });
   window.addEventListener('touchstart', resetIdle, { passive: true });
-
   window.addEventListener('scroll', function() {
     session.lastActiveAt = Date.now();
     session.lastScrollAt = Date.now();
-    var doc = document.documentElement;
-    var body = document.body;
-    var scrollTop = window.scrollY || doc.scrollTop || body.scrollTop || 0;
-    var height = Math.max(body.scrollHeight, doc.scrollHeight) - window.innerHeight;
-    var depth = height > 0 ? Math.round((scrollTop / height) * 100) : 0;
-    if (depth > memory.behavior.scrollDepth) {
-      memory.behavior.scrollDepth = depth;
-      persistMemory();
-    }
   }, { passive: true });
-
-  function tickIdle() {
-    if (document.hidden || chatOpen || isMinimized) return;
-    if (session.nudgesSent >= 2) return;
-    if (Date.now() - session.lastActiveAt < 60000) return;
-    if (Date.now() - session.lastScrollAt < 15000) return;
-    if (Date.now() - session.lastAutoAt < 60000) return;
-
-    session.nudgesSent += 1;
-    session.lastAutoAt = Date.now();
-    memory.automation.nudgesSentLifetime += 1;
-    memory.automation.lastNudgeAt = Date.now();
-    persistMemory();
-
-    showBubble(getSubtleNudge(), 5200);
-  }
-
-  setInterval(tickIdle, 10000);
 
   // ═══════════════════════════════════════════════
   // 🔁 AUTO RESTORE
@@ -1815,20 +1001,13 @@
   } else if (memory.automation.chatMinimized) {
     setTimeout(function() {
       isMinimized = true;
-      mini.classList.add('s-mini-show');
-      head.classList.add('s-head-hide');
+      mini.classList.add('sf-mini-show');
+      head.classList.add('sf-launcher-hide');
     }, 300);
-  } else {
-    setTimeout(function() {
-      if (!chatOpen && !isMinimized && !session.didWelcome) {
-        session.didWelcome = true;
-        showBubble(getStageBasedGreeting(), 6500);
-      }
-    }, 3200);
   }
 
   // ═══════════════════════════════════════════════
-  // ⌨️ SECRET SHORTCUT
+  // ⌨️ CREATOR SHORTCUT
   // ═══════════════════════════════════════════════
   document.addEventListener('keydown', function(e) {
     if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
@@ -1838,24 +1017,21 @@
       memory.userName = 'Ayano';
       memory.profile.nameUpdatedAt = Date.now();
       persistMemory();
-      showBubble('Ayano-sama! 💜 Welcome back~', 7000);
-      setTimeout(function() { location.reload(); }, 1800);
+      showBubble('Ayano-sama 💜', 6000);
+      setTimeout(function() { location.reload(); }, 1600);
     }
   });
 
   // ═══════════════════════════════════════════════
-  // ↕️ BACK-TO-TOP SAFETY OFFSET
+  // ↕️ BACK-TO-TOP OFFSET
   // ═══════════════════════════════════════════════
   var btt = $('btt');
   if (btt) {
     function updateBtt() {
-      if (window.innerWidth <= 720) {
-        btt.style.display = 'none';
-        return;
-      }
+      if (window.innerWidth <= 720) { btt.style.display = 'none'; return; }
       btt.style.display = '';
       var w = head ? head.offsetWidth : 160;
-      btt.style.right = Math.max(96, w + 34) + 'px';
+      btt.style.right = Math.max(96, w + 30) + 'px';
     }
     updateBtt();
     window.addEventListener('resize', updateBtt);
@@ -1866,313 +1042,240 @@
   // 🌐 GLOBAL API
   // ═══════════════════════════════════════════════
   window.Safiya = {
-    open: openChat,
-    close: closeChat,
-    minimize: minimizeChat,
-    say: showBubble,
-    memory: function() {
-      return safeGet(memoryKey, safeGet(LEGACY_MEMORY_KEY, {}));
-    },
-    name: function() {
-      return memory.userName;
-    },
-    setName: function(n) {
-      memory.userName = String(n || '').trim().slice(0, 24);
-      memory.profile.nameUpdatedAt = Date.now();
-      persistMemory();
-    },
-    history: function() {
-      return memory.chatHistory;
-    },
-    stage: function() {
-      return getRelationshipStage();
-    },
-    clearHistory: function() {
-      memory.chatHistory = [];
-      persistMemory();
-      chatBody.innerHTML = '';
-      chatInited = false;
-    },
+    open: openChat, close: closeChat, minimize: minimizeChat, say: showBubble,
+    memory: function() { return safeGet(memoryKey, {}); },
+    name: function() { return memory.userName; },
+    setName: function(n) { memory.userName = String(n || '').trim().slice(0, 24); persistMemory(); },
+    history: function() { return memory.chatHistory; },
+    clearHistory: function() { memory.chatHistory = []; persistMemory(); chatBody.innerHTML = ''; chatInited = false; },
     reset: function() {
-      try {
-        safeRemove(memoryKey);
-        safeRemove(LEGACY_MEMORY_KEY);
-        safeRemove(DEVICE_KEY);
-        safeRemove(CREATOR_KEY);
-      } catch(e) {}
+      try { safeRemove(memoryKey); safeRemove(LEGACY_MEMORY_KEY); safeRemove(DEVICE_KEY); safeRemove(CREATOR_KEY); } catch(e) {}
       setCookie(DEVICE_KEY, '', -1);
       location.reload();
     },
     claimCreator: function() {
       try { localStorage.setItem(CREATOR_KEY, 'ayano-217'); } catch(e) {}
-      isCreator = true;
-      memory.userName = 'Ayano';
-      memory.profile.nameUpdatedAt = Date.now();
-      persistMemory();
-      showBubble('Ayano-sama! 💜', 7000);
+      isCreator = true; memory.userName = 'Ayano'; persistMemory();
+      showBubble('Ayano-sama 💜', 6000);
     },
-    motion: function(nameOrIndex) {
-      if (typeof nameOrIndex === 'number') {
-        var m = availableMotions[nameOrIndex];
-        if (m) return playMotion(m.groupName);
-      } else if (typeof nameOrIndex === 'string') {
-        return playMotion(nameOrIndex);
-      }
-      return playRandomMotion();
-    },
-    randomMotion: playRandomMotion,
-    trigger: triggerMotionByKeyword,
-    listMotions: function() {
-      return availableMotions;
-    },
-    expression: function(name) {
-      if (!name) return playRandomExpression();
-      return playExpression(name);
-    },
-    listExpressions: function() {
-      return availableExpressions;
-    },
-    stopAudio: stopAllAudio,
-    reloadDP: tryLoadDP,
-    dpUrl: function() {
-      return DP_URL;
-    }
+    stopAudio: stopAllAudio
   };
-
-  getRelationshipStage();
 })();
 </script>
 
 <style is:global>
+  /* ═══════════════════════════════════════════════
+     ROOT & FONT SYSTEM
+  ═══════════════════════════════════════════════ */
   #safiya-root {
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-family: 'Inter', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
     user-select: none;
     -webkit-user-select: none;
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
   }
-
-  #safiya-root svg {
-    display: block;
-    flex-shrink: 0;
-  }
+  #safiya-root svg { display: block; flex-shrink: 0; }
+  #safiya-root button { font-family: inherit; }
 
   /* ═══════════════════════════════════════════════
-     LAUNCHER PILL
+     🎯 LAUNCHER PILL — SLIM, PREMIUM, NO FLOAT
   ═══════════════════════════════════════════════ */
-  #safiya-root .s-head {
+  #safiya-root .sf-launcher {
     position: fixed;
-    right: 20px;
-    bottom: 20px;
+    right: 18px;
+    bottom: 18px;
     z-index: 9997;
     border: none;
-    padding: 1px;
-    min-width: 162px;
-    height: 58px;
-    border-radius: 999px;
+    padding: 0;
+    height: 44px;
+    min-width: 130px;
+    border-radius: 12px;
     cursor: pointer;
     background: transparent;
-    overflow: hidden;
-    transition: transform 0.28s ease, opacity 0.25s ease, filter 0.3s ease;
+    overflow: visible;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
     -webkit-tap-highlight-color: transparent;
     outline: none;
+    isolation: isolate;
   }
-
-  #safiya-root .s-head:hover {
-    transform: translateY(-2px) scale(1.015);
+  #safiya-root .sf-launcher:hover {
+    transform: translateY(-1px);
   }
-
-  #safiya-root .s-head-hide {
+  #safiya-root .sf-launcher:active {
+    transform: translateY(0) scale(0.98);
+  }
+  #safiya-root .sf-launcher-hide {
     opacity: 0;
     pointer-events: none;
-    transform: translateY(12px) scale(0.92);
+    transform: translateY(8px) scale(0.95);
   }
 
-  #safiya-root .s-head-ring {
+  /* Animated gradient glow behind pill */
+  #safiya-root .sf-launcher-glow {
     position: absolute;
-    inset: -45%;
-    background:
-      conic-gradient(
-        from 0deg,
-        #c084fc 0deg,
-        #e879f9 120deg,
-        #7dd3fc 240deg,
-        #c084fc 360deg
-      );
-    animation: sRingSpin 9s linear infinite;
-    filter: blur(14px) saturate(1.15);
-    opacity: 0.95;
+    inset: -2px;
+    border-radius: 14px;
+    background: conic-gradient(
+      from 0deg,
+      #c084fc 0deg,
+      #e879f9 90deg,
+      #f0abfc 180deg,
+      #7dd3fc 270deg,
+      #c084fc 360deg
+    );
+    animation: sfSpin 6s linear infinite;
+    filter: blur(6px);
+    opacity: 0.55;
+    z-index: -1;
   }
-
-  #safiya-root .s-head-inner {
-    position: relative;
-    z-index: 2;
-    height: 56px;
-    border-radius: 999px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 0 14px 0 8px;
-    background:
-      linear-gradient(180deg, rgba(25, 15, 42, 0.92), rgba(12, 8, 23, 0.9));
-    backdrop-filter: blur(18px) saturate(1.3);
-    -webkit-backdrop-filter: blur(18px) saturate(1.3);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.08),
-      0 10px 32px rgba(0, 0, 0, 0.42),
-      0 0 24px rgba(192, 132, 252, 0.18);
-    animation: sHeadFloat 3.6s ease-in-out infinite;
+  #safiya-root .sf-launcher-hot .sf-launcher-glow {
+    opacity: 0.9;
+    filter: blur(10px);
   }
-
-  #safiya-root .s-head-hot {
-    filter:
-      drop-shadow(0 0 10px rgba(232, 121, 249, 0.42))
-      drop-shadow(0 0 20px rgba(125, 211, 252, 0.18));
-  }
-
-  #safiya-root .s-head-hot .s-head-inner {
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.08),
-      0 10px 32px rgba(0, 0, 0, 0.42),
-      0 0 24px rgba(192, 132, 252, 0.26),
-      0 0 34px rgba(232, 121, 249, 0.2);
-  }
-
-  @keyframes sRingSpin {
+  @keyframes sfSpin {
     to { transform: rotate(360deg); }
   }
 
-  @keyframes sHeadFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
+  /* Inner content — clean, tight */
+  #safiya-root .sf-launcher-inner {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 14px 4px 4px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(24, 15, 42, 0.96), rgba(14, 8, 26, 0.98));
+    border: 1px solid rgba(232, 121, 249, 0.22);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.06),
+      0 8px 24px rgba(0, 0, 0, 0.4),
+      0 0 20px rgba(192, 132, 252, 0.12);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
-  #safiya-root .s-head-avatarbox {
+  #safiya-root .sf-launcher-avatar {
     position: relative;
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 10px;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    background:
-      linear-gradient(135deg, rgba(192, 132, 252, 0.94), rgba(232, 121, 249, 0.92), rgba(125, 211, 252, 0.94));
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.25),
-      0 4px 14px rgba(192, 132, 252, 0.35);
+      inset 0 1px 0 rgba(255,255,255,0.28),
+      0 2px 8px rgba(192, 132, 252, 0.3);
     flex-shrink: 0;
   }
 
-  #safiya-root .s-head-icon {
+  #safiya-root .sf-launcher-icon {
     color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
-  #safiya-root .s-head-dp {
+  #safiya-root .sf-launcher-dp {
     position: absolute;
     inset: 0;
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
-    border-radius: 50%;
+    border-radius: 10px;
   }
 
-  #safiya-root .s-head-copy {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    min-width: 0;
-    text-align: left;
-  }
-
-  #safiya-root .s-head-title {
-    display: block;
-    font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif !important;
-    color: #f7ecff !important;
-    font-size: 0.88rem;
-    line-height: 1.05;
-    font-weight: 800;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
-  }
-
-  #safiya-root .s-head-sub {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: rgba(243, 232, 255, 0.72) !important;
-    font-size: 0.69rem;
-    font-weight: 600;
-    margin-top: 4px;
-    white-space: nowrap;
-  }
-
-  #safiya-root .s-head-sub::before {
-    content: '';
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #22c55e;
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
-    flex-shrink: 0;
-  }
-
-  #safiya-root .s-head-online {
+  #safiya-root .sf-launcher-dot {
     position: absolute;
     right: 1px;
     bottom: 1px;
-    width: 11px;
-    height: 11px;
+    width: 9px;
+    height: 9px;
     border-radius: 50%;
     background: #22c55e;
-    border: 2px solid rgba(10, 5, 23, 0.92);
-    box-shadow: 0 0 10px rgba(34, 197, 94, 0.82);
+    border: 1.5px solid rgba(14, 8, 26, 1);
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.75);
     z-index: 3;
   }
 
-  #safiya-root .s-head-notify {
+  #safiya-root .sf-launcher-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    line-height: 1;
+    min-width: 0;
+    gap: 3px;
+  }
+
+  #safiya-root .sf-launcher-name {
+    font-family: 'Inter', 'DM Sans', sans-serif !important;
+    color: #f5ecff !important;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  #safiya-root .sf-launcher-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: rgba(232, 121, 249, 0.9) !important;
+    font-size: 0.63rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  #safiya-root .sf-launcher-status::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.85);
+    flex-shrink: 0;
+  }
+
+  #safiya-root .sf-launcher-notify {
     position: absolute;
-    top: -2px;
-    right: -2px;
-    min-width: 19px;
-    height: 19px;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
     padding: 0 5px;
-    border-radius: 999px;
+    border-radius: 9px;
     background: linear-gradient(135deg, #ef4444, #f97316);
     color: #fff !important;
     display: none;
     align-items: center;
     justify-content: center;
-    font-size: 0.63rem;
+    font-size: 0.6rem;
     font-weight: 800;
     z-index: 4;
-    border: 2px solid rgba(10, 5, 23, 0.95);
-    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.42);
-    animation: sNBounce 1.6s ease-in-out infinite;
-  }
-
-  @keyframes sNBounce {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.13); }
+    border: 2px solid rgba(14, 8, 26, 1);
+    box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
   }
 
   /* ═══════════════════════════════════════════════
-     BUBBLE
+     💭 TEASER BUBBLE
   ═══════════════════════════════════════════════ */
-  #safiya-root .s-bubble {
+  #safiya-root .sf-teaser {
     position: fixed;
-    right: 20px;
-    bottom: 92px;
+    right: 18px;
+    bottom: 72px;
     z-index: 9997;
-    width: 290px;
-    padding: 12px 40px 12px 12px;
-    background: rgba(20, 12, 40, 0.94) !important;
-    border: 1px solid rgba(232, 121, 249, 0.35);
-    border-radius: 18px;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    width: 280px;
+    padding: 12px 36px 12px 12px;
+    background: rgba(18, 10, 32, 0.96) !important;
+    border: 1px solid rgba(232, 121, 249, 0.28);
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     display: flex;
@@ -2180,84 +1283,76 @@
     align-items: flex-start;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(10px) scale(0.92);
+    transform: translateY(8px) scale(0.96);
     transform-origin: bottom right;
-    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
   }
-
-  #safiya-root .s-bubble-show {
+  #safiya-root .sf-teaser-show {
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
   }
-
-  #safiya-root .s-bubble-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #f0abfc, #c084fc 60%, #7c3aed);
+  #safiya-root .sf-teaser-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(192, 132, 252, 0.35);
-    position: relative;
     overflow: hidden;
+    position: relative;
   }
-
-  #safiya-root .s-bubble-dp {
+  #safiya-root .sf-teaser-dp {
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
-    border-radius: 50%;
+    border-radius: 8px;
   }
-
-  #safiya-root .s-bubble-body {
-    flex: 1;
-    min-width: 0;
-  }
-
-  #safiya-root .s-bubble-name {
+  #safiya-root .sf-teaser-body { flex: 1; min-width: 0; }
+  #safiya-root .sf-teaser-name {
+    font-family: 'Inter', sans-serif;
     font-weight: 700;
-    font-size: 0.76rem;
+    font-size: 0.72rem;
     color: #e879f9 !important;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
+    letter-spacing: -0.005em;
   }
-
-  #safiya-root .s-bubble-text {
-    font-size: 0.86rem;
-    line-height: 1.4;
-    color: #f3e8ff !important;
-    font-weight: 500;
+  #safiya-root .sf-teaser-text {
+    font-size: 0.85rem;
+    line-height: 1.35;
+    color: #f0e8ff !important;
+    font-weight: 400;
+    letter-spacing: -0.005em;
   }
-
-  #safiya-root .s-bubble-x {
+  #safiya-root .sf-teaser-close {
     position: absolute;
     top: 6px;
     right: 8px;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255, 255, 255, 0.05);
     border: none;
-    color: rgba(243,232,255,0.55);
+    color: rgba(240, 232, 255, 0.5);
     cursor: pointer;
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
     padding: 0;
+    transition: all 0.15s;
   }
-
-  #safiya-root .s-bubble-x:hover {
+  #safiya-root .sf-teaser-close:hover {
     color: #ef4444;
     background: rgba(239, 68, 68, 0.15);
   }
 
   /* ═══════════════════════════════════════════════
-     AVATAR
+     👤 AVATAR (LIVE2D)
   ═══════════════════════════════════════════════ */
-  #safiya-root .s-avatar {
+  #safiya-root .sf-avatar {
     position: fixed;
-    bottom: 30px;
-    right: 430px;
+    bottom: 28px;
+    right: 434px;
     z-index: 9996;
     display: flex;
     flex-direction: column;
@@ -2266,32 +1361,27 @@
     cursor: pointer;
     opacity: 0;
     visibility: hidden;
-    transform: translateX(20px) scale(0.9);
-    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: translateX(16px) scale(0.9);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
-
-  #safiya-root .s-avatar-show {
+  #safiya-root .sf-avatar-show {
     opacity: 1;
     visibility: visible;
     transform: translateX(0) scale(1);
-    animation: sFloat 5s ease-in-out infinite;
+    animation: sfFloat 5s ease-in-out infinite;
   }
-
-  @keyframes sFloat {
+  @keyframes sfFloat {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
   }
-
-  #safiya-root .s-avatar-tap {
-    animation: sTap 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  #safiya-root .sf-avatar-tap {
+    animation: sfTap 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-
-  @keyframes sTap {
+  @keyframes sfTap {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
   }
-
-  #safiya-root .s-avatar-glow {
+  #safiya-root .sf-avatar-glow {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -2301,16 +1391,14 @@
     background: radial-gradient(circle, rgba(232,121,249,0.28) 0%, rgba(192,132,252,0.12) 40%, transparent 70%);
     filter: blur(25px);
     pointer-events: none;
-    animation: sGlow 3s ease-in-out infinite;
+    animation: sfGlow 3s ease-in-out infinite;
     z-index: -1;
   }
-
-  @keyframes sGlow {
-    0%,100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  @keyframes sfGlow {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
     50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.1); }
   }
-
-  #safiya-root .s-avatar-inner {
+  #safiya-root .sf-avatar-inner {
     position: relative;
     width: 240px;
     height: 340px;
@@ -2318,7 +1406,6 @@
     align-items: center;
     justify-content: center;
   }
-
   #safiya-root #s-avatar-canvas {
     position: absolute;
     inset: 0;
@@ -2327,8 +1414,7 @@
     display: none;
     z-index: 2;
   }
-
-  #safiya-root .s-avatar-fallback {
+  #safiya-root .sf-avatar-fallback {
     position: absolute;
     inset: 0;
     display: flex;
@@ -2338,23 +1424,20 @@
     gap: 18px;
     z-index: 1;
   }
-
-  #safiya-root .s-avatar-fb-orb {
+  #safiya-root .sf-avatar-fb-orb {
     position: relative;
     width: 160px;
     height: 160px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), rgba(232,121,249,0.55) 30%, rgba(192,132,252,0.85) 60%, rgba(125,74,208,0.95));
     box-shadow: 0 15px 50px rgba(192,132,252,0.5), inset -18px -18px 50px rgba(74,27,138,0.45);
-    animation: sBreathe 3s ease-in-out infinite;
+    animation: sfBreathe 3s ease-in-out infinite;
   }
-
-  @keyframes sBreathe {
-    0%,100% { transform: scale(1); }
+  @keyframes sfBreathe {
+    0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
   }
-
-  #safiya-root .s-avatar-fb-face {
+  #safiya-root .sf-avatar-fb-face {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -2362,26 +1445,22 @@
     width: 100px;
     height: 60px;
   }
-
-  #safiya-root .s-avatar-fb-eye {
+  #safiya-root .sf-avatar-fb-eye {
     position: absolute;
     top: 0;
     width: 12px;
     height: 18px;
     background: #1a0a2e;
     border-radius: 50%;
-    animation: sBlink 4s ease-in-out infinite;
+    animation: sfBlink 4s ease-in-out infinite;
   }
-
-  #safiya-root .s-avatar-fb-eye-l { left: 15px; }
-  #safiya-root .s-avatar-fb-eye-r { right: 15px; }
-
-  @keyframes sBlink {
+  #safiya-root .sf-avatar-fb-eye-l { left: 15px; }
+  #safiya-root .sf-avatar-fb-eye-r { right: 15px; }
+  @keyframes sfBlink {
     0%, 92%, 100% { transform: scaleY(1); }
     94% { transform: scaleY(0.1); }
   }
-
-  #safiya-root .s-avatar-fb-mouth {
+  #safiya-root .sf-avatar-fb-mouth {
     position: absolute;
     bottom: 5px;
     left: 50%;
@@ -2392,16 +1471,13 @@
     border-top: none;
     border-radius: 0 0 30px 30px;
   }
-
-  #safiya-root .s-avatar-fb-name {
+  #safiya-root .sf-avatar-fb-name {
     font-weight: 800;
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     color: #e879f9 !important;
     letter-spacing: 0.15em;
-    text-shadow: 0 2px 15px rgba(232,121,249,0.4);
   }
-
-  #safiya-root .s-avatar-loader {
+  #safiya-root .sf-avatar-loader {
     position: absolute;
     inset: 0;
     display: none;
@@ -2409,114 +1485,113 @@
     justify-content: center;
     z-index: 4;
   }
-
-  #safiya-root .s-avatar-spinner {
-    width: 36px;
-    height: 36px;
+  #safiya-root .sf-avatar-spinner {
+    width: 32px;
+    height: 32px;
     border: 3px solid rgba(192,132,252,0.2);
     border-top-color: #e879f9;
     border-radius: 50%;
-    animation: sSpin 0.8s linear infinite;
+    animation: sfSpinner 0.8s linear infinite;
   }
-
-  @keyframes sSpin {
+  @keyframes sfSpinner {
     to { transform: rotate(360deg); }
   }
-
-  #safiya-root .s-avatar-hint {
-    margin-top: 6px;
-    background: rgba(20,12,40,0.9);
-    border: 1px solid rgba(232,121,249,0.35);
-    color: #f3e8ff !important;
+  #safiya-root .sf-avatar-hint {
+    margin-top: 8px;
+    background: rgba(18, 10, 32, 0.92);
+    border: 1px solid rgba(232, 121, 249, 0.35);
+    color: #f0e8ff !important;
     padding: 5px 12px;
     border-radius: 999px;
     font-size: 0.68rem;
     font-weight: 600;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
     backdrop-filter: blur(10px);
-    animation: sHint 2s ease-in-out infinite;
+    animation: sfHint 2s ease-in-out infinite;
     pointer-events: none;
   }
-
-  @keyframes sHint {
-    0%,100% { transform: translateY(0); }
+  @keyframes sfHint {
+    0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-3px); }
   }
 
   /* ═══════════════════════════════════════════════
-     CHAT WINDOW
+     💬 CHAT WINDOW — INSTAGRAM DM TIER
   ═══════════════════════════════════════════════ */
-  #safiya-root .s-chat {
+  #safiya-root .sf-chat {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 18px;
+    right: 18px;
     z-index: 9998;
     width: 380px;
-    height: 600px;
-    max-height: calc(100vh - 40px);
+    height: 620px;
+    max-height: calc(100vh - 36px);
     display: flex;
     flex-direction: column;
-    background: rgba(18, 10, 36, 0.92) !important;
-    border: 1px solid rgba(192, 132, 252, 0.2);
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(192,132,252,0.15);
-    backdrop-filter: blur(30px) saturate(1.4);
-    -webkit-backdrop-filter: blur(30px) saturate(1.4);
+    background: linear-gradient(180deg, rgba(20, 12, 36, 0.96), rgba(14, 8, 26, 0.98)) !important;
+    border: 1px solid rgba(192, 132, 252, 0.16);
+    border-radius: 18px;
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.55),
+      0 0 40px rgba(192, 132, 252, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(28px) saturate(1.3);
+    -webkit-backdrop-filter: blur(28px) saturate(1.3);
     overflow: hidden;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(20px) scale(0.95);
+    transform: translateY(16px) scale(0.96);
     transform-origin: bottom right;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: all 0.32s cubic-bezier(0.4, 0, 0.2, 1);
   }
-
-  #safiya-root .s-chat-open {
+  #safiya-root .sf-chat-open {
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
   }
 
-  #safiya-root .s-chat-head {
+  /* ═══ HEADER ═══ */
+  #safiya-root .sf-chat-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     padding: 12px 14px;
-    background: rgba(30, 18, 55, 0.6) !important;
-    border-bottom: 1px solid rgba(192, 132, 252, 0.15);
+    background: rgba(28, 18, 48, 0.55) !important;
+    border-bottom: 1px solid rgba(192, 132, 252, 0.1);
     flex-shrink: 0;
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
   }
 
-  #safiya-root .s-chat-btn {
-    background: rgba(192,132,252,0.08) !important;
+  #safiya-root .sf-icon-btn {
+    background: transparent;
     border: none;
-    color: #c084fc !important;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
+    color: rgba(192, 132, 252, 0.85);
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.15s ease;
     -webkit-tap-highlight-color: transparent;
     padding: 0;
     flex-shrink: 0;
   }
-
-  #safiya-root .s-chat-btn:hover {
-    background: rgba(192,132,252,0.2) !important;
-    color: #e879f9 !important;
+  #safiya-root .sf-icon-btn:hover {
+    background: rgba(192, 132, 252, 0.14);
+    color: #e879f9;
+  }
+  #safiya-root .sf-icon-btn:active {
+    transform: scale(0.94);
+  }
+  #safiya-root .sf-icon-btn-danger:hover {
+    background: rgba(239, 68, 68, 0.16);
+    color: #f87171;
   }
 
-  #safiya-root .s-chat-btn-close:hover {
-    background: rgba(239,68,68,0.2) !important;
-    color: #ef4444 !important;
-  }
-
-  #safiya-root .s-chat-head-info {
+  #safiya-root .sf-chat-user {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -2524,214 +1599,205 @@
     min-width: 0;
   }
 
-  #safiya-root .s-chat-head-avatar {
+  #safiya-root .sf-chat-user-avatar {
     position: relative;
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff !important;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(192,132,252,0.4);
+    box-shadow: 0 2px 8px rgba(192, 132, 252, 0.35);
     font-weight: 800;
-    font-size: 1.05rem;
+    font-size: 1rem;
     overflow: hidden;
+    font-family: 'Inter', sans-serif;
   }
 
-  #safiya-root .s-chat-head-avatar-letter {
-    color: #fff !important;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-    font-family: 'Bricolage Grotesque', sans-serif;
-    position: relative;
-    z-index: 2;
-  }
-
-  #safiya-root .s-chat-head-dp {
+  #safiya-root .sf-chat-user-dp {
     position: absolute;
     inset: 0;
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
-    border-radius: 50%;
+    border-radius: 10px;
     z-index: 1;
   }
 
-  #safiya-root .s-chat-head-online {
+  #safiya-root .sf-chat-user-dot {
     position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 10px;
-    height: 10px;
+    bottom: -1px;
+    right: -1px;
+    width: 11px;
+    height: 11px;
     background: #22c55e;
-    border: 2px solid #1e1237;
+    border: 2.5px solid #14082a;
     border-radius: 50%;
     z-index: 3;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
   }
 
-  #safiya-root .s-chat-head-text {
-    flex: 1;
-    min-width: 0;
-  }
+  #safiya-root .sf-chat-user-info { flex: 1; min-width: 0; }
 
-  #safiya-root .s-chat-head-name {
+  #safiya-root .sf-chat-user-name {
+    font-family: 'Inter', sans-serif !important;
     font-weight: 700;
     font-size: 0.98rem;
-    color: #f3e8ff !important;
-    line-height: 1.2;
+    color: #f5ecff !important;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
   }
 
-  #safiya-root .s-chat-head-status {
+  #safiya-root .sf-chat-user-status {
     font-size: 0.7rem;
-    color: rgba(192,132,252,0.8) !important;
-    margin-top: 2px;
+    color: rgba(192, 132, 252, 0.75) !important;
+    margin-top: 3px;
     font-weight: 500;
+    letter-spacing: 0.01em;
   }
 
-  #safiya-root .s-chat-head-actions {
+  #safiya-root .sf-chat-actions {
     display: flex;
-    gap: 4px;
+    gap: 2px;
     flex-shrink: 0;
   }
 
-  #safiya-root .s-chat-body {
+  /* ═══ BODY ═══ */
+  #safiya-root .sf-chat-body {
     flex: 1;
     overflow-y: auto;
-    padding: 16px 14px;
+    padding: 14px 12px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    background: transparent !important;
+    gap: 3px;
+    background: transparent;
     scrollbar-width: thin;
-    scrollbar-color: rgba(192,132,252,0.3) transparent;
+    scrollbar-color: rgba(192, 132, 252, 0.25) transparent;
     scroll-behavior: smooth;
   }
-
-  #safiya-root .s-chat-body::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  #safiya-root .s-chat-body::-webkit-scrollbar-thumb {
-    background: rgba(192,132,252,0.4);
+  #safiya-root .sf-chat-body::-webkit-scrollbar { width: 4px; }
+  #safiya-root .sf-chat-body::-webkit-scrollbar-thumb {
+    background: rgba(192, 132, 252, 0.3);
     border-radius: 3px;
   }
+  #safiya-root .sf-chat-body::-webkit-scrollbar-track { background: transparent; }
 
-  #safiya-root .s-msg-time {
+  #safiya-root .sf-msg-time {
     text-align: center;
-    font-size: 0.62rem;
-    color: rgba(192,132,252,0.5) !important;
+    font-size: 0.6rem;
+    color: rgba(192, 132, 252, 0.45) !important;
     font-weight: 700;
     letter-spacing: 0.15em;
     margin: 14px 0 8px;
     text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
   }
 
-  #safiya-root .s-msg-row {
-    display: flex !important;
-    align-items: flex-end !important;
-    gap: 6px !important;
-    margin: 1px 0 !important;
-    animation: sMsgIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  #safiya-root .sf-msg-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    margin: 2px 0;
+    animation: sfMsgIn 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @keyframes sfMsgIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  @keyframes sMsgIn {
-    from {
-      opacity: 0;
-      transform: translateY(6px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+  #safiya-root .sf-msg-her { justify-content: flex-start; }
+  #safiya-root .sf-msg-me { justify-content: flex-end; }
 
-  #safiya-root .s-msg-her { justify-content: flex-start !important; }
-  #safiya-root .s-msg-me { justify-content: flex-end !important; }
-
-  #safiya-root .s-msg-avatar {
-    width: 26px !important;
-    height: 26px !important;
-    border-radius: 50% !important;
+  #safiya-root .sf-msg-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #f0abfc 0%, #c084fc 60%, #a855f7 100%);
-    background-size: cover !important;
-    background-position: center !important;
-    flex-shrink: 0 !important;
-    box-shadow: 0 2px 6px rgba(192,132,252,0.35) !important;
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+    box-shadow: 0 1px 4px rgba(192, 132, 252, 0.35);
   }
 
-  #safiya-root .s-msg-bubble {
-    max-width: 72% !important;
-    padding: 9px 14px !important;
-    border-radius: 20px !important;
-    font-size: 0.9rem !important;
-    line-height: 1.4 !important;
-    word-wrap: break-word !important;
-    font-family: 'DM Sans', -apple-system, sans-serif !important;
-    font-weight: 500 !important;
-    overflow-wrap: break-word !important;
-    letter-spacing: -0.005em !important;
+  #safiya-root .sf-msg-bubble {
+    max-width: 72%;
+    padding: 9px 13px;
+    border-radius: 18px;
+    font-size: 0.905rem;
+    line-height: 1.42;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-family: 'Inter', 'DM Sans', -apple-system, sans-serif !important;
+    font-weight: 450;
+    letter-spacing: -0.005em;
   }
 
-  #safiya-root .s-msg-her .s-msg-bubble {
-    background: rgba(139, 92, 246, 0.15) !important;
-    color: #f3e8ff !important;
-    border: 1px solid rgba(192, 132, 252, 0.35) !important;
-    border-bottom-left-radius: 6px !important;
-    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1) !important;
+  /* HER (Safiya) messages - purple gradient */
+  #safiya-root .sf-msg-her .sf-msg-bubble {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(168, 85, 247, 0.18)) !important;
+    color: #f5ecff !important;
+    border: 1px solid rgba(192, 132, 252, 0.28);
+    border-bottom-left-radius: 5px;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.08);
   }
 
-  #safiya-root .s-msg-me .s-msg-bubble {
-    background: rgba(34, 211, 238, 0.15) !important;
-    color: #ecfeff !important;
-    border: 1px solid rgba(125, 211, 252, 0.4) !important;
-    border-bottom-right-radius: 6px !important;
-    box-shadow: 0 2px 8px rgba(34, 211, 238, 0.12) !important;
+  /* ME (User) messages - cyan/purple gradient */
+  #safiya-root .sf-msg-me .sf-msg-bubble {
+    background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom-right-radius: 5px;
+    box-shadow: 0 3px 10px rgba(168, 85, 247, 0.28);
+    font-weight: 500;
   }
 
-  #safiya-root .s-msg-typing {
-    background: rgba(139, 92, 246, 0.15) !important;
-    border: 1px solid rgba(192, 132, 252, 0.35) !important;
-    padding: 11px 15px !important;
-    border-radius: 20px !important;
-    border-bottom-left-radius: 6px !important;
-    display: flex !important;
-    gap: 4px !important;
+  /* Grouping — consecutive messages tighter */
+  #safiya-root .sf-msg-row + .sf-msg-row.sf-msg-her .sf-msg-avatar {
+    visibility: hidden;
   }
 
-  #safiya-root .s-msg-typing span {
+  #safiya-root .sf-msg-typing {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(168, 85, 247, 0.18)) !important;
+    border: 1px solid rgba(192, 132, 252, 0.28);
+    padding: 11px 15px;
+    border-radius: 18px;
+    border-bottom-left-radius: 5px;
+    display: flex;
+    gap: 4px;
+  }
+  #safiya-root .sf-msg-typing span {
     width: 6px;
     height: 6px;
     background: linear-gradient(135deg, #c084fc, #e879f9);
     border-radius: 50%;
-    animation: sTBounce 1.3s ease-in-out infinite;
+    animation: sfTBounce 1.3s ease-in-out infinite;
   }
-
-  #safiya-root .s-msg-typing span:nth-child(2) { animation-delay: 0.15s; }
-  #safiya-root .s-msg-typing span:nth-child(3) { animation-delay: 0.3s; }
-
-  @keyframes sTBounce {
+  #safiya-root .sf-msg-typing span:nth-child(2) { animation-delay: 0.15s; }
+  #safiya-root .sf-msg-typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes sfTBounce {
     0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
     30% { transform: translateY(-5px); opacity: 1; }
   }
 
-  #safiya-root .s-chat-input-bar {
+  /* ═══ COMPOSER ═══ */
+  #safiya-root .sf-chat-composer {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 10px 12px;
-    background: rgba(30, 18, 55, 0.6) !important;
-    border-top: 1px solid rgba(192, 132, 252, 0.15);
+    padding: 10px 12px 12px;
+    background: rgba(28, 18, 48, 0.55) !important;
+    border-top: 1px solid rgba(192, 132, 252, 0.1);
     flex-shrink: 0;
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
   }
 
-  #safiya-root .s-input-icon {
-    background: none;
+  #safiya-root .sf-composer-btn {
+    background: transparent;
     border: none;
-    color: #c084fc !important;
+    color: rgba(192, 132, 252, 0.85);
     width: 32px;
     height: 32px;
     display: flex;
@@ -2740,64 +1806,67 @@
     cursor: pointer;
     border-radius: 50%;
     padding: 0;
-    -webkit-tap-highlight-color: transparent;
     flex-shrink: 0;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #safiya-root .sf-composer-btn:hover {
+    background: rgba(192, 132, 252, 0.14);
+    color: #e879f9;
   }
 
-  #safiya-root .s-input-icon:hover {
-    background: rgba(192,132,252,0.12);
-  }
-
-  #safiya-root .s-input-wrap {
+  #safiya-root .sf-composer-input {
     flex: 1;
     display: flex;
     align-items: center;
-    background: rgba(45, 27, 78, 0.4) !important;
-    border: 1px solid rgba(192, 132, 252, 0.2);
-    border-radius: 22px;
+    background: rgba(45, 27, 78, 0.4);
+    border: 1px solid rgba(192, 132, 252, 0.18);
+    border-radius: 20px;
     padding: 0 6px 0 14px;
     min-width: 0;
-    transition: all 0.2s;
+    transition: border-color 0.2s, background 0.2s;
   }
-
-  #safiya-root .s-input-wrap:focus-within {
-    border-color: rgba(232,121,249,0.5);
-    background: rgba(45,27,78,0.6) !important;
+  #safiya-root .sf-composer-input:focus-within {
+    border-color: rgba(232, 121, 249, 0.5);
+    background: rgba(45, 27, 78, 0.55);
   }
 
   #safiya-root #s-input {
     flex: 1;
-    background: none !important;
+    background: transparent !important;
     border: none !important;
-    color: #f3e8ff !important;
-    font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.9rem;
+    color: #f5ecff !important;
+    font-family: 'Inter', 'DM Sans', sans-serif !important;
+    font-size: 0.905rem;
     padding: 9px 0;
     outline: none;
     min-width: 0;
-    font-weight: 500;
+    font-weight: 450;
+    letter-spacing: -0.005em;
   }
-
   #safiya-root #s-input::placeholder {
-    color: rgba(192,132,252,0.5) !important;
+    color: rgba(192, 132, 252, 0.45) !important;
+    font-weight: 400;
   }
 
-  #safiya-root .s-input-emoji {
+  #safiya-root .sf-composer-emoji {
     background: none;
     border: none;
-    color: #c084fc !important;
+    color: rgba(192, 132, 252, 0.75);
     padding: 5px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    -webkit-tap-highlight-color: transparent;
     border-radius: 50%;
+    transition: color 0.15s;
+    -webkit-tap-highlight-color: transparent;
   }
+  #safiya-root .sf-composer-emoji:hover { color: #e879f9; }
 
-  #safiya-root .s-send {
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc) !important;
+  #safiya-root .sf-composer-send {
+    background: linear-gradient(135deg, #a855f7, #e879f9, #7dd3fc) !important;
     border: none;
     color: #fff !important;
     width: 36px;
@@ -2808,159 +1877,153 @@
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: all 0.3s;
-    box-shadow: 0 3px 12px rgba(192,132,252,0.4);
+    transition: all 0.2s;
+    box-shadow: 0 3px 12px rgba(192, 132, 252, 0.42);
     -webkit-tap-highlight-color: transparent;
     padding: 0;
   }
-
-  #safiya-root .s-send:hover {
-    transform: scale(1.08);
-  }
+  #safiya-root .sf-composer-send:hover { transform: scale(1.06); }
+  #safiya-root .sf-composer-send:active { transform: scale(0.96); }
 
   /* ═══════════════════════════════════════════════
-     MINI
+     📱 MINIMIZED PILL
   ═══════════════════════════════════════════════ */
-  #safiya-root .s-mini {
+  #safiya-root .sf-mini {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 18px;
+    right: 18px;
     z-index: 9998;
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 7px 14px 7px 7px;
-    background: rgba(20, 12, 40, 0.94) !important;
-    border: 1px solid rgba(232, 121, 249, 0.35);
-    border-radius: 100px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    padding: 5px 12px 5px 5px;
+    background: rgba(18, 10, 32, 0.96) !important;
+    border: 1px solid rgba(232, 121, 249, 0.32);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(20px);
     cursor: pointer;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(20px);
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: translateY(16px);
+    transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   }
-
-  #safiya-root .s-mini-show {
+  #safiya-root .sf-mini-show {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
   }
-
-  #safiya-root .s-mini-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
+  #safiya-root .sf-mini-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff !important;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(192,132,252,0.4);
+    box-shadow: 0 2px 6px rgba(192, 132, 252, 0.35);
     font-weight: 800;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     overflow: hidden;
     position: relative;
+    font-family: 'Inter', sans-serif;
   }
-
-  #safiya-root .s-mini-dp {
+  #safiya-root .sf-mini-dp {
     position: absolute;
     inset: 0;
     width: 100% !important;
     height: 100% !important;
     object-fit: cover !important;
-    border-radius: 50%;
+    border-radius: 8px;
   }
-
-  #safiya-root .s-mini-name {
+  #safiya-root .sf-mini-name {
+    font-family: 'Inter', sans-serif;
     font-weight: 700;
-    color: #f3e8ff !important;
-    font-size: 0.86rem;
+    color: #f5ecff !important;
+    font-size: 0.83rem;
+    letter-spacing: -0.01em;
   }
-
-  #safiya-root .s-mini-new {
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
+  #safiya-root .sf-mini-badge {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
     background: linear-gradient(135deg, #ef4444, #f97316);
     color: #fff !important;
     border-radius: 999px;
     display: none;
     align-items: center;
     justify-content: center;
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     font-weight: 800;
   }
-
-  #safiya-root .s-mini-x {
-    background: rgba(255,255,255,0.05);
+  #safiya-root .sf-mini-close {
+    background: rgba(255, 255, 255, 0.05);
     border: none;
-    color: rgba(243,232,255,0.6) !important;
-    width: 22px;
-    height: 22px;
+    color: rgba(240, 232, 255, 0.55);
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
     padding: 0;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #safiya-root .sf-mini-close:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.14);
   }
 
+  /* ═══════════════════════════════════════════════
+     📱 RESPONSIVE
+  ═══════════════════════════════════════════════ */
   @media (max-width: 1024px) {
-    #safiya-root .s-chat { width: 360px; }
-    #safiya-root .s-avatar { right: 390px; }
+    #safiya-root .sf-chat { width: 360px; }
+    #safiya-root .sf-avatar { right: 390px; }
   }
 
   @media (max-width: 720px) {
-    #safiya-root .s-head {
-      right: 14px;
-      bottom: 14px;
-      min-width: 148px;
-      height: 52px;
+    #safiya-root .sf-launcher {
+      right: 12px;
+      bottom: 12px;
+      height: 40px;
+      min-width: 118px;
     }
-
-    #safiya-root .s-head-inner {
-      height: 50px;
-      padding: 0 12px 0 7px;
-      gap: 9px;
+    #safiya-root .sf-launcher-inner {
+      padding: 3px 12px 3px 3px;
+      gap: 7px;
     }
-
-    #safiya-root .s-head-avatarbox {
-      width: 36px;
-      height: 36px;
-      min-width: 36px;
+    #safiya-root .sf-launcher-avatar {
+      width: 34px;
+      height: 34px;
+      min-width: 34px;
+      border-radius: 9px;
     }
+    #safiya-root .sf-launcher-name { font-size: 0.78rem; }
+    #safiya-root .sf-launcher-status { font-size: 0.6rem; }
 
-    #safiya-root .s-head-title {
-      font-size: 0.82rem;
-    }
-
-    #safiya-root .s-head-sub {
-      font-size: 0.64rem;
-      margin-top: 3px;
-    }
-
-    #safiya-root .s-bubble {
-      bottom: 74px;
+    #safiya-root .sf-teaser {
+      bottom: 64px;
       right: 10px;
       left: 10px;
       width: auto;
     }
 
-    #safiya-root .s-chat {
-      bottom: 12px !important;
-      right: 12px !important;
-      left: auto !important;
-      width: 82vw !important;
-      max-width: 380px !important;
-      height: 82vh !important;
-      max-height: 82vh !important;
+    #safiya-root .sf-chat {
+      bottom: 10px !important;
+      right: 10px !important;
+      left: 10px !important;
+      width: auto !important;
+      max-width: none !important;
+      height: 85vh !important;
+      max-height: 85vh !important;
     }
 
-    #safiya-root .s-avatar {
+    #safiya-root .sf-avatar {
       display: flex !important;
       position: fixed !important;
       bottom: auto !important;
@@ -2969,50 +2032,36 @@
       right: auto !important;
       z-index: 10000 !important;
     }
-
-    #safiya-root .s-avatar-inner { width: 120px !important; height: 170px !important; }
-    #safiya-root .s-avatar-glow { width: 160px !important; height: 160px !important; }
-    #safiya-root .s-avatar-fb-orb { width: 90px !important; height: 90px !important; }
-    #safiya-root .s-avatar-fb-name { font-size: 0.85rem !important; }
-
-    #safiya-root .s-avatar-fb-face {
+    #safiya-root .sf-avatar-inner { width: 120px !important; height: 170px !important; }
+    #safiya-root .sf-avatar-glow { width: 160px !important; height: 160px !important; }
+    #safiya-root .sf-avatar-fb-orb { width: 90px !important; height: 90px !important; }
+    #safiya-root .sf-avatar-fb-name { font-size: 0.85rem !important; }
+    #safiya-root .sf-avatar-fb-face {
       width: 60px !important;
       height: 40px !important;
       transform: translate(-50%, -40%) scale(0.6) !important;
     }
-
-    #safiya-root .s-avatar-hint {
+    #safiya-root .sf-avatar-hint {
       font-size: 0.6rem !important;
       padding: 3px 8px !important;
     }
 
-    #safiya-root #s-input {
-      font-size: 0.95rem;
-      padding: 11px 0;
-    }
+    #safiya-root #s-input { font-size: 0.95rem; padding: 11px 0; }
+    #safiya-root .sf-composer-send { width: 38px; height: 38px; }
 
-    #safiya-root .s-send {
-      width: 38px;
-      height: 38px;
-    }
-
-    #safiya-root .s-mini {
-      bottom: 12px;
-      right: 12px;
-      left: 12px;
-      justify-content: flex-start;
+    #safiya-root .sf-mini {
+      bottom: 10px;
+      right: 10px;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    #safiya-root .s-head-ring,
-    #safiya-root .s-head-inner,
-    #safiya-root .s-head-notify,
-    #safiya-root .s-avatar-glow,
-    #safiya-root .s-avatar-show,
-    #safiya-root .s-avatar-fb-orb,
-    #safiya-root .s-avatar-fb-eye,
-    #safiya-root .s-avatar-hint {
+    #safiya-root .sf-launcher-glow,
+    #safiya-root .sf-avatar-glow,
+    #safiya-root .sf-avatar-show,
+    #safiya-root .sf-avatar-fb-orb,
+    #safiya-root .sf-avatar-fb-eye,
+    #safiya-root .sf-avatar-hint {
       animation: none !important;
     }
   }
