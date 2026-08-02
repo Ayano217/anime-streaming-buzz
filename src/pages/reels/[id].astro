@@ -6,415 +6,350 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 const { id } = Astro.params;
 ---
 
-<BaseLayout title="Watch" description="Watch premium videos">
-  <div class="tk-page" id="tkPage">
+<BaseLayout title="Watch" description="Premium video experience">
+  <div class="reels-page">
     
-    <!-- Minimal Top Bar -->
-    <div class="tk-topbar">
-      <a href="/" class="tk-back" aria-label="Back">
+    <!-- Minimal top bar -->
+    <div class="reels-top">
+      <button class="reels-back" id="reelsBack" aria-label="Back">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      </a>
-      <div class="tk-logo">
+      </button>
+      <div class="reels-brand">
         <span class="grad-text">Ani</span><span style="color:#fff">Tube</span><span class="grad-text">Buzz</span>
       </div>
-      <button class="tk-menu-btn" id="tkMenuBtn" aria-label="Menu">
+      <button class="reels-menu" id="reelsMenu" aria-label="Menu">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-      </button>
-      
-      <!-- 3-dot dropdown menu -->
-      <div class="tk-menu-dropdown" id="tkMenuDropdown">
-        <button class="tk-menu-item" id="tkSaveBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-          <span>Save Video</span>
-        </button>
-        <button class="tk-menu-item" id="tkCopyBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          <span>Copy Link</span>
-        </button>
-      </div>
-    </div>
-    
-    <!-- Main Content -->
-    <div class="tk-main">
-      
-      <!-- Loading -->
-      <div id="tkLoader" class="tk-loader">
-        <div class="tk-spinner"></div>
-        <p>Loading...</p>
-      </div>
-      
-      <!-- Video Stack -->
-      <div id="tkStack" class="tk-stack" style="display:none;">
-        
-        <!-- Current Video Slot -->
-        <div class="tk-slot" id="tkSlot">
-          
-          <!-- Video Player -->
-          <div class="tk-video" id="tkVideo">
-            <div class="tk-video-loading">
-              <div class="tk-spinner"></div>
-            </div>
-          </div>
-          
-          <!-- Minimal Bottom Info (auto-hide on inactivity) -->
-          <div class="tk-info" id="tkInfo">
-            <div class="tk-user">
-              <div class="tk-avatar">
-                <div class="tk-avatar-inner">▶</div>
-              </div>
-              <div class="tk-user-text">
-                <div class="tk-channel" id="tkChannel">Loading...</div>
-                <button class="tk-follow">Follow</button>
-              </div>
-            </div>
-            <div class="tk-caption" id="tkCaption">Loading...</div>
-          </div>
-          
-          <!-- Bottom center: Down arrow for next video -->
-          <button class="tk-next-btn" id="tkNextBtn" aria-label="Next video">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M7 13l5 5 5-5M7 6l5 5 5-5"/></svg>
+        <div class="reels-menu-drop" id="reelsMenuDrop">
+          <button class="reels-menu-item" data-action="save">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            <span>Save</span>
+          </button>
+          <button class="reels-menu-item" data-action="copy">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <span>Copy Link</span>
           </button>
         </div>
-      </div>
-      
-      <!-- SAFIYA COMMENT BUBBLE (appears during video) -->
-      <div class="tk-safiya" id="tkSafiya" style="display:none;">
-        <div class="tk-safiya-avatar">
-          <img src="/live2d/safiya/avatar.png" alt="Safiya" onerror="this.style.display='none';this.parentElement.innerHTML='💜';" />
-        </div>
-        <div class="tk-safiya-bubble" id="tkSafiyaBubble">
-          <div class="tk-safiya-name">Safiya</div>
-          <div class="tk-safiya-msg" id="tkSafiyaMsg">Watching with you 👀</div>
-        </div>
-      </div>
-      
-      <!-- RELATED VIDEOS (TikTok "For You" style) -->
-      <div class="tk-related-section" id="tkRelated" style="display:none;">
-        <div class="tk-related-header">
-          <div class="tk-related-title">✨ For You</div>
-          <div class="tk-related-hint">Scroll to explore</div>
-        </div>
-        <div class="tk-related-grid" id="tkRelatedGrid"></div>
-      </div>
-      
+      </button>
     </div>
+    
+    <!-- Loading -->
+    <div id="reelsLoader" class="reels-loader">
+      <div class="reels-spinner"></div>
+      <p>Loading premium experience...</p>
+    </div>
+    
+    <!-- ═══ VERTICAL SCROLL CONTAINER (TikTok exact) ═══ -->
+    <div id="reelsScroller" class="reels-scroller" style="display:none;">
+      <!-- Slots get injected dynamically -->
+    </div>
+    
+    <!-- Progress indicator -->
+    <div class="reels-progress" id="reelsProgress" style="display:none;">
+      <div class="reels-progress-dot"></div>
+      <div class="reels-progress-dot"></div>
+      <div class="reels-progress-dot"></div>
+    </div>
+    
+    <!-- Toast for save/copy actions -->
+    <div id="reelsToast" class="reels-toast"></div>
+    
   </div>
 </BaseLayout>
 
 <script is:inline define:vars={{ id }}>
 (async function() {
-  var loader = document.getElementById('tkLoader');
-  var stack = document.getElementById('tkStack');
-  var video = document.getElementById('tkVideo');
-  var channelEl = document.getElementById('tkChannel');
-  var captionEl = document.getElementById('tkCaption');
-  var nextBtn = document.getElementById('tkNextBtn');
-  var menuBtn = document.getElementById('tkMenuBtn');
-  var menuDropdown = document.getElementById('tkMenuDropdown');
-  var saveBtn = document.getElementById('tkSaveBtn');
-  var copyBtn = document.getElementById('tkCopyBtn');
-  var infoEl = document.getElementById('tkInfo');
-  var relatedSection = document.getElementById('tkRelated');
-  var relatedGrid = document.getElementById('tkRelatedGrid');
-  var safiyaEl = document.getElementById('tkSafiya');
-  var safiyaMsg = document.getElementById('tkSafiyaMsg');
-  var safiyaBubble = document.getElementById('tkSafiyaBubble');
+  var loader = document.getElementById('reelsLoader');
+  var scroller = document.getElementById('reelsScroller');
+  var progress = document.getElementById('reelsProgress');
+  var back = document.getElementById('reelsBack');
+  var menu = document.getElementById('reelsMenu');
+  var menuDrop = document.getElementById('reelsMenuDrop');
+  var toast = document.getElementById('reelsToast');
   
   var allVideos = [];
   var currentIdx = 0;
-  var safiyaTimeout = null;
-  var infoHideTimeout = null;
+  var isTransitioning = false;
   
   function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})}
   function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n).trim()+'…':s;}
   
-  // ═══ SAFIYA AI — Watches videos with user ═══
-  var SAFIYA_REACTIONS = {
-    anime: [
-      "Ooooh this is fire 🔥",
-      "You have good taste btw 👀",
-      "Wait this is actually so good",
-      "Bestie you're going to love this ✨",
-      "The animation tho 😍",
-      "Not me watching this too 💜",
-      "This gives me such main character energy",
-      "Okay but the vibes tho",
-    ],
-    kdrama: [
-      "K-drama time?? Say less 💖",
-      "The chemistry is INSANE 🥺",
-      "I'm crying and I haven't even watched it yet",
-      "Second lead syndrome incoming 😭",
-      "This is going to hurt so good 💔",
-      "Get the tissues bestie",
-    ],
-    donghua: [
-      "Chinese animation slaps different fr",
-      "The art style is unreal 🎨",
-      "Cultivation anime hits different",
-      "Wait this looks EXPENSIVE",
-      "Donghua tier list moment",
-    ],
-    movies: [
-      "Movie night?? I'm in 🍿",
-      "This is going to be so cinematic",
-      "Bestie you have great taste in movies",
-      "I'm here for the plot twist",
-      "Waiting for that ONE scene 👀",
-    ],
-    generic: [
-      "Watching with you 👀",
-      "You have such good taste",
-      "This is giving main character energy ✨",
-      "Not me being obsessed",
-      "Okay but the vibes tho 💜",
-      "I'm invested now",
-      "This is a cinematic experience",
-      "Bestie... you're onto something",
-    ],
-  };
+  // Back
+  back.addEventListener('click', function() {
+    if (window.history.length > 1) window.history.back();
+    else window.location.href = '/';
+  });
   
-  function getSafiyaReaction(video) {
-    var reactions = SAFIYA_REACTIONS[video.type] || SAFIYA_REACTIONS.generic;
-    return reactions[Math.floor(Math.random() * reactions.length)];
+  // Menu toggle
+  menu.addEventListener('click', function(e) {
+    e.stopPropagation();
+    menuDrop.classList.toggle('open');
+  });
+  document.addEventListener('click', function(e) {
+    if (!menu.contains(e.target)) menuDrop.classList.remove('open');
+  });
+  
+  // Menu actions
+  menuDrop.addEventListener('click', function(e) {
+    var btn = e.target.closest('.reels-menu-item');
+    if (!btn) return;
+    var action = btn.dataset.action;
+    var v = allVideos[currentIdx];
+    if (!v) return;
+    
+    if (action === 'save') {
+      var saved = JSON.parse(localStorage.getItem('savedVideos') || '[]');
+      var exists = saved.findIndex(function(x) { return x.id === v.id; });
+      if (exists >= 0) {
+        saved.splice(exists, 1);
+        showToast('❌ Removed from saved');
+      } else {
+        saved.push({ id: v.id, title: v.title, thumbnail: v.thumbnail, savedAt: Date.now() });
+        showToast('✓ Saved to your library');
+        notifySafiya('save', v);
+      }
+      localStorage.setItem('savedVideos', JSON.stringify(saved));
+    } else if (action === 'copy') {
+      navigator.clipboard.writeText(window.location.href);
+      showToast('✓ Link copied');
+    }
+    menuDrop.classList.remove('open');
+  });
+  
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(function() { toast.classList.remove('show'); }, 2500);
   }
   
-  function showSafiya(video) {
-    if (safiyaTimeout) clearTimeout(safiyaTimeout);
-    
-    var msg = getSafiyaReaction(video);
-    safiyaMsg.textContent = msg;
-    safiyaEl.style.display = 'flex';
-    
-    // Track in Safiya's memory (integrate with main Safiya)
+  // ═══ SAFIYA INTEGRATION ═══
+  // Trigger main Safiya (right-side) to comment on video
+  function notifySafiya(type, video) {
     try {
+      // Track in Safiya's memory
       var memory = JSON.parse(localStorage.getItem('safiya_memory') || '{}');
       if (!memory.watchHistory) memory.watchHistory = [];
       memory.watchHistory.unshift({
         title: video.title,
         type: video.type,
-        watchedAt: Date.now(),
         source: video.source,
+        watchedAt: Date.now(),
+        action: type,
       });
-      memory.watchHistory = memory.watchHistory.slice(0, 30);
-      memory.lastVideoWatched = video.title;
-      memory.lastVideoType = video.type;
+      memory.watchHistory = memory.watchHistory.slice(0, 50);
+      memory.lastVideo = { title: video.title, type: video.type, timestamp: Date.now() };
+      memory.currentlyWatching = video.title;
       localStorage.setItem('safiya_memory', JSON.stringify(memory));
-    } catch(e) {}
-    
-    // Auto-hide after 5s
-    safiyaTimeout = setTimeout(function() {
-      safiyaBubble.style.opacity = '0';
-      setTimeout(function() {
-        safiyaEl.style.display = 'none';
-        safiyaBubble.style.opacity = '';
-      }, 400);
-    }, 5000);
+      
+      // Dispatch custom event that SafiyaCore listens to
+      var event = new CustomEvent('safiya:video-event', {
+        detail: {
+          action: type,
+          video: video,
+          currentTitle: video.title,
+          currentType: video.type,
+        }
+      });
+      window.dispatchEvent(event);
+      
+      // Also try calling Safiya's public API if available
+      if (window.Safiya && typeof window.Safiya.reactToVideo === 'function') {
+        window.Safiya.reactToVideo(video, type);
+      } else if (window.Safiya && typeof window.Safiya.say === 'function') {
+        var reactions = {
+          watch: {
+            movies: ["Movie night with you? Say less 🍿", "Bestie you have good taste", "The vibes are immaculate"],
+            kdrama: ["K-drama time??? I'm SO here for this 💖", "The chemistry better be crazy", "Second lead syndrome incoming"],
+            donghua: ["Ohh donghua? These slap different fr", "The art style is unreal", "Cultivation anime hits"],
+            anime: ["Not you having elite taste 👀", "Bestie I'm invested", "The animation tho"],
+          },
+          save: ["Saving for later? Smart move 💜", "Adding to your collection 📚", "Nice pick bestie"],
+        };
+        var msgList = type === 'save' ? reactions.save : (reactions.watch[video.type] || reactions.watch.anime);
+        var msg = msgList[Math.floor(Math.random() * msgList.length)];
+        setTimeout(function() { window.Safiya.say(msg); }, 500);
+      }
+    } catch(e) {
+      console.warn('Safiya notify failed:', e);
+    }
   }
   
-  // ═══ Load video ═══
-  function loadVideoAt(idx) {
-    if (!allVideos[idx]) return;
-    currentIdx = idx;
-    var v = allVideos[idx];
+  // ═══ BUILD REEL SLOT ═══
+  function buildSlot(video, idx) {
+    var slot = document.createElement('div');
+    slot.className = 'reels-slot';
+    slot.dataset.idx = idx;
+    slot.dataset.vid = video.id;
+    
+    var thumb = video.thumbnail ? '<img src="' + esc(video.thumbnail) + '" alt="" class="reels-slot-poster" loading="lazy" />' : '';
+    
+    slot.innerHTML = 
+      // Poster (shown before video loads)
+      thumb +
+      // Video container (populated when active)
+      '<div class="reels-slot-video" data-idx="' + idx + '"></div>' +
+      // Gradient overlay
+      '<div class="reels-slot-gradient"></div>' +
+      // Bottom info
+      '<div class="reels-slot-info">' +
+        '<div class="reels-slot-user">' +
+          '<div class="reels-slot-avatar"><div class="reels-slot-avatar-inner">▶</div></div>' +
+          '<div class="reels-slot-user-name">' + esc(video.channel || 'Channel') + '</div>' +
+          '<button class="reels-slot-follow">Follow</button>' +
+        '</div>' +
+        '<div class="reels-slot-caption">' + esc(video.title || 'Video') + '</div>' +
+      '</div>';
+    
+    return slot;
+  }
+  
+  // ═══ LOAD VIDEO INTO SLOT ═══
+  function loadVideoInSlot(idx) {
+    var slot = scroller.querySelector('[data-idx="' + idx + '"]');
+    if (!slot) return;
+    var videoDiv = slot.querySelector('.reels-slot-video');
+    if (videoDiv.dataset.loaded === '1') return;
+    videoDiv.dataset.loaded = '1';
+    
+    var video = allVideos[idx];
+    if (!video) return;
+    
+    var embedUrl = video.embedUrl;
+    if (video.source === 'dailymotion') {
+      embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'autoplay=1&mute=1&ui-logo=0&ui-start-screen-info=0&sharing-enable=0&queue-enable=0';
+    }
+    if (video.source === 'youtube') {
+      embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'autoplay=1&mute=1&modestbranding=1&rel=0&showinfo=0';
+    }
+    
+    var iframe = document.createElement('iframe');
+    iframe.src = embedUrl;
+    iframe.setAttribute('frameborder', '0');
+    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen');
+    iframe.setAttribute('allowfullscreen', '');
+    videoDiv.appendChild(iframe);
+    
+    // Hide poster after brief delay
+    setTimeout(function() {
+      var poster = slot.querySelector('.reels-slot-poster');
+      if (poster) poster.style.opacity = '0';
+    }, 800);
+  }
+  
+  // ═══ UNLOAD VIDEO (save memory) ═══
+  function unloadVideoInSlot(idx) {
+    var slot = scroller.querySelector('[data-idx="' + idx + '"]');
+    if (!slot) return;
+    var videoDiv = slot.querySelector('.reels-slot-video');
+    if (videoDiv.dataset.loaded !== '1') return;
+    videoDiv.dataset.loaded = '0';
+    videoDiv.innerHTML = '';
+    var poster = slot.querySelector('.reels-slot-poster');
+    if (poster) poster.style.opacity = '1';
+  }
+  
+  // ═══ UPDATE CURRENT VIDEO ═══
+  function setCurrentIdx(newIdx) {
+    if (newIdx < 0 || newIdx >= allVideos.length) return;
+    if (newIdx === currentIdx) return;
+    
+    var oldIdx = currentIdx;
+    currentIdx = newIdx;
     
     // Update URL
     try {
-      window.history.replaceState({}, '', '/reels/' + encodeURIComponent(v.id));
+      var v = allVideos[newIdx];
+      if (v) {
+        window.history.replaceState({}, '', '/reels/' + encodeURIComponent(v.id));
+        document.title = (v.title || 'Reel') + ' - AniTube Buzz';
+      }
     } catch(e) {}
     
-    document.title = (v.title || 'Reel') + ' - AniTube Buzz';
+    // Unload far videos, load nearby (window of 3: prev, current, next)
+    allVideos.forEach(function(_, i) {
+      if (Math.abs(i - newIdx) <= 1) {
+        loadVideoInSlot(i);
+      } else if (Math.abs(i - oldIdx) <= 1 && Math.abs(i - newIdx) > 1) {
+        unloadVideoInSlot(i);
+      }
+    });
     
-    // Loading state
-    video.innerHTML = '<div class="tk-video-loading"><div class="tk-spinner"></div></div>';
-    
-    // Update info
-    channelEl.textContent = v.channel || 'Channel';
-    captionEl.textContent = v.title || 'Video';
-    
-    // Build embed URL with cleaner params
-    var embedUrl = v.embedUrl;
-    if (v.source === 'dailymotion') {
-      embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'ui-logo=0&ui-start-screen-info=0&sharing-enable=0&autoplay=1&mute=1&queue-enable=0';
-    }
-    if (v.source === 'youtube') {
-      embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'modestbranding=1&showinfo=0&rel=0&autoplay=1&mute=1&controls=1';
+    // Notify Safiya
+    var video = allVideos[newIdx];
+    if (video) {
+      setTimeout(function() { notifySafiya('watch', video); }, 2500);
     }
     
-    setTimeout(function() {
-      video.innerHTML = '';
-      var iframe = document.createElement('iframe');
-      iframe.src = embedUrl;
-      iframe.setAttribute('frameborder', '0');
-      iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen');
-      iframe.setAttribute('allowfullscreen', '');
-      iframe.style.cssText = 'width:100%;height:100%;border:0;position:absolute;top:0;left:0;';
-      video.appendChild(iframe);
-    }, 150);
-    
-    // Show Safiya reaction (delayed to feel natural)
-    setTimeout(function() { showSafiya(v); }, 3000);
-    
-    // Update related videos
-    renderRelated();
-    
-    // Reset info visibility
-    showInfoTemporarily();
+    // Update progress
+    updateProgress();
   }
   
-  function nextVideo() {
-    if (currentIdx < allVideos.length - 1) {
-      loadVideoAt(currentIdx + 1);
-      // Scroll to top for fresh feel
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (allVideos.length > 0) {
-      // Loop back to start
-      loadVideoAt(0);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+  function updateProgress() {
+    if (!progress) return;
+    var dots = progress.querySelectorAll('.reels-progress-dot');
+    dots.forEach(function(d, i) {
+      d.classList.remove('active');
+      if (i === 1) d.classList.add('active'); // Middle dot always active (current)
+    });
   }
   
-  function prevVideo() {
-    if (currentIdx > 0) {
-      loadVideoAt(currentIdx - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }
-  
-  // Auto-hide info bar (like TikTok — clean viewing)
-  function showInfoTemporarily() {
-    if (!infoEl) return;
-    infoEl.classList.remove('tk-info-hidden');
-    if (infoHideTimeout) clearTimeout(infoHideTimeout);
-    infoHideTimeout = setTimeout(function() {
-      infoEl.classList.add('tk-info-hidden');
-    }, 4000);
-  }
-  
-  // Show info on hover/tap
-  document.querySelector('.tk-slot').addEventListener('mousemove', showInfoTemporarily);
-  document.querySelector('.tk-slot').addEventListener('touchstart', showInfoTemporarily);
-  
-  function renderRelated() {
-    if (allVideos.length < 2) {
-      relatedSection.style.display = 'none';
-      return;
-    }
+  // ═══ SCROLL DETECTION (Intersection Observer for smooth) ═══
+  var slotObserver = null;
+  function setupObserver() {
+    if (slotObserver) slotObserver.disconnect();
     
-    var related = allVideos.filter(function(v, i) { return i !== currentIdx; }).slice(0, 12);
-    
-    relatedGrid.innerHTML = related.map(function(v, i) {
-      var img = v.thumbnail ? '<img src="' + esc(v.thumbnail) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />' : '';
-      var typeLabel = { movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA', donghua: '🐼 DONGHUA', anime: '🎌 ANIME' }[v.type] || '';
-      
-      return '<div class="tk-rel-card" data-vid="' + esc(v.id) + '">' +
-        '<div class="tk-rel-thumb">' + img +
-          '<div class="tk-rel-play">▶</div>' +
-          (typeLabel ? '<div class="tk-rel-type">' + typeLabel + '</div>' : '') +
-        '</div>' +
-        '<div class="tk-rel-info">' +
-          '<div class="tk-rel-title">' + esc(trunc(v.title, 45)) + '</div>' +
-          '<div class="tk-rel-channel">' + esc(v.channel || 'Channel') + '</div>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-    
-    relatedSection.style.display = 'block';
-    
-    // Attach click handlers
-    relatedGrid.querySelectorAll('.tk-rel-card').forEach(function(card) {
-      card.addEventListener('click', function() {
-        var vidId = card.dataset.vid;
-        var idx = allVideos.findIndex(function(v) { return v.id === vidId; });
-        if (idx >= 0) {
-          loadVideoAt(idx);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+    slotObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.intersectionRatio >= 0.7) {
+          var idx = parseInt(entry.target.dataset.idx);
+          if (!isNaN(idx) && idx !== currentIdx) {
+            setCurrentIdx(idx);
+          }
         }
       });
+    }, { 
+      root: scroller,
+      threshold: [0.5, 0.7, 0.9]
+    });
+    
+    scroller.querySelectorAll('.reels-slot').forEach(function(slot) {
+      slotObserver.observe(slot);
     });
   }
   
-  // ═══ 3-Dot Menu ═══
-  menuBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    menuDropdown.classList.toggle('open');
-  });
-  
-  document.addEventListener('click', function(e) {
-    if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
-      menuDropdown.classList.remove('open');
-    }
-  });
-  
-  saveBtn.addEventListener('click', function() {
-    var v = allVideos[currentIdx];
-    if (!v) return;
-    var saved = JSON.parse(localStorage.getItem('savedVideos') || '[]');
-    var exists = saved.findIndex(function(x) { return x.id === v.id; });
-    if (exists >= 0) {
-      saved.splice(exists, 1);
-      saveBtn.querySelector('span').textContent = 'Save Video';
-    } else {
-      saved.push({ id: v.id, title: v.title, thumbnail: v.thumbnail, savedAt: Date.now() });
-      saveBtn.querySelector('span').textContent = '✓ Saved';
-      // Safiya reaction to save
-      setTimeout(function() {
-        safiyaMsg.textContent = "Ooh saving this for later? Good choice 💜";
-        safiyaEl.style.display = 'flex';
-        if (safiyaTimeout) clearTimeout(safiyaTimeout);
-        safiyaTimeout = setTimeout(function() { safiyaEl.style.display = 'none'; }, 4000);
-      }, 500);
-    }
-    localStorage.setItem('savedVideos', JSON.stringify(saved));
-    menuDropdown.classList.remove('open');
-  });
-  
-  copyBtn.addEventListener('click', function() {
-    navigator.clipboard.writeText(window.location.href).then(function() {
-      copyBtn.querySelector('span').textContent = '✓ Copied!';
-      setTimeout(function() { copyBtn.querySelector('span').textContent = 'Copy Link'; }, 2000);
-    });
-    menuDropdown.classList.remove('open');
-  });
-  
-  // ═══ Navigation ═══
-  nextBtn.addEventListener('click', nextVideo);
-  
-  // Keyboard
+  // ═══ KEYBOARD NAV ═══
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); nextVideo(); }
-    else if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); prevVideo(); }
-    else if (e.key === 'Escape') { window.history.back(); }
-    else if (e.key === 'm') { menuBtn.click(); }
+    if (e.key === 'ArrowDown' || e.key === 'j') {
+      e.preventDefault();
+      scrollToSlot(currentIdx + 1);
+    } else if (e.key === 'ArrowUp' || e.key === 'k') {
+      e.preventDefault();
+      scrollToSlot(currentIdx - 1);
+    } else if (e.key === 'Escape') {
+      window.history.back();
+    }
   });
   
-  // Swipe on mobile
-  var touchStartY = 0, touchEndY = 0;
-  document.addEventListener('touchstart', function(e) {
-    touchStartY = e.changedTouches[0].screenY;
-  }, { passive: true });
-  document.addEventListener('touchend', function(e) {
-    touchEndY = e.changedTouches[0].screenY;
-    var diff = touchStartY - touchEndY;
-    if (Math.abs(diff) > 80) {
-      if (diff > 0) nextVideo();
-      else prevVideo();
-    }
-  }, { passive: true });
+  function scrollToSlot(idx) {
+    if (idx < 0 || idx >= allVideos.length || isTransitioning) return;
+    var slot = scroller.querySelector('[data-idx="' + idx + '"]');
+    if (!slot) return;
+    isTransitioning = true;
+    slot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(function() { isTransitioning = false; }, 600);
+  }
   
   // ═══ INIT ═══
   async function init() {
     try {
-      // Fetch videos
-      var allFetched = [];
+      var fetched = [];
       var found = null;
       
       for (var i = 1; i <= 3; i++) {
         try {
-          var res = await fetch('/api/social-feed?type=all&page=' + i + '&limit=20');
+          var res = await fetch('/api/social-feed?type=all&page=' + i + '&limit=25');
           var data = await res.json();
           if (data.success && data.videos) {
-            allFetched = allFetched.concat(data.videos);
+            fetched = fetched.concat(data.videos);
             if (!found) {
               found = data.videos.find(function(v) { return v.id === id; });
             }
@@ -422,36 +357,49 @@ const { id } = Astro.params;
         } catch(e) {}
       }
       
-      if (!found && allFetched.length > 0) {
-        found = allFetched[0];
-      }
+      if (!found && fetched.length > 0) found = fetched[0];
       
       if (!found) {
-        loader.innerHTML = '<h1 style="color:#fff;margin-bottom:1rem;">Video Not Found</h1><a href="/" style="color:#c084fc;font-weight:700;">← Back to Home</a>';
+        loader.innerHTML = '<h1 style="color:#fff;margin-bottom:1rem;font-family:\'Bricolage Grotesque\',sans-serif;">Video Not Available</h1><a href="/" style="color:#c084fc;font-weight:700;text-decoration:none;padding:12px 24px;border:1px solid #c084fc;border-radius:999px;">← Back to Home</a>';
         return;
       }
       
       // Dedupe
       var seen = {};
-      allVideos = allFetched.filter(function(v) {
+      allVideos = fetched.filter(function(v) {
         if (seen[v.id]) return false;
         seen[v.id] = true;
         return true;
       });
       
+      // Move found video to first
       var foundIdx = allVideos.findIndex(function(v) { return v.id === found.id; });
-      if (foundIdx < 0) {
+      if (foundIdx > 0) {
+        var [first] = allVideos.splice(foundIdx, 1);
+        allVideos.unshift(first);
+      } else if (foundIdx < 0) {
         allVideos.unshift(found);
-        foundIdx = 0;
       }
       
-      loader.style.display = 'none';
-      stack.style.display = 'block';
+      // Build all slots
+      scroller.innerHTML = '';
+      allVideos.forEach(function(v, i) {
+        scroller.appendChild(buildSlot(v, i));
+      });
       
-      loadVideoAt(foundIdx);
+      loader.style.display = 'none';
+      scroller.style.display = 'block';
+      progress.style.display = 'flex';
+      
+      // Setup observer & load first video
+      setupObserver();
+      currentIdx = -1; // Force update
+      setCurrentIdx(0);
+      updateProgress();
+      
     } catch(e) {
       console.error(e);
-      loader.innerHTML = '<h1 style="color:#fff;">Error loading video</h1>';
+      loader.innerHTML = '<h1 style="color:#fff;">Error loading</h1>';
     }
   }
   
@@ -460,60 +408,41 @@ const { id } = Astro.params;
 </script>
 
 <style>
-  html, body { background: #000 !important; }
+  /* ═══ FULL BLACK BACKGROUND ═══ */
+  html, body { background: #000 !important; overflow: hidden; }
   #app { background: #000 !important; }
   main { background: #000 !important; padding: 0 !important; }
   
-  .tk-page {
-    min-height: 100vh;
+  .reels-page {
+    height: 100vh;
     background: #000;
     color: #fff;
     display: flex;
     flex-direction: column;
+    position: fixed;
+    inset: 0;
+    z-index: 500;
   }
   
-  /* ═══ TOP BAR ═══ */
-  .tk-topbar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
+  /* Top bar */
+  .reels-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 14px 20px;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.7), transparent);
+    z-index: 100;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
   }
   
-  .tk-back {
-    color: #fff;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
+  .reels-back, .reels-menu {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    transition: all 0.2s ease;
-  }
-  
-  .tk-back:hover {
-    background: rgba(255, 255, 255, 0.1);
-  }
-  
-  .tk-logo {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-  }
-  
-  .tk-menu-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: transparent;
+    background: rgba(0, 0, 0, 0.5);
     border: none;
     color: #fff;
     cursor: pointer;
@@ -521,177 +450,212 @@ const { id } = Astro.params;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
     position: relative;
   }
   
-  .tk-menu-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+  .reels-back:hover, .reels-menu:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
   }
   
-  /* Menu Dropdown */
-  .tk-menu-dropdown {
+  .reels-brand {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  }
+  
+  /* Menu dropdown */
+  .reels-menu-drop {
     position: absolute;
-    top: 100%;
-    right: 12px;
-    margin-top: 8px;
+    top: calc(100% + 8px);
+    right: 0;
     background: rgba(20, 10, 30, 0.98);
     border: 1px solid rgba(192, 132, 252, 0.3);
     border-radius: 14px;
     padding: 6px;
     min-width: 180px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(192, 132, 252, 0.15);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(192, 132, 252, 0.2);
     backdrop-filter: blur(20px);
     opacity: 0;
     visibility: hidden;
     transform: translateY(-8px);
-    transition: all 0.25s ease;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
     z-index: 200;
   }
   
-  .tk-menu-dropdown.open {
+  .reels-menu-drop.open {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
   }
   
-  .tk-menu-item {
+  .reels-menu-item {
     display: flex;
     align-items: center;
     gap: 10px;
     width: 100%;
-    padding: 10px 14px;
+    padding: 12px 14px;
     background: transparent;
     border: none;
     color: #fff;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
     border-radius: 8px;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
     text-align: left;
   }
   
-  .tk-menu-item:hover {
+  .reels-menu-item:hover {
     background: rgba(192, 132, 252, 0.15);
     color: #e879f9;
   }
   
-  .tk-menu-item svg {
+  .reels-menu-item svg {
     color: rgba(255, 255, 255, 0.7);
     transition: color 0.2s ease;
   }
   
-  .tk-menu-item:hover svg {
+  .reels-menu-item:hover svg {
     color: #e879f9;
   }
   
-  /* ═══ MAIN ═══ */
-  .tk-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 24px 0 40px;
-  }
-  
-  .tk-loader {
+  /* Loading */
+  .reels-loader {
+    position: fixed;
+    inset: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 15px;
-    padding: 6rem 1rem;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.6);
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.85rem;
-    min-height: 60vh;
+    background: #000;
+    z-index: 50;
   }
   
-  .tk-spinner {
-    width: 40px;
-    height: 40px;
+  .reels-spinner {
+    width: 42px;
+    height: 42px;
     border: 3px solid rgba(192, 132, 252, 0.2);
     border-top-color: #c084fc;
     border-radius: 50%;
-    animation: tkSpin 0.8s linear infinite;
+    animation: reelsSpin 0.8s linear infinite;
   }
   
-  @keyframes tkSpin { to { transform: rotate(360deg); } }
+  @keyframes reelsSpin { to { transform: rotate(360deg); } }
   
-  /* ═══ VIDEO STACK ═══ */
-  .tk-stack {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    max-width: 540px;
-    margin: 0 auto;
-    padding: 0 16px;
+  /* ═══ SCROLLER (TikTok's magic) ═══ */
+  .reels-scroller {
+    flex: 1;
+    height: 100vh;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-stop: always;
   }
   
-  /* Video slot - vertical 9:16 like TikTok */
-  .tk-slot {
+  .reels-scroller::-webkit-scrollbar { display: none; }
+  
+  /* Each video slot = 1 full screen */
+  .reels-slot {
     position: relative;
+    height: 100vh;
     width: 100%;
-    aspect-ratio: 9/16;
-    max-height: calc(100vh - 130px);
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
     background: #000;
-    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
-    box-shadow: 
-      0 30px 80px rgba(0, 0, 0, 0.9),
-      0 0 40px rgba(192, 132, 252, 0.15);
   }
   
-  .tk-video {
+  /* Poster (background before video loads) */
+  .reels-slot-poster {
     position: absolute;
-    inset: 0;
-    background: #000;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    z-index: 1;
+    transition: opacity 0.5s ease;
+    filter: blur(20px) brightness(0.5);
+    width: 100%;
+    height: 100%;
+    object-position: center;
   }
   
-  .tk-video iframe {
+  /* Video container */
+  .reels-slot-video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    max-width: min(500px, calc(100vh * 9 / 16));
+    aspect-ratio: 9/16;
+    max-height: calc(100vh - 40px);
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+    z-index: 5;
+  }
+  
+  .reels-slot-video iframe {
     width: 100%;
     height: 100%;
     border: 0;
     background: #000;
   }
   
-  .tk-video-loading {
+  /* Gradient overlays for text readability */
+  .reels-slot-gradient {
     position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #000;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 200px;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.7), transparent);
+    pointer-events: none;
+    z-index: 8;
   }
   
-  /* Minimal info bar (auto-hide) */
-  .tk-info {
+  /* Bottom info bar */
+  .reels-slot-info {
     position: absolute;
-    left: 16px;
-    right: 16px;
-    bottom: 60px;
+    left: 20px;
+    right: 20px;
+    bottom: 40px;
     z-index: 10;
     color: #fff;
-    transition: opacity 0.4s ease, transform 0.4s ease;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-  }
-  
-  .tk-info.tk-info-hidden {
-    opacity: 0;
-    transform: translateY(10px);
+    max-width: 500px;
+    margin: 0 auto;
     pointer-events: none;
   }
   
-  .tk-user {
+  .reels-slot-user {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    pointer-events: auto;
   }
   
-  .tk-avatar {
+  .reels-slot-avatar {
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -700,7 +664,7 @@ const { id } = Astro.params;
     flex-shrink: 0;
   }
   
-  .tk-avatar-inner {
+  .reels-slot-avatar-inner {
     width: 100%;
     height: 100%;
     border-radius: 50%;
@@ -713,46 +677,41 @@ const { id } = Astro.params;
     padding-left: 2px;
   }
   
-  .tk-user-text {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 0;
-  }
-  
-  .tk-channel {
+  .reels-slot-user-name {
     font-family: 'DM Sans', sans-serif;
     font-size: 0.9rem;
     font-weight: 700;
     color: #fff;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+    flex: 1;
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   
-  .tk-follow {
+  .reels-slot-follow {
     padding: 5px 14px;
     background: transparent;
     border: 1.5px solid #fff;
     color: #fff;
     border-radius: 6px;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s ease;
     flex-shrink: 0;
   }
   
-  .tk-follow:hover {
+  .reels-slot-follow:hover {
     background: #fff;
     color: #000;
   }
   
-  .tk-caption {
+  .reels-slot-caption {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     font-weight: 500;
     color: #fff;
     line-height: 1.4;
@@ -760,263 +719,81 @@ const { id } = Astro.params;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+    pointer-events: auto;
   }
   
-  /* Bottom center: Next button */
-  .tk-next-btn {
-    position: absolute;
-    bottom: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1.5px solid rgba(255, 255, 255, 0.3);
-    color: #fff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 15;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    animation: tkNextPulse 2.5s ease-in-out infinite;
-  }
-  
-  @keyframes tkNextPulse {
-    0%, 100% { transform: translateX(-50%) translateY(0); }
-    50% { transform: translateX(-50%) translateY(4px); }
-  }
-  
-  .tk-next-btn:hover {
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    border-color: transparent;
-    transform: translateX(-50%) scale(1.1);
-    animation: none;
-    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.5);
-  }
-  
-  /* ═══ SAFIYA COMMENT BUBBLE ═══ */
-  .tk-safiya {
+  /* Progress indicator (right side) */
+  .reels-progress {
     position: fixed;
-    bottom: 20px;
-    left: 20px;
-    z-index: 500;
-    display: none;
-    align-items: flex-end;
-    gap: 10px;
-    animation: tkSafiyaIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    max-width: 320px;
-  }
-  
-  @keyframes tkSafiyaIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .tk-safiya-avatar {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    padding: 2px;
-    overflow: hidden;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
     display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.5);
-    font-size: 1.5rem;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 50;
+    pointer-events: none;
   }
   
-  .tk-safiya-avatar img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-  
-  .tk-safiya-bubble {
-    background: linear-gradient(135deg, rgba(28, 15, 61, 0.98), rgba(20, 10, 45, 0.98));
-    border: 1px solid rgba(232, 121, 249, 0.4);
-    border-radius: 16px 16px 16px 4px;
-    padding: 10px 14px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(192, 132, 252, 0.25);
-    transition: opacity 0.4s ease;
-    backdrop-filter: blur(15px);
-  }
-  
-  .tk-safiya-name {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.72rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 3px;
-  }
-  
-  .tk-safiya-msg {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.82rem;
-    color: rgba(255, 255, 255, 0.95);
-    line-height: 1.35;
-  }
-  
-  /* ═══ RELATED VIDEOS ═══ */
-  .tk-related-section {
-    width: 100%;
-    max-width: 800px;
-    margin: 40px auto 60px;
-    padding: 0 20px;
-  }
-  
-  .tk-related-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 18px;
-  }
-  
-  .tk-related-title {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: #fff;
-  }
-  
-  .tk-related-hint {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.5);
-  }
-  
-  .tk-related-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-  }
-  
-  .tk-rel-card {
-    cursor: pointer;
-    transition: transform 0.3s ease;
-  }
-  
-  .tk-rel-card:hover {
-    transform: translateY(-4px);
-  }
-  
-  .tk-rel-thumb {
-    position: relative;
-    width: 100%;
-    padding-top: 140%;
-    border-radius: 14px;
-    overflow: hidden;
-    background: #0d0520;
-    border: 1px solid rgba(232, 121, 249, 0.25);
-    margin-bottom: 8px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  .reels-progress-dot {
+    width: 3px;
+    height: 20px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.3);
     transition: all 0.3s ease;
   }
   
-  .tk-rel-card:hover .tk-rel-thumb {
-    border-color: rgba(232, 121, 249, 0.8);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(192, 132, 252, 0.4);
+  .reels-progress-dot.active {
+    background: #e879f9;
+    height: 32px;
+    box-shadow: 0 0 10px rgba(232, 121, 249, 0.6);
   }
   
-  .tk-rel-thumb img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s ease;
-  }
-  
-  .tk-rel-card:hover .tk-rel-thumb img {
-    transform: scale(1.08);
-  }
-  
-  .tk-rel-play {
-    position: absolute;
-    top: 50%;
+  /* Toast notification */
+  .reels-toast {
+    position: fixed;
+    top: 80px;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.6);
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    transform: translateX(-50%) translateY(-20px);
+    padding: 12px 24px;
+    background: rgba(20, 10, 30, 0.98);
+    border: 1px solid rgba(232, 121, 249, 0.4);
+    border-radius: 999px;
     color: #fff;
-    padding-left: 3px;
-    font-size: 1rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(192, 132, 252, 0.3);
+    backdrop-filter: blur(20px);
     opacity: 0;
+    visibility: hidden;
+    z-index: 300;
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 0 6px 20px rgba(192, 132, 252, 0.6);
   }
   
-  .tk-rel-card:hover .tk-rel-play {
+  .reels-toast.show {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
   }
   
-  .tk-rel-type {
-    position: absolute;
-    bottom: 6px;
-    left: 6px;
-    padding: 3px 7px;
-    background: rgba(0, 0, 0, 0.85);
-    color: #fbbf24;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.55rem;
-    font-weight: 800;
-    border-radius: 4px;
-  }
-  
-  .tk-rel-info {
-    padding: 0 2px;
-  }
-  
-  .tk-rel-title {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin-bottom: 4px;
-  }
-  
-  .tk-rel-channel {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    color: rgba(255, 255, 255, 0.5);
-  }
-  
-  /* Hide Safiya global container on this page (use custom bubble) */
-  #safiyaContainer,
-  #safiya-container { display: none !important; }
-  #btt { display: none !important; }
+  /* Hide site header, BTT, and OLD Safiya duplicate */
   .site-header { display: none !important; }
+  #btt { display: none !important; }
   
-  @media (max-width: 540px) {
-    .tk-stack { padding: 0; }
-    .tk-slot { border-radius: 0; max-height: calc(100vh - 60px); }
-    .tk-topbar { padding: 10px 16px; }
-    .tk-related-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .tk-safiya { bottom: 10px; left: 10px; right: 10px; max-width: none; }
-    .tk-info { bottom: 70px; }
-  }
+  /* IMPORTANT: Only allow MAIN Safiya (right side), hide any duplicates */
+  #safiya-panel-wrap,
+  #safiyaContainer,
+  .safiya-container:not([data-safiya-main]) { display: none !important; }
   
-  @media (max-width: 400px) {
-    .tk-related-grid { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 500px) {
+    .reels-slot-video {
+      max-width: 100%;
+      max-height: calc(100vh - 20px);
+      border-radius: 0;
+    }
+    .reels-progress { display: none !important; }
+    .reels-slot-info { bottom: 30px; }
   }
 </style>
