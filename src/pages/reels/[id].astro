@@ -10,55 +10,82 @@ const videoId = id || '';
 <BaseLayout>
   <div class="rp-root" data-video-id={videoId}>
     <div class="rp-bg" id="rpBg"></div>
-    <div class="rp-bg-tint"></div>
+    <div class="rp-bg-overlay"></div>
 
-    <!-- Top controls -->
-    <button class="rp-back" id="rpBack" aria-label="Back">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-    </button>
-    <div class="rp-brand">AniTube<span>Buzz</span></div>
-    <div class="rp-counter" id="rpCounter">1 / 1</div>
+    <div class="rp-topbar">
+      <button class="rp-btn-icon" id="rpBack" aria-label="Back">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <div class="rp-brand">AniTube<span>Buzz</span></div>
+      <div class="rp-counter" id="rpCounter">1 / 1</div>
+    </div>
 
-    <!-- Desktop nav arrows -->
-    <button class="rp-arrow rp-arrow-up" id="rpArrowUp" aria-label="Previous">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-    </button>
-    <button class="rp-arrow rp-arrow-down" id="rpArrowDown" aria-label="Next">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-    </button>
+    <div class="rp-nav-arrows">
+      <button class="rp-arrow" id="rpArrowUp" aria-label="Previous">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+      </button>
+      <button class="rp-arrow" id="rpArrowDown" aria-label="Next">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
 
-    <!-- Video feed -->
-    <div class="rp-feed" id="rpFeed"></div>
+    <div class="rp-feed" id="rpFeed">
+      <div class="rp-loading" id="rpLoading"><div class="rp-spinner"></div></div>
+    </div>
 
-    <!-- Loading -->
-    <div class="rp-loading" id="rpLoading"><div class="rp-spinner"></div></div>
-
-    <!-- Toast -->
     <div class="rp-toast" id="rpToast"></div>
   </div>
 </BaseLayout>
 
 <style is:global>
-  body.reels-mode {
+  /* Global lockdown when reels page loads */
+  html.rp-active,
+  body.rp-active {
+    margin: 0 !important;
+    padding: 0 !important;
     overflow: hidden !important;
     background: #000 !important;
+    height: 100% !important;
+    width: 100% !important;
   }
-  body.reels-mode .ambient-bg,
-  body.reels-mode .site-header,
-  body.reels-mode header.site-header,
-  body.reels-mode .site-footer,
-  body.reels-mode footer.site-footer,
-  body.reels-mode #btt,
-  body.reels-mode .back-to-top {
+
+  /* Hide site chrome */
+  body.rp-active .ambient-bg,
+  body.rp-active .site-header,
+  body.rp-active header.site-header,
+  body.rp-active > header,
+  body.rp-active footer.site-footer,
+  body.rp-active .site-footer,
+  body.rp-active #btt,
+  body.rp-active .back-to-top {
     display: none !important;
   }
-  body.reels-mode #app {
+
+  /* Reset #app for fullscreen reels */
+  body.rp-active #app {
     background: #000 !important;
     padding: 0 !important;
     margin: 0 !important;
     max-width: 100vw !important;
     width: 100vw !important;
     min-height: 100vh !important;
+    display: block !important;
+    overflow: hidden !important;
+  }
+
+  /* Hide ALL children of #app except rp-root and Safiya */
+  body.rp-active #app > *:not(.rp-root) {
+    display: none !important;
+  }
+
+  /* Keep Safiya alive (usually rendered outside #app or with own portal) */
+  body.rp-active [class*="safiya-core"],
+  body.rp-active [class*="safiya-launcher"],
+  body.rp-active [class*="safiya-panel"],
+  body.rp-active [id^="safiya"],
+  body.rp-active [class^="safiya"] {
+    display: block !important;
+    visibility: visible !important;
   }
 </style>
 
@@ -75,53 +102,60 @@ const videoId = id || '';
     height: 100vh;
   }
 
-  /* Blurred BG */
+  /* Cinematic blurred BG */
   .rp-bg {
     position: absolute;
     inset: -40px;
     background-size: cover;
     background-position: center;
-    filter: blur(50px) brightness(0.3) saturate(1.3);
+    filter: blur(55px) brightness(0.28) saturate(1.3);
     transform: scale(1.2);
     transition: background-image 0.6s ease;
     z-index: 1;
+    will-change: background-image;
   }
-  .rp-bg-tint {
+  .rp-bg-overlay {
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.8) 100%);
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.85) 100%);
     z-index: 2;
   }
 
-  /* Back button */
-  .rp-back {
+  /* Top bar */
+  .rp-topbar {
     position: fixed;
-    top: 20px; left: 20px;
-    width: 42px; height: 42px;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 22px;
+    z-index: 9100;
+    height: 62px;
+    box-sizing: border-box;
+    pointer-events: none;
+  }
+  .rp-btn-icon {
+    width: 40px; height: 40px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.6);
-    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.12);
     color: #fff;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9100;
+    transition: all 0.25s ease;
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    transition: all 0.25s ease;
     padding: 0;
+    pointer-events: auto;
   }
-  .rp-back:hover {
-    background: rgba(192,132,252,0.4);
+  .rp-btn-icon:hover {
+    background: rgba(192,132,252,0.35);
+    border-color: rgba(192,132,252,0.6);
     transform: scale(1.06);
   }
-
-  /* Brand */
   .rp-brand {
-    position: fixed;
-    top: 30px; left: 50%;
-    transform: translateX(-50%);
     font-family: 'Bricolage Grotesque', sans-serif;
     font-size: 1.05rem;
     font-weight: 800;
@@ -130,56 +164,57 @@ const videoId = id || '';
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: -0.02em;
-    z-index: 9100;
-    pointer-events: none;
+    text-shadow: 0 2px 15px rgba(192,132,252,0.3);
   }
   .rp-brand span { color: #fff; -webkit-text-fill-color: #fff; }
-
-  /* Counter */
   .rp-counter {
-    position: fixed;
-    top: 32px; right: 24px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
     color: rgba(255,255,255,0.7);
-    z-index: 9100;
     letter-spacing: 0.08em;
-    padding: 5px 12px;
+    padding: 6px 12px;
     background: rgba(0,0,0,0.5);
     border-radius: 999px;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(255,255,255,0.08);
+    pointer-events: auto;
   }
 
-  /* Nav arrows (desktop) */
-  .rp-arrow {
+  /* Nav arrows */
+  .rp-nav-arrows {
     position: fixed;
-    right: 32px;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 9050;
+  }
+  .rp-arrow {
     width: 44px; height: 44px;
     border-radius: 50%;
-    background: rgba(20,20,30,0.8);
+    background: rgba(20,20,30,0.75);
     border: 1px solid rgba(255,255,255,0.15);
     color: #fff;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9050;
+    transition: all 0.25s ease;
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    transition: all 0.25s ease;
     padding: 0;
   }
   .rp-arrow:hover {
-    background: rgba(192,132,252,0.5);
+    background: rgba(192,132,252,0.45);
+    border-color: rgba(192,132,252,0.7);
     transform: scale(1.1);
   }
-  .rp-arrow-up { top: calc(50% - 55px); }
-  .rp-arrow-down { top: calc(50% + 25px); }
 
-  /* Feed - scroll snap */
+  /* Feed scroll snap */
   .rp-feed {
     position: absolute;
     inset: 0;
@@ -205,37 +240,52 @@ const videoId = id || '';
     position: relative;
   }
 
-  /* Premium video card */
+  /* Premium video card with curved-display glow */
   .rp-card {
     position: relative;
     height: min(88vh, calc(100vh - 60px));
     aspect-ratio: 9 / 16;
-    max-width: min(90vw, 480px);
+    max-width: min(90vw, 460px);
     background: #0a0517;
-    border-radius: 22px;
+    border-radius: 24px;
     overflow: visible;
     box-shadow: 
-      0 30px 80px rgba(0,0,0,0.85),
+      0 30px 90px rgba(0,0,0,0.85),
       0 0 0 1px rgba(255,255,255,0.06);
   }
 
-  /* Curved-display gradient glow border */
+  /* Curved OLED-style animated glow border */
   .rp-card::before {
     content: '';
     position: absolute;
-    inset: -3px;
+    inset: -4px;
+    border-radius: 28px;
+    background: linear-gradient(135deg, 
+      rgba(192,132,252,0.8) 0%, 
+      rgba(232,121,249,0.5) 20%, 
+      rgba(125,211,252,0.8) 40%,
+      rgba(232,121,249,0.5) 60%,
+      rgba(192,132,252,0.8) 80%,
+      rgba(125,211,252,0.6) 100%);
+    background-size: 400% 400%;
+    animation: rpBorderShift 6s ease infinite;
+    z-index: -1;
+    opacity: 0.6;
+    filter: blur(14px);
+  }
+  .rp-card::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
     border-radius: 25px;
     background: linear-gradient(135deg, 
-      rgba(192,132,252,0.7) 0%, 
-      rgba(232,121,249,0.4) 25%, 
-      rgba(125,211,252,0.7) 50%, 
-      rgba(232,121,249,0.4) 75%, 
-      rgba(192,132,252,0.7) 100%);
-    background-size: 300% 300%;
-    animation: rpBorderShift 8s ease infinite;
+      rgba(192,132,252,0.5), 
+      rgba(232,121,249,0.3),
+      rgba(125,211,252,0.5));
+    background-size: 200% 200%;
+    animation: rpBorderShift 6s ease infinite reverse;
     z-index: -1;
-    opacity: 0.55;
-    filter: blur(10px);
+    opacity: 0.6;
   }
   @keyframes rpBorderShift {
     0%, 100% { background-position: 0% 50%; }
@@ -249,7 +299,7 @@ const videoId = id || '';
     height: 100%;
     background: #000;
     z-index: 1;
-    border-radius: 22px;
+    border-radius: 24px;
     overflow: hidden;
   }
   .rp-video iframe {
@@ -259,11 +309,11 @@ const videoId = id || '';
     display: block;
   }
 
-  /* Send button */
+  /* Send button - beside video (desktop) */
   .rp-send {
     position: absolute;
-    right: -60px;
-    bottom: 24px;
+    right: -62px;
+    bottom: 28px;
     width: 46px; height: 46px;
     border-radius: 50%;
     background: rgba(20,10,45,0.9);
@@ -278,12 +328,13 @@ const videoId = id || '';
     transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
     padding: 0;
     z-index: 15;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
   }
   .rp-send:hover {
     background: linear-gradient(135deg, rgba(192,132,252,0.5), rgba(232,121,249,0.4));
     border-color: rgba(232,121,249,0.8);
-    transform: scale(1.1);
+    transform: scale(1.12);
+    box-shadow: 0 10px 30px rgba(192,132,252,0.4);
   }
 
   /* Loading */
@@ -341,25 +392,28 @@ const videoId = id || '';
       aspect-ratio: unset;
       border-radius: 0;
     }
-    .rp-card::before { display: none; }
+    .rp-card::before,
+    .rp-card::after { display: none; }
     .rp-video { border-radius: 0; }
-    .rp-arrow { display: none; }
-    .rp-counter { display: none; }
+    .rp-nav-arrows { display: none; }
     .rp-send {
       right: 14px;
       bottom: 110px;
     }
+    .rp-topbar { padding: 12px 14px; height: 56px; }
   }
   @media (max-width: 480px) {
-    .rp-back { width: 38px; height: 38px; top: 14px; left: 14px; }
-    .rp-brand { font-size: 0.95rem; top: 24px; }
+    .rp-btn-icon { width: 38px; height: 38px; }
+    .rp-brand { font-size: 0.95rem; }
+    .rp-counter { font-size: 0.65rem; padding: 5px 10px; }
   }
 </style>
 
 <script is:inline define:vars={{ videoId }}>
 (function(){
-  // Activate reels mode
-  document.body.classList.add('reels-mode');
+  // Activate reels mode IMMEDIATELY (before render)
+  document.documentElement.classList.add('rp-active');
+  document.body.classList.add('rp-active');
 
   var CURRENT_ID = videoId;
   var feedEl = document.getElementById('rpFeed');
@@ -522,7 +576,6 @@ const videoId = id || '';
 
   async function loadFeed(){
     try {
-      // Step 1: Find the CLICKED video across all types
       var clickedVideo = null;
       var types = ['anime','donghua','kdrama','movies'];
       for(var t = 0; t < types.length; t++){
@@ -535,16 +588,11 @@ const videoId = id || '';
           }
         }catch(_){}
       }
-
-      // Fallback if not found: build from ID prefix
-      if(!clickedVideo){
-        clickedVideo = buildFallbackVideo(CURRENT_ID);
-      }
+      if(!clickedVideo) clickedVideo = buildFallbackVideo(CURRENT_ID);
 
       videos = [clickedVideo];
       seenIds[clickedVideo.id] = true;
 
-      // Step 2: Load related feed
       var loaders = [
         '/api/social-feed?type=anime&limit=30',
         '/api/social-feed?type=donghua&limit=30',
@@ -566,19 +614,13 @@ const videoId = id || '';
         }catch(_){}
       }
 
-      // Render
       feedEl.innerHTML = '';
       videos.forEach(function(v, i){
         feedEl.appendChild(renderItem(v, i));
       });
 
-      // Hide loading
       if(loadingEl) loadingEl.classList.add('hidden');
-
-      // Activate first
-      setTimeout(function(){
-        activateItem(0);
-      }, 100);
+      setTimeout(function(){ activateItem(0); }, 100);
 
     } catch(err){
       console.error('[reels]', err);
@@ -590,7 +632,6 @@ const videoId = id || '';
     }
   }
 
-  // Scroll snap detection
   var scrollTimer;
   feedEl.addEventListener('scroll', function(){
     if(scrollTimer) clearTimeout(scrollTimer);
@@ -616,7 +657,8 @@ const videoId = id || '';
   });
 
   function goBack(){
-    document.body.classList.remove('reels-mode');
+    document.documentElement.classList.remove('rp-active');
+    document.body.classList.remove('rp-active');
     if(document.referrer && document.referrer.indexOf(window.location.origin) === 0){
       history.back();
     } else {
@@ -625,7 +667,6 @@ const videoId = id || '';
   }
   if(backBtn) backBtn.addEventListener('click', goBack);
 
-  // Start
   loadFeed();
 })();
 </script>
