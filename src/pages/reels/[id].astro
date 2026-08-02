@@ -38,7 +38,6 @@ const videoId = id || '';
 </BaseLayout>
 
 <style is:global>
-  /* Global lockdown when reels page loads */
   html.rp-active,
   body.rp-active {
     margin: 0 !important;
@@ -49,7 +48,7 @@ const videoId = id || '';
     width: 100% !important;
   }
 
-  /* Hide site chrome */
+  /* Hide specific home page chrome */
   body.rp-active .ambient-bg,
   body.rp-active .site-header,
   body.rp-active header.site-header,
@@ -57,11 +56,26 @@ const videoId = id || '';
   body.rp-active footer.site-footer,
   body.rp-active .site-footer,
   body.rp-active #btt,
-  body.rp-active .back-to-top {
+  body.rp-active .back-to-top,
+  body.rp-active .section-block,
+  body.rp-active .hero-section,
+  body.rp-active .container:not(.rp-root .container),
+  body.rp-active main > *:not(.rp-root),
+  body.rp-active .arrivals-block,
+  body.rp-active .novelty-block,
+  body.rp-active .news-block,
+  body.rp-active .arrivals-header,
+  body.rp-active .cat-tabs,
+  body.rp-active .feed-wrap,
+  body.rp-active .novelty-grid,
+  body.rp-active .news-grid,
+  body.rp-active .product-row,
+  body.rp-active .arrivals-count,
+  body.rp-active .loading-more {
     display: none !important;
   }
 
-  /* Reset #app for fullscreen reels */
+  /* Reset #app so reels can take full screen */
   body.rp-active #app {
     background: #000 !important;
     padding: 0 !important;
@@ -71,24 +85,16 @@ const videoId = id || '';
     min-height: 100vh !important;
     display: block !important;
     overflow: hidden !important;
+    position: relative !important;
   }
 
-  /* Hide ALL children of #app except rp-root and Safiya */
-  body.rp-active #app > *:not(.rp-root) {
-    display: none !important;
-  }
-
-  /* Keep Safiya alive (usually rendered outside #app or with own portal) */
-  body.rp-active [class*="safiya-core"],
-  body.rp-active [class*="safiya-launcher"],
-  body.rp-active [class*="safiya-panel"],
-  body.rp-active [id^="safiya"],
-  body.rp-active [class^="safiya"] {
+  /* Force reels root visible on top of everything */
+  body.rp-active .rp-root {
     display: block !important;
     visibility: visible !important;
+    opacity: 1 !important;
   }
 </style>
-
 <style>
   .rp-root {
     position: fixed;
