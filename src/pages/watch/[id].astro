@@ -8,170 +8,898 @@ import Footer from '../../components/Footer.astro';
 const { id } = Astro.params;
 ---
 
-<BaseLayout title="Watch Video">
+<BaseLayout
+  title="Watch"
+  description="Watch premium videos on AniTube Buzz."
+>
   <Header slot="header" />
-  
-  <div class="watch-wrap">
-    <div id="watchLoader" class="watch-loader">
-      <div class="wl-spinner"></div>
-      <p>Loading video...</p>
+
+  <div class="wp-wrap">
+
+    <!-- LOADER -->
+    <div id="wpLoader" class="wp-loader">
+      <div class="lo-orb"><div class="lo-ring"></div><div class="lo-core"></div></div>
+      <p id="wpLoaderText">Loading video...</p>
     </div>
-    
-    <div id="watchContent" style="display:none;">
-      <div class="container">
-        <div class="watch-player-wrap">
-          <div id="watchPlayer" class="watch-player"></div>
-        </div>
-        
-        <div class="watch-info">
-          <div class="watch-badges" id="watchBadges"></div>
-          <h1 class="watch-title" id="watchTitle">Loading...</h1>
-          <div class="watch-meta" id="watchMeta"></div>
+
+    <!-- NOT FOUND -->
+    <div id="wpNotFound" class="wp-nf" style="display:none;">
+      <div class="nf-ic">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>
+        </svg>
+      </div>
+      <h1>Video Not Found</h1>
+      <p>This video doesn't exist or couldn't be loaded.</p>
+      <div class="nf-btns">
+        <a href="/" class="nf-bk">← Back to Homepage</a>
+        <button onclick="location.reload()" class="nf-rt">🔄 Try Again</button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="wpContent" style="display:none;">
+
+      <!-- HERO -->
+      <div class="wp-hero">
+        <div class="wp-bg" id="wpBg"></div>
+        <div class="wp-fade"></div>
+        <div class="container">
+          <div class="wp-hero-in">
+            <div class="wp-poster" id="wpPoster">
+              <img id="wpPosterImg" alt="" />
+              <div class="wp-poster-play" id="wpPosterPlay">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </div>
+            </div>
+            <div class="wp-info">
+              <div class="wp-badges" id="wpBadges"></div>
+              <h1 class="wp-title" id="wpTitle">Loading...</h1>
+              <div class="wp-meta" id="wpMeta"></div>
+              <p class="wp-syno" id="wpSyno"></p>
+              <div class="wp-actions">
+                <button class="wp-btn wp-btn-p" id="wpWatchBtn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  <span>Watch Now</span>
+                </button>
+                <button class="wp-btn wp-btn-s" id="wpSaveBtn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  <span id="wpSaveLabel">Save</span>
+                </button>
+                <button class="wp-btn wp-btn-s" id="wpShareBtn">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>
+                  <span>Share</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      
-      <section class="section-block">
+
+      <!-- PLAYER -->
+      <section class="section-block wp-player" id="wpPlayerBlock" style="display:none;">
         <div class="container">
-          <h2 class="section-title"><span class="grad-text">More Videos</span></h2>
-          <div id="watchRelated" class="watch-related-grid"></div>
+          <div class="pl-head">
+            <h2 class="section-title"><span class="grad-text">Now Playing</span></h2>
+            <button class="pl-close" id="wpClosePlayer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="pl-wrap-full">
+            <div id="wpPlayerFrame" class="pl-frame-full">
+              <div class="pl-load-msg">Loading player...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DETAILS + RELATED -->
+      <section class="section-block wp-details">
+        <div class="container">
+          <div class="wp-grid">
+            <div class="wp-main">
+
+              <!-- Description -->
+              <div class="wp-sec">
+                <h2 class="wp-sh">About this video</h2>
+                <p class="wp-desc" id="wpFullDesc">Loading...</p>
+              </div>
+
+              <!-- Related videos (home page style) -->
+              <div class="wp-sec">
+                <div class="wp-related-head">
+                  <div class="arrivals-title-wrap">
+                    <div class="arrivals-bar"></div>
+                    <div>
+                      <div class="arrivals-tag">
+                        <span class="arrivals-dot"></span>
+                        <span>MORE FOR YOU</span>
+                      </div>
+                      <h2 class="arrivals-title"><span class="grad-text">Related Videos</span></h2>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Category tabs -->
+                <div class="wp-cats" id="wpCatsTabs"></div>
+
+                <!-- Related grid -->
+                <div id="wpRelatedGrid" class="feed-wrap">
+                  <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:.85rem;">Loading videos...</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SIDEBAR -->
+            <aside class="wp-side">
+              <div class="wp-card">
+                <h3 class="wc-t">Information</h3>
+                <div class="wc-list" id="wpInfoList"></div>
+              </div>
+
+              <div class="wp-card">
+                <h3 class="wc-t">Share</h3>
+                <div class="wp-share">
+                  <button class="sh-btn" data-share="twitter" title="Twitter"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></button>
+                  <button class="sh-btn" data-share="facebook" title="Facebook"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg></button>
+                  <button class="sh-btn" data-share="copy" title="Copy Link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+                </div>
+              </div>
+            </aside>
+          </div>
         </div>
       </section>
     </div>
-    
-    <div id="watchNotFound" style="display:none;padding:6rem 1rem;text-align:center;">
-      <h1 style="font-size:2rem;color:var(--text-primary);">Video Not Found</h1>
-      <p style="color:var(--text-muted);margin:1rem 0;">This video is no longer available.</p>
-      <a href="/" class="btn btn-grad">← Back to Homepage</a>
-    </div>
   </div>
-  
+
   <Footer slot="footer" />
 </BaseLayout>
 
 <script is:inline define:vars={{ id }}>
 (async function() {
-  var loader = document.getElementById('watchLoader');
-  var content = document.getElementById('watchContent');
-  var notFound = document.getElementById('watchNotFound');
-  var player = document.getElementById('watchPlayer');
-  var titleEl = document.getElementById('watchTitle');
-  var metaEl = document.getElementById('watchMeta');
-  var badgesEl = document.getElementById('watchBadges');
-  var relatedEl = document.getElementById('watchRelated');
-  
-  function esc(s) {
-    return String(s || '').replace(/[&<>"']/g, function(c) {
-      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-    });
-  }
-  
-  function trunc(s, n) {
-    s = String(s || '');
-    return s.length > n ? s.slice(0, n).trim() + '…' : s;
-  }
-  
-  // Try to find video from social feed
-  try {
-    // Fetch all types and search for this video
-    var types = ['all'];
-    var found = null;
-    var allVideos = [];
-    
-    for (var i = 0; i < 3; i++) {
-      var res = await fetch('/api/social-feed?type=all&page=' + (i + 1) + '&limit=30');
-      var data = await res.json();
-      if (data.success && data.videos) {
-        allVideos = allVideos.concat(data.videos);
-        found = data.videos.find(function(v) { return v.id === id; });
-        if (found) break;
+  var loader = document.getElementById('wpLoader');
+  var notFound = document.getElementById('wpNotFound');
+  var content = document.getElementById('wpContent');
+  var bg = document.getElementById('wpBg');
+  var posterImg = document.getElementById('wpPosterImg');
+  var posterPlay = document.getElementById('wpPosterPlay');
+  var poster = document.getElementById('wpPoster');
+  var title = document.getElementById('wpTitle');
+  var badges = document.getElementById('wpBadges');
+  var meta = document.getElementById('wpMeta');
+  var syno = document.getElementById('wpSyno');
+  var fullDesc = document.getElementById('wpFullDesc');
+  var infoList = document.getElementById('wpInfoList');
+  var watchBtn = document.getElementById('wpWatchBtn');
+  var saveBtn = document.getElementById('wpSaveBtn');
+  var saveLabel = document.getElementById('wpSaveLabel');
+  var shareBtn = document.getElementById('wpShareBtn');
+  var playerBlock = document.getElementById('wpPlayerBlock');
+  var playerFrame = document.getElementById('wpPlayerFrame');
+  var closePlayer = document.getElementById('wpClosePlayer');
+  var relatedGrid = document.getElementById('wpRelatedGrid');
+  var catsTabs = document.getElementById('wpCatsTabs');
+
+  var currentVideo = null;
+  var allVideos = [];
+  var relatedByType = {};
+
+  function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})}
+  function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n).trim()+'…':s;}
+  function fmt(d){try{if(!d)return'N/A';var x=new Date(d);if(isNaN(x.getTime()))return'N/A';return x.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});}catch(e){return'N/A';}}
+  function cap(s){try{if(!s)return'';var str=String(s).replace(/_/g,' ');return str.charAt(0).toUpperCase()+str.slice(1);}catch(e){return String(s||'');}}
+  function shuffle(arr){var a=arr.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+  // ═══ SAFIYA ═══
+  function notifySafiya(type, video) {
+    try {
+      var deviceId = '';
+      try { deviceId = localStorage.getItem('safiya_v13:device_id') || ''; } catch(e) {}
+      var memoryKey = deviceId ? 'safiya_v13:memory:' + deviceId : null;
+      var memRaw = null;
+      if (memoryKey) memRaw = localStorage.getItem(memoryKey);
+      if (!memRaw) memRaw = localStorage.getItem('safiya_memory');
+      var memory = memRaw ? JSON.parse(memRaw) : {};
+      if (!memory.behavior) memory.behavior = {};
+      if (!memory.behavior.watchHistory) memory.behavior.watchHistory = [];
+      if (!memory.behavior.savedVideos) memory.behavior.savedVideos = [];
+
+      var record = {
+        id: video.id, title: video.title, type: video.type || 'video',
+        channel: video.channel || '', source: video.source || '',
+        time: Date.now(), action: type
+      };
+      if (type === 'save') {
+        memory.behavior.savedVideos.unshift(record);
+        memory.behavior.savedVideos = memory.behavior.savedVideos.slice(0, 40);
+      } else {
+        memory.behavior.watchHistory.unshift(record);
+        memory.behavior.watchHistory = memory.behavior.watchHistory.slice(0, 40);
       }
+      memory.behavior.currentlyWatching = record;
+      if (memoryKey) localStorage.setItem(memoryKey, JSON.stringify(memory));
+      localStorage.setItem('safiya_memory', JSON.stringify(memory));
+
+      window.dispatchEvent(new CustomEvent('safiya:video-event', {
+        detail: { action: type, video: video, title: video.title, type: video.type }
+      }));
+
+      if (window.Safiya && typeof window.Safiya.say === 'function') {
+        var lines = {
+          save: ['saved that? nice pick', 'good taste ✨', 'adding to your library 💜'],
+          watch: {
+            movies: ['movie mode 🍿', 'peak cinema', 'good taste bestie'],
+            kdrama: ['k-drama? im here 💕', 'chemistry incoming', 'plot better slap'],
+            donghua: ['ooh donghua? underrated fr', 'animation slaps', 'cultivation hits'],
+            anime: ['elite taste 👀', 'im invested', 'the vibes ✨']
+          }
+        };
+        var msgList = type === 'save' ? lines.save : (lines.watch[video.type] || lines.watch.anime);
+        setTimeout(function() {
+          window.Safiya.say(msgList[Math.floor(Math.random() * msgList.length)], 4000);
+        }, 500);
+      }
+    } catch(err) { console.warn('Safiya notify failed:', err); }
+  }
+
+  // ═══ SAVE ═══
+  function isVideoSaved(vid) {
+    try {
+      var saved = JSON.parse(localStorage.getItem('savedVideos') || '[]');
+      return saved.some(function(x) { return x.id === vid; });
+    } catch(e) { return false; }
+  }
+  function toggleSave(video) {
+    try {
+      var saved = JSON.parse(localStorage.getItem('savedVideos') || '[]');
+      var idx = saved.findIndex(function(x) { return x.id === video.id; });
+      if (idx >= 0) {
+        saved.splice(idx, 1);
+        localStorage.setItem('savedVideos', JSON.stringify(saved));
+        showToast('Removed from saved');
+        return false;
+      } else {
+        saved.push({
+          id: video.id, title: video.title, thumbnail: video.thumbnail,
+          channel: video.channel, type: video.type, savedAt: Date.now()
+        });
+        localStorage.setItem('savedVideos', JSON.stringify(saved));
+        showToast('Saved to library ✓');
+        notifySafiya('save', video);
+        return true;
+      }
+    } catch(e) { return false; }
+  }
+  function updateSaveButton(video) {
+    if (!saveLabel) return;
+    saveLabel.textContent = isVideoSaved(video.id) ? 'Saved' : 'Save';
+  }
+
+  function showToast(msg) {
+    var t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);padding:10px 20px;background:rgba(20,12,32,.98);border:1px solid rgba(232,121,249,.4);border-radius:999px;color:#fff;font-family:"Inter",sans-serif;font-size:.85rem;font-weight:600;z-index:9999;box-shadow:0 12px 30px rgba(0,0,0,.6);backdrop-filter:blur(20px);animation:wpToastIn .3s cubic-bezier(0.34,1.56,0.64,1);';
+    document.body.appendChild(t);
+    setTimeout(function() { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; }, 2000);
+    setTimeout(function() { t.remove(); }, 2500);
+  }
+
+  // ═══ RENDER ═══
+  function render(video) {
+    try { document.title = (video.title || 'Watch') + ' - AniTube Buzz'; } catch(e) {}
+
+    if (video.thumbnail) {
+      if (bg) bg.style.backgroundImage = 'url(' + video.thumbnail + ')';
+      if (posterImg) { posterImg.src = video.thumbnail; posterImg.alt = video.title || ''; }
     }
-    
-    if (!found) {
-      loader.style.display = 'none';
-      notFound.style.display = 'block';
+
+    if (title) title.textContent = video.title || 'Untitled';
+
+    // Badges
+    var b = [];
+    if (video.isNew) b.push('<span class="wp-b wp-b-new"><span class="wp-dot"></span>NEW</span>');
+    if (video.isOfficial) b.push('<span class="wp-b wp-b-off">✓ OFFICIAL</span>');
+    b.push('<span class="wp-b wp-b-hd">HD</span>');
+    if (video.type) b.push('<span class="wp-b wp-b-type">' + esc((video.type || '').toUpperCase()) + '</span>');
+    if (badges) badges.innerHTML = b.join('');
+
+    // Meta
+    var m = [];
+    if (video.channel) m.push(esc(video.channel));
+    if (video.publishedAt) m.push(fmt(video.publishedAt));
+    if (video.episodeNumber) m.push('Episode ' + video.episodeNumber);
+    if (meta) meta.innerHTML = m.map(function(x) { return '<span>' + x + '</span>'; }).join('<span class="mp-sep">·</span>');
+
+    // Synopsis
+    var syn = video.description || 'Enjoy this ' + (video.type || 'video') + ' on AniTubeBuzz.';
+    if (syno) syno.textContent = trunc(syn, 250);
+    if (fullDesc) fullDesc.textContent = syn;
+
+    // Info list
+    var info = [
+      ['Type', video.type ? cap(video.type) : 'Video'],
+      ['Channel', video.channel || 'Unknown'],
+      ['Published', video.publishedAt ? fmt(video.publishedAt) : 'N/A'],
+      ['Episode', video.episodeNumber || 'N/A'],
+      ['Quality', 'HD']
+    ];
+    if (infoList) infoList.innerHTML = info.map(function(r) {
+      return '<div class="ir"><span class="ir-l">' + esc(r[0]) + '</span><span class="ir-v">' + esc(String(r[1])) + '</span></div>';
+    }).join('');
+
+    updateSaveButton(video);
+  }
+
+  // ═══ PLAY ═══
+  function playVideo(video) {
+    if (!playerBlock || !playerFrame) return;
+    playerBlock.style.display = 'block';
+    playerFrame.innerHTML = '<div class="pl-load-msg"><div class="lo-orb sm"><div class="lo-ring"></div><div class="lo-core"></div></div><span style="margin-left:12px;color:#fff;">Loading video...</span></div>';
+
+    setTimeout(function() { playerBlock.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+
+    var embedUrl = video.embedUrl;
+    if (video.source === 'dailymotion') {
+      embedUrl += (embedUrl.indexOf('?') !== -1 ? '&' : '?') + 'autoplay=1&mute=0&ui-logo=0&ui-start-screen-info=0&sharing-enable=0&queue-enable=0';
+    } else if (video.source === 'youtube') {
+      embedUrl += (embedUrl.indexOf('?') !== -1 ? '&' : '?') + 'autoplay=1&modestbranding=1&rel=0&showinfo=0&playsinline=1';
+    }
+
+    var brand = '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player</span></div>';
+    playerFrame.innerHTML = brand;
+
+    var iframe = document.createElement('iframe');
+    iframe.src = embedUrl;
+    iframe.setAttribute('frameborder', '0');
+    iframe.setAttribute('allow', 'accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;fullscreen');
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('playsinline', '');
+    playerFrame.appendChild(iframe);
+
+    setTimeout(function() { notifySafiya('watch', video); }, 3000);
+  }
+
+  // ═══ RELATED VIDEO CARD (home page style — SAME animations) ═══
+  function buildRelatedCard(v, idx) {
+    var t = v.title || 'Video';
+    var img = v.thumbnail || '';
+    var delay = ((idx % 8) * 40) + 'ms';
+    var typeLabel = { movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA', donghua: '🐼 DONGHUA', anime: '🎌 ANIME' }[v.type] || '';
+
+    var imgHtml = img
+      ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="at-na-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
+      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>';
+
+    var el = document.createElement('div');
+    el.className = 'at-na-card';
+    el.style.animationDelay = delay;
+    el.style.cursor = 'pointer';
+
+    el.innerHTML =
+      '<div class="at-na-thumb">' +
+        imgHtml +
+        '<div class="at-na-shine"></div>' +
+        '<div class="at-na-overlay"></div>' +
+        '<div class="at-na-play">' +
+          '<div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:2px;box-shadow:0 8px 25px rgba(192,132,252,0.7);z-index:2;">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+          '</div>' +
+        '</div>' +
+        (v.isNew ? '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">NEW</div>' : '') +
+        '<div style="position:absolute;bottom:6px;left:6px;padding:2px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:4px;z-index:6;">' + typeLabel + '</div>' +
+      '</div>' +
+      '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
+        '<h3 class="at-na-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(t, 55)) + '</h3>' +
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;">' + esc(v.channel || 'Channel') + '</div>' +
+      '</div>';
+
+    el.addEventListener('click', function(e) {
+      e.preventDefault();
+      // Navigate to same page with new video id
+      window.location.href = '/watch/' + encodeURIComponent(v.id);
+    });
+
+    return el;
+  }
+
+  function renderRelated(videos, currentType) {
+    relatedByType = {};
+    videos.forEach(function(v) {
+      if (v.id === id) return; // Skip current
+      // Skip portrait shorts
+      if (v.aspect === 'portrait' || v.source === 'youtube_shorts' || v.isShort) return;
+      var t = v.type || 'other';
+      if (!relatedByType[t]) relatedByType[t] = [];
+      relatedByType[t].push(v);
+    });
+
+    var types = Object.keys(relatedByType);
+    if (!types.length) {
+      relatedGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);">No related videos.</div>';
       return;
     }
-    
-    // Render video
-    document.title = found.title + ' — AniTube Buzz';
-    
-    var iframe = document.createElement('iframe');
-    iframe.src = found.embedUrl;
-    iframe.setAttribute('frameborder', '0');
-    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen');
-    iframe.setAttribute('allowfullscreen', '');
-    iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:0;';
-    player.appendChild(iframe);
-    
-    titleEl.textContent = found.title;
-    
-    var typeLabel = { movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA', donghua: '🐼 DONGHUA', anime: '🎌 ANIME' }[found.type] || '📺';
-    var sourceLabel = { youtube: 'YouTube', dailymotion: 'Dailymotion', bilibili: 'Bilibili', odysee: 'Odysee' }[found.source] || 'Video';
-    
-    badgesEl.innerHTML = 
-      '<span class="wb wb-type">' + typeLabel + '</span>' +
-      '<span class="wb wb-source">' + esc(sourceLabel) + '</span>' +
-      (found.isNew ? '<span class="wb wb-new">NEW</span>' : '');
-    
-    metaEl.innerHTML = 
-      '<span>👤 ' + esc(found.channel || 'Unknown') + '</span>' +
-      (found.publishedAt ? '<span>📅 ' + new Date(found.publishedAt).toLocaleDateString() : '');
-    
-    // Related videos (other videos except this one)
-    var related = allVideos.filter(function(v) { return v.id !== found.id; }).slice(0, 12);
-    relatedEl.innerHTML = related.map(function(v) {
-      var img = v.thumbnail 
-        ? '<img src="' + esc(v.thumbnail) + '" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover;" />'
-        : '<div style="width:100%;height:100%;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>';
-      var srcColor = { youtube: '#ff0000', dailymotion: '#0066dc', bilibili: '#00a1d6' }[v.source] || '#c084fc';
-      var srcLabel = { youtube: 'YT', dailymotion: 'DM', bilibili: 'BILI' }[v.source] || 'V';
-      return '<a href="/watch/' + encodeURIComponent(v.id) + '" class="wr-card">' +
-        '<div class="wr-thumb">' + img + '<div class="wr-src" style="background:' + srcColor + '">' + srcLabel + '</div></div>' +
-        '<div class="wr-title">' + esc(trunc(v.title, 60)) + '</div>' +
-        '<div class="wr-channel">' + esc(v.channel || '') + '</div>' +
-      '</a>';
-    }).join('');
-    
-    loader.style.display = 'none';
-    content.style.display = 'block';
-  } catch(e) {
-    console.error('watch error:', e);
-    loader.style.display = 'none';
-    notFound.style.display = 'block';
+
+    // Current type first
+    if (currentType && relatedByType[currentType]) {
+      types = types.filter(function(t) { return t !== currentType; });
+      types.unshift(currentType);
+    }
+
+    if (catsTabs) {
+      catsTabs.innerHTML = types.map(function(t, i) {
+        var label = { movies: 'Movies', kdrama: 'K-Drama', donghua: 'Donghua', anime: 'Anime' }[t] || cap(t);
+        return '<button class="wp-ct' + (i === 0 ? ' active' : '') + '" data-cat="' + esc(t) + '">' + label + ' <span class="ct-c">' + relatedByType[t].length + '</span></button>';
+      }).join('');
+
+      catsTabs.querySelectorAll('.wp-ct').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          catsTabs.querySelectorAll('.wp-ct').forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          showCategory(btn.dataset.cat);
+        });
+      });
+    }
+
+    showCategory(types[0]);
   }
+
+  function showCategory(cat) {
+    var list = shuffle(relatedByType[cat] || []).slice(0, 16);
+    if (!list.length) {
+      relatedGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);">No videos.</div>';
+      return;
+    }
+    relatedGrid.innerHTML = '';
+    list.forEach(function(v, i) {
+      relatedGrid.appendChild(buildRelatedCard(v, i));
+    });
+  }
+
+  // ═══ INIT ═══
+  async function init() {
+    try {
+      var fetched = [];
+      var found = null;
+
+      for (var i = 1; i <= 3; i++) {
+        try {
+          var res = await fetch('/api/social-feed?type=all&page=' + i + '&limit=25');
+          if (!res.ok) continue;
+          var data = await res.json();
+          if (data.success && data.videos) {
+            fetched = fetched.concat(data.videos);
+            if (!found) found = data.videos.find(function(v) { return v.id === id; });
+          }
+        } catch(e) {}
+      }
+
+      if (!found && fetched.length > 0) found = fetched[0];
+
+      if (!found) {
+        loader.style.display = 'none';
+        notFound.style.display = 'flex';
+        return;
+      }
+
+      // Dedupe
+      var seen = {};
+      allVideos = fetched.filter(function(v) {
+        if (!v || !v.id || seen[v.id]) return false;
+        seen[v.id] = true;
+        return true;
+      });
+
+      if (!allVideos.find(function(v) { return v.id === found.id; })) {
+        allVideos.unshift(found);
+      }
+
+      currentVideo = found;
+
+      loader.style.display = 'none';
+      content.style.display = 'block';
+
+      render(currentVideo);
+      renderRelated(allVideos, currentVideo.type);
+
+      // Button handlers
+      if (watchBtn) watchBtn.addEventListener('click', function() { playVideo(currentVideo); });
+      if (posterPlay) posterPlay.addEventListener('click', function() { playVideo(currentVideo); });
+      if (poster) poster.addEventListener('click', function() { playVideo(currentVideo); });
+      if (saveBtn) saveBtn.addEventListener('click', function() { toggleSave(currentVideo); updateSaveButton(currentVideo); });
+      if (shareBtn) shareBtn.addEventListener('click', function() {
+        try {
+          navigator.clipboard.writeText(window.location.href);
+          showToast('Link copied ✓');
+        } catch(e) {}
+      });
+      if (closePlayer) closePlayer.addEventListener('click', function() {
+        if (playerBlock) playerBlock.style.display = 'none';
+        if (playerFrame) playerFrame.innerHTML = '';
+      });
+
+      document.querySelectorAll('.sh-btn').forEach(function(b) {
+        b.addEventListener('click', function() {
+          var t = b.dataset.share, u = window.location.href, x = (currentVideo.title || 'Video') + ' on AniTube Buzz';
+          if (t === 'twitter') window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(x) + '&url=' + encodeURIComponent(u), '_blank');
+          else if (t === 'facebook') window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(u), '_blank');
+          else if (t === 'copy') { try { navigator.clipboard.writeText(u); showToast('Link copied ✓'); } catch(e) {} }
+        });
+      });
+
+    } catch(err) {
+      console.error('[Watch]', err);
+      loader.style.display = 'none';
+      notFound.style.display = 'flex';
+    }
+  }
+
+  init();
 })();
 </script>
 
+<style is:global>
+  /* Home page compatible animations */
+  @keyframes atNaCardIn { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes wpToastIn { from{opacity:0;transform:translateX(-50%) translateY(-10px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
+
+  .feed-wrap {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    min-height: 200px;
+  }
+  @media (max-width: 1400px) { .feed-wrap { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 1100px) { .feed-wrap { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
+  @media (max-width: 768px) { .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+
+  .at-na-card {
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    animation: atNaCardIn 0.4s ease backwards;
+  }
+  .at-na-card:hover { transform: translateY(-4px); }
+
+  .at-na-thumb {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #0d0520;
+    border: 1px solid rgba(232, 121, 249, 0.35);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: all 0.35s ease;
+  }
+  .at-na-card:hover .at-na-thumb {
+    border-color: rgba(232, 121, 249, 0.9);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(192, 132, 252, 0.5);
+  }
+  .at-na-img {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    transition: transform 0.5s ease, filter 0.3s ease;
+  }
+  .at-na-card:hover .at-na-img { transform: scale(1.08); filter: brightness(0.65); }
+  .at-na-shine {
+    position: absolute; top: 0; left: -80%;
+    width: 60%; height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,0.2), transparent);
+    z-index: 3; transition: left 0.8s ease; pointer-events: none;
+  }
+  .at-na-card:hover .at-na-shine { left: 120%; }
+  .at-na-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(10,5,23,0.85) 100%);
+    opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 3;
+  }
+  .at-na-card:hover .at-na-overlay { opacity: 1; }
+  .at-na-play {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%,-50%) scale(0.4);
+    width: 44px; height: 44px; z-index: 5;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+  }
+  .at-na-card:hover .at-na-play {
+    opacity: 1;
+    transform: translate(-50%,-50%) scale(1);
+  }
+  .at-na-card:hover .at-na-title {
+    background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  @media (max-width: 768px) {
+    .at-na-play { opacity: 0.75 !important; transform: translate(-50%,-50%) scale(0.7) !important; }
+  }
+
+  /* Arrivals shared styles */
+  .arrivals-title-wrap{display:flex;align-items:center;gap:1rem}
+  .arrivals-bar{width:4px;height:44px;background:linear-gradient(180deg,#c084fc,#e879f9,#7dd3fc);border-radius:3px;box-shadow:0 0 15px rgba(192,132,252,.6);animation:bg 3s ease infinite}
+  @keyframes bg{0%,100%{box-shadow:0 0 15px rgba(192,132,252,.6)}50%{box-shadow:0 0 25px rgba(232,121,249,.8)}}
+  .arrivals-tag{display:inline-flex;align-items:center;gap:.4rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.15em;color:#c084fc;margin-bottom:4px}
+  .arrivals-dot{width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;animation:lb 1.5s ease infinite}
+  @keyframes lb{0%,100%{opacity:1}50%{opacity:.4}}
+  .arrivals-title{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(1.5rem,2.8vw,2.2rem);font-weight:800;margin:0;letter-spacing:-.03em;line-height:1}
+</style>
+
 <style>
-  .watch-wrap { min-height: 100vh; }
-  .watch-loader { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6rem 1rem; }
-  .wl-spinner { width: 40px; height: 40px; border: 3px solid rgba(192,132,252,0.2); border-top-color: #c084fc; border-radius: 50%; animation: wlSpin 0.8s linear infinite; margin-bottom: 1rem; }
-  @keyframes wlSpin { to { transform: rotate(360deg); } }
-  .watch-loader p { color: var(--text-muted); }
-  
-  .watch-player-wrap { padding: 2rem 0 1rem; }
-  .watch-player { position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-  
-  .watch-info { padding: 1.5rem 0; }
-  .watch-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; }
-  .wb { padding: 4px 10px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.05em; }
-  .wb-type { background: rgba(251,191,36,0.15); color: #fbbf24; }
-  .wb-source { background: rgba(192,132,252,0.15); color: #c084fc; border: 1px solid rgba(192,132,252,0.3); }
-  .wb-new { background: linear-gradient(135deg,#ef4444,#f97316); color: #fff; }
-  
-  .watch-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: clamp(1.3rem, 2.5vw, 1.8rem); font-weight: 800; color: var(--text-primary); margin: 0 0 0.75rem; letter-spacing: -0.02em; line-height: 1.2; }
-  .watch-meta { display: flex; gap: 1rem; flex-wrap: wrap; color: var(--text-muted); font-size: 0.85rem; font-family: 'JetBrains Mono', monospace; }
-  
-  .watch-related-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-  @media (max-width: 1024px) { .watch-related-grid { grid-template-columns: repeat(3, 1fr); } }
-  @media (max-width: 768px) { .watch-related-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
-  
-  .wr-card { text-decoration: none; color: inherit; display: block; transition: transform 0.3s ease; }
-  .wr-card:hover { transform: translateY(-5px); }
-  .wr-thumb { position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 12px; overflow: hidden; margin-bottom: 8px; border: 1px solid rgba(192,132,252,0.2); }
-  .wr-thumb > img { position: absolute; top: 0; left: 0; }
-  .wr-src { position: absolute; top: 6px; right: 6px; padding: 3px 7px; color: #fff; font-family: 'JetBrains Mono', monospace; font-size: 0.55rem; font-weight: 800; border-radius: 4px; }
-  .wr-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 0.85rem; font-weight: 700; color: var(--text-primary); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px; }
-  .wr-channel { font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: var(--text-muted); }
+  /* ═══════════════════════════════════════════════
+     WATCH PAGE
+  ═══════════════════════════════════════════════ */
+  .wp-wrap { min-height: 100vh; color: var(--text-primary); }
+  .wp-loader, .wp-nf {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 6rem 1rem; text-align: center; min-height: 60vh;
+  }
+  .lo-orb { position: relative; width: 50px; height: 50px; margin-bottom: 1rem; }
+  .lo-orb.sm { width: 32px; height: 32px; margin-bottom: 0; }
+  .lo-core {
+    position: absolute; inset: 15%; border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    box-shadow: 0 0 20px rgba(192,132,252,.6);
+    animation: loPu 1s ease infinite;
+  }
+  .lo-ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 2px solid rgba(192,132,252,.6);
+    animation: loEx 1.2s ease-out infinite;
+  }
+  @keyframes loEx { 0%{transform:scale(.5);opacity:1} 100%{transform:scale(1.5);opacity:0} }
+  @keyframes loPu { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+  .wp-loader p { color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: .85rem; }
+  .nf-ic { color: #c084fc; margin-bottom: 1rem; }
+  .wp-nf h1 {
+    font-family: 'Bricolage Grotesque', sans-serif; font-size: 2rem;
+    background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin-bottom: .5rem;
+  }
+  .wp-nf p { color: var(--text-secondary); margin-bottom: 1.5rem; max-width: 400px; }
+  .nf-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .nf-bk, .nf-rt {
+    display: inline-flex; align-items: center; gap: 6px; padding: 12px 24px;
+    text-decoration: none; border: none; cursor: pointer; border-radius: 999px;
+    font-weight: 700; font-family: 'Bricolage Grotesque', sans-serif; font-size: .9rem;
+    transition: transform .2s ease;
+  }
+  .nf-bk { background: var(--grad); color: #fff; box-shadow: 0 8px 24px rgba(192,132,252,.4); }
+  .nf-rt { background: rgba(192,132,252,.1); border: 1px solid rgba(192,132,252,.3); color: var(--text-primary); }
+  .nf-bk:hover, .nf-rt:hover { transform: translateY(-2px); }
+
+  /* HERO */
+  .wp-hero {
+    position: relative; padding: 3rem 0; overflow: hidden; min-height: 480px;
+  }
+  .wp-bg {
+    position: absolute; inset: 0; background-size: cover; background-position: center;
+    filter: blur(35px) brightness(.3) saturate(1.3); transform: scale(1.15);
+    opacity: .7; z-index: 0;
+  }
+  .wp-fade {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(10,5,23,.55) 0%, rgba(10,5,23,.7) 60%, var(--bg-base,#0a0517) 100%);
+    z-index: 1;
+  }
+  .wp-hero-in {
+    position: relative; z-index: 2;
+    display: grid; grid-template-columns: 340px 1fr; gap: 3rem; align-items: center;
+  }
+  .wp-poster {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(192,132,252,.3);
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  .wp-poster:hover { transform: scale(1.02); }
+  .wp-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .wp-poster-play {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 72px; height: 72px; border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; padding-left: 4px;
+    box-shadow: 0 10px 30px rgba(192,132,252,.7), 0 0 40px rgba(232,121,249,.5);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 2;
+  }
+  .wp-poster:hover .wp-poster-play { transform: translate(-50%, -50%) scale(1.15); }
+
+  .wp-info { min-width: 0; color: #fff; }
+  .wp-badges { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .wp-b {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 11px; border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: .68rem;
+    font-weight: 800; letter-spacing: .08em;
+  }
+  .wp-b-new { background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; box-shadow: 0 4px 15px rgba(239,68,68,.4); }
+  .wp-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px #fff; animation: apd 1.5s ease infinite; }
+  @keyframes apd { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .wp-b-off { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+  .wp-b-hd { background: rgba(125, 211, 252, .9); color: #0a0517; }
+  .wp-b-type { background: rgba(192, 132, 252, .9); color: #0a0517; }
+
+  .wp-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(1.5rem, 3.2vw, 2.4rem); font-weight: 800;
+    line-height: 1.15; letter-spacing: -.02em; margin: 0 0 .75rem;
+    color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,.8);
+  }
+  .wp-meta {
+    display: flex; align-items: center; gap: 12px;
+    color: rgba(255,255,255,.75); font-size: .85rem;
+    font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .mp-sep { color: rgba(192,132,252,.5); }
+  .wp-syno {
+    color: rgba(255,255,255,.82); font-size: .95rem; line-height: 1.65;
+    margin: 0 0 1.75rem; max-width: 700px;
+    text-shadow: 0 2px 10px rgba(0,0,0,.5);
+  }
+  .wp-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .wp-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px; border-radius: 999px;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: .88rem; font-weight: 700;
+    cursor: pointer; transition: all .25s ease; border: none;
+  }
+  .wp-btn-p {
+    background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
+    color: #fff; box-shadow: 0 10px 30px rgba(192,132,252,.5);
+  }
+  .wp-btn-p:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(192,132,252,.65); }
+  .wp-btn-s {
+    background: rgba(28,15,61,.7); color: #fff;
+    border: 1px solid rgba(192,132,252,.4);
+  }
+  .wp-btn-s:hover { background: rgba(192,132,252,.2); transform: translateY(-3px); }
+
+  /* PLAYER */
+  .wp-player { padding: 2rem 0; }
+  .pl-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+  .pl-close {
+    background: rgba(192,132,252,.1); border: 1px solid rgba(192,132,252,.3);
+    color: var(--text-primary); width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all .2s ease;
+  }
+  .pl-close:hover { background: rgba(239,68,68,.2); color: #ef4444; transform: rotate(90deg); }
+  .pl-wrap-full {
+    width: 100%; max-width: 100%; position: relative;
+    border-radius: 20px; overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5), 0 0 0 1px rgba(192,132,252,.2);
+    background: #000;
+  }
+  .pl-frame-full {
+    position: relative; width: 100%; padding-top: 56.25%;
+    background: #000; overflow: hidden;
+  }
+  .pl-frame-full iframe {
+    position: absolute !important; top: 0 !important; left: 0 !important;
+    width: 100% !important; height: 100% !important;
+    border: 0 !important; display: block !important;
+  }
+  .pl-load-msg {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: #fff; font-family: 'JetBrains Mono', monospace; font-size: .85rem; background: #000;
+  }
+  .pl-brand {
+    position: absolute; top: 12px; left: 12px;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 11px; background: rgba(10,5,23,.85);
+    border: 1px solid rgba(192,132,252,.3); border-radius: 999px;
+    color: #e879f9; font-family: 'JetBrains Mono', monospace;
+    font-size: .7rem; font-weight: 700; z-index: 10;
+    pointer-events: none; opacity: .9;
+  }
+  .pl-brand span { color: #fff; }
+
+  /* DETAILS + RELATED */
+  .wp-details { padding: 2rem 0 4rem; }
+  .wp-grid {
+    display: grid; grid-template-columns: 1fr 320px; gap: 2.5rem;
+  }
+  .wp-sec { margin-bottom: 2.5rem; }
+  .wp-sh {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.35rem; font-weight: 800; margin: 0 0 1rem;
+    color: var(--text-primary); padding-bottom: .6rem;
+    border-bottom: 2px solid rgba(192,132,252,.15);
+    display: inline-block; position: relative;
+  }
+  .wp-sh::after {
+    content: ''; position: absolute; left: 0; bottom: -2px;
+    width: 40px; height: 2px; background: var(--grad); border-radius: 2px;
+  }
+  .wp-desc {
+    color: var(--text-secondary); font-size: .95rem; line-height: 1.75;
+    white-space: pre-wrap;
+  }
+
+  .wp-related-head { margin-bottom: 1.25rem; }
+
+  .wp-cats {
+    display: flex; gap: 8px; margin-bottom: 1.25rem; flex-wrap: wrap;
+  }
+  .wp-ct {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px; background: rgba(28,15,61,.5);
+    border: 1px solid rgba(192,132,252,.2); border-radius: 999px;
+    color: var(--text-secondary); font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: .78rem; font-weight: 600; cursor: pointer;
+    transition: all .25s ease; white-space: nowrap;
+  }
+  .wp-ct:hover { background: rgba(192,132,252,.12); color: var(--text-primary); transform: translateY(-1px); }
+  .wp-ct.active {
+    background: var(--grad); color: #fff; border-color: transparent;
+    box-shadow: 0 6px 20px rgba(192,132,252,.4);
+  }
+  .ct-c {
+    font-family: 'JetBrains Mono', monospace; font-size: .7rem; opacity: .8;
+    background: rgba(0,0,0,.2); padding: 2px 8px; border-radius: 6px;
+  }
+  .wp-ct.active .ct-c { background: rgba(255,255,255,.2); }
+
+  .wp-side { display: flex; flex-direction: column; gap: 1.25rem; }
+  .wp-card {
+    background: rgba(28,15,61,.5); border: 1px solid rgba(192,132,252,.15);
+    border-radius: 16px; padding: 1.25rem;
+  }
+  .wc-t {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1rem; font-weight: 800; margin: 0 0 1rem;
+    color: var(--text-primary); padding-bottom: .5rem;
+    border-bottom: 1px solid rgba(192,132,252,.15);
+  }
+  .wc-list { display: flex; flex-direction: column; gap: 10px; }
+  .ir {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px; font-size: .82rem;
+  }
+  .ir-l {
+    color: var(--text-muted); font-weight: 600;
+    font-family: 'JetBrains Mono', monospace; font-size: .72rem;
+    letter-spacing: .05em; text-transform: uppercase; min-width: 80px;
+  }
+  .ir-v { color: var(--text-primary); text-align: right; font-weight: 500; }
+
+  .wp-share { display: flex; gap: 8px; }
+  .sh-btn {
+    flex: 1; padding: 10px;
+    background: rgba(192,132,252,.08);
+    border: 1px solid rgba(192,132,252,.2);
+    border-radius: 10px; color: var(--text-secondary);
+    cursor: pointer; transition: all .2s ease;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sh-btn:hover {
+    background: var(--grad); color: #fff; border-color: transparent;
+  }
+
+  @media (max-width: 1024px) {
+    .wp-hero-in { grid-template-columns: 280px 1fr; gap: 2rem; }
+    .wp-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+  }
+  @media (max-width: 768px) {
+    .wp-hero { padding: 2rem 0; min-height: auto; }
+    .wp-hero-in { grid-template-columns: 1fr; gap: 1.5rem; text-align: center; }
+    .wp-poster { max-width: 100%; }
+    .wp-badges, .wp-meta, .wp-actions { justify-content: center; }
+    .wp-btn { padding: 11px 20px; font-size: .82rem; }
+  }
 </style>
