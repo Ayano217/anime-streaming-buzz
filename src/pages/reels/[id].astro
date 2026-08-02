@@ -12,31 +12,29 @@ const videoId = id || '';
     <div class="rp-bg" id="rpBg"></div>
     <div class="rp-bg-overlay"></div>
 
-    <div class="rp-topbar">
-      <button class="rp-btn-icon" id="rpBack" aria-label="Back">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      </button>
-      <div class="rp-brand">AniTube<span>Buzz</span></div>
-      <button class="rp-btn-icon" id="rpMenu" aria-label="Menu">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-      </button>
-    </div>
+    <!-- Top -->
+    <button class="rp-back" id="rpBack" aria-label="Back">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+    <div class="rp-brand">AniTube<span>Buzz</span></div>
 
-    <div class="rp-nav-arrows">
-      <button class="rp-arrow" id="rpArrowUp" aria-label="Previous">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-      </button>
-      <button class="rp-arrow" id="rpArrowDown" aria-label="Next">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-    </div>
+    <!-- Nav arrows (desktop) -->
+    <button class="rp-arrow rp-arrow-up" id="rpArrowUp" aria-label="Previous">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
+    <button class="rp-arrow rp-arrow-down" id="rpArrowDown" aria-label="Next">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
 
+    <!-- Feed -->
     <div class="rp-feed" id="rpFeed">
-      <div class="rp-loading" id="rpLoading">
-        <div class="rp-spinner"></div>
-      </div>
+      <div class="rp-loading" id="rpLoading"><div class="rp-spinner"></div></div>
     </div>
 
+    <!-- Counter -->
+    <div class="rp-counter" id="rpCounter"></div>
+
+    <!-- Toast -->
     <div class="rp-toast" id="rpToast"></div>
   </div>
 </BaseLayout>
@@ -73,109 +71,130 @@ const videoId = id || '';
     padding: 0 !important;
     margin: 0 !important;
   }
+</style>
 
+<style>
   .rp-root {
-    position: fixed !important;
-    inset: 0 !important;
-    background: #000 !important;
-    color: #fff !important;
-    z-index: 9999 !important;
-    font-family: 'Inter', 'DM Sans', sans-serif !important;
-    overflow: hidden !important;
-    width: 100vw !important;
-    height: 100vh !important;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    color: #fff;
+    z-index: 9999;
+    font-family: 'Inter', 'DM Sans', sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
   }
 
+  /* Cinematic blurred BG */
   .rp-bg {
     position: absolute;
-    inset: -30px;
+    inset: -40px;
     background-size: cover;
     background-position: center;
-    filter: blur(45px) brightness(0.35);
-    transform: scale(1.15);
-    transition: background-image 0.5s ease;
+    filter: blur(50px) brightness(0.3) saturate(1.2);
+    transform: scale(1.2);
+    transition: background-image 0.6s ease;
     z-index: 1;
+    will-change: background-image;
   }
   .rp-bg-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.55);
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.75) 100%);
     z-index: 2;
   }
 
-  .rp-topbar {
+  /* Back button (top left) */
+  .rp-back {
     position: absolute;
-    top: 0; left: 0; right: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 20px;
-    z-index: 100;
-    background: linear-gradient(180deg, rgba(0,0,0,0.7), transparent);
-    height: 60px;
-    box-sizing: border-box;
-  }
-  .rp-btn-icon {
-    width: 40px; height: 40px;
+    top: 20px; left: 20px;
+    width: 42px; height: 42px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.5);
-    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.55);
+    border: 1px solid rgba(255,255,255,0.12);
     color: #fff;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    z-index: 100;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    transition: all 0.25s ease;
     padding: 0;
   }
-  .rp-btn-icon:hover {
-    background: rgba(192,132,252,0.3);
+  .rp-back:hover {
+    background: rgba(192,132,252,0.35);
     border-color: rgba(192,132,252,0.6);
-    transform: scale(1.05);
+    transform: scale(1.06);
   }
+
+  /* Brand center top */
   .rp-brand {
+    position: absolute;
+    top: 30px; left: 50%;
+    transform: translateX(-50%);
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 800;
     background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: -0.02em;
+    z-index: 100;
+    pointer-events: none;
+    text-shadow: 0 2px 20px rgba(192,132,252,0.4);
   }
   .rp-brand span { color: #fff; -webkit-text-fill-color: #fff; }
 
-  .rp-nav-arrows {
-    position: absolute;
-    right: 30px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    z-index: 90;
-  }
+  /* Nav arrows */
   .rp-arrow {
+    position: absolute;
+    right: 32px;
     width: 44px; height: 44px;
     border-radius: 50%;
-    background: rgba(30,30,30,0.9);
-    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(20,20,30,0.75);
+    border: 1px solid rgba(255,255,255,0.12);
     color: #fff;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(10px);
+    z-index: 90;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    transition: all 0.25s ease;
     padding: 0;
   }
   .rp-arrow:hover {
     background: rgba(192,132,252,0.4);
+    border-color: rgba(192,132,252,0.7);
     transform: scale(1.1);
   }
+  .rp-arrow-up { top: calc(50% - 60px); transform: translateY(-50%); }
+  .rp-arrow-up:hover { transform: translateY(-50%) scale(1.1); }
+  .rp-arrow-down { top: calc(50% + 30px); transform: translateY(-50%); }
+  .rp-arrow-down:hover { transform: translateY(-50%) scale(1.1); }
 
+  /* Counter (top right corner subtle) */
+  .rp-counter {
+    position: absolute;
+    top: 32px; right: 90px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.65);
+    z-index: 100;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 999px;
+    backdrop-filter: blur(10px);
+  }
+
+  /* Feed */
   .rp-feed {
     position: absolute;
     inset: 0;
@@ -202,15 +221,42 @@ const videoId = id || '';
     box-sizing: border-box;
   }
 
+  /* Premium card with curved-display glow */
   .rp-card {
     position: relative;
-    height: min(90vh, calc(100vh - 40px));
+    height: min(88vh, calc(100vh - 60px));
     aspect-ratio: 9 / 16;
-    max-width: min(92vw, 500px);
-    background: #0d0520;
-    border-radius: 18px;
+    max-width: min(90vw, 480px);
+    background: #0a0517;
+    border-radius: 22px;
     overflow: hidden;
-    box-shadow: 0 25px 70px rgba(0,0,0,0.8), 0 0 40px rgba(192,132,252,0.2);
+    box-shadow: 
+      0 30px 80px rgba(0,0,0,0.85),
+      0 0 0 1px rgba(255,255,255,0.06);
+  }
+
+  /* Curved-display neon border animation */
+  .rp-card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, 
+      rgba(192,132,252,0.6) 0%, 
+      rgba(232,121,249,0.4) 25%, 
+      rgba(125,211,252,0.6) 50%, 
+      rgba(232,121,249,0.4) 75%, 
+      rgba(192,132,252,0.6) 100%);
+    background-size: 300% 300%;
+    animation: rpBorderShift 8s ease infinite;
+    z-index: -1;
+    opacity: 0.5;
+    filter: blur(8px);
+  }
+
+  @keyframes rpBorderShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
   }
 
   .rp-video {
@@ -230,134 +276,40 @@ const videoId = id || '';
     inset: 0;
   }
 
-  .rp-info {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    padding: 24px 18px 20px;
-    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.9) 60%);
-    z-index: 5;
-    pointer-events: none;
-  }
-  .rp-info-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    pointer-events: auto;
-    flex-wrap: wrap;
-  }
-  .rp-avatar {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
-    padding: 2px;
-    flex-shrink: 0;
-    box-sizing: border-box;
-  }
-  .rp-avatar-inner {
-    width: 100%; height: 100%;
-    border-radius: 50%;
-    background: #0d0520;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-weight: 800;
-    font-size: 0.9rem;
-    font-family: 'Bricolage Grotesque', sans-serif;
-  }
-  .rp-channel {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #fff;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
-  }
-  .rp-follow {
-    margin-left: 4px;
-    padding: 5px 14px;
-    background: transparent;
-    border: 1.5px solid rgba(255,255,255,0.9);
-    color: #fff;
-    border-radius: 6px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: inherit;
-  }
-  .rp-follow:hover {
-    background: rgba(255,255,255,0.15);
-  }
-  .rp-follow.followed {
-    background: linear-gradient(135deg,#c084fc,#e879f9);
-    border-color: transparent;
-  }
-  .rp-caption {
-    font-size: 0.82rem;
-    line-height: 1.45;
-    color: rgba(255,255,255,0.95);
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    pointer-events: auto;
-    padding-right: 70px;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.6);
-  }
-
+  /* Minimal side action (only Send button) */
   .rp-actions {
     position: absolute;
-    right: 8px;
-    bottom: 20px;
+    right: -60px;
+    bottom: 24px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    z-index: 10;
-    align-items: center;
-  }
-  .rp-action {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
+    gap: 12px;
+    z-index: 15;
   }
   .rp-action-btn {
     width: 46px; height: 46px;
     border-radius: 50%;
-    background: rgba(0,0,0,0.55);
-    border: none;
+    background: rgba(20,10,45,0.85);
+    border: 1px solid rgba(192,132,252,0.25);
     color: #fff;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
     padding: 0;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
   }
   .rp-action-btn:hover {
-    background: rgba(255,255,255,0.22);
+    background: linear-gradient(135deg, rgba(192,132,252,0.4), rgba(232,121,249,0.3));
+    border-color: rgba(232,121,249,0.7);
     transform: scale(1.1);
-  }
-  .rp-action-btn.liked {
-    background: rgba(239,68,68,0.3);
-    color: #ef4444;
-  }
-  .rp-action-btn.liked svg { fill: #ef4444; }
-  .rp-action-btn.saved {
-    background: linear-gradient(135deg,rgba(192,132,252,0.5),rgba(232,121,249,0.5));
-    color: #e879f9;
-  }
-  .rp-action-btn.saved svg { fill: #e879f9; }
-  .rp-action-lbl {
-    font-size: 0.62rem;
-    font-weight: 700;
-    color: #fff;
-    font-family: 'JetBrains Mono', monospace;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
-    letter-spacing: 0.02em;
+    box-shadow: 0 8px 24px rgba(192,132,252,0.35);
   }
 
+  /* Loading */
   .rp-loading {
     position: fixed;
     inset: 0;
@@ -368,14 +320,15 @@ const videoId = id || '';
     z-index: 200;
   }
   .rp-spinner {
-    width: 44px; height: 44px;
-    border: 3px solid rgba(192,132,252,0.2);
+    width: 42px; height: 42px;
+    border: 3px solid rgba(192,132,252,0.15);
     border-top-color: #c084fc;
     border-radius: 50%;
     animation: rpSpin 0.8s linear infinite;
   }
   @keyframes rpSpin { to { transform: rotate(360deg); } }
 
+  /* Toast */
   .rp-toast {
     position: fixed;
     bottom: 40px; left: 50%;
@@ -389,9 +342,9 @@ const videoId = id || '';
     font-weight: 600;
     z-index: 500;
     opacity: 0;
-    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
     backdrop-filter: blur(15px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
     pointer-events: none;
     white-space: nowrap;
   }
@@ -400,6 +353,7 @@ const videoId = id || '';
     transform: translateX(-50%) translateY(0);
   }
 
+  /* Mobile: full screen, actions inside */
   @media (max-width: 768px) {
     .rp-card {
       height: 100vh;
@@ -407,25 +361,18 @@ const videoId = id || '';
       width: 100vw;
       aspect-ratio: unset;
       border-radius: 0;
-      box-shadow: none;
     }
-    .rp-nav-arrows { display: none; }
+    .rp-card::before { display: none; }
+    .rp-arrow { display: none; }
+    .rp-counter { display: none; }
     .rp-actions {
-      right: 10px;
-      bottom: 110px;
+      right: 12px;
+      bottom: 140px;
     }
-    .rp-info {
-      right: 0;
-      padding: 24px 14px 24px;
-    }
-    .rp-caption {
-      padding-right: 70px;
-    }
-    .rp-topbar { padding: 10px 14px; }
   }
   @media (max-width: 480px) {
-    .rp-brand { font-size: 0.95rem; }
-    .rp-btn-icon { width: 36px; height: 36px; }
+    .rp-back { width: 38px; height: 38px; top: 16px; left: 16px; }
+    .rp-brand { font-size: 0.95rem; top: 24px; }
   }
 </style>
 
@@ -439,23 +386,27 @@ const videoId = id || '';
   var backBtn = document.getElementById('rpBack');
   var arrowUp = document.getElementById('rpArrowUp');
   var arrowDown = document.getElementById('rpArrowDown');
+  var counterEl = document.getElementById('rpCounter');
 
   var videos = [];
   var currentIdx = 0;
   var seenIds = {};
 
   function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})}
-  function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n).trim()+'…':s;}
 
   function showToast(msg){
     if(!toastEl)return;
     toastEl.textContent = msg;
     toastEl.classList.add('show');
     clearTimeout(toastEl._t);
-    toastEl._t = setTimeout(function(){ toastEl.classList.remove('show'); }, 2000);
+    toastEl._t = setTimeout(function(){ toastEl.classList.remove('show'); }, 1800);
   }
 
-  // Detect source from ID prefix
+  function updateCounter(){
+    if(!counterEl) return;
+    counterEl.textContent = (currentIdx + 1) + ' / ' + videos.length;
+  }
+
   function detectSource(id){
     if(!id) return 'youtube';
     if(id.indexOf('dm_') === 0) return 'dailymotion';
@@ -466,8 +417,6 @@ const videoId = id || '';
     if(id.indexOf('yt_') === 0) return 'youtube';
     return 'youtube';
   }
-
-  // Extract raw ID (strip prefix)
   function stripPrefix(id, source){
     if(source === 'dailymotion') return id.replace(/^dm_/, '');
     if(source === 'bilibili') return id.replace(/^bili_/, '');
@@ -485,83 +434,24 @@ const videoId = id || '';
     var thumbnail = '';
 
     if(source === 'dailymotion'){
-      embedUrl = 'https://www.dailymotion.com/embed/video/' + rawId + '?autoplay=1&mute=1&ui-logo=0&ui-start-screen-info=0&sharing-enable=0';
+      embedUrl = 'https://www.dailymotion.com/embed/video/' + rawId;
       thumbnail = 'https://www.dailymotion.com/thumbnail/video/' + rawId;
     } else if(source === 'bilibili'){
-      embedUrl = 'https://player.bilibili.com/player.html?bvid=' + rawId + '&autoplay=1&muted=1';
-      thumbnail = '';
+      embedUrl = 'https://player.bilibili.com/player.html?bvid=' + rawId;
     } else if(source === 'odysee'){
-      embedUrl = 'https://odysee.com/$/embed/' + rawId + '?autoplay=1&muted=1';
-      thumbnail = '';
+      embedUrl = 'https://odysee.com/$/embed/' + rawId;
     } else if(source === 'rumble'){
-      embedUrl = 'https://rumble.com/embed/' + rawId + '/?autoplay=2';
-      thumbnail = '';
-    } else if(source === 'youtube' || source === 'youtube_shorts'){
-      embedUrl = 'https://www.youtube.com/embed/' + rawId + '?autoplay=1&mute=1&modestbranding=1&rel=0&playsinline=1';
+      embedUrl = 'https://rumble.com/embed/' + rawId + '/';
+    } else {
+      embedUrl = 'https://www.youtube.com/embed/' + rawId;
       thumbnail = 'https://i.ytimg.com/vi/' + rawId + '/hqdefault.jpg';
     }
 
     return {
-      id: id,
-      title: 'Video',
-      channel: 'Channel',
-      thumbnail: thumbnail,
-      embedUrl: embedUrl,
-      source: source,
-      type: 'anime',
-      aspect: 'portrait'
+      id: id, title: 'Video', channel: 'Channel',
+      thumbnail: thumbnail, embedUrl: embedUrl,
+      source: source, type: 'anime', aspect: 'portrait'
     };
-  }
-
-  function addToHistory(v){
-    try{
-      var hist = JSON.parse(localStorage.getItem('atb_watch_history')||'[]');
-      hist = hist.filter(function(h){ return h.id !== v.id; });
-      hist.unshift({
-        id: v.id,
-        title: v.title,
-        thumbnail: v.thumbnail,
-        channel: v.channel,
-        type: v.type,
-        watchedAt: Date.now()
-      });
-      hist = hist.slice(0, 50);
-      localStorage.setItem('atb_watch_history', JSON.stringify(hist));
-    }catch(e){}
-  }
-
-  function isSaved(id){
-    try{ var s = JSON.parse(localStorage.getItem('atb_saved_reels')||'[]'); return s.indexOf(id) !== -1; }catch(e){return false;}
-  }
-  function toggleSaved(id){
-    try{
-      var s = JSON.parse(localStorage.getItem('atb_saved_reels')||'[]');
-      var i = s.indexOf(id);
-      if(i === -1){ s.push(id); localStorage.setItem('atb_saved_reels', JSON.stringify(s)); return true; }
-      s.splice(i,1); localStorage.setItem('atb_saved_reels', JSON.stringify(s)); return false;
-    }catch(e){return false;}
-  }
-  function isLiked(id){
-    try{ var l = JSON.parse(localStorage.getItem('atb_liked_reels')||'[]'); return l.indexOf(id) !== -1; }catch(e){return false;}
-  }
-  function toggleLiked(id){
-    try{
-      var l = JSON.parse(localStorage.getItem('atb_liked_reels')||'[]');
-      var i = l.indexOf(id);
-      if(i === -1){ l.push(id); localStorage.setItem('atb_liked_reels', JSON.stringify(l)); return true; }
-      l.splice(i,1); localStorage.setItem('atb_liked_reels', JSON.stringify(l)); return false;
-    }catch(e){return false;}
-  }
-  function isFollowed(ch){
-    try{ var f = JSON.parse(localStorage.getItem('atb_followed')||'[]'); return f.indexOf(ch) !== -1; }catch(e){return false;}
-  }
-  function toggleFollowed(ch){
-    try{
-      var f = JSON.parse(localStorage.getItem('atb_followed')||'[]');
-      var i = f.indexOf(ch);
-      if(i === -1){ f.push(ch); localStorage.setItem('atb_followed', JSON.stringify(f)); return true; }
-      f.splice(i,1); localStorage.setItem('atb_followed', JSON.stringify(f)); return false;
-    }catch(e){return false;}
   }
 
   function buildEmbedUrl(v){
@@ -569,7 +459,7 @@ const videoId = id || '';
     if(!url) return '';
     var sep = url.indexOf('?') === -1 ? '?' : '&';
     if(v.source === 'youtube' || v.source === 'youtube_shorts'){
-      if(url.indexOf('autoplay') === -1) url += sep + 'autoplay=1&mute=1&modestbranding=1&rel=0&playsinline=1';
+      if(url.indexOf('autoplay') === -1) url += sep + 'autoplay=1&mute=1&modestbranding=1&rel=0&playsinline=1&controls=1';
     } else if(v.source === 'dailymotion'){
       if(url.indexOf('autoplay') === -1) url += sep + 'autoplay=1&mute=1&ui-logo=0&ui-start-screen-info=0&sharing-enable=0';
     } else if(v.source === 'bilibili'){
@@ -586,92 +476,32 @@ const videoId = id || '';
     el.dataset.videoId = v.id;
     el.dataset.idx = idx;
 
-    var liked = isLiked(v.id);
-    var saved = isSaved(v.id);
-    var followed = isFollowed(v.channel || '');
-    var initials = (v.channel||'AT').charAt(0).toUpperCase();
-
     el.innerHTML =
       '<div class="rp-card">' +
         '<div class="rp-video" data-video-container></div>' +
-        '<div class="rp-info">' +
-          '<div class="rp-info-row">' +
-            '<div class="rp-avatar"><div class="rp-avatar-inner">' + esc(initials) + '</div></div>' +
-            '<div class="rp-channel">' + esc(v.channel || 'Channel') + '</div>' +
-            '<button class="rp-follow ' + (followed?'followed':'') + '" data-follow>' + (followed?'Following':'Follow') + '</button>' +
-          '</div>' +
-          '<div class="rp-caption">' + esc(trunc(v.title||'', 120)) + '</div>' +
-        '</div>' +
         '<div class="rp-actions">' +
-          '<div class="rp-action">' +
-            '<button class="rp-action-btn ' + (liked?'liked':'') + '" data-like aria-label="Like">' +
-              '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' +
-            '</button>' +
-            '<div class="rp-action-lbl">' + (liked?'Liked':'Like') + '</div>' +
-          '</div>' +
-          '<div class="rp-action">' +
-            '<button class="rp-action-btn" data-comment aria-label="Comment">' +
-              '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
-            '</button>' +
-            '<div class="rp-action-lbl">Chat</div>' +
-          '</div>' +
-          '<div class="rp-action">' +
-            '<button class="rp-action-btn" data-share aria-label="Share">' +
-              '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>' +
-            '</button>' +
-            '<div class="rp-action-lbl">Share</div>' +
-          '</div>' +
-          '<div class="rp-action">' +
-            '<button class="rp-action-btn ' + (saved?'saved':'') + '" data-save aria-label="Save">' +
-              '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>' +
-            '</button>' +
-            '<div class="rp-action-lbl">' + (saved?'Saved':'Save') + '</div>' +
-          '</div>' +
+          '<button class="rp-action-btn" data-send aria-label="Send to friend">' +
+            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
+          '</button>' +
         '</div>' +
       '</div>';
 
-    el.querySelector('[data-like]').addEventListener('click', function(e){
-      e.stopPropagation();
-      var nowLiked = toggleLiked(v.id);
-      this.classList.toggle('liked', nowLiked);
-      var lbl = this.parentElement.querySelector('.rp-action-lbl');
-      if(lbl) lbl.textContent = nowLiked ? 'Liked' : 'Like';
-      showToast(nowLiked ? '❤️ Liked' : 'Removed');
-    });
-    el.querySelector('[data-save]').addEventListener('click', function(e){
-      e.stopPropagation();
-      var nowSaved = toggleSaved(v.id);
-      this.classList.toggle('saved', nowSaved);
-      var lbl = this.parentElement.querySelector('.rp-action-lbl');
-      if(lbl) lbl.textContent = nowSaved ? 'Saved' : 'Save';
-      showToast(nowSaved ? '🔖 Saved' : 'Removed');
-    });
-    el.querySelector('[data-share]').addEventListener('click', function(e){
+    el.querySelector('[data-send]').addEventListener('click', function(e){
       e.stopPropagation();
       var url = window.location.origin + '/reels/' + encodeURIComponent(v.id);
+      // Future: open messaging system to send to friend
       if(navigator.share){
-        navigator.share({title: v.title, url: url}).catch(function(){});
+        navigator.share({title: v.title || 'Video', url: url}).catch(function(){});
       } else {
-        try{ navigator.clipboard.writeText(url); showToast('🔗 Link copied'); }catch(_){}
+        try{ navigator.clipboard.writeText(url); showToast('🔗 Link copied to send'); }catch(_){ showToast('Copy failed'); }
       }
-    });
-    el.querySelector('[data-comment]').addEventListener('click', function(e){
-      e.stopPropagation();
-      showToast('💬 Comments coming soon');
-    });
-    el.querySelector('[data-follow]').addEventListener('click', function(e){
-      e.stopPropagation();
-      var ch = v.channel || '';
-      var nowFollow = toggleFollowed(ch);
-      this.classList.toggle('followed', nowFollow);
-      this.textContent = nowFollow ? 'Following' : 'Follow';
-      showToast(nowFollow ? '✅ Following ' + ch : 'Unfollowed');
     });
 
     return el;
   }
 
   function activateItem(idx){
+    if(idx < 0 || idx >= videos.length) return;
     var items = feedEl.querySelectorAll('.rp-item');
     items.forEach(function(item, i){
       var container = item.querySelector('[data-video-container]');
@@ -697,13 +527,15 @@ const videoId = id || '';
         if(vv && vv.thumbnail && bgEl){
           bgEl.style.backgroundImage = 'url(' + vv.thumbnail + ')';
         }
-        if(vv) addToHistory(vv);
+        // Notify Safiya
         try{
           window.dispatchEvent(new CustomEvent('safiya:video-event', {
             detail: { action: 'watch', video: vv }
           }));
         }catch(_){}
+        updateCounter();
       } else {
+        // Unload iframes far from current (keep +1/-1)
         if(Math.abs(i - idx) > 1){
           container.innerHTML = '';
         }
@@ -726,24 +558,25 @@ const videoId = id || '';
           }
         }catch(_){}
       }
-
-      // Fallback: build from ID prefix (proper source detect)
-      if(!clickedVideo){
-        clickedVideo = buildFallbackVideo(CURRENT_ID);
-      }
+      if(!clickedVideo) clickedVideo = buildFallbackVideo(CURRENT_ID);
 
       videos = [clickedVideo];
       seenIds[clickedVideo.id] = true;
 
-      // 2) Load related portrait shorts
-      var relatedTypes = ['anime','donghua'];
-      for(var rt = 0; rt < relatedTypes.length; rt++){
+      // 2) Load related — try multiple types + pages for variety
+      var loaders = [
+        '/api/social-feed?type=anime&limit=30',
+        '/api/social-feed?type=donghua&limit=30',
+        '/api/social-feed?type=kdrama&limit=20',
+        '/api/social-feed?type=movies&limit=20'
+      ];
+      for(var i = 0; i < loaders.length; i++){
         try {
-          var rr = await fetch('/api/social-feed?type=' + relatedTypes[rt] + '&format=portrait&limit=25');
+          var rr = await fetch(loaders[i]);
           var dd = await rr.json();
           if(dd.success && dd.videos){
             dd.videos.forEach(function(v){
-              if(!seenIds[v.id] && (v.aspect === 'portrait' || v.source === 'youtube_shorts' || v.isShort)){
+              if(!seenIds[v.id]){
                 videos.push(v);
                 seenIds[v.id] = true;
               }
@@ -759,23 +592,26 @@ const videoId = id || '';
       });
 
       if(loadingEl) loadingEl.style.display = 'none';
-      setTimeout(function(){ activateItem(0); }, 100);
+      setTimeout(function(){ activateItem(0); updateCounter(); }, 100);
 
     } catch(err){
       console.error('[reels]', err);
       if(loadingEl){
-        loadingEl.innerHTML = '<div style="text-align:center;color:#fff;padding:20px;"><div style="font-size:2rem;margin-bottom:10px;">😔</div><div>Failed to load video</div><button onclick="history.back()" style="margin-top:20px;padding:10px 20px;background:rgba(192,132,252,0.3);border:1px solid rgba(192,132,252,0.6);color:#fff;border-radius:8px;cursor:pointer;">Go Back</button></div>';
+        loadingEl.innerHTML = '<div style="text-align:center;color:#fff;padding:20px;"><div style="font-size:2rem;margin-bottom:10px;">😔</div><div>Failed to load</div><button onclick="history.back()" style="margin-top:20px;padding:10px 20px;background:rgba(192,132,252,0.3);border:1px solid rgba(192,132,252,0.6);color:#fff;border-radius:8px;cursor:pointer;">Go Back</button></div>';
       }
     }
   }
 
+  // Scroll snap → activate visible item
   var scrollTimer;
   feedEl.addEventListener('scroll', function(){
     if(scrollTimer) clearTimeout(scrollTimer);
     scrollTimer = setTimeout(function(){
       var idx = Math.round(feedEl.scrollTop / window.innerHeight);
-      if(idx !== currentIdx){ activateItem(idx); }
-    }, 100);
+      if(idx !== currentIdx && idx >= 0 && idx < videos.length){
+        activateItem(idx);
+      }
+    }, 120);
   }, { passive: true });
 
   function scrollToIdx(idx){
