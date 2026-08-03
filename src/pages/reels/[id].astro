@@ -144,9 +144,8 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
     data-next={nextVideo?.id || ''}
   >
     
-    <!-- Top Bar -->
     <header class="rp-topbar">
-      <button class="rp-back" id="backBtn" aria-label="Back">
+      <button class="rp-back" id="backBtn" aria-label="Back to home">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
@@ -164,7 +163,6 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       </div>
     </header>
 
-    <!-- Video Stage -->
     <main class="rp-stage">
       
       <div class="rp-card" id="videoCard">
@@ -180,7 +178,6 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
             loading="eager"
           ></iframe>
           
-          <!-- Premium branded loader -->
           <div class="rp-loader" id="loader">
             <div class="rp-loader-orbit">
               <div class="rp-loader-dot rp-dot-1"></div>
@@ -192,7 +189,6 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         </div>
       </div>
 
-      <!-- Info (Bottom Left) -->
       <div class="rp-info">
         <div class="rp-channel-row">
           <div class="rp-avatar">
@@ -208,34 +204,26 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         </p>
       </div>
 
-      <!-- Actions (Right - PREMIUM BRANDED) -->
       <div class="rp-actions">
-        <button class="rp-action rp-like" id="likeBtn" aria-label="Like">
-          <div class="rp-action-btn">
-            <div class="rp-action-ring"></div>
-            <div class="rp-action-inner">
-              <svg class="rp-icon rp-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-            </div>
+        <button class="rp-pill rp-save" id="saveBtn" aria-label="Save">
+          <div class="rp-pill-icon">
+            <svg class="rp-icon rp-bookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
           </div>
-          <span class="rp-action-label">Like</span>
+          <span class="rp-pill-label">Save</span>
         </button>
         
-        <button class="rp-action rp-send" id="sendBtn" aria-label="Share">
-          <div class="rp-action-btn">
-            <div class="rp-action-ring"></div>
-            <div class="rp-action-inner">
-              <svg class="rp-icon rp-plane" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-              </svg>
-            </div>
+        <button class="rp-pill rp-send" id="sendBtn" aria-label="Share">
+          <div class="rp-pill-icon">
+            <svg class="rp-icon rp-plane" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+            </svg>
           </div>
-          <span class="rp-action-label">Send</span>
+          <span class="rp-pill-label">Send</span>
         </button>
       </div>
 
-      <!-- Desktop Nav -->
       <div class="rp-nav">
         <button class="rp-arrow" id="prevBtn" aria-label="Previous">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -251,12 +239,11 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
 
     </main>
 
-    <script is:inline set:html={`window.__REELS_QUEUE__ = ${JSON.stringify(feedQueue.slice(0, 30))};`}></script>
+    <script is:inline set:html={`window.__REELS_VIDEO__ = ${JSON.stringify(video)}; window.__REELS_QUEUE__ = ${JSON.stringify(feedQueue.slice(0, 30))};`}></script>
 
   </div>
 
   <style>
-    /* ===== ROOT ===== */
     .rp-root {
       position: fixed;
       inset: 0;
@@ -266,7 +253,6 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       background: 
         radial-gradient(ellipse at 20% 20%, rgba(192, 132, 252, 0.18) 0%, transparent 55%),
         radial-gradient(ellipse at 85% 75%, rgba(125, 211, 252, 0.12) 0%, transparent 55%),
-        radial-gradient(ellipse at 50% 50%, rgba(232, 121, 249, 0.08) 0%, transparent 70%),
         linear-gradient(180deg, #0a0517 0%, #150a29 50%, #0a0517 100%);
       overflow: hidden;
       display: flex;
@@ -276,7 +262,6 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       z-index: 1;
     }
 
-    /* ===== TOP BAR ===== */
     .rp-topbar {
       position: fixed;
       top: 0;
@@ -288,7 +273,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       justify-content: space-between;
       padding: 0 20px;
       z-index: 100;
-      background: linear-gradient(to bottom, rgba(10, 5, 23, 0.95) 0%, rgba(10, 5, 23, 0.4) 60%, transparent 100%);
+      background: linear-gradient(to bottom, rgba(10, 5, 23, 0.95) 0%, transparent 100%);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
     }
@@ -314,9 +299,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       transform: scale(1.05);
     }
 
-    .rp-back:active {
-      transform: scale(0.94);
-    }
+    .rp-back:active { transform: scale(0.94); }
 
     .rp-brand {
       display: flex;
@@ -372,12 +355,8 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       font-weight: 700;
     }
 
-    .rp-counter-sep {
-      margin: 0 6px;
-      opacity: 0.4;
-    }
+    .rp-counter-sep { margin: 0 6px; opacity: 0.4; }
 
-    /* ===== VIDEO STAGE ===== */
     .rp-stage {
       flex: 1;
       display: flex;
@@ -388,7 +367,6 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       z-index: 1;
     }
 
-    /* ===== CARD ===== */
     .rp-card {
       position: relative;
       width: 100%;
@@ -433,7 +411,6 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       display: block;
     }
 
-    /* ===== PREMIUM ANIMATED LOADER ===== */
     .rp-loader {
       position: absolute;
       inset: 0;
@@ -447,10 +424,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       transition: opacity 0.5s;
     }
 
-    .rp-loader.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+    .rp-loader.hidden { opacity: 0; pointer-events: none; }
 
     .rp-loader-orbit {
       position: relative;
@@ -468,23 +442,9 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       transform: translate(-50%, -50%);
     }
 
-    .rp-dot-1 {
-      background: #c084fc;
-      box-shadow: 0 0 15px #c084fc;
-      animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    }
-
-    .rp-dot-2 {
-      background: #e879f9;
-      box-shadow: 0 0 15px #e879f9;
-      animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite -0.47s;
-    }
-
-    .rp-dot-3 {
-      background: #7dd3fc;
-      box-shadow: 0 0 15px #7dd3fc;
-      animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite -0.93s;
-    }
+    .rp-dot-1 { background: #c084fc; box-shadow: 0 0 15px #c084fc; animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+    .rp-dot-2 { background: #e879f9; box-shadow: 0 0 15px #e879f9; animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite -0.47s; }
+    .rp-dot-3 { background: #7dd3fc; box-shadow: 0 0 15px #7dd3fc; animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite -0.93s; }
 
     @keyframes rp-orbit {
       0% { transform: translate(-50%, -50%) rotate(0deg) translateX(22px) rotate(0deg); }
@@ -503,7 +463,6 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       opacity: 0.9;
     }
 
-    /* ===== INFO PANEL ===== */
     .rp-info {
       position: absolute;
       bottom: 40px;
@@ -542,7 +501,6 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       font-size: 15px;
       color: white;
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-      letter-spacing: -0.01em;
     }
 
     .rp-title {
@@ -557,7 +515,6 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      letter-spacing: -0.01em;
     }
 
     .rp-meta {
@@ -583,80 +540,72 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       box-shadow: 0 2px 8px rgba(192, 132, 252, 0.4);
     }
 
-    .rp-dot {
-      opacity: 0.4;
-    }
+    .rp-dot { opacity: 0.4; }
 
-    /* ===================================================
-       ✨ PREMIUM BRANDED ACTION BUTTONS
-       =================================================== */
     .rp-actions {
       position: absolute;
-      right: 24px;
-      bottom: 140px; /* Raised HIGH to avoid Safiya overlap */
+      right: 20px;
+      bottom: 260px;
       display: flex;
       flex-direction: column;
-      gap: 22px;
+      gap: 10px;
       z-index: 60;
     }
 
-    .rp-action {
-      background: transparent;
-      border: none;
-      padding: 0;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* OUTER BUTTON - gradient ring container */
-    .rp-action-btn {
-      position: relative;
-      width: 58px;
-      height: 58px;
-      border-radius: 50%;
+    .rp-pill {
       display: flex;
       align-items: center;
-      justify-content: center;
-      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* GRADIENT RING - brand colors */
-    .rp-action-ring {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      opacity: 0.9;
-      padding: 2px;
-      transition: all 0.35s;
-      box-shadow: 
-        0 8px 24px rgba(192, 132, 252, 0.35),
-        0 0 0 1px rgba(192, 132, 252, 0.2);
-    }
-
-    /* INNER GLASS - dark background with icon */
-    .rp-action-inner {
-      position: absolute;
-      inset: 2px;
-      border-radius: 50%;
+      gap: 10px;
+      padding: 6px 14px 6px 6px;
+      height: 44px;
       background: 
-        radial-gradient(circle at 30% 30%, rgba(45, 25, 75, 0.95) 0%, rgba(20, 10, 40, 0.98) 100%);
+        linear-gradient(135deg, rgba(28, 15, 61, 0.85), rgba(20, 10, 40, 0.9));
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #f5ecff;
-      transition: all 0.35s;
+      border: 1px solid rgba(192, 132, 252, 0.35);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 
+        0 6px 20px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(192, 132, 252, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      position: relative;
       overflow: hidden;
     }
 
-    /* SHINE OVERLAY inside inner */
-    .rp-action-inner::before {
+    .rp-pill-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+      box-shadow: 
+        0 3px 10px rgba(192, 132, 252, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transition: all 0.3s;
+    }
+
+    .rp-icon {
+      width: 16px;
+      height: 16px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .rp-pill-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #f5ecff;
+      letter-spacing: 0.01em;
+      padding-right: 4px;
+    }
+
+    .rp-pill::before {
       content: '';
       position: absolute;
       top: 0;
@@ -666,107 +615,78 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       background: linear-gradient(
         90deg,
         transparent 0%,
-        rgba(255, 255, 255, 0.15) 50%,
+        rgba(192, 132, 252, 0.2) 50%,
         transparent 100%
       );
       transition: left 0.7s;
+      pointer-events: none;
     }
 
-    /* HOVER STATE */
-    .rp-action:hover .rp-action-btn {
-      transform: scale(1.1) translateY(-3px);
-    }
-
-    .rp-action:hover .rp-action-ring {
-      opacity: 1;
-      box-shadow: 
-        0 14px 34px rgba(192, 132, 252, 0.55),
-        0 0 20px rgba(232, 121, 249, 0.4);
-      animation: rp-ring-spin 3s linear infinite;
-    }
-
-    @keyframes rp-ring-spin {
-      to { filter: hue-rotate(360deg); }
-    }
-
-    .rp-action:hover .rp-action-inner {
+    .rp-pill:hover {
+      transform: translateX(-3px);
       background: 
-        radial-gradient(circle at 30% 30%, rgba(65, 35, 105, 0.95) 0%, rgba(30, 15, 55, 0.98) 100%);
-      color: white;
-    }
-
-    .rp-action:hover .rp-action-inner::before {
-      left: 100%;
-    }
-
-    .rp-action:hover .rp-icon {
-      transform: scale(1.15);
-      filter: drop-shadow(0 0 6px rgba(232, 121, 249, 0.7));
-    }
-
-    /* ACTIVE (click) */
-    .rp-action:active .rp-action-btn {
-      transform: scale(0.92);
-    }
-
-    .rp-icon {
-      width: 24px;
-      height: 24px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      z-index: 1;
-    }
-
-    /* LIKED STATE - Red gradient takeover */
-    .rp-like.liked .rp-action-ring {
-      background: linear-gradient(135deg, #ff2d55, #ff6b9d, #ff375f);
+        linear-gradient(135deg, rgba(48, 25, 90, 0.9), rgba(35, 18, 65, 0.95));
+      border-color: rgba(232, 121, 249, 0.6);
       box-shadow: 
-        0 10px 30px rgba(255, 45, 85, 0.6),
-        0 0 20px rgba(255, 45, 85, 0.4);
-      animation: rp-ring-spin 3s linear infinite;
+        0 10px 30px rgba(192, 132, 252, 0.35),
+        0 0 20px rgba(232, 121, 249, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
     }
 
-    .rp-like.liked .rp-action-inner {
+    .rp-pill:hover::before { left: 100%; }
+
+    .rp-pill:hover .rp-pill-icon {
+      transform: scale(1.08);
+      box-shadow: 
+        0 5px 16px rgba(232, 121, 249, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .rp-pill:hover .rp-icon { transform: scale(1.1); }
+    .rp-pill:active { transform: translateX(-2px) scale(0.97); }
+
+    /* SAVED STATE - gold/yellow accent */
+    .rp-save.saved {
+      border-color: rgba(255, 200, 100, 0.55);
       background: 
-        radial-gradient(circle at 30% 30%, rgba(75, 15, 35, 0.95) 0%, rgba(40, 5, 20, 0.98) 100%);
-      color: #ff6b9d;
+        linear-gradient(135deg, rgba(75, 55, 20, 0.85), rgba(50, 35, 10, 0.9));
+      box-shadow: 
+        0 8px 24px rgba(255, 200, 100, 0.3),
+        0 0 15px rgba(255, 200, 100, 0.15);
     }
 
-    .rp-like.liked .rp-heart {
+    .rp-save.saved .rp-pill-icon {
+      background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+      box-shadow: 
+        0 4px 14px rgba(251, 191, 36, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    .rp-save.saved .rp-bookmark {
       fill: currentColor;
-      animation: rp-heart-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-      filter: drop-shadow(0 0 10px rgba(255, 45, 85, 0.8));
+      animation: rp-save-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    @keyframes rp-heart-pop {
+    .rp-save.saved .rp-pill-label { color: #fde68a; }
+
+    @keyframes rp-save-pop {
       0% { transform: scale(1); }
-      40% { transform: scale(1.4); }
-      70% { transform: scale(0.9); }
-      100% { transform: scale(1); }
+      40% { transform: scale(1.35) rotate(-8deg); }
+      70% { transform: scale(0.92) rotate(4deg); }
+      100% { transform: scale(1) rotate(0deg); }
     }
 
-    /* SENT STATE (plane flies) */
     .rp-send.sent .rp-plane {
       animation: rp-plane-fly 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @keyframes rp-plane-fly {
       0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
-      50% { transform: translate(30px, -30px) rotate(30deg); opacity: 0; }
-      51% { transform: translate(-30px, 30px) rotate(-30deg); opacity: 0; }
+      50% { transform: translate(20px, -20px) rotate(30deg); opacity: 0; }
+      51% { transform: translate(-20px, 20px) rotate(-30deg); opacity: 0; }
       100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
     }
 
-    .rp-action-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      color: white;
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
-      letter-spacing: 0.02em;
-    }
-
-    /* ===== DESKTOP NAV ARROWS ===== */
     .rp-nav {
       position: absolute;
       right: 32px;
@@ -779,8 +699,8 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
     }
 
     .rp-arrow {
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
       backdrop-filter: blur(20px);
@@ -799,27 +719,19 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.15));
       border-color: rgba(232, 121, 249, 0.6);
       transform: scale(1.1);
-      box-shadow: 0 10px 26px rgba(192, 132, 252, 0.4);
     }
 
-    .rp-arrow:active {
-      transform: scale(0.95);
-    }
+    .rp-arrow:active { transform: scale(0.95); }
+    .rp-arrow svg { width: 20px; height: 20px; }
 
-    .rp-arrow svg {
-      width: 22px;
-      height: 22px;
-    }
-
-    /* ===== DESKTOP ===== */
     @media (min-width: 1024px) {
       .rp-nav {
         display: flex;
         right: 40px;
       }
       .rp-actions {
-        right: 110px;
-        bottom: 60px;
+        right: 40px;
+        bottom: 200px;
       }
       .rp-info {
         left: 40px;
@@ -827,11 +739,8 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       }
     }
 
-    /* ===== MOBILE ===== */
     @media (max-width: 640px) {
-      .rp-stage {
-        padding: 0;
-      }
+      .rp-stage { padding: 0; }
       
       .rp-card {
         max-width: 100%;
@@ -841,9 +750,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         aspect-ratio: auto;
       }
       
-      .rp-card-glow {
-        display: none;
-      }
+      .rp-card-glow { display: none; }
       
       .rp-card-frame {
         border-radius: 0;
@@ -857,40 +764,30 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       .rp-info {
         left: 16px;
         bottom: 95px;
-        max-width: calc(100% - 90px);
+        max-width: calc(100% - 130px);
       }
       
       .rp-actions {
-        right: 14px;
-        bottom: 180px; /* HIGHER on mobile - Safiya button sits at bottom-right */
-        gap: 18px;
+        right: 12px;
+        bottom: 240px;
+        gap: 8px;
       }
       
-      .rp-action-btn {
-        width: 52px;
-        height: 52px;
+      .rp-pill {
+        height: 40px;
+        padding: 5px 12px 5px 5px;
+        gap: 8px;
       }
       
-      .rp-icon {
-        width: 22px;
-        height: 22px;
-      }
-      
-      .rp-title {
-        font-size: 15px;
-      }
+      .rp-pill-icon { width: 30px; height: 30px; }
+      .rp-icon { width: 15px; height: 15px; }
+      .rp-pill-label { font-size: 12px; }
+      .rp-title { font-size: 15px; }
     }
 
-    /* ===== TABLET ===== */
     @media (min-width: 641px) and (max-width: 1023px) {
-      .rp-info {
-        left: 24px;
-        bottom: 50px;
-      }
-      .rp-actions {
-        right: 24px;
-        bottom: 150px;
-      }
+      .rp-info { left: 24px; bottom: 50px; }
+      .rp-actions { right: 24px; bottom: 220px; }
     }
   </style>
 
@@ -900,29 +797,83 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       if (!root) return;
       
       const videoId = root.dataset.videoid || '';
-      const nextId = root.dataset.next || '';
+      const currentVideo: any = (window as any).__REELS_VIDEO__ || null;
+      const queue: any[] = (window as any).__REELS_QUEUE__ || [];
       
-      // LIKE
-      const likeBtn = document.getElementById('likeBtn');
-      const likedVideos: string[] = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
-      
-      if (likedVideos.includes(videoId) && likeBtn) {
-        likeBtn.classList.add('liked');
+      // ═══════════════════════════════════════════════════
+      // 📚 WATCH HISTORY — auto-save on page load
+      // ═══════════════════════════════════════════════════
+      try {
+        if (currentVideo && videoId) {
+          const history = JSON.parse(localStorage.getItem('anitube_history') || '[]');
+          
+          // Remove if already exists (to move to top)
+          const filtered = history.filter((h: any) => h.id !== videoId);
+          
+          // Add current at top with timestamp
+          filtered.unshift({
+            id: videoId,
+            title: currentVideo.title,
+            channel: currentVideo.channel,
+            thumbnail: currentVideo.thumbnail || '',
+            type: currentVideo.type || 'anime',
+            source: currentVideo.source || 'youtube',
+            watchedAt: Date.now()
+          });
+          
+          // Keep only last 100 entries
+          const trimmed = filtered.slice(0, 100);
+          
+          localStorage.setItem('anitube_history', JSON.stringify(trimmed));
+          
+          // Also track "last watched" for resume feature
+          localStorage.setItem('anitube_last_watched', videoId);
+        }
+      } catch (e) {
+        console.warn('History save failed', e);
       }
       
-      likeBtn?.addEventListener('click', () => {
-        const idx = likedVideos.indexOf(videoId);
+      // ═══════════════════════════════════════════════════
+      // 🔖 SAVE / BOOKMARK
+      // ═══════════════════════════════════════════════════
+      const saveBtn = document.getElementById('saveBtn');
+      const savedVideos: any[] = JSON.parse(localStorage.getItem('anitube_saved') || '[]');
+      
+      const isSaved = () => savedVideos.some((s: any) => s.id === videoId);
+      
+      if (isSaved() && saveBtn) {
+        saveBtn.classList.add('saved');
+        const label = saveBtn.querySelector('.rp-pill-label');
+        if (label) label.textContent = 'Saved';
+      }
+      
+      saveBtn?.addEventListener('click', () => {
+        const label = saveBtn.querySelector('.rp-pill-label');
+        const idx = savedVideos.findIndex((s: any) => s.id === videoId);
+        
         if (idx > -1) {
-          likedVideos.splice(idx, 1);
-          likeBtn.classList.remove('liked');
+          savedVideos.splice(idx, 1);
+          saveBtn.classList.remove('saved');
+          if (label) label.textContent = 'Save';
         } else {
-          likedVideos.push(videoId);
-          likeBtn.classList.add('liked');
+          savedVideos.unshift({
+            id: videoId,
+            title: currentVideo?.title || 'Video',
+            channel: currentVideo?.channel || 'AniTube',
+            thumbnail: currentVideo?.thumbnail || '',
+            type: currentVideo?.type || 'anime',
+            source: currentVideo?.source || 'youtube',
+            savedAt: Date.now()
+          });
+          saveBtn.classList.add('saved');
+          if (label) label.textContent = 'Saved';
         }
-        localStorage.setItem('anitube_liked', JSON.stringify(likedVideos));
+        localStorage.setItem('anitube_saved', JSON.stringify(savedVideos));
       });
       
-      // SEND
+      // ═══════════════════════════════════════════════════
+      // 📤 SEND / SHARE
+      // ═══════════════════════════════════════════════════
       const sendBtn = document.getElementById('sendBtn');
       sendBtn?.addEventListener('click', async () => {
         const shareData = {
@@ -933,18 +884,15 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         
         const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
         
-        // Fly animation
         sendBtn.classList.add('sent');
         setTimeout(() => sendBtn.classList.remove('sent'), 600);
         
         if (isMobile && (navigator as any).share) {
-          try {
-            await (navigator as any).share(shareData);
-          } catch { /* cancelled */ }
+          try { await (navigator as any).share(shareData); } catch { }
         } else {
           try {
             await navigator.clipboard.writeText(window.location.href);
-            const label = sendBtn.querySelector('.rp-action-label');
+            const label = sendBtn.querySelector('.rp-pill-label');
             if (label) {
               const orig = label.textContent;
               label.textContent = 'Copied!';
@@ -956,37 +904,28 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         }
       });
       
-      // BACK
+      // ═══════════════════════════════════════════════════
+      // 🔙 BACK BUTTON — ALWAYS goes home with resume param
+      // ═══════════════════════════════════════════════════
       const backBtn = document.getElementById('backBtn');
       backBtn?.addEventListener('click', (e) => {
         e.preventDefault();
-        const referrer = document.referrer;
-        const sameOrigin = referrer && referrer.startsWith(window.location.origin);
-        
-        if (window.history.length > 1 && sameOrigin) {
-          window.history.back();
-        } else {
-          window.location.href = '/';
-        }
+        // Send resume param so home page can highlight this video
+        window.location.href = `/?resume=${encodeURIComponent(videoId)}`;
       });
       
-      // NAVIGATION
-      const queue: any[] = (window as any).__REELS_QUEUE__ || [];
-      let currentQueuePos = 0;
-      
+      // ═══════════════════════════════════════════════════
+      // ⏭️ NAVIGATION (next/prev inside reels)
+      // ═══════════════════════════════════════════════════
       function navigate(direction: 'next' | 'prev') {
         let targetId = '';
         
         if (direction === 'next') {
           if (queue.length > 1) {
-            const nextPos = currentQueuePos + 1;
-            if (nextPos < queue.length) {
-              targetId = queue[nextPos].id;
-            }
-          } else if (nextId) {
-            targetId = nextId;
+            targetId = queue[1].id;
           }
         } else {
+          // Prev inside reels = browser history back
           if (window.history.length > 1) {
             window.history.back();
             return;
@@ -1017,7 +956,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
           e.preventDefault();
           navigate('prev');
         } else if (e.key === 'Escape') {
-          window.history.length > 1 ? window.history.back() : window.location.href = '/';
+          window.location.href = `/?resume=${encodeURIComponent(videoId)}`;
         }
       });
       
@@ -1054,7 +993,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         }
       }, { passive: true });
       
-      // LOADER HIDE
+      // LOADER
       const iframe = document.getElementById('videoFrame') as HTMLIFrameElement;
       const loader = document.getElementById('loader');
       
@@ -1066,7 +1005,6 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       
       // SAFIYA
       setTimeout(() => {
-        const currentVideo = queue[0];
         if (currentVideo) {
           window.dispatchEvent(new CustomEvent('safiya:video-event', {
             detail: { action: 'watch', video: currentVideo }
