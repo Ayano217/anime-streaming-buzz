@@ -197,7 +197,6 @@ const videoId = id || '';
       0 0 0 1px rgba(255,255,255,0.06);
   }
 
-  /* Curved-display gradient glow border */
   .rp-card::before {
     content: '';
     position: absolute;
@@ -397,24 +396,19 @@ const videoId = id || '';
     return id.replace(/^(dm_|bili_|od_|rum_|ytshort_|yt_)/, '');
   }
 
-  function buildFallback(id){
-    var src = detectSource(id);
-    var raw = stripPrefix(id);
-    var embed = '', thumb = '';
-    if(src === 'dailymotion'){
-      embed = 'https://www.dailymotion.com/embed/video/' + raw;
-      thumb = 'https://www.dailymotion.com/thumbnail/video/' + raw;
-    } else if(src === 'bilibili'){
-      embed = 'https://player.bilibili.com/player.html?bvid=' + raw;
-    } else if(src === 'odysee'){
-      embed = 'https://odysee.com/$/embed/' + raw;
-    } else if(src === 'rumble'){
-      embed = 'https://rumble.com/embed/' + raw + '/';
-    } else {
-      embed = 'https://www.youtube.com/embed/' + raw;
-      thumb = 'https://i.ytimg.com/vi/' + raw + '/hqdefault.jpg';
-    }
-    return { id: id, title: 'Video', channel: 'Channel', thumbnail: thumb, embedUrl: embed, source: src, type: 'anime', aspect: 'portrait' };
+  // Check if a video is portrait (9:16) - reels eligible
+  function isPortrait(v){
+    if(!v) return false;
+    // Explicit aspect field
+    if(v.aspect === 'portrait') return true;
+    if(v.aspect === 'landscape') return false;
+    // isShort flag
+    if(v.isShort === true) return true;
+    // Source-based inference
+    if(v.source === 'youtube_shorts') return true;
+    // ID prefix based
+    if(v.id && v.id.indexOf('ytshort_') === 0) return true;
+    return false;
   }
 
   function buildEmbedUrl(v){
@@ -511,7 +505,6 @@ const videoId = id || '';
         }catch(_){}
         updateCounter();
       } else {
-        // Clear iframe of far-away items to save memory
         if(Math.abs(i - idx) > 1){ 
           var ifr = container.querySelector('iframe');
           if(ifr) ifr.remove();
@@ -522,8 +515,24 @@ const videoId = id || '';
     });
   }
 
+  function showRedirectScreen(){
+    if(loadingEl){
+      loadingEl.innerHTML = 
+        '<div style="text-align:center;color:#fff;padding:20px;max-width:340px;">' +
+          '<div style="font-size:2.5rem;margin-bottom:14px;">🎬</div>' +
+          '<div style="font-size:1.1rem;font-weight:700;margin-bottom:8px;">Opening in Theater Mode</div>' +
+          '<div style="font-size:0.85rem;color:rgba(255,255,255,0.6);margin-bottom:20px;">This video is landscape (16:9) — better watched full-width</div>' +
+          '<div class="rp-spinner" style="margin:0 auto;"></div>' +
+        '</div>';
+    }
+    setTimeout(function(){
+      window.location.replace('/watch/' + encodeURIComponent(CURRENT_ID));
+    }, 900);
+  }
+
   async function loadFeed(){
     try {
+      // Step 1: Fetch the clicked video's metadata
       var clicked = null;
       var types = ['anime','donghua','kdrama','movies'];
       for(var t = 0; t < types.length; t++){
@@ -536,16 +545,45 @@ const videoId = id || '';
           }
         }catch(_){}
       }
-      if(!clicked) clicked = buildFallback(CURRENT_ID);
 
+      // Step 2: If we found metadata AND it's landscape → redirect to /watch
+      if(clicked && !isPortrait(clicked)){
+        showRedirectScreen();
+        return;
+      }
+
+      // Step 3: If no metadata found, use ID heuristics
+      if(!clicked){
+        // Only ytshort_ prefix is guaranteed portrait
+        // Everything else is unknown — safer to redirect to /watch
+        var src = detectSource(CURRENT_ID);
+        if(src !== 'youtube_shorts' && CURRENT_ID.indexOf('ytshort_') !== 0){
+          showRedirectScreen();
+          return;
+        }
+        // Build a minimal fallback for known-portrait sources
+        var raw = stripPrefix(CURRENT_ID);
+        clicked = {
+          id: CURRENT_ID,
+          title: 'Video',
+          channel: '',
+          thumbnail: 'https://i.ytimg.com/vi/' + raw + '/hqdefault.jpg',
+          embedUrl: 'https://www.youtube.com/embed/' + raw,
+          source: 'youtube_shorts',
+          aspect: 'portrait',
+          isShort: true
+        };
+      }
+
+      // Step 4: Build feed of ONLY portrait videos
       videos = [clicked];
       seenIds[clicked.id] = true;
 
       var loaders = [
-        '/api/social-feed?type=anime&limit=30',
-        '/api/social-feed?type=donghua&limit=30',
-        '/api/social-feed?type=kdrama&limit=20',
-        '/api/social-feed?type=movies&limit=20'
+        '/api/social-feed?type=anime&limit=50&format=portrait',
+        '/api/social-feed?type=donghua&limit=50&format=portrait',
+        '/api/social-feed?type=kdrama&limit=30&format=portrait',
+        '/api/social-feed?type=movies&limit=30&format=portrait'
       ];
       for(var i = 0; i < loaders.length; i++){
         try {
@@ -553,7 +591,7 @@ const videoId = id || '';
           var dd = await rr.json();
           if(dd.success && dd.videos){
             dd.videos.forEach(function(v){
-              if(!seenIds[v.id]){ 
+              if(!seenIds[v.id] && isPortrait(v)){ 
                 videos.push(v); 
                 seenIds[v.id] = true; 
               }
@@ -562,13 +600,12 @@ const videoId = id || '';
         }catch(_){}
       }
 
-      // Clear feed and render items
+      // Render feed
       feedEl.innerHTML = '';
       videos.forEach(function(v, i){ feedEl.appendChild(renderItem(v, i)); });
 
       if(loadingEl) loadingEl.classList.add('hidden');
       
-      // Activate first video after DOM settles
       requestAnimationFrame(function(){
         requestAnimationFrame(function(){
           activate(0);
@@ -579,7 +616,7 @@ const videoId = id || '';
     } catch(err){
       console.error('[reels]', err);
       if(loadingEl){
-        loadingEl.innerHTML = '<div style="text-align:center;color:#fff;padding:20px;"><div style="font-size:2rem;margin-bottom:10px;">😔</div><div>Failed to load</div><button id="rpErrBack" style="margin-top:20px;padding:10px 20px;background:rgba(192,132,252,0.3);border:1px solid rgba(192,132,252,0.6);color:#fff;border-radius:8px;cursor:pointer;">Go Back</button></div>';
+        loadingEl.innerHTML = '<div style="text-align:center;color:#fff;padding:20px;"><div style="font-size:2rem;margin-bottom:10px;">😔</div><div>Failed to load</div><button id="rpErrBack" style="margin-top:20px;padding:10px 20px;background:rgba(192,132,252,0.3);border:1px solid rgba(192,132,252,0.6);color:#fff;border-radius:8px;cursor:pointer;">Go Home</button></div>';
         var eb = document.getElementById('rpErrBack');
         if(eb) eb.addEventListener('click', goBack);
       }
@@ -611,7 +648,6 @@ const videoId = id || '';
   });
 
   function goBack(){
-    // Always go home - avoids losing state issues
     window.location.href = '/';
   }
   if(backBtn) backBtn.addEventListener('click', goBack);
