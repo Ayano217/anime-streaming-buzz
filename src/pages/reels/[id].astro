@@ -1,109 +1,84 @@
 ---
 export const prerender = false;
 
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import ImmersiveLayout from '../../layouts/ImmersiveLayout.astro';
 
 const { id } = Astro.params;
 const videoId = id || '';
 ---
 
-<BaseLayout>
-  <div class="reels-page" data-video-id={videoId}>
-    <div class="reels-bg" id="reelsBg"></div>
+<ImmersiveLayout title="Reels · AniTubeBuzz">
+  <div class="rp-root" data-video-id={videoId}>
+    <div class="rp-bg" id="rpBg"></div>
+    <div class="rp-bg-overlay"></div>
 
-    <header class="reels-header">
-      <button class="reels-icon-btn" id="reelsBack" aria-label="Back">
+    <header class="rp-header">
+      <button class="rp-icon-btn" id="rpBack" aria-label="Back">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       </button>
-      <div class="reels-brand">AniTube<span>Buzz</span></div>
-      <div class="reels-counter" id="reelsCounter">1 / 1</div>
+      <div class="rp-brand">AniTube<span>Buzz</span></div>
+      <div class="rp-counter" id="rpCounter">1 / 1</div>
     </header>
 
-    <button class="reels-nav reels-nav-up" id="reelsUp" aria-label="Previous">
+    <button class="rp-nav rp-nav-up" id="rpUp" aria-label="Previous">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
     </button>
-    <button class="reels-nav reels-nav-down" id="reelsDown" aria-label="Next">
+    <button class="rp-nav rp-nav-down" id="rpDown" aria-label="Next">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </button>
 
-    <div class="reels-container" id="reelsContainer">
-      <div class="reels-loading" id="reelsLoading"><div class="reels-spinner"></div></div>
+    <div class="rp-feed" id="rpFeed">
+      <div class="rp-loading" id="rpLoading"><div class="rp-spinner"></div></div>
     </div>
 
-    <div class="reels-toast" id="reelsToast"></div>
+    <div class="rp-toast" id="rpToast"></div>
   </div>
-</BaseLayout>
-
-<style is:global>
-  body:has(.reels-page) {
-    overflow: hidden !important;
-    background: #000 !important;
-    margin: 0 !important;
-  }
-  body:has(.reels-page) > header,
-  body:has(.reels-page) > footer,
-  body:has(.reels-page) .site-header,
-  body:has(.reels-page) .site-footer,
-  body:has(.reels-page) header.site-header,
-  body:has(.reels-page) footer.site-footer,
-  body:has(.reels-page) .ambient-bg,
-  body:has(.reels-page) #btt,
-  body:has(.reels-page) .back-to-top {
-    display: none !important;
-  }
-  body:has(.reels-page) #app {
-    background: #000 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    max-width: 100vw !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    overflow: hidden !important;
-    display: block !important;
-    position: relative !important;
-  }
-  body:has(.reels-page) #app > *:not(:has(.reels-page)):not(.reels-page) {
-    display: none !important;
-  }
-</style>
+</ImmersiveLayout>
 
 <style>
-  .reels-page {
+  .rp-root {
     position: fixed;
-    top: 0; left: 0;
-    width: 100vw;
-    height: 100vh;
+    inset: 0;
     background: #000;
     color: #fff;
-    z-index: 9000;
+    z-index: 100;
     font-family: 'Inter', 'DM Sans', sans-serif;
     overflow: hidden;
+    width: 100vw;
+    height: 100vh;
   }
 
-  .reels-bg {
+  .rp-bg {
     position: absolute;
     inset: -40px;
     background-size: cover;
     background-position: center;
     filter: blur(50px) brightness(0.3) saturate(1.3);
     transform: scale(1.2);
-    transition: background-image 0.5s ease;
+    transition: background-image 0.6s ease;
     z-index: 1;
+    will-change: background-image;
+  }
+  .rp-bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.85) 100%);
+    z-index: 2;
   }
 
-  .reels-header {
+  .rp-header {
     position: absolute;
     top: 0; left: 0; right: 0;
     padding: 16px 22px;
-    height: 60px;
+    height: 62px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    z-index: 100;
+    z-index: 200;
     pointer-events: none;
     box-sizing: border-box;
   }
-  .reels-icon-btn {
+  .rp-icon-btn {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -120,30 +95,31 @@ const videoId = id || '';
     padding: 0;
     pointer-events: auto;
   }
-  .reels-icon-btn:hover {
+  .rp-icon-btn:hover {
     background: rgba(192,132,252,0.35);
     border-color: rgba(192,132,252,0.6);
     transform: scale(1.06);
   }
-  .reels-brand {
+  .rp-brand {
     font-family: 'Bricolage Grotesque', sans-serif;
     font-size: 1.05rem;
     font-weight: 800;
-    background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     letter-spacing: -0.02em;
+    text-shadow: 0 2px 15px rgba(192,132,252,0.3);
   }
-  .reels-brand span {
+  .rp-brand span {
     color: #fff;
     -webkit-text-fill-color: #fff;
   }
-  .reels-counter {
+  .rp-counter {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
     font-weight: 700;
-    color: rgba(255,255,255,0.75);
+    color: rgba(255,255,255,0.7);
     letter-spacing: 0.08em;
     padding: 5px 12px;
     background: rgba(0,0,0,0.5);
@@ -154,13 +130,13 @@ const videoId = id || '';
     pointer-events: auto;
   }
 
-  .reels-nav {
+  .rp-nav {
     position: absolute;
     right: 30px;
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: rgba(20,20,30,0.8);
+    background: rgba(20,20,30,0.75);
     border: 1px solid rgba(255,255,255,0.15);
     color: #fff;
     cursor: pointer;
@@ -171,16 +147,16 @@ const videoId = id || '';
     -webkit-backdrop-filter: blur(15px);
     transition: all 0.25s ease;
     padding: 0;
-    z-index: 90;
+    z-index: 150;
   }
-  .reels-nav:hover {
+  .rp-nav:hover {
     background: rgba(192,132,252,0.45);
     transform: scale(1.1);
   }
-  .reels-nav-up { top: calc(50% - 55px); }
-  .reels-nav-down { top: calc(50% + 25px); }
+  .rp-nav-up { top: calc(50% - 55px); }
+  .rp-nav-down { top: calc(50% + 25px); }
 
-  .reels-container {
+  .rp-feed {
     position: absolute;
     inset: 0;
     z-index: 10;
@@ -192,12 +168,9 @@ const videoId = id || '';
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
   }
-  .reels-container::-webkit-scrollbar {
-    display: none;
-    width: 0;
-  }
+  .rp-feed::-webkit-scrollbar { display: none; width: 0; }
 
-  .reel {
+  .rp-item {
     height: 100vh;
     width: 100vw;
     scroll-snap-align: start;
@@ -208,7 +181,7 @@ const videoId = id || '';
     position: relative;
   }
 
-  .reel-card {
+  .rp-card {
     position: relative;
     height: min(88vh, calc(100vh - 60px));
     aspect-ratio: 9 / 16;
@@ -217,11 +190,12 @@ const videoId = id || '';
     border-radius: 24px;
     overflow: visible;
     box-shadow: 
-      0 30px 80px rgba(0,0,0,0.85),
+      0 30px 90px rgba(0,0,0,0.85),
       0 0 0 1px rgba(255,255,255,0.06);
   }
 
-  .reel-card::before {
+  /* Curved-display gradient glow border */
+  .rp-card::before {
     content: '';
     position: absolute;
     inset: -4px;
@@ -233,17 +207,17 @@ const videoId = id || '';
       rgba(232,121,249,0.5) 75%,
       rgba(192,132,252,0.8) 100%);
     background-size: 300% 300%;
-    animation: reelGlow 6s ease infinite;
+    animation: rpGlow 6s ease infinite;
     z-index: -1;
-    opacity: 0.55;
-    filter: blur(12px);
+    opacity: 0.6;
+    filter: blur(14px);
   }
-  @keyframes reelGlow {
+  @keyframes rpGlow {
     0%, 100% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
   }
 
-  .reel-video {
+  .rp-video {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -253,14 +227,14 @@ const videoId = id || '';
     overflow: hidden;
     z-index: 1;
   }
-  .reel-video iframe {
+  .rp-video iframe {
     width: 100%;
     height: 100%;
     border: 0;
     display: block;
   }
 
-  .reel-send {
+  .rp-send {
     position: absolute;
     right: -62px;
     bottom: 28px;
@@ -281,33 +255,34 @@ const videoId = id || '';
     z-index: 15;
     box-shadow: 0 8px 24px rgba(0,0,0,0.6);
   }
-  .reel-send:hover {
+  .rp-send:hover {
     background: linear-gradient(135deg, rgba(192,132,252,0.5), rgba(232,121,249,0.4));
     border-color: rgba(232,121,249,0.8);
     transform: scale(1.12);
+    box-shadow: 0 10px 30px rgba(192,132,252,0.4);
   }
 
-  .reels-loading {
+  .rp-loading {
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #000;
-    z-index: 200;
+    z-index: 300;
   }
-  .reels-loading.hidden { display: none; }
-  .reels-spinner {
+  .rp-loading.hidden { display: none; }
+  .rp-spinner {
     width: 42px;
     height: 42px;
     border: 3px solid rgba(192,132,252,0.15);
     border-top-color: #c084fc;
     border-radius: 50%;
-    animation: reelSpin 0.8s linear infinite;
+    animation: rpSpin 0.8s linear infinite;
   }
-  @keyframes reelSpin { to { transform: rotate(360deg); } }
+  @keyframes rpSpin { to { transform: rotate(360deg); } }
 
-  .reels-toast {
+  .rp-toast {
     position: fixed;
     bottom: 100px;
     left: 50%;
@@ -328,46 +303,48 @@ const videoId = id || '';
     white-space: nowrap;
     box-shadow: 0 10px 30px rgba(0,0,0,0.6);
   }
-  .reels-toast.show {
+  .rp-toast.show {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
 
   @media (max-width: 768px) {
-    .reel-card {
+    .rp-card {
       height: 100vh;
       max-width: 100vw;
       width: 100vw;
       aspect-ratio: unset;
       border-radius: 0;
     }
-    .reel-card::before { display: none; }
-    .reel-video { border-radius: 0; }
-    .reels-nav { display: none; }
-    .reel-send {
+    .rp-card::before { display: none; }
+    .rp-video { border-radius: 0; }
+    .rp-nav { display: none; }
+    .rp-send {
       right: 14px;
       bottom: 110px;
     }
-    .reels-header { padding: 12px 14px; height: 56px; }
+    .rp-header { padding: 12px 14px; height: 56px; }
   }
   @media (max-width: 480px) {
-    .reels-icon-btn { width: 38px; height: 38px; }
-    .reels-brand { font-size: 0.95rem; }
-    .reels-counter { font-size: 0.65rem; padding: 5px 10px; }
+    .rp-icon-btn { width: 38px; height: 38px; }
+    .rp-brand { font-size: 0.95rem; }
+    .rp-counter { font-size: 0.65rem; padding: 5px 10px; }
   }
 </style>
 
 <script is:inline define:vars={{ videoId }}>
 (function(){
   var CURRENT_ID = videoId;
-  var containerEl = document.getElementById('reelsContainer');
-  var loadingEl = document.getElementById('reelsLoading');
-  var bgEl = document.getElementById('reelsBg');
-  var toastEl = document.getElementById('reelsToast');
-  var backBtn = document.getElementById('reelsBack');
-  var upBtn = document.getElementById('reelsUp');
-  var downBtn = document.getElementById('reelsDown');
-  var counterEl = document.getElementById('reelsCounter');
+  var feedEl = document.getElementById('rpFeed');
+  var loadingEl = document.getElementById('rpLoading');
+  var bgEl = document.getElementById('rpBg');
+  var toastEl = document.getElementById('rpToast');
+  var backBtn = document.getElementById('rpBack');
+  var upBtn = document.getElementById('rpUp');
+  var downBtn = document.getElementById('rpDown');
+  var counterEl = document.getElementById('rpCounter');
+
+  if(!feedEl) return; // safety guard
 
   var videos = [];
   var currentIdx = 0;
@@ -397,13 +374,13 @@ const videoId = id || '';
     if(id.indexOf('yt_') === 0) return 'youtube';
     return 'youtube';
   }
-  function stripPrefix(id, src){
+  function stripPrefix(id){
     return id.replace(/^(dm_|bili_|od_|rum_|ytshort_|yt_)/, '');
   }
 
   function buildFallback(id){
     var src = detectSource(id);
-    var raw = stripPrefix(id, src);
+    var raw = stripPrefix(id);
     var embed = '', thumb = '';
     if(src === 'dailymotion'){
       embed = 'https://www.dailymotion.com/embed/video/' + raw;
@@ -437,14 +414,14 @@ const videoId = id || '';
     return url;
   }
 
-  function renderReel(v, idx){
+  function renderItem(v, idx){
     var el = document.createElement('div');
-    el.className = 'reel';
+    el.className = 'rp-item';
     el.dataset.idx = idx;
     el.innerHTML =
-      '<div class="reel-card">' +
-        '<div class="reel-video" data-container></div>' +
-        '<button class="reel-send" data-send aria-label="Send">' +
+      '<div class="rp-card">' +
+        '<div class="rp-video" data-container></div>' +
+        '<button class="rp-send" data-send aria-label="Send">' +
           '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
         '</button>' +
       '</div>';
@@ -459,9 +436,9 @@ const videoId = id || '';
 
   function activate(idx){
     if(idx < 0 || idx >= videos.length) return;
-    var reels = containerEl.querySelectorAll('.reel');
-    reels.forEach(function(reel, i){
-      var container = reel.querySelector('[data-container]');
+    var items = feedEl.querySelectorAll('.rp-item');
+    items.forEach(function(item, i){
+      var container = item.querySelector('[data-container]');
       if(!container) return;
       if(i === idx){
         if(!container.querySelector('iframe')){
@@ -525,8 +502,8 @@ const videoId = id || '';
         }catch(_){}
       }
 
-      containerEl.innerHTML = '';
-      videos.forEach(function(v, i){ containerEl.appendChild(renderReel(v, i)); });
+      feedEl.innerHTML = '';
+      videos.forEach(function(v, i){ feedEl.appendChild(renderItem(v, i)); });
 
       if(loadingEl) loadingEl.classList.add('hidden');
       setTimeout(function(){ activate(0); }, 100);
@@ -534,25 +511,25 @@ const videoId = id || '';
     } catch(err){
       console.error('[reels]', err);
       if(loadingEl){
-        loadingEl.innerHTML = '<div style="text-align:center;color:#fff;padding:20px;"><div style="font-size:2rem;margin-bottom:10px;">😔</div><div>Failed to load</div><button id="rBack" style="margin-top:20px;padding:10px 20px;background:rgba(192,132,252,0.3);border:1px solid rgba(192,132,252,0.6);color:#fff;border-radius:8px;cursor:pointer;">Go Back</button></div>';
-        var eb = document.getElementById('rBack');
+        loadingEl.innerHTML = '<div style="text-align:center;color:#fff;padding:20px;"><div style="font-size:2rem;margin-bottom:10px;">😔</div><div>Failed to load</div><button id="rpErrBack" style="margin-top:20px;padding:10px 20px;background:rgba(192,132,252,0.3);border:1px solid rgba(192,132,252,0.6);color:#fff;border-radius:8px;cursor:pointer;">Go Back</button></div>';
+        var eb = document.getElementById('rpErrBack');
         if(eb) eb.addEventListener('click', goBack);
       }
     }
   }
 
   var scrollTimer;
-  containerEl.addEventListener('scroll', function(){
+  feedEl.addEventListener('scroll', function(){
     if(scrollTimer) clearTimeout(scrollTimer);
     scrollTimer = setTimeout(function(){
-      var idx = Math.round(containerEl.scrollTop / window.innerHeight);
+      var idx = Math.round(feedEl.scrollTop / window.innerHeight);
       if(idx !== currentIdx && idx >= 0 && idx < videos.length){ activate(idx); }
     }, 120);
   }, { passive: true });
 
   function scrollTo(idx){
     if(idx < 0 || idx >= videos.length) return;
-    containerEl.scrollTo({ top: idx * window.innerHeight, behavior: 'smooth' });
+    feedEl.scrollTo({ top: idx * window.innerHeight, behavior: 'smooth' });
   }
   if(upBtn) upBtn.addEventListener('click', function(){ scrollTo(currentIdx - 1); });
   if(downBtn) downBtn.addEventListener('click', function(){ scrollTo(currentIdx + 1); });
@@ -571,4 +548,4 @@ const videoId = id || '';
 
   loadFeed();
 })();
-</script>rebuild: reels TikTok-style feed, clean minimal, video plays properly
+</script>
