@@ -6,7 +6,6 @@ import ImmersiveLayout from '../../layouts/ImmersiveLayout.astro';
 const { id } = Astro.params;
 const videoId = id || '';
 
-// Platform detection from ID prefix
 function getPlatformData(vid: string) {
   if (vid.startsWith('yts_')) {
     const rawId = vid.replace('yts_', '');
@@ -65,10 +64,8 @@ function getPlatformData(vid: string) {
   return null;
 }
 
-// Fetch all videos from API
 let video: any = null;
 let allVideos: any[] = [];
-let relatedVideos: any[] = [];
 
 try {
   const apiUrl = new URL('/api/social-feed', Astro.url.origin);
@@ -85,7 +82,6 @@ try {
   console.error('API fetch failed:', e);
 }
 
-// Fallback: build video from ID if not found in API
 if (!video) {
   const platformData = getPlatformData(videoId);
   if (platformData) {
@@ -115,58 +111,28 @@ if (!video) {
   }
 }
 
-// 🧠 INSTAGRAM-STYLE ALGORITHM: Smart Related Videos
-// Priority: 1) Same channel, 2) Same type, 3) Recent trending
 function buildRelatedFeed(current: any, all: any[]): any[] {
-  if (!all || all.length === 0) return [];
-  
-  // Remove current video from pool
+  if (!all || all.length === 0) return [current];
   const pool = all.filter(v => v.id !== current.id);
-  
-  // Score each video by similarity
   const scored = pool.map(v => {
     let score = 0;
-    
-    // Same channel = huge boost
     if (v.channel === current.channel) score += 100;
-    
-    // Same content type (anime/kdrama/donghua/movies)
     if (v.type === current.type) score += 50;
-    
-    // Same platform source
     if (v.source === current.source) score += 20;
-    
-    // Same aspect ratio (portrait/landscape) = better UX
     if (v.aspect === current.aspect) score += 30;
-    
-    // Recent = fresh
     if (v.isNew) score += 15;
-    
-    // Official content boost
     if (v.isOfficial) score += 10;
-    
-    // Randomness to avoid same order always
     score += Math.random() * 5;
-    
     return { video: v, score };
   });
-  
-  // Sort by score descending
   scored.sort((a, b) => b.score - a.score);
-  
-  // Return video array with current at position 0
   return [current, ...scored.map(s => s.video)];
 }
 
 const feedQueue = buildRelatedFeed(video, allVideos);
 const currentIndex = 1;
 const totalCount = feedQueue.length;
-
-// Next/Prev from smart-sorted queue
 const nextVideo = feedQueue[1] || null;
-const prevVideo = null; // First position, no prev in queue
-
-// Clean channel name for @handle
 const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCase().slice(0, 20);
 ---
 
@@ -178,10 +144,10 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
     data-next={nextVideo?.id || ''}
   >
     
-    <!-- Top Navigation Bar -->
+    <!-- Top Bar -->
     <header class="rp-topbar">
-      <button class="rp-back" id="backBtn" aria-label="Go back">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <button class="rp-back" id="backBtn" aria-label="Back">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
       </button>
@@ -198,13 +164,11 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       </div>
     </header>
 
-    <!-- Main Video Stage -->
+    <!-- Video Stage -->
     <main class="rp-stage">
       
-      <!-- Video Card -->
       <div class="rp-card" id="videoCard">
         <div class="rp-card-glow"></div>
-        <div class="rp-card-glow-2"></div>
         <div class="rp-card-frame">
           <iframe 
             id="videoFrame"
@@ -216,13 +180,19 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
             loading="eager"
           ></iframe>
           
+          <!-- Premium branded loader -->
           <div class="rp-loader" id="loader">
-            <div class="rp-spinner"></div>
+            <div class="rp-loader-orbit">
+              <div class="rp-loader-dot rp-dot-1"></div>
+              <div class="rp-loader-dot rp-dot-2"></div>
+              <div class="rp-loader-dot rp-dot-3"></div>
+            </div>
+            <div class="rp-loader-text">AniTubeBuzz</div>
           </div>
         </div>
       </div>
 
-      <!-- Info Panel (Bottom Left - Instagram Style) -->
+      <!-- Info (Bottom Left) -->
       <div class="rp-info">
         <div class="rp-channel-row">
           <div class="rp-avatar">
@@ -238,35 +208,41 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         </p>
       </div>
 
-      <!-- Action Panel (Right Side - Premium) -->
+      <!-- Actions (Right - PREMIUM BRANDED) -->
       <div class="rp-actions">
         <button class="rp-action rp-like" id="likeBtn" aria-label="Like">
           <div class="rp-action-btn">
-            <svg class="rp-icon rp-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-            </svg>
+            <div class="rp-action-ring"></div>
+            <div class="rp-action-inner">
+              <svg class="rp-icon rp-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            </div>
           </div>
           <span class="rp-action-label">Like</span>
         </button>
         
         <button class="rp-action rp-send" id="sendBtn" aria-label="Share">
           <div class="rp-action-btn">
-            <svg class="rp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-            </svg>
+            <div class="rp-action-ring"></div>
+            <div class="rp-action-inner">
+              <svg class="rp-icon rp-plane" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+              </svg>
+            </div>
           </div>
           <span class="rp-action-label">Send</span>
         </button>
       </div>
 
-      <!-- Desktop Nav Arrows -->
+      <!-- Desktop Nav -->
       <div class="rp-nav">
-        <button class="rp-arrow" id="prevBtn" aria-label="Previous video">
+        <button class="rp-arrow" id="prevBtn" aria-label="Previous">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 15l-6-6-6 6"/>
           </svg>
         </button>
-        <button class="rp-arrow" id="nextBtn" aria-label="Next video">
+        <button class="rp-arrow" id="nextBtn" aria-label="Next">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 9l6 6 6-6"/>
           </svg>
@@ -275,13 +251,12 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
 
     </main>
 
-    <!-- Hidden data for JS -->
     <script is:inline set:html={`window.__REELS_QUEUE__ = ${JSON.stringify(feedQueue.slice(0, 30))};`}></script>
 
   </div>
 
   <style>
-    /* ===== ROOT CONTAINER ===== */
+    /* ===== ROOT ===== */
     .rp-root {
       position: fixed;
       inset: 0;
@@ -289,9 +264,10 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       height: 100vh;
       height: 100dvh;
       background: 
-        radial-gradient(circle at 20% 30%, rgba(192, 132, 252, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 70%, rgba(125, 211, 252, 0.1) 0%, transparent 50%),
-        linear-gradient(180deg, #0a0517 0%, #1a0f2e 50%, #0a0517 100%);
+        radial-gradient(ellipse at 20% 20%, rgba(192, 132, 252, 0.18) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 75%, rgba(125, 211, 252, 0.12) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 50%, rgba(232, 121, 249, 0.08) 0%, transparent 70%),
+        linear-gradient(180deg, #0a0517 0%, #150a29 50%, #0a0517 100%);
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -312,9 +288,9 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       justify-content: space-between;
       padding: 0 20px;
       z-index: 100;
-      background: linear-gradient(to bottom, rgba(10, 5, 23, 0.95) 0%, rgba(10, 5, 23, 0.5) 60%, transparent 100%);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: linear-gradient(to bottom, rgba(10, 5, 23, 0.95) 0%, rgba(10, 5, 23, 0.4) 60%, transparent 100%);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
 
     .rp-back {
@@ -339,7 +315,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
     }
 
     .rp-back:active {
-      transform: scale(0.95);
+      transform: scale(0.94);
     }
 
     .rp-brand {
@@ -367,7 +343,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       height: 6px;
       background: #7dd3fc;
       border-radius: 50%;
-      box-shadow: 0 0 8px #7dd3fc;
+      box-shadow: 0 0 10px #7dd3fc;
       animation: rp-pulse 2s infinite;
     }
 
@@ -408,46 +384,35 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       align-items: center;
       justify-content: center;
       position: relative;
-      padding: 80px 20px;
+      padding: 80px 20px 40px;
       z-index: 1;
     }
 
-    /* ===== VIDEO CARD (9:16 Premium) ===== */
+    /* ===== CARD ===== */
     .rp-card {
       position: relative;
       width: 100%;
       max-width: 420px;
       aspect-ratio: 9 / 16;
-      max-height: calc(100vh - 140px);
-      max-height: calc(100dvh - 140px);
+      max-height: calc(100vh - 130px);
+      max-height: calc(100dvh - 130px);
       transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
     }
 
-    /* Outer glow layer */
     .rp-card-glow {
       position: absolute;
-      inset: -4px;
+      inset: -3px;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      border-radius: 26px;
-      opacity: 0.7;
-      filter: blur(12px);
-      z-index: -2;
+      border-radius: 24px;
+      opacity: 0.65;
+      filter: blur(14px);
+      z-index: -1;
       animation: rp-glow 4s ease-in-out infinite;
     }
 
-    /* Inner sharper glow */
-    .rp-card-glow-2 {
-      position: absolute;
-      inset: -1px;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      border-radius: 22px;
-      opacity: 0.9;
-      z-index: -1;
-    }
-
     @keyframes rp-glow {
-      0%, 100% { opacity: 0.5; filter: blur(12px); }
-      50% { opacity: 0.85; filter: blur(18px); }
+      0%, 100% { opacity: 0.5; filter: blur(14px); }
+      50% { opacity: 0.8; filter: blur(20px); }
     }
 
     .rp-card-frame {
@@ -456,7 +421,9 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       background: #000;
       border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(192, 132, 252, 0.35);
     }
 
     .rp-card-frame iframe {
@@ -466,16 +433,18 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       display: block;
     }
 
-    /* Loader */
+    /* ===== PREMIUM ANIMATED LOADER ===== */
     .rp-loader {
       position: absolute;
       inset: 0;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #000;
+      gap: 20px;
+      background: radial-gradient(circle at center, #1a0f2e 0%, #000 100%);
       z-index: 5;
-      transition: opacity 0.4s;
+      transition: opacity 0.5s;
     }
 
     .rp-loader.hidden {
@@ -483,24 +452,61 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       pointer-events: none;
     }
 
-    .rp-spinner {
-      width: 44px;
-      height: 44px;
-      border: 3px solid rgba(192, 132, 252, 0.2);
-      border-top-color: #e879f9;
-      border-right-color: #c084fc;
+    .rp-loader-orbit {
+      position: relative;
+      width: 60px;
+      height: 60px;
+    }
+
+    .rp-loader-dot {
+      position: absolute;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
-      animation: rp-spin 0.9s linear infinite;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
 
-    @keyframes rp-spin {
-      to { transform: rotate(360deg); }
+    .rp-dot-1 {
+      background: #c084fc;
+      box-shadow: 0 0 15px #c084fc;
+      animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
     }
 
-    /* ===== INFO PANEL (Bottom Left) ===== */
+    .rp-dot-2 {
+      background: #e879f9;
+      box-shadow: 0 0 15px #e879f9;
+      animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite -0.47s;
+    }
+
+    .rp-dot-3 {
+      background: #7dd3fc;
+      box-shadow: 0 0 15px #7dd3fc;
+      animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite -0.93s;
+    }
+
+    @keyframes rp-orbit {
+      0% { transform: translate(-50%, -50%) rotate(0deg) translateX(22px) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg) translateX(22px) rotate(-360deg); }
+    }
+
+    .rp-loader-text {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      opacity: 0.9;
+    }
+
+    /* ===== INFO PANEL ===== */
     .rp-info {
       position: absolute;
-      bottom: 32px;
+      bottom: 40px;
       left: 32px;
       z-index: 50;
       max-width: 320px;
@@ -527,7 +533,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       font-size: 15px;
       color: white;
       border: 2px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
+      box-shadow: 0 4px 14px rgba(192, 132, 252, 0.5);
     }
 
     .rp-channel-name {
@@ -567,27 +573,31 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
     .rp-badge {
       background: linear-gradient(135deg, #c084fc, #e879f9);
       color: white;
+      font-family: 'JetBrains Mono', monospace;
       font-size: 10px;
       font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 4px;
-      letter-spacing: 0.05em;
+      padding: 2px 8px;
+      border-radius: 5px;
+      letter-spacing: 0.08em;
       text-shadow: none;
+      box-shadow: 0 2px 8px rgba(192, 132, 252, 0.4);
     }
 
     .rp-dot {
       opacity: 0.4;
     }
 
-    /* ===== ACTION PANEL (Right - PREMIUM) ===== */
+    /* ===================================================
+       ✨ PREMIUM BRANDED ACTION BUTTONS
+       =================================================== */
     .rp-actions {
       position: absolute;
-      right: 32px;
-      bottom: 40px;
+      right: 24px;
+      bottom: 140px; /* Raised HIGH to avoid Safiya overlap */
       display: flex;
       flex-direction: column;
       gap: 22px;
-      z-index: 50;
+      z-index: 60;
     }
 
     .rp-action {
@@ -598,63 +608,103 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
-      transition: transform 0.2s;
+      gap: 8px;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    /* OUTER BUTTON - gradient ring container */
     .rp-action-btn {
-      width: 54px;
-      height: 54px;
+      position: relative;
+      width: 58px;
+      height: 58px;
       border-radius: 50%;
-      background: 
-        linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.18);
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* GRADIENT RING - brand colors */
+    .rp-action-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      opacity: 0.9;
+      padding: 2px;
+      transition: all 0.35s;
       box-shadow: 
-        0 8px 24px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
-      position: relative;
+        0 8px 24px rgba(192, 132, 252, 0.35),
+        0 0 0 1px rgba(192, 132, 252, 0.2);
+    }
+
+    /* INNER GLASS - dark background with icon */
+    .rp-action-inner {
+      position: absolute;
+      inset: 2px;
+      border-radius: 50%;
+      background: 
+        radial-gradient(circle at 30% 30%, rgba(45, 25, 75, 0.95) 0%, rgba(20, 10, 40, 0.98) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f5ecff;
+      transition: all 0.35s;
       overflow: hidden;
     }
 
-    /* Shine overlay */
-    .rp-action-btn::before {
+    /* SHINE OVERLAY inside inner */
+    .rp-action-inner::before {
       content: '';
       position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
       background: linear-gradient(
-        45deg,
-        transparent 40%,
+        90deg,
+        transparent 0%,
         rgba(255, 255, 255, 0.15) 50%,
-        transparent 60%
+        transparent 100%
       );
-      transform: rotate(-45deg) translateY(100%);
-      transition: transform 0.6s;
+      transition: left 0.7s;
     }
 
+    /* HOVER STATE */
     .rp-action:hover .rp-action-btn {
-      background: 
-        linear-gradient(135deg, rgba(192, 132, 252, 0.25), rgba(232, 121, 249, 0.1));
-      border-color: rgba(192, 132, 252, 0.5);
-      transform: scale(1.08) translateY(-2px);
+      transform: scale(1.1) translateY(-3px);
+    }
+
+    .rp-action:hover .rp-action-ring {
+      opacity: 1;
       box-shadow: 
-        0 12px 30px rgba(192, 132, 252, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+        0 14px 34px rgba(192, 132, 252, 0.55),
+        0 0 20px rgba(232, 121, 249, 0.4);
+      animation: rp-ring-spin 3s linear infinite;
     }
 
-    .rp-action:hover .rp-action-btn::before {
-      transform: rotate(-45deg) translateY(-100%);
+    @keyframes rp-ring-spin {
+      to { filter: hue-rotate(360deg); }
     }
 
+    .rp-action:hover .rp-action-inner {
+      background: 
+        radial-gradient(circle at 30% 30%, rgba(65, 35, 105, 0.95) 0%, rgba(30, 15, 55, 0.98) 100%);
+      color: white;
+    }
+
+    .rp-action:hover .rp-action-inner::before {
+      left: 100%;
+    }
+
+    .rp-action:hover .rp-icon {
+      transform: scale(1.15);
+      filter: drop-shadow(0 0 6px rgba(232, 121, 249, 0.7));
+    }
+
+    /* ACTIVE (click) */
     .rp-action:active .rp-action-btn {
       transform: scale(0.92);
     }
@@ -662,27 +712,49 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
     .rp-icon {
       width: 24px;
       height: 24px;
-      transition: all 0.3s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      z-index: 1;
     }
 
-    /* Liked state - gorgeous red gradient */
-    .rp-like.liked .rp-action-btn {
-      background: linear-gradient(135deg, #ff2d55, #ff375f);
-      border-color: rgba(255, 45, 85, 0.6);
+    /* LIKED STATE - Red gradient takeover */
+    .rp-like.liked .rp-action-ring {
+      background: linear-gradient(135deg, #ff2d55, #ff6b9d, #ff375f);
       box-shadow: 
-        0 8px 24px rgba(255, 45, 85, 0.45),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        0 10px 30px rgba(255, 45, 85, 0.6),
+        0 0 20px rgba(255, 45, 85, 0.4);
+      animation: rp-ring-spin 3s linear infinite;
+    }
+
+    .rp-like.liked .rp-action-inner {
+      background: 
+        radial-gradient(circle at 30% 30%, rgba(75, 15, 35, 0.95) 0%, rgba(40, 5, 20, 0.98) 100%);
+      color: #ff6b9d;
     }
 
     .rp-like.liked .rp-heart {
       fill: currentColor;
-      animation: rp-heart-pop 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: rp-heart-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      filter: drop-shadow(0 0 10px rgba(255, 45, 85, 0.8));
     }
 
     @keyframes rp-heart-pop {
       0% { transform: scale(1); }
-      50% { transform: scale(1.35); }
+      40% { transform: scale(1.4); }
+      70% { transform: scale(0.9); }
       100% { transform: scale(1); }
+    }
+
+    /* SENT STATE (plane flies) */
+    .rp-send.sent .rp-plane {
+      animation: rp-plane-fly 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes rp-plane-fly {
+      0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+      50% { transform: translate(30px, -30px) rotate(30deg); opacity: 0; }
+      51% { transform: translate(-30px, 30px) rotate(-30deg); opacity: 0; }
+      100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
     }
 
     .rp-action-label {
@@ -690,7 +762,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       font-size: 11px;
       font-weight: 600;
       color: white;
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
       letter-spacing: 0.02em;
     }
 
@@ -713,7 +785,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(192, 132, 252, 0.25);
       color: white;
       display: flex;
       align-items: center;
@@ -724,10 +796,10 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
     }
 
     .rp-arrow:hover {
-      background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.1));
-      border-color: rgba(192, 132, 252, 0.5);
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.15));
+      border-color: rgba(232, 121, 249, 0.6);
       transform: scale(1.1);
-      box-shadow: 0 10px 24px rgba(192, 132, 252, 0.3);
+      box-shadow: 0 10px 26px rgba(192, 132, 252, 0.4);
     }
 
     .rp-arrow:active {
@@ -739,23 +811,23 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       height: 22px;
     }
 
-    /* ===== DESKTOP (≥1024px) ===== */
+    /* ===== DESKTOP ===== */
     @media (min-width: 1024px) {
       .rp-nav {
         display: flex;
         right: 40px;
       }
       .rp-actions {
-        right: 120px;
-        bottom: 50px;
+        right: 110px;
+        bottom: 60px;
       }
       .rp-info {
         left: 40px;
-        bottom: 50px;
+        bottom: 60px;
       }
     }
 
-    /* ===== MOBILE (≤640px) ===== */
+    /* ===== MOBILE ===== */
     @media (max-width: 640px) {
       .rp-stage {
         padding: 0;
@@ -769,34 +841,34 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         aspect-ratio: auto;
       }
       
-      .rp-card-glow,
-      .rp-card-glow-2 {
+      .rp-card-glow {
         display: none;
       }
       
       .rp-card-frame {
         border-radius: 0;
+        box-shadow: none;
       }
       
       .rp-topbar {
-        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
       }
       
       .rp-info {
         left: 16px;
-        bottom: 90px;
-        max-width: calc(100% - 100px);
+        bottom: 95px;
+        max-width: calc(100% - 90px);
       }
       
       .rp-actions {
-        right: 12px;
-        bottom: 90px;
+        right: 14px;
+        bottom: 180px; /* HIGHER on mobile - Safiya button sits at bottom-right */
         gap: 18px;
       }
       
       .rp-action-btn {
-        width: 48px;
-        height: 48px;
+        width: 52px;
+        height: 52px;
       }
       
       .rp-icon {
@@ -813,11 +885,11 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
     @media (min-width: 641px) and (max-width: 1023px) {
       .rp-info {
         left: 24px;
-        bottom: 40px;
+        bottom: 50px;
       }
       .rp-actions {
         right: 24px;
-        bottom: 40px;
+        bottom: 150px;
       }
     }
   </style>
@@ -830,7 +902,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       const videoId = root.dataset.videoid || '';
       const nextId = root.dataset.next || '';
       
-      // ===== LIKE FUNCTIONALITY =====
+      // LIKE
       const likeBtn = document.getElementById('likeBtn');
       const likedVideos: string[] = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
       
@@ -850,7 +922,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         localStorage.setItem('anitube_liked', JSON.stringify(likedVideos));
       });
       
-      // ===== SEND / SHARE =====
+      // SEND
       const sendBtn = document.getElementById('sendBtn');
       sendBtn?.addEventListener('click', async () => {
         const shareData = {
@@ -861,12 +933,14 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         
         const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
         
+        // Fly animation
+        sendBtn.classList.add('sent');
+        setTimeout(() => sendBtn.classList.remove('sent'), 600);
+        
         if (isMobile && (navigator as any).share) {
           try {
             await (navigator as any).share(shareData);
-          } catch (err) {
-            /* user cancelled */
-          }
+          } catch { /* cancelled */ }
         } else {
           try {
             await navigator.clipboard.writeText(window.location.href);
@@ -882,11 +956,10 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         }
       });
       
-      // ===== SMART BACK BUTTON (history-aware) =====
+      // BACK
       const backBtn = document.getElementById('backBtn');
       backBtn?.addEventListener('click', (e) => {
         e.preventDefault();
-        // Track how we got here
         const referrer = document.referrer;
         const sameOrigin = referrer && referrer.startsWith(window.location.origin);
         
@@ -897,7 +970,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         }
       });
       
-      // ===== NAVIGATION (Instagram-style smart algorithm) =====
+      // NAVIGATION
       const queue: any[] = (window as any).__REELS_QUEUE__ || [];
       let currentQueuePos = 0;
       
@@ -905,7 +978,6 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         let targetId = '';
         
         if (direction === 'next') {
-          // Use smart queue if available
           if (queue.length > 1) {
             const nextPos = currentQueuePos + 1;
             if (nextPos < queue.length) {
@@ -915,7 +987,6 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
             targetId = nextId;
           }
         } else {
-          // Back button uses history
           if (window.history.length > 1) {
             window.history.back();
             return;
@@ -937,7 +1008,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
       document.getElementById('nextBtn')?.addEventListener('click', () => navigate('next'));
       document.getElementById('prevBtn')?.addEventListener('click', () => navigate('prev'));
       
-      // ===== KEYBOARD =====
+      // KEYBOARD
       document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') {
           e.preventDefault();
@@ -950,7 +1021,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         }
       });
       
-      // ===== WHEEL SCROLL (debounced) =====
+      // WHEEL
       let wheelLocked = false;
       document.addEventListener('wheel', (e) => {
         if (wheelLocked) return;
@@ -963,7 +1034,7 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         setTimeout(() => { wheelLocked = false; }, 800);
       }, { passive: true });
       
-      // ===== TOUCH SWIPE =====
+      // TOUCH SWIPE
       let touchStartY = 0;
       let touchStartTime = 0;
       
@@ -977,25 +1048,23 @@ const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCa
         const diff = touchStartY - touchEndY;
         const timeDiff = Date.now() - touchStartTime;
         
-        // Fast swipe or long swipe
         if (Math.abs(diff) > 80 && timeDiff < 600) {
           if (diff > 0) navigate('next');
           else navigate('prev');
         }
       }, { passive: true });
       
-      // ===== HIDE LOADER =====
+      // LOADER HIDE
       const iframe = document.getElementById('videoFrame') as HTMLIFrameElement;
       const loader = document.getElementById('loader');
       
       iframe?.addEventListener('load', () => {
-        setTimeout(() => loader?.classList.add('hidden'), 300);
+        setTimeout(() => loader?.classList.add('hidden'), 400);
       });
       
-      // Fallback: hide loader after 3s no matter what
-      setTimeout(() => loader?.classList.add('hidden'), 3000);
+      setTimeout(() => loader?.classList.add('hidden'), 3500);
       
-      // ===== SAFIYA INTEGRATION =====
+      // SAFIYA
       setTimeout(() => {
         const currentVideo = queue[0];
         if (currentVideo) {
