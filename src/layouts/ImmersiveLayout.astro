@@ -1,0 +1,57 @@
+---
+import SafiyaCore from '../components/SafiyaCore.astro';
+
+const { title = 'AniTubeBuzz' } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0517" />
+  <title>{title}</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=DM+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <slot name="head" />
+</head>
+<body class="immersive-body">
+  <div id="immersive-app">
+    <slot />
+  </div>
+  <SafiyaCore />
+
+  <style is:global>
+    :root {
+      --grad: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      --text-primary: #f5ecff;
+      --text-secondary: rgba(255,255,255,0.75);
+      --text-muted: rgba(255,255,255,0.5);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      color: #fff;
+      font-family: 'DM Sans', 'Inter', sans-serif;
+      overflow: hidden;
+      height: 100%;
+      width: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body.immersive-body {
+      background: #000 !important;
+    }
+    #immersive-app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+  </style>
+</body>
+</html>
