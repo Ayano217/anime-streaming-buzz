@@ -1,755 +1,844 @@
 ---
 export const prerender = false;
 
-import ImmersiveLayout from '../../layouts/ImmersiveLayout.astro';
-
 const { id } = Astro.params;
 const videoId = id || '';
+
+// Helper to determine platform from ID prefix
+function getPlatformData(vid: string) {
+  if (vid.startsWith('yts_')) {
+    const rawId = vid.replace('yts_', '');
+    return {
+      source: 'youtube_shorts',
+      embedUrl: `https://www.youtube.com/embed/${rawId}?loop=1&playlist=${rawId}&rel=0&modestbranding=1`,
+      aspect: 'portrait',
+      isShort: true
+    };
+  }
+  if (vid.startsWith('yt_')) {
+    const rawId = vid.replace('yt_', '');
+    return {
+      source: 'youtube',
+      embedUrl: `https://www.youtube.com/embed/${rawId}?rel=0&modestbranding=1`,
+      aspect: 'landscape',
+      isShort: false
+    };
+  }
+  if (vid.startsWith('dm_')) {
+    const rawId = vid.replace('dm_', '');
+    return {
+      source: 'dailymotion',
+      embedUrl: `https://www.dailymotion.com/embed/video/${rawId}?autoplay=1&mute=0`,
+      aspect: 'mixed', // DM can be both
+      isShort: false
+    };
+  }
+  if (vid.startsWith('bili_')) {
+    const rawId = vid.replace('bili_', '');
+    return {
+      source: 'bilibili',
+      embedUrl: `https://player.bilibili.com/player.html?bvid=${rawId}&autoplay=1`,
+      aspect: 'landscape',
+      isShort: false
+    };
+  }
+  if (vid.startsWith('ody_')) {
+    const rawId = vid.replace('ody_', '');
+    // Odysee format: name/claimId
+    return {
+      source: 'odysee',
+      embedUrl: `https://odysee.com/$/embed/${rawId}`,
+      aspect: 'landscape',
+      isShort: false
+    };
+  }
+  if (vid.startsWith('rmb_')) {
+    const rawId = vid.replace('rmb_', '');
+    return {
+      source: 'rumble',
+      embedUrl: `https://rumble.com/embed/${rawId}/`,
+      aspect: 'landscape',
+      isShort: false
+    };
+  }
+  // Default fallback
+  return null;
+}
+
+// Try to fetch from API first, fallback to constructed data
+let video = null;
+let relatedVideos = [];
+
+try {
+  const apiUrl = new URL('/api/social-feed', Astro.url.origin);
+  apiUrl.searchParams.set('limit', '50');
+  apiUrl.searchParams.set('format', 'all');
+  
+  const response = await fetch(apiUrl);
+  if (response.ok) {
+    const data = await response.json();
+    relatedVideos = data.videos || [];
+    video = relatedVideos.find(v => v.id === videoId);
+  }
+} catch (e) {
+  console.error('API fetch failed:', e);
+}
+
+// If not found in API, build fallback from ID
+if (!video) {
+  const platformData = getPlatformData(videoId);
+  if (platformData) {
+    video = {
+      id: videoId,
+      title: 'Video Content',
+      channel: 'AniTube Channel',
+      thumbnail: '',
+      embedUrl: platformData.embedUrl,
+      source: platformData.source,
+      aspect: platformData.aspect,
+      isShort: platformData.isShort,
+      index: 0
+    };
+  } else {
+    // Complete fallback
+    video = {
+      id: videoId,
+      title: 'Anime Video',
+      channel: 'AniTubeBuzz',
+      thumbnail: '',
+      embedUrl: `https://www.youtube.com/embed/${videoId.replace(/^(yt_|yts_|dm_|bili_|ody_|rmb_)/, '')}?rel=0`,
+      source: 'unknown',
+      aspect: 'landscape',
+      isShort: false,
+      index: 0
+    };
+  }
+}
+
+// Calculate current index in feed for counter
+const currentIndex = relatedVideos.findIndex(v => v.id === videoId) + 1 || 1;
+const totalCount = relatedVideos.length || 134; // Fallback number
+
+// Prepare next/prev IDs for navigation
+const currentPos = relatedVideos.findIndex(v => v.id === videoId);
+const nextVideo = relatedVideos[currentPos + 1];
+const prevVideo = relatedVideos[currentPos - 1];
 ---
 
-<ImmersiveLayout title="Reels · AniTubeBuzz">
-  <div class="rp-root" data-video-id={videoId}>
-    <div class="rp-bg" id="rpBg"></div>
-    <div class="rp-bg-overlay"></div>
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>{video.title} | AniTubeBuzz Reels</title>
+  <meta name="description" content={`Watch ${video.title} on AniTubeBuzz`} />
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style is:global>
+    :root {
+      --grad: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      --bg-deep: #0a0517;
+      --bg-card: rgba(28,15,61,0.5);
+      --border-color: rgba(192,132,252,0.3);
+      --text-primary: #f5ecff;
+      --text-secondary: rgba(255,255,255,0.75);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg-deep);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-primary);
+    }
+    
+    /* Hide scrollbar but keep functionality */
+    body::-webkit-scrollbar {
+      display: none;
+    }
+    body {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
 
-    <header class="rp-header">
-      <button class="rp-icon-btn" id="rpBack" aria-label="Back">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      </button>
-      <div class="rp-brand">AniTube<span>Buzz</span></div>
-      <div class="rp-counter" id="rpCounter">1 / 1</div>
+<body>
+  <div id="reels-root" class="reels-container" data-videoid={videoId} data-next={nextVideo?.id || ''} data-prev={prevVideo?.id || ''}>
+    
+    <!-- Top Navigation Bar -->
+    <header class="top-bar">
+      <a href="/" class="back-btn" aria-label="Go back">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      
+      <div class="brand">
+        <span class="brand-text">AniTubeBuzz</span>
+        <div class="brand-dot"></div>
+      </div>
+      
+      <div class="counter">
+        <span class="current">{currentIndex}</span>
+        <span class="separator">/</span>
+        <span class="total">{totalCount}</span>
+      </div>
     </header>
 
-    <button class="rp-nav rp-nav-up" id="rpUp" aria-label="Previous">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-    </button>
-    <button class="rp-nav rp-nav-down" id="rpDown" aria-label="Next">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-    </button>
+    <!-- Main Video Area -->
+    <main class="video-stage">
+      
+      <!-- Video Card with Glow -->
+      <div class="video-card" id="videoCard">
+        <div class="card-glow"></div>
+        <div class="card-frame">
+          <iframe 
+            id="videoFrame"
+            src={video.embedUrl}
+            title={video.title}
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            loading="eager"
+          ></iframe>
+          
+          <!-- Loading State -->
+          <div class="video-loader" id="loader">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
 
-    <div class="rp-feed" id="rpFeed">
-      <div class="rp-loading" id="rpLoading"><div class="rp-spinner"></div></div>
-    </div>
+      <!-- Left Side Info (Instagram Style) -->
+      <div class="info-panel">
+        <div class="channel-row">
+          <div class="channel-avatar">
+            {video.channel.charAt(0).toUpperCase()}
+          </div>
+          <span class="channel-name">@{video.channel.replace(/\s+/g, '').toLowerCase()}</span>
+        </div>
+        <h1 class="video-title">{video.title}</h1>
+        <p class="video-meta">AniTube Anime • HD</p>
+      </div>
 
-    <div class="rp-toast" id="rpToast"></div>
+      <!-- Right Side Actions -->
+      <div class="action-panel">
+        <button class="action-btn like-btn" id="likeBtn" aria-label="Like video">
+          <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          <span class="action-label">Like</span>
+        </button>
+        
+        <button class="action-btn send-btn" id="sendBtn" aria-label="Share video">
+          <svg class="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+          </svg>
+          <span class="action-label">Send</span>
+        </button>
+      </div>
+
+      <!-- Desktop Navigation Arrows -->
+      <div class="desktop-nav">
+        <button class="nav-arrow up-arrow" id="prevBtn" disabled={!prevVideo}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 15l-6-6-6 6"/>
+          </svg>
+        </button>
+        <button class="nav-arrow down-arrow" id="nextBtn" disabled={!nextVideo}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </button>
+      </div>
+
+    </main>
+
+    <!-- Hidden data for JS -->
+    <script is:inline define:vars={{ videoData: video, relatedData: relatedVideos }}>
+      window.__REELS_DATA__ = {
+        current: videoData,
+        related: relatedData,
+        index: {currentIndex}
+      };
+    </script>
+
   </div>
-</ImmersiveLayout>
 
-<style>
-  .rp-root {
-    position: fixed;
-    inset: 0;
-    background: #000;
-    color: #fff;
-    z-index: 100;
-    font-family: 'Inter', 'DM Sans', sans-serif;
-    overflow: hidden;
-    width: 100vw;
-    height: 100vh;
-    height: 100dvh;
-  }
-
-  .rp-bg {
-    position: absolute;
-    inset: -40px;
-    background-size: cover;
-    background-position: center;
-    filter: blur(50px) brightness(0.35) saturate(1.3);
-    transform: scale(1.2);
-    transition: background-image 0.6s ease;
-    z-index: 1;
-    will-change: background-image;
-  }
-  .rp-bg-overlay {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.85) 100%);
-    z-index: 2;
-    pointer-events: none;
-  }
-
-  .rp-header {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    padding: 16px 22px;
-    height: 62px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    z-index: 200;
-    pointer-events: none;
-    box-sizing: border-box;
-  }
-  .rp-icon-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.55);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: #fff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    transition: all 0.25s ease;
-    padding: 0;
-    pointer-events: auto;
-  }
-  .rp-icon-btn:hover {
-    background: rgba(192,132,252,0.35);
-    border-color: rgba(192,132,252,0.6);
-    transform: scale(1.06);
-  }
-  .rp-brand {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1.05rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: -0.02em;
-    pointer-events: auto;
-  }
-  .rp-brand span {
-    color: #fff;
-    -webkit-text-fill-color: #fff;
-  }
-  .rp-counter {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: rgba(255,255,255,0.85);
-    letter-spacing: 0.08em;
-    padding: 6px 12px;
-    background: rgba(0,0,0,0.55);
-    border-radius: 999px;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.1);
-    pointer-events: auto;
-  }
-
-  .rp-nav {
-    position: absolute;
-    right: 30px;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(20,20,30,0.75);
-    border: 1px solid rgba(255,255,255,0.15);
-    color: #fff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    transition: all 0.25s ease;
-    padding: 0;
-    z-index: 150;
-  }
-  .rp-nav:hover {
-    background: rgba(192,132,252,0.45);
-    transform: scale(1.1);
-  }
-  .rp-nav-up { top: calc(50% - 55px); }
-  .rp-nav-down { top: calc(50% + 25px); }
-
-  .rp-feed {
-    position: absolute;
-    inset: 0;
-    z-index: 10;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    scroll-snap-type: y mandatory;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-  }
-  .rp-feed::-webkit-scrollbar { display: none; width: 0; }
-
-  .rp-item {
-    height: 100vh;
-    height: 100dvh;
-    width: 100vw;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  .rp-card {
-    position: relative;
-    height: min(88vh, calc(100vh - 80px));
-    aspect-ratio: 9 / 16;
-    max-width: min(90vw, 460px);
-    background: #0a0517;
-    border-radius: 20px;
-    box-shadow: 0 30px 90px rgba(0,0,0,0.85);
-  }
-
-  .rp-card::before {
-    content: '';
-    position: absolute;
-    inset: -3px;
-    border-radius: 23px;
-    background: linear-gradient(135deg,
-      rgba(192,132,252,0.9) 0%,
-      rgba(232,121,249,0.6) 25%,
-      rgba(125,211,252,0.9) 50%,
-      rgba(232,121,249,0.6) 75%,
-      rgba(192,132,252,0.9) 100%);
-    background-size: 300% 300%;
-    animation: rpGlow 6s ease infinite;
-    z-index: -1;
-    opacity: 0.65;
-    filter: blur(12px);
-    pointer-events: none;
-  }
-  @keyframes rpGlow {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-  }
-
-  .rp-video {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    background: #000;
-    border-radius: 20px;
-    overflow: hidden;
-    z-index: 1;
-  }
-  .rp-video iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
-    display: block;
-  }
-
-  .rp-video-loader {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #0a0517;
-    z-index: 2;
-    pointer-events: none;
-  }
-  .rp-video-loader.hidden { display: none; }
-
-  .rp-info {
-    position: absolute;
-    left: 14px;
-    right: 70px;
-    bottom: 14px;
-    z-index: 5;
-    color: #fff;
-    pointer-events: none;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.9);
-  }
-  .rp-info-channel {
-    font-size: 0.85rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .rp-info-dot {
-    width: 3px;
-    height: 3px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.6);
-  }
-  .rp-info-title {
-    font-size: 0.78rem;
-    font-weight: 400;
-    color: rgba(255,255,255,0.9);
-    line-height: 1.35;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .rp-actions {
-    position: absolute;
-    right: -58px;
-    bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    z-index: 15;
-  }
-  .rp-action {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(20,10,45,0.85);
-    border: 1px solid rgba(192,132,252,0.25);
-    color: #fff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
-    padding: 0;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-  }
-  .rp-action:hover {
-    background: linear-gradient(135deg, rgba(192,132,252,0.5), rgba(232,121,249,0.4));
-    border-color: rgba(232,121,249,0.7);
-    transform: scale(1.1);
-  }
-  .rp-action.liked {
-    background: linear-gradient(135deg, #ff3366, #ff0055);
-    border-color: #ff3366;
-  }
-  .rp-action.liked svg { fill: #fff; }
-
-  .rp-loading {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #000;
-    z-index: 300;
-  }
-  .rp-loading.hidden { display: none; }
-  .rp-spinner {
-    width: 42px;
-    height: 42px;
-    border: 3px solid rgba(192,132,252,0.15);
-    border-top-color: #c084fc;
-    border-radius: 50%;
-    animation: rpSpin 0.8s linear infinite;
-  }
-  @keyframes rpSpin { to { transform: rotate(360deg); } }
-
-  .rp-toast {
-    position: fixed;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%) translateY(30px);
-    padding: 12px 24px;
-    background: rgba(20,10,45,0.95);
-    border: 1px solid rgba(192,132,252,0.4);
-    border-radius: 999px;
-    color: #fff;
-    font-size: 0.85rem;
-    font-weight: 600;
-    z-index: 500;
-    opacity: 0;
-    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    pointer-events: none;
-    white-space: nowrap;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-  }
-  .rp-toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  @media (max-width: 768px) {
-    .rp-card {
-      height: 100vh;
-      height: 100dvh;
-      max-width: 100vw;
+  <style>
+    /* Container - Full Screen */
+    .reels-container {
       width: 100vw;
-      aspect-ratio: unset;
-      border-radius: 0;
+      height: 100vh;
+      height: 100dvh; /* Mobile viewport fix */
+      background: linear-gradient(180deg, #0a0517 0%, #1a0f2e 50%, #0a0517 100%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
-    .rp-card::before { display: none; }
-    .rp-video { border-radius: 0; }
-    .rp-nav { display: none; }
-    .rp-actions {
-      right: 8px;
-      bottom: 110px;
+
+    /* Ambient Background Blur */
+    .reels-container::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 50% 50%, rgba(192, 132, 252, 0.15) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
     }
-    .rp-info {
-      left: 14px;
-      right: 68px;
-      bottom: 90px;
+
+    /* Top Bar */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 100;
+      background: linear-gradient(to bottom, rgba(10,5,23,0.9) 0%, transparent 100%);
     }
-    .rp-header { 
-      padding: 12px 14px; 
-      height: 56px;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.55), transparent);
+
+    .back-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      border-radius: 50%;
+      transition: background 0.2s;
+      cursor: pointer;
+      text-decoration: none;
     }
-  }
-  @media (max-width: 480px) {
-    .rp-icon-btn { width: 38px; height: 38px; }
-    .rp-brand { font-size: 0.95rem; }
-    .rp-counter { font-size: 0.65rem; padding: 5px 10px; }
-    .rp-action { width: 42px; height: 42px; }
-  }
-</style>
 
-<script is:inline define:vars={{ videoId }}>
-(function(){
-  var CURRENT_ID = videoId;
-
-  // ═══ INSTANT LANDSCAPE REDIRECT (before anything renders) ═══
-  // If ID is not portrait-guaranteed (yts_), immediately go to /watch/
-  // We do this BEFORE checking metadata to avoid any visual delay
-  function needsMetaCheck(id){
-    if(!id) return false;
-    // Only these are guaranteed portrait from ID alone:
-    if(id.indexOf('yts_') === 0) return false; // YT Shorts = portrait, no check needed
-    // Dailymotion (dm_) can be either — needs metadata check
-    // Everything else — same
-    return true;
-  }
-
-  var feedEl = document.getElementById('rpFeed');
-  var loadingEl = document.getElementById('rpLoading');
-  var bgEl = document.getElementById('rpBg');
-  var toastEl = document.getElementById('rpToast');
-  var backBtn = document.getElementById('rpBack');
-  var upBtn = document.getElementById('rpUp');
-  var downBtn = document.getElementById('rpDown');
-  var counterEl = document.getElementById('rpCounter');
-
-  if(!feedEl) return;
-
-  var videos = [];
-  var currentIdx = 0;
-  var seenIds = {};
-  var likedIds = {};
-
-  try {
-    var saved = localStorage.getItem('reels_liked_v1');
-    if(saved) likedIds = JSON.parse(saved) || {};
-  } catch(_){}
-
-  function saveLiked(){
-    try { localStorage.setItem('reels_liked_v1', JSON.stringify(likedIds)); } catch(_){}
-  }
-
-  function toast(msg){
-    if(!toastEl) return;
-    toastEl.textContent = msg;
-    toastEl.classList.add('show');
-    clearTimeout(toastEl._t);
-    toastEl._t = setTimeout(function(){ toastEl.classList.remove('show'); }, 1800);
-  }
-
-  function updateCounter(){
-    if(counterEl) counterEl.textContent = (currentIdx + 1) + ' / ' + videos.length;
-  }
-
-  function detectSource(id){
-    if(!id) return 'youtube';
-    if(id.indexOf('dm_') === 0) return 'dailymotion';
-    if(id.indexOf('bili_') === 0) return 'bilibili';
-    if(id.indexOf('ody_') === 0) return 'odysee';
-    if(id.indexOf('rmb_') === 0) return 'rumble';
-    if(id.indexOf('yts_') === 0) return 'youtube_shorts';
-    if(id.indexOf('yt_') === 0) return 'youtube';
-    return 'youtube';
-  }
-  function stripPrefix(id){
-    return id.replace(/^(dm_|bili_|ody_|rmb_|yts_|yt_|anime_)/, '');
-  }
-
-  function isPortrait(v){
-    if(!v) return false;
-    if(v.aspect === 'portrait') return true;
-    if(v.aspect === 'landscape') return false;
-    if(v.isShort === true) return true;
-    if(v.source === 'youtube_shorts') return true;
-    if(v.id && v.id.indexOf('yts_') === 0) return true;
-    return false;
-  }
-
-  function buildEmbedUrl(v){
-    var url = v.embedUrl || '';
-    if(!url) return '';
-    var sep = url.indexOf('?') === -1 ? '?' : '&';
-    if(v.source === 'youtube' || v.source === 'youtube_shorts'){
-      if(url.indexOf('autoplay') === -1) url += sep + 'autoplay=1&mute=1&modestbranding=1&rel=0&playsinline=1';
-    } else if(v.source === 'dailymotion'){
-      if(url.indexOf('autoplay') === -1) url += sep + 'autoplay=1&mute=1&ui-logo=0&ui-start-screen-info=0&sharing-enable=0';
-    } else if(v.source === 'bilibili'){
-      if(url.indexOf('autoplay') === -1) url += sep + 'autoplay=1&muted=1';
-    } else {
-      if(url.indexOf('autoplay') === -1) url += sep + 'autoplay=1&mute=1';
+    .back-btn:hover {
+      background: rgba(255,255,255,0.1);
     }
-    return url;
-  }
 
-  function esc(s){
-    return String(s||'').replace(/[&<>"']/g, function(c){
-      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-    });
-  }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
 
-  function renderItem(v, idx){
-    var el = document.createElement('div');
-    el.className = 'rp-item';
-    el.dataset.idx = idx;
+    .brand-text {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 18px;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-    var card = document.createElement('div');
-    card.className = 'rp-card';
+    .brand-dot {
+      width: 6px;
+      height: 6px;
+      background: #7dd3fc;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
 
-    var videoWrap = document.createElement('div');
-    videoWrap.className = 'rp-video';
-    videoWrap.setAttribute('data-container', '');
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
 
-    var loader = document.createElement('div');
-    loader.className = 'rp-video-loader';
-    loader.innerHTML = '<div class="rp-spinner"></div>';
-    videoWrap.appendChild(loader);
+    .counter {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.1);
+      padding: 6px 12px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+    }
 
-    var info = document.createElement('div');
-    info.className = 'rp-info';
-    var channelName = v.channel || 'AniTube';
-    var titleText = v.title || '';
-    info.innerHTML =
-      '<div class="rp-info-channel">' +
-        '<span>@' + esc(channelName.toLowerCase().replace(/\s+/g,'')) + '</span>' +
-        (v.isNew ? '<span class="rp-info-dot"></span><span style="color:#c084fc;font-size:0.7rem;">NEW</span>' : '') +
-      '</div>' +
-      '<div class="rp-info-title">' + esc(titleText) + '</div>';
+    .counter .current {
+      color: #e879f9;
+    }
 
-    var actions = document.createElement('div');
-    actions.className = 'rp-actions';
+    .counter .separator {
+      margin: 0 4px;
+      opacity: 0.5;
+    }
 
-    var isLiked = !!likedIds[v.id];
-    var likeBtn = document.createElement('button');
-    likeBtn.className = 'rp-action' + (isLiked ? ' liked' : '');
-    likeBtn.setAttribute('aria-label', 'Like');
-    likeBtn.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="' + (isLiked ? '#fff' : 'none') + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
-    likeBtn.addEventListener('click', function(e){
-      e.stopPropagation();
-      if(likedIds[v.id]){
-        delete likedIds[v.id];
-        likeBtn.classList.remove('liked');
-        likeBtn.querySelector('svg').setAttribute('fill', 'none');
-      } else {
-        likedIds[v.id] = true;
+    /* Main Stage - Center Everything */
+    .video-stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 80px 20px;
+      z-index: 1;
+    }
+
+    /* Video Card - 9:16 Aspect Ratio */
+    .video-card {
+      position: relative;
+      width: 100%;
+      max-width: 420px;
+      aspect-ratio: 9/16;
+      max-height: 85vh;
+      filter: drop-shadow(0 0 30px rgba(192, 132, 252, 0.4));
+      transition: transform 0.3s ease;
+    }
+
+    .card-glow {
+      position: absolute;
+      inset: -2px;
+      background: var(--grad);
+      border-radius: 24px;
+      opacity: 0.6;
+      filter: blur(8px);
+      z-index: -1;
+      animation: glow-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.02); }
+    }
+
+    .card-frame {
+      width: 100%;
+      height: 100%;
+      background: #000;
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid rgba(192, 132, 252, 0.3);
+    }
+
+    .card-frame iframe {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Loader */
+    .video-loader {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      z-index: 10;
+      transition: opacity 0.3s;
+    }
+
+    .video-loader.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(192, 132, 252, 0.3);
+      border-top-color: #e879f9;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Info Panel - Bottom Left (Instagram Style) */
+    .info-panel {
+      position: absolute;
+      bottom: 100px;
+      left: 20px;
+      z-index: 50;
+      max-width: 300px;
+      pointer-events: none; /* Let clicks pass through to video */
+    }
+
+    .channel-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .channel-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--grad);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: white;
+      border: 2px solid rgba(255,255,255,0.2);
+    }
+
+    .channel-name {
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .video-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      line-height: 1.3;
+      margin-bottom: 6px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .video-meta {
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    }
+
+    /* Action Panel - Right Side Fixed */
+    .action-panel {
+      position: absolute;
+      right: 20px;
+      bottom: 100px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      z-index: 50;
+    }
+
+    .action-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .action-btn:hover {
+      transform: scale(1.1);
+      background: rgba(255,255,255,0.2);
+    }
+
+    .action-btn:active {
+      transform: scale(0.95);
+    }
+
+    .action-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    .action-btn.liked {
+      color: #ff2d55;
+      background: rgba(255, 45, 85, 0.2);
+      border-color: rgba(255, 45, 85, 0.4);
+    }
+
+    .action-btn.liked svg {
+      fill: currentColor;
+    }
+
+    .action-label {
+      font-size: 10px;
+      margin-top: 4px;
+      font-weight: 600;
+      opacity: 0.9;
+    }
+
+    /* Desktop Navigation Arrows */
+    .desktop-nav {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      z-index: 50;
+    }
+
+    .nav-arrow {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-arrow:hover:not(:disabled) {
+      background: rgba(255,255,255,0.2);
+      transform: scale(1.1);
+    }
+
+    .nav-arrow:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .nav-arrow svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    /* Show desktop nav on larger screens */
+    @media (min-width: 1024px) {
+      .desktop-nav {
+        display: flex;
+      }
+      .action-panel {
+        bottom: 120px;
+        right: 30px;
+      }
+      .info-panel {
+        left: 60px;
+        bottom: 120px;
+      }
+    }
+
+    /* Mobile Optimizations */
+    @media (max-width: 640px) {
+      .video-card {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+        filter: none;
+      }
+      
+      .card-frame {
+        border-radius: 0;
+        border: none;
+      }
+      
+      .card-glow {
+        display: none; /* No glow on mobile full screen */
+      }
+      
+      .video-stage {
+        padding: 0;
+      }
+      
+      .top-bar {
+        background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+      }
+      
+      .info-panel {
+        left: 16px;
+        bottom: 80px;
+        max-width: 70%;
+      }
+      
+      .action-panel {
+        right: 16px;
+        bottom: 80px;
+        gap: 16px;
+      }
+      
+      .action-btn {
+        width: 44px;
+        height: 44px;
+      }
+    }
+
+    /* Prevent text selection */
+    .reels-container {
+      user-select: none;
+      -webkit-user-select: none;
+    }
+  </style>
+
+  <script>
+    // Client-side functionality
+    (function() {
+      const root = document.getElementById('reels-root');
+      const videoId = root.dataset.videoid;
+      const nextId = root.dataset.next;
+      const prevId = root.dataset.prev;
+      
+      // Like functionality
+      const likeBtn = document.getElementById('likeBtn');
+      const likedVideos = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
+      
+      if (likedVideos.includes(videoId)) {
         likeBtn.classList.add('liked');
-        likeBtn.querySelector('svg').setAttribute('fill', '#fff');
       }
-      saveLiked();
-    });
-
-    var sendBtn = document.createElement('button');
-    sendBtn.className = 'rp-action';
-    sendBtn.setAttribute('aria-label', 'Send');
-    sendBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>';
-    sendBtn.addEventListener('click', function(e){
-      e.stopPropagation();
-      var url = window.location.origin + '/reels/' + encodeURIComponent(v.id);
-      if(navigator.share){ 
-        navigator.share({title: v.title || 'Video', url: url}).catch(function(){}); 
-      } else { 
-        try{ 
-          navigator.clipboard.writeText(url); 
-          toast('Link copied'); 
-        }catch(_){ 
-          toast('Copy failed'); 
-        } 
-      }
-    });
-
-    actions.appendChild(likeBtn);
-    actions.appendChild(sendBtn);
-
-    card.appendChild(videoWrap);
-    card.appendChild(info);
-    card.appendChild(actions);
-    el.appendChild(card);
-    return el;
-  }
-
-  function activate(idx){
-    if(idx < 0 || idx >= videos.length) return;
-    var items = feedEl.querySelectorAll('.rp-item');
-    items.forEach(function(item, i){
-      var container = item.querySelector('[data-container]');
-      if(!container) return;
-      if(i === idx){
-        if(!container.querySelector('iframe')){
-          var v = videos[i];
-          var url = buildEmbedUrl(v);
-          if(url){
-            var iframe = document.createElement('iframe');
-            iframe.src = url;
-            iframe.setAttribute('frameborder','0');
-            iframe.setAttribute('allow','accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; fullscreen; web-share; picture-in-picture');
-            iframe.setAttribute('allowfullscreen', 'true');
-            iframe.addEventListener('load', function(){
-              var l = container.querySelector('.rp-video-loader');
-              if(l) l.classList.add('hidden');
-            });
-            container.appendChild(iframe);
+      
+      likeBtn.addEventListener('click', () => {
+        const index = likedVideos.indexOf(videoId);
+        if (index > -1) {
+          likedVideos.splice(index, 1);
+          likeBtn.classList.remove('liked');
+        } else {
+          likedVideos.push(videoId);
+          likeBtn.classList.add('liked');
+          
+          // Animation
+          likeBtn.style.transform = 'scale(1.3)';
+          setTimeout(() => likeBtn.style.transform = '', 200);
+        }
+        localStorage.setItem('anitube_liked', JSON.stringify(likedVideos));
+      });
+      
+      // Share/Send functionality
+      const sendBtn = document.getElementById('sendBtn');
+      sendBtn.addEventListener('click', async () => {
+        const shareData = {
+          title: document.querySelector('.video-title')?.textContent || 'AniTube Video',
+          text: `Check out this anime on AniTubeBuzz!`,
+          url: window.location.href
+        };
+        
+        if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
+          try {
+            await navigator.share(shareData);
+          } catch (err) {
+            console.log('Share cancelled');
           }
         } else {
-          var l = container.querySelector('.rp-video-loader');
-          if(l) l.classList.add('hidden');
-        }
-        currentIdx = idx;
-        var vv = videos[idx];
-        if(vv && vv.thumbnail && bgEl){
-          bgEl.style.backgroundImage = 'url(' + vv.thumbnail + ')';
-        }
-        try{
-          window.dispatchEvent(new CustomEvent('safiya:video-event', { detail: { action: 'watch', video: vv } }));
-        }catch(_){}
-        updateCounter();
-      } else {
-        if(Math.abs(i - idx) > 1){ 
-          var ifr = container.querySelector('iframe');
-          if(ifr) ifr.remove();
-          var ldr = container.querySelector('.rp-video-loader');
-          if(ldr) ldr.classList.remove('hidden');
-        }
-      }
-    });
-  }
-
-  // ═══ SILENT REDIRECT — no fake screen, no delay ═══
-  function silentRedirect(){
-    window.location.replace('/watch/' + encodeURIComponent(CURRENT_ID));
-  }
-
-  async function loadFeed(){
-    try {
-      // Fetch clicked video metadata
-      var clicked = null;
-      var types = ['anime','donghua','kdrama','movies'];
-      
-      for(var t = 0; t < types.length && !clicked; t++){
-        try {
-          var r = await fetch('/api/social-feed?type=' + types[t] + '&limit=50');
-          var d = await r.json();
-          if(d.success && d.videos){ 
-            clicked = d.videos.find(function(v){ return v.id === CURRENT_ID; }); 
+          // Desktop: Copy to clipboard
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            const originalLabel = sendBtn.querySelector('.action-label').textContent;
+            sendBtn.querySelector('.action-label').textContent = 'Copied!';
+            setTimeout(() => {
+              sendBtn.querySelector('.action-label').textContent = originalLabel;
+            }, 2000);
+          } catch (err) {
+            prompt('Copy this link:', window.location.href);
           }
-        }catch(_){}
-      }
-
-      // Landscape → silent redirect
-      if(clicked && !isPortrait(clicked)){
-        silentRedirect();
-        return;
-      }
-
-      // No metadata + not YT Shorts → assume landscape, redirect
-      if(!clicked){
-        if(CURRENT_ID.indexOf('yts_') !== 0){
-          silentRedirect();
-          return;
         }
-        var raw = stripPrefix(CURRENT_ID);
-        clicked = {
-          id: CURRENT_ID,
-          title: 'Video',
-          channel: 'Shorts',
-          thumbnail: 'https://i.ytimg.com/vi/' + raw + '/hqdefault.jpg',
-          embedUrl: 'https://www.youtube.com/embed/' + raw + '?rel=0&modestbranding=1&playsinline=1&loop=1&playlist=' + raw,
-          source: 'youtube_shorts',
-          aspect: 'portrait',
-          isShort: true
-        };
-      }
-
-      // Build portrait-only feed
-      videos = [clicked];
-      seenIds[clicked.id] = true;
-
-      var loaders = [
-        '/api/social-feed?type=anime&limit=50&format=portrait',
-        '/api/social-feed?type=donghua&limit=50&format=portrait',
-        '/api/social-feed?type=kdrama&limit=30&format=portrait',
-        '/api/social-feed?type=movies&limit=30&format=portrait'
-      ];
-      for(var i = 0; i < loaders.length; i++){
-        try {
-          var rr = await fetch(loaders[i]);
-          var dd = await rr.json();
-          if(dd.success && dd.videos){
-            dd.videos.forEach(function(v){
-              if(!seenIds[v.id] && isPortrait(v)){ 
-                videos.push(v); 
-                seenIds[v.id] = true; 
-              }
-            });
-          }
-        }catch(_){}
-      }
-
-      // Shuffle related (keep clicked first)
-      var first = videos.shift();
-      for(var s = videos.length - 1; s > 0; s--){
-        var j = Math.floor(Math.random() * (s + 1));
-        var tmp = videos[s]; videos[s] = videos[j]; videos[j] = tmp;
-      }
-      videos.unshift(first);
-
-      feedEl.innerHTML = '';
-      videos.forEach(function(v, i){ feedEl.appendChild(renderItem(v, i)); });
-
-      if(loadingEl) loadingEl.classList.add('hidden');
-      
-      requestAnimationFrame(function(){
-        requestAnimationFrame(function(){
-          activate(0);
-          feedEl.scrollTop = 0;
-        });
       });
-
-    } catch(err){
-      console.error('[reels]', err);
-      silentRedirect();
-    }
-  }
-
-  var scrollTimer;
-  feedEl.addEventListener('scroll', function(){
-    if(scrollTimer) clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(function(){
-      var idx = Math.round(feedEl.scrollTop / window.innerHeight);
-      if(idx !== currentIdx && idx >= 0 && idx < videos.length){ 
-        activate(idx); 
+      
+      // Navigation
+      const nextBtn = document.getElementById('nextBtn');
+      const prevBtn = document.getElementById('prevBtn');
+      
+      function navigate(direction) {
+        const targetId = direction === 'next' ? nextId : prevId;
+        if (targetId) {
+          // Smooth transition
+          document.querySelector('.video-card').style.opacity = '0';
+          document.querySelector('.video-card').style.transform = `translateY(${direction === 'next' ? '-20px' : '20px'})`;
+          
+          setTimeout(() => {
+            window.location.href = `/reels/${targetId}`;
+          }, 200);
+        }
       }
-    }, 120);
-  }, { passive: true });
-
-  function scrollTo(idx){
-    if(idx < 0 || idx >= videos.length) return;
-    feedEl.scrollTo({ top: idx * window.innerHeight, behavior: 'smooth' });
-  }
-  if(upBtn) upBtn.addEventListener('click', function(){ scrollTo(currentIdx - 1); });
-  if(downBtn) downBtn.addEventListener('click', function(){ scrollTo(currentIdx + 1); });
-
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'ArrowDown' || e.key === 'j'){ e.preventDefault(); scrollTo(currentIdx + 1); }
-    else if(e.key === 'ArrowUp' || e.key === 'k'){ e.preventDefault(); scrollTo(currentIdx - 1); }
-    else if(e.key === 'Escape'){ goBack(); }
-  });
-
-  function goBack(){
-    window.location.href = '/';
-  }
-  if(backBtn) backBtn.addEventListener('click', goBack);
-
-  loadFeed();
-})();
-</script>
+      
+      if (nextBtn) nextBtn.addEventListener('click', () => navigate('next'));
+      if (prevBtn) prevBtn.addEventListener('click', () => navigate('prev'));
+      
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') {
+          navigate('next');
+        } else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') {
+          navigate('prev');
+        } else if (e.key === 'Escape') {
+          window.location.href = '/';
+        }
+      });
+      
+      // Wheel/Scroll snap
+      let wheelTimeout;
+      document.addEventListener('wheel', (e) => {
+        clearTimeout(wheelTimeout);
+        wheelTimeout = setTimeout(() => {
+          if (e.deltaY > 50) navigate('next');
+          else if (e.deltaY < -50) navigate('prev');
+        }, 50);
+      });
+      
+      // Touch swipe for mobile
+      let touchStartY = 0;
+      document.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+      }, {passive: true});
+      
+      document.addEventListener('touchend', (e) => {
+        const touchEndY = e.changedTouches[0].clientY;
+        const diff = touchStartY - touchEndY;
+        
+        if (Math.abs(diff) > 100) {
+          if (diff > 0) navigate('next');
+          else navigate('prev');
+        }
+      }, {passive: true});
+      
+      // Hide loader when iframe loads
+      const iframe = document.getElementById('videoFrame');
+      const loader = document.getElementById('loader');
+      
+      iframe.addEventListener('load', () => {
+        loader.classList.add('hidden');
+      });
+      
+      // Safiya Integration
+      if (window.__REELS_DATA__?.current) {
+        window.dispatchEvent(new CustomEvent('safiya:video-event', {
+          detail: { 
+            action: 'watch', 
+            video: window.__REELS_DATA__.current 
+          }
+        }));
+      }
+      
+      // Visibility API - pause/resume logic if needed
+      document.addEventListener('visibilitychange', () => {
+        // Could add pause logic here if we had direct video control
+      });
+    })();
+  </script>
+</body>
+</html>
