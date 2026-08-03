@@ -1,16 +1,18 @@
 ---
 export const prerender = false;
 
+import ImmersiveLayout from '../../layouts/ImmersiveLayout.astro';
+
 const { id } = Astro.params;
 const videoId = id || '';
 
-// Helper to determine platform from ID prefix
+// Platform detection from ID prefix
 function getPlatformData(vid: string) {
   if (vid.startsWith('yts_')) {
     const rawId = vid.replace('yts_', '');
     return {
       source: 'youtube_shorts',
-      embedUrl: `https://www.youtube.com/embed/${rawId}?loop=1&playlist=${rawId}&rel=0&modestbranding=1`,
+      embedUrl: `https://www.youtube.com/embed/${rawId}?loop=1&playlist=${rawId}&rel=0&modestbranding=1&autoplay=1`,
       aspect: 'portrait',
       isShort: true
     };
@@ -19,7 +21,7 @@ function getPlatformData(vid: string) {
     const rawId = vid.replace('yt_', '');
     return {
       source: 'youtube',
-      embedUrl: `https://www.youtube.com/embed/${rawId}?rel=0&modestbranding=1`,
+      embedUrl: `https://www.youtube.com/embed/${rawId}?rel=0&modestbranding=1&autoplay=1`,
       aspect: 'landscape',
       isShort: false
     };
@@ -29,7 +31,7 @@ function getPlatformData(vid: string) {
     return {
       source: 'dailymotion',
       embedUrl: `https://www.dailymotion.com/embed/video/${rawId}?autoplay=1&mute=0`,
-      aspect: 'mixed', // DM can be both
+      aspect: 'mixed',
       isShort: false
     };
   }
@@ -37,17 +39,16 @@ function getPlatformData(vid: string) {
     const rawId = vid.replace('bili_', '');
     return {
       source: 'bilibili',
-      embedUrl: `https://player.bilibili.com/player.html?bvid=${rawId}&autoplay=1`,
+      embedUrl: `https://player.bilibili.com/player.html?bvid=${rawId}&autoplay=1&high_quality=1`,
       aspect: 'landscape',
       isShort: false
     };
   }
   if (vid.startsWith('ody_')) {
     const rawId = vid.replace('ody_', '');
-    // Odysee format: name/claimId
     return {
       source: 'odysee',
-      embedUrl: `https://odysee.com/$/embed/${rawId}`,
+      embedUrl: `https://odysee.com/$/embed/${rawId}?autoplay=1`,
       aspect: 'landscape',
       isShort: false
     };
@@ -56,209 +57,217 @@ function getPlatformData(vid: string) {
     const rawId = vid.replace('rmb_', '');
     return {
       source: 'rumble',
-      embedUrl: `https://rumble.com/embed/${rawId}/`,
+      embedUrl: `https://rumble.com/embed/${rawId}/?autoplay=2`,
       aspect: 'landscape',
       isShort: false
     };
   }
-  // Default fallback
   return null;
 }
 
-// Try to fetch from API first, fallback to constructed data
-let video = null;
-let relatedVideos = [];
+// Fetch all videos from API
+let video: any = null;
+let allVideos: any[] = [];
+let relatedVideos: any[] = [];
 
 try {
   const apiUrl = new URL('/api/social-feed', Astro.url.origin);
-  apiUrl.searchParams.set('limit', '50');
+  apiUrl.searchParams.set('limit', '100');
   apiUrl.searchParams.set('format', 'all');
   
   const response = await fetch(apiUrl);
   if (response.ok) {
     const data = await response.json();
-    relatedVideos = data.videos || [];
-    video = relatedVideos.find(v => v.id === videoId);
+    allVideos = data.videos || [];
+    video = allVideos.find((v: any) => v.id === videoId);
   }
 } catch (e) {
   console.error('API fetch failed:', e);
 }
 
-// If not found in API, build fallback from ID
+// Fallback: build video from ID if not found in API
 if (!video) {
   const platformData = getPlatformData(videoId);
   if (platformData) {
     video = {
       id: videoId,
-      title: 'Video Content',
+      title: 'Anime Content',
       channel: 'AniTube Channel',
       thumbnail: '',
       embedUrl: platformData.embedUrl,
       source: platformData.source,
       aspect: platformData.aspect,
       isShort: platformData.isShort,
-      index: 0
+      type: 'anime'
     };
   } else {
-    // Complete fallback
     video = {
       id: videoId,
       title: 'Anime Video',
       channel: 'AniTubeBuzz',
       thumbnail: '',
-      embedUrl: `https://www.youtube.com/embed/${videoId.replace(/^(yt_|yts_|dm_|bili_|ody_|rmb_)/, '')}?rel=0`,
-      source: 'unknown',
+      embedUrl: `https://www.youtube.com/embed/${videoId.replace(/^(yt_|yts_|dm_|bili_|ody_|rmb_)/, '')}?rel=0&autoplay=1`,
+      source: 'youtube',
       aspect: 'landscape',
       isShort: false,
-      index: 0
+      type: 'anime'
     };
   }
 }
 
-// Calculate current index in feed for counter
-const currentIndex = relatedVideos.findIndex(v => v.id === videoId) + 1 || 1;
-const totalCount = relatedVideos.length || 134; // Fallback number
+// 🧠 INSTAGRAM-STYLE ALGORITHM: Smart Related Videos
+// Priority: 1) Same channel, 2) Same type, 3) Recent trending
+function buildRelatedFeed(current: any, all: any[]): any[] {
+  if (!all || all.length === 0) return [];
+  
+  // Remove current video from pool
+  const pool = all.filter(v => v.id !== current.id);
+  
+  // Score each video by similarity
+  const scored = pool.map(v => {
+    let score = 0;
+    
+    // Same channel = huge boost
+    if (v.channel === current.channel) score += 100;
+    
+    // Same content type (anime/kdrama/donghua/movies)
+    if (v.type === current.type) score += 50;
+    
+    // Same platform source
+    if (v.source === current.source) score += 20;
+    
+    // Same aspect ratio (portrait/landscape) = better UX
+    if (v.aspect === current.aspect) score += 30;
+    
+    // Recent = fresh
+    if (v.isNew) score += 15;
+    
+    // Official content boost
+    if (v.isOfficial) score += 10;
+    
+    // Randomness to avoid same order always
+    score += Math.random() * 5;
+    
+    return { video: v, score };
+  });
+  
+  // Sort by score descending
+  scored.sort((a, b) => b.score - a.score);
+  
+  // Return video array with current at position 0
+  return [current, ...scored.map(s => s.video)];
+}
 
-// Prepare next/prev IDs for navigation
-const currentPos = relatedVideos.findIndex(v => v.id === videoId);
-const nextVideo = relatedVideos[currentPos + 1];
-const prevVideo = relatedVideos[currentPos - 1];
+const feedQueue = buildRelatedFeed(video, allVideos);
+const currentIndex = 1;
+const totalCount = feedQueue.length;
+
+// Next/Prev from smart-sorted queue
+const nextVideo = feedQueue[1] || null;
+const prevVideo = null; // First position, no prev in queue
+
+// Clean channel name for @handle
+const channelHandle = (video.channel || 'anitube').replace(/\s+/g, '').toLowerCase().slice(0, 20);
 ---
 
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>{video.title} | AniTubeBuzz Reels</title>
-  <meta name="description" content={`Watch ${video.title} on AniTubeBuzz`} />
-  
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  
-  <style is:global>
-    :root {
-      --grad: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      --bg-deep: #0a0517;
-      --bg-card: rgba(28,15,61,0.5);
-      --border-color: rgba(192,132,252,0.3);
-      --text-primary: #f5ecff;
-      --text-secondary: rgba(255,255,255,0.75);
-    }
-    
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: var(--bg-deep);
-      font-family: 'DM Sans', sans-serif;
-      color: var(--text-primary);
-    }
-    
-    /* Hide scrollbar but keep functionality */
-    body::-webkit-scrollbar {
-      display: none;
-    }
-    body {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-  </style>
-</head>
-
-<body>
-  <div id="reels-root" class="reels-container" data-videoid={videoId} data-next={nextVideo?.id || ''} data-prev={prevVideo?.id || ''}>
+<ImmersiveLayout title={`${video.title} | AniTubeBuzz`}>
+  <div 
+    id="reels-root" 
+    class="rp-root" 
+    data-videoid={videoId}
+    data-next={nextVideo?.id || ''}
+  >
     
     <!-- Top Navigation Bar -->
-    <header class="top-bar">
-      <a href="/" class="back-btn" aria-label="Go back">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+    <header class="rp-topbar">
+      <button class="rp-back" id="backBtn" aria-label="Go back">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
-      </a>
+      </button>
       
-      <div class="brand">
-        <span class="brand-text">AniTubeBuzz</span>
-        <div class="brand-dot"></div>
+      <div class="rp-brand">
+        <span class="rp-brand-text">AniTubeBuzz</span>
+        <div class="rp-brand-dot"></div>
       </div>
       
-      <div class="counter">
-        <span class="current">{currentIndex}</span>
-        <span class="separator">/</span>
-        <span class="total">{totalCount}</span>
+      <div class="rp-counter">
+        <span class="rp-counter-current">{currentIndex}</span>
+        <span class="rp-counter-sep">/</span>
+        <span class="rp-counter-total">{totalCount}</span>
       </div>
     </header>
 
-    <!-- Main Video Area -->
-    <main class="video-stage">
+    <!-- Main Video Stage -->
+    <main class="rp-stage">
       
-      <!-- Video Card with Glow -->
-      <div class="video-card" id="videoCard">
-        <div class="card-glow"></div>
-        <div class="card-frame">
+      <!-- Video Card -->
+      <div class="rp-card" id="videoCard">
+        <div class="rp-card-glow"></div>
+        <div class="rp-card-glow-2"></div>
+        <div class="rp-card-frame">
           <iframe 
             id="videoFrame"
             src={video.embedUrl}
             title={video.title}
             frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowfullscreen
             loading="eager"
           ></iframe>
           
-          <!-- Loading State -->
-          <div class="video-loader" id="loader">
-            <div class="spinner"></div>
+          <div class="rp-loader" id="loader">
+            <div class="rp-spinner"></div>
           </div>
         </div>
       </div>
 
-      <!-- Left Side Info (Instagram Style) -->
-      <div class="info-panel">
-        <div class="channel-row">
-          <div class="channel-avatar">
-            {video.channel.charAt(0).toUpperCase()}
+      <!-- Info Panel (Bottom Left - Instagram Style) -->
+      <div class="rp-info">
+        <div class="rp-channel-row">
+          <div class="rp-avatar">
+            {(video.channel || 'A').charAt(0).toUpperCase()}
           </div>
-          <span class="channel-name">@{video.channel.replace(/\s+/g, '').toLowerCase()}</span>
+          <span class="rp-channel-name">@{channelHandle}</span>
         </div>
-        <h1 class="video-title">{video.title}</h1>
-        <p class="video-meta">AniTube Anime • HD</p>
+        <h1 class="rp-title">{video.title}</h1>
+        <p class="rp-meta">
+          <span class="rp-badge">HD</span>
+          <span class="rp-dot">•</span>
+          <span>{video.type === 'kdrama' ? 'K-Drama' : video.type === 'donghua' ? 'Donghua' : video.type === 'movies' ? 'Movie' : 'Anime'}</span>
+        </p>
       </div>
 
-      <!-- Right Side Actions -->
-      <div class="action-panel">
-        <button class="action-btn like-btn" id="likeBtn" aria-label="Like video">
-          <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-          </svg>
-          <span class="action-label">Like</span>
+      <!-- Action Panel (Right Side - Premium) -->
+      <div class="rp-actions">
+        <button class="rp-action rp-like" id="likeBtn" aria-label="Like">
+          <div class="rp-action-btn">
+            <svg class="rp-icon rp-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+          </div>
+          <span class="rp-action-label">Like</span>
         </button>
         
-        <button class="action-btn send-btn" id="sendBtn" aria-label="Share video">
-          <svg class="send-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-          </svg>
-          <span class="action-label">Send</span>
+        <button class="rp-action rp-send" id="sendBtn" aria-label="Share">
+          <div class="rp-action-btn">
+            <svg class="rp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+            </svg>
+          </div>
+          <span class="rp-action-label">Send</span>
         </button>
       </div>
 
-      <!-- Desktop Navigation Arrows -->
-      <div class="desktop-nav">
-        <button class="nav-arrow up-arrow" id="prevBtn" disabled={!prevVideo}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <!-- Desktop Nav Arrows -->
+      <div class="rp-nav">
+        <button class="rp-arrow" id="prevBtn" aria-label="Previous video">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 15l-6-6-6 6"/>
           </svg>
         </button>
-        <button class="nav-arrow down-arrow" id="nextBtn" disabled={!nextVideo}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <button class="rp-arrow" id="nextBtn" aria-label="Next video">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 9l6 6 6-6"/>
           </svg>
         </button>
@@ -267,75 +276,73 @@ const prevVideo = relatedVideos[currentPos - 1];
     </main>
 
     <!-- Hidden data for JS -->
-    <script is:inline define:vars={{ videoData: video, relatedData: relatedVideos }}>
-      window.__REELS_DATA__ = {
-        current: videoData,
-        related: relatedData,
-        index: {currentIndex}
-      };
-    </script>
+    <script is:inline set:html={`window.__REELS_QUEUE__ = ${JSON.stringify(feedQueue.slice(0, 30))};`}></script>
 
   </div>
 
   <style>
-    /* Container - Full Screen */
-    .reels-container {
+    /* ===== ROOT CONTAINER ===== */
+    .rp-root {
+      position: fixed;
+      inset: 0;
       width: 100vw;
       height: 100vh;
-      height: 100dvh; /* Mobile viewport fix */
-      background: linear-gradient(180deg, #0a0517 0%, #1a0f2e 50%, #0a0517 100%);
-      position: relative;
+      height: 100dvh;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(192, 132, 252, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(125, 211, 252, 0.1) 0%, transparent 50%),
+        linear-gradient(180deg, #0a0517 0%, #1a0f2e 50%, #0a0517 100%);
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      user-select: none;
+      -webkit-user-select: none;
+      z-index: 1;
     }
 
-    /* Ambient Background Blur */
-    .reels-container::before {
-      content: '';
-      position: fixed;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle at 50% 50%, rgba(192, 132, 252, 0.15) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Top Bar */
-    .top-bar {
+    /* ===== TOP BAR ===== */
+    .rp-topbar {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
-      height: 60px;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 20px;
       z-index: 100;
-      background: linear-gradient(to bottom, rgba(10,5,23,0.9) 0%, transparent 100%);
+      background: linear-gradient(to bottom, rgba(10, 5, 23, 0.95) 0%, rgba(10, 5, 23, 0.5) 60%, transparent 100%);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
-    .back-btn {
-      width: 40px;
-      height: 40px;
+    .rp-back {
+      width: 42px;
+      height: 42px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
+      color: #f5ecff;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 50%;
-      transition: background 0.2s;
       cursor: pointer;
-      text-decoration: none;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
     }
 
-    .back-btn:hover {
-      background: rgba(255,255,255,0.1);
+    .rp-back:hover {
+      background: rgba(192, 132, 252, 0.15);
+      border-color: rgba(192, 132, 252, 0.4);
+      transform: scale(1.05);
     }
 
-    .brand {
+    .rp-back:active {
+      transform: scale(0.95);
+    }
+
+    .rp-brand {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -344,51 +351,58 @@ const prevVideo = relatedVideos[currentPos - 1];
       transform: translateX(-50%);
     }
 
-    .brand-text {
-      font-family: 'DM Sans', sans-serif;
+    .rp-brand-text {
+      font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif;
       font-weight: 700;
-      font-size: 18px;
-      background: var(--grad);
+      font-size: 17px;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
 
-    .brand-dot {
+    .rp-brand-dot {
       width: 6px;
       height: 6px;
       background: #7dd3fc;
       border-radius: 50%;
-      animation: pulse 2s infinite;
+      box-shadow: 0 0 8px #7dd3fc;
+      animation: rp-pulse 2s infinite;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+    @keyframes rp-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
     }
 
-    .counter {
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
+    .rp-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
       font-weight: 600;
-      color: rgba(255,255,255,0.9);
-      background: rgba(255,255,255,0.1);
-      padding: 6px 12px;
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 7px 14px;
       border-radius: 20px;
       backdrop-filter: blur(10px);
+      letter-spacing: 0.05em;
     }
 
-    .counter .current {
-      color: #e879f9;
+    .rp-counter-current {
+      background: linear-gradient(135deg, #e879f9, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
     }
 
-    .counter .separator {
-      margin: 0 4px;
-      opacity: 0.5;
+    .rp-counter-sep {
+      margin: 0 6px;
+      opacity: 0.4;
     }
 
-    /* Main Stage - Center Everything */
-    .video-stage {
+    /* ===== VIDEO STAGE ===== */
+    .rp-stage {
       flex: 1;
       display: flex;
       align-items: center;
@@ -398,447 +412,599 @@ const prevVideo = relatedVideos[currentPos - 1];
       z-index: 1;
     }
 
-    /* Video Card - 9:16 Aspect Ratio */
-    .video-card {
+    /* ===== VIDEO CARD (9:16 Premium) ===== */
+    .rp-card {
       position: relative;
       width: 100%;
       max-width: 420px;
-      aspect-ratio: 9/16;
-      max-height: 85vh;
-      filter: drop-shadow(0 0 30px rgba(192, 132, 252, 0.4));
-      transition: transform 0.3s ease;
+      aspect-ratio: 9 / 16;
+      max-height: calc(100vh - 140px);
+      max-height: calc(100dvh - 140px);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
     }
 
-    .card-glow {
+    /* Outer glow layer */
+    .rp-card-glow {
       position: absolute;
-      inset: -2px;
-      background: var(--grad);
-      border-radius: 24px;
-      opacity: 0.6;
-      filter: blur(8px);
+      inset: -4px;
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      border-radius: 26px;
+      opacity: 0.7;
+      filter: blur(12px);
+      z-index: -2;
+      animation: rp-glow 4s ease-in-out infinite;
+    }
+
+    /* Inner sharper glow */
+    .rp-card-glow-2 {
+      position: absolute;
+      inset: -1px;
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      border-radius: 22px;
+      opacity: 0.9;
       z-index: -1;
-      animation: glow-pulse 3s ease-in-out infinite;
     }
 
-    @keyframes glow-pulse {
-      0%, 100% { opacity: 0.4; transform: scale(1); }
-      50% { opacity: 0.7; transform: scale(1.02); }
+    @keyframes rp-glow {
+      0%, 100% { opacity: 0.5; filter: blur(12px); }
+      50% { opacity: 0.85; filter: blur(18px); }
     }
 
-    .card-frame {
-      width: 100%;
-      height: 100%;
+    .rp-card-frame {
+      position: absolute;
+      inset: 0;
       background: #000;
       border-radius: 20px;
       overflow: hidden;
-      position: relative;
-      border: 1px solid rgba(192, 132, 252, 0.3);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     }
 
-    .card-frame iframe {
+    .rp-card-frame iframe {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      border: 0;
+      display: block;
     }
 
     /* Loader */
-    .video-loader {
+    .rp-loader {
       position: absolute;
       inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       background: #000;
-      z-index: 10;
-      transition: opacity 0.3s;
+      z-index: 5;
+      transition: opacity 0.4s;
     }
 
-    .video-loader.hidden {
+    .rp-loader.hidden {
       opacity: 0;
       pointer-events: none;
     }
 
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(192, 132, 252, 0.3);
+    .rp-spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(192, 132, 252, 0.2);
       border-top-color: #e879f9;
+      border-right-color: #c084fc;
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      animation: rp-spin 0.9s linear infinite;
     }
 
-    @keyframes spin {
+    @keyframes rp-spin {
       to { transform: rotate(360deg); }
     }
 
-    /* Info Panel - Bottom Left (Instagram Style) */
-    .info-panel {
+    /* ===== INFO PANEL (Bottom Left) ===== */
+    .rp-info {
       position: absolute;
-      bottom: 100px;
-      left: 20px;
+      bottom: 32px;
+      left: 32px;
       z-index: 50;
-      max-width: 300px;
-      pointer-events: none; /* Let clicks pass through to video */
+      max-width: 320px;
+      pointer-events: none;
     }
 
-    .channel-row {
+    .rp-channel-row {
       display: flex;
       align-items: center;
       gap: 10px;
       margin-bottom: 12px;
     }
 
-    .channel-avatar {
-      width: 36px;
-      height: 36px;
+    .rp-avatar {
+      width: 38px;
+      height: 38px;
       border-radius: 50%;
-      background: var(--grad);
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       display: flex;
       align-items: center;
       justify-content: center;
+      font-family: 'Bricolage Grotesque', sans-serif;
       font-weight: 700;
-      font-size: 14px;
+      font-size: 15px;
       color: white;
-      border: 2px solid rgba(255,255,255,0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
     }
 
-    .channel-name {
+    .rp-channel-name {
       font-family: 'Inter', sans-serif;
       font-weight: 600;
       font-size: 15px;
       color: white;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+      letter-spacing: -0.01em;
     }
 
-    .video-title {
+    .rp-title {
       font-family: 'DM Sans', sans-serif;
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 700;
       color: white;
-      line-height: 1.3;
-      margin-bottom: 6px;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+      line-height: 1.35;
+      margin: 0 0 8px 0;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.95);
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      letter-spacing: -0.01em;
     }
 
-    .video-meta {
+    .rp-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-size: 13px;
-      color: rgba(255,255,255,0.7);
-      text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+      color: rgba(255, 255, 255, 0.85);
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+      margin: 0;
     }
 
-    /* Action Panel - Right Side Fixed */
-    .action-panel {
+    .rp-badge {
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+      text-shadow: none;
+    }
+
+    .rp-dot {
+      opacity: 0.4;
+    }
+
+    /* ===== ACTION PANEL (Right - PREMIUM) ===== */
+    .rp-actions {
       position: absolute;
-      right: 20px;
-      bottom: 100px;
+      right: 32px;
+      bottom: 40px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 22px;
       z-index: 50;
     }
 
-    .action-btn {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.2);
+    .rp-action {
+      background: transparent;
+      border: none;
+      padding: 0;
+      cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 6px;
+      transition: transform 0.2s;
+    }
+
+    .rp-action-btn {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: 
+        linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      display: flex;
+      align-items: center;
       justify-content: center;
       color: white;
-      cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
       position: relative;
+      overflow: hidden;
     }
 
-    .action-btn:hover {
-      transform: scale(1.1);
-      background: rgba(255,255,255,0.2);
-    }
-
-    .action-btn:active {
-      transform: scale(0.95);
-    }
-
-    .action-btn svg {
-      width: 22px;
-      height: 22px;
-    }
-
-    .action-btn.liked {
-      color: #ff2d55;
-      background: rgba(255, 45, 85, 0.2);
-      border-color: rgba(255, 45, 85, 0.4);
-    }
-
-    .action-btn.liked svg {
-      fill: currentColor;
-    }
-
-    .action-label {
-      font-size: 10px;
-      margin-top: 4px;
-      font-weight: 600;
-      opacity: 0.9;
-    }
-
-    /* Desktop Navigation Arrows */
-    .desktop-nav {
+    /* Shine overlay */
+    .rp-action-btn::before {
+      content: '';
       position: absolute;
-      right: 20px;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        45deg,
+        transparent 40%,
+        rgba(255, 255, 255, 0.15) 50%,
+        transparent 60%
+      );
+      transform: rotate(-45deg) translateY(100%);
+      transition: transform 0.6s;
+    }
+
+    .rp-action:hover .rp-action-btn {
+      background: 
+        linear-gradient(135deg, rgba(192, 132, 252, 0.25), rgba(232, 121, 249, 0.1));
+      border-color: rgba(192, 132, 252, 0.5);
+      transform: scale(1.08) translateY(-2px);
+      box-shadow: 
+        0 12px 30px rgba(192, 132, 252, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+
+    .rp-action:hover .rp-action-btn::before {
+      transform: rotate(-45deg) translateY(-100%);
+    }
+
+    .rp-action:active .rp-action-btn {
+      transform: scale(0.92);
+    }
+
+    .rp-icon {
+      width: 24px;
+      height: 24px;
+      transition: all 0.3s;
+    }
+
+    /* Liked state - gorgeous red gradient */
+    .rp-like.liked .rp-action-btn {
+      background: linear-gradient(135deg, #ff2d55, #ff375f);
+      border-color: rgba(255, 45, 85, 0.6);
+      box-shadow: 
+        0 8px 24px rgba(255, 45, 85, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .rp-like.liked .rp-heart {
+      fill: currentColor;
+      animation: rp-heart-pop 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes rp-heart-pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.35); }
+      100% { transform: scale(1); }
+    }
+
+    .rp-action-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+      letter-spacing: 0.02em;
+    }
+
+    /* ===== DESKTOP NAV ARROWS ===== */
+    .rp-nav {
+      position: absolute;
+      right: 32px;
       top: 50%;
       transform: translateY(-50%);
       display: none;
       flex-direction: column;
-      gap: 20px;
+      gap: 14px;
       z-index: 50;
     }
 
-    .nav-arrow {
+    .rp-arrow {
       width: 48px;
       height: 48px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.2);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       color: white;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
     }
 
-    .nav-arrow:hover:not(:disabled) {
-      background: rgba(255,255,255,0.2);
+    .rp-arrow:hover {
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.1));
+      border-color: rgba(192, 132, 252, 0.5);
       transform: scale(1.1);
+      box-shadow: 0 10px 24px rgba(192, 132, 252, 0.3);
     }
 
-    .nav-arrow:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
+    .rp-arrow:active {
+      transform: scale(0.95);
     }
 
-    .nav-arrow svg {
-      width: 24px;
-      height: 24px;
+    .rp-arrow svg {
+      width: 22px;
+      height: 22px;
     }
 
-    /* Show desktop nav on larger screens */
+    /* ===== DESKTOP (≥1024px) ===== */
     @media (min-width: 1024px) {
-      .desktop-nav {
+      .rp-nav {
         display: flex;
+        right: 40px;
       }
-      .action-panel {
-        bottom: 120px;
-        right: 30px;
+      .rp-actions {
+        right: 120px;
+        bottom: 50px;
       }
-      .info-panel {
-        left: 60px;
-        bottom: 120px;
+      .rp-info {
+        left: 40px;
+        bottom: 50px;
       }
     }
 
-    /* Mobile Optimizations */
+    /* ===== MOBILE (≤640px) ===== */
     @media (max-width: 640px) {
-      .video-card {
-        max-width: 100%;
-        max-height: 100%;
-        border-radius: 0;
-        filter: none;
-      }
-      
-      .card-frame {
-        border-radius: 0;
-        border: none;
-      }
-      
-      .card-glow {
-        display: none; /* No glow on mobile full screen */
-      }
-      
-      .video-stage {
+      .rp-stage {
         padding: 0;
       }
       
-      .top-bar {
-        background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+      .rp-card {
+        max-width: 100%;
+        max-height: 100%;
+        width: 100%;
+        height: 100%;
+        aspect-ratio: auto;
       }
       
-      .info-panel {
+      .rp-card-glow,
+      .rp-card-glow-2 {
+        display: none;
+      }
+      
+      .rp-card-frame {
+        border-radius: 0;
+      }
+      
+      .rp-topbar {
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+      }
+      
+      .rp-info {
         left: 16px;
-        bottom: 80px;
-        max-width: 70%;
+        bottom: 90px;
+        max-width: calc(100% - 100px);
       }
       
-      .action-panel {
-        right: 16px;
-        bottom: 80px;
-        gap: 16px;
+      .rp-actions {
+        right: 12px;
+        bottom: 90px;
+        gap: 18px;
       }
       
-      .action-btn {
-        width: 44px;
-        height: 44px;
+      .rp-action-btn {
+        width: 48px;
+        height: 48px;
+      }
+      
+      .rp-icon {
+        width: 22px;
+        height: 22px;
+      }
+      
+      .rp-title {
+        font-size: 15px;
       }
     }
 
-    /* Prevent text selection */
-    .reels-container {
-      user-select: none;
-      -webkit-user-select: none;
+    /* ===== TABLET ===== */
+    @media (min-width: 641px) and (max-width: 1023px) {
+      .rp-info {
+        left: 24px;
+        bottom: 40px;
+      }
+      .rp-actions {
+        right: 24px;
+        bottom: 40px;
+      }
     }
   </style>
 
   <script>
-    // Client-side functionality
     (function() {
-      const root = document.getElementById('reels-root');
-      const videoId = root.dataset.videoid;
-      const nextId = root.dataset.next;
-      const prevId = root.dataset.prev;
+      const root = document.getElementById('reels-root') as HTMLElement;
+      if (!root) return;
       
-      // Like functionality
+      const videoId = root.dataset.videoid || '';
+      const nextId = root.dataset.next || '';
+      
+      // ===== LIKE FUNCTIONALITY =====
       const likeBtn = document.getElementById('likeBtn');
-      const likedVideos = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
+      const likedVideos: string[] = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
       
-      if (likedVideos.includes(videoId)) {
+      if (likedVideos.includes(videoId) && likeBtn) {
         likeBtn.classList.add('liked');
       }
       
-      likeBtn.addEventListener('click', () => {
-        const index = likedVideos.indexOf(videoId);
-        if (index > -1) {
-          likedVideos.splice(index, 1);
+      likeBtn?.addEventListener('click', () => {
+        const idx = likedVideos.indexOf(videoId);
+        if (idx > -1) {
+          likedVideos.splice(idx, 1);
           likeBtn.classList.remove('liked');
         } else {
           likedVideos.push(videoId);
           likeBtn.classList.add('liked');
-          
-          // Animation
-          likeBtn.style.transform = 'scale(1.3)';
-          setTimeout(() => likeBtn.style.transform = '', 200);
         }
         localStorage.setItem('anitube_liked', JSON.stringify(likedVideos));
       });
       
-      // Share/Send functionality
+      // ===== SEND / SHARE =====
       const sendBtn = document.getElementById('sendBtn');
-      sendBtn.addEventListener('click', async () => {
+      sendBtn?.addEventListener('click', async () => {
         const shareData = {
-          title: document.querySelector('.video-title')?.textContent || 'AniTube Video',
-          text: `Check out this anime on AniTubeBuzz!`,
+          title: document.querySelector('.rp-title')?.textContent || 'AniTube Video',
+          text: 'Check out this on AniTubeBuzz!',
           url: window.location.href
         };
         
-        if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
+        const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
+        
+        if (isMobile && (navigator as any).share) {
           try {
-            await navigator.share(shareData);
+            await (navigator as any).share(shareData);
           } catch (err) {
-            console.log('Share cancelled');
+            /* user cancelled */
           }
         } else {
-          // Desktop: Copy to clipboard
           try {
             await navigator.clipboard.writeText(window.location.href);
-            const originalLabel = sendBtn.querySelector('.action-label').textContent;
-            sendBtn.querySelector('.action-label').textContent = 'Copied!';
-            setTimeout(() => {
-              sendBtn.querySelector('.action-label').textContent = originalLabel;
-            }, 2000);
-          } catch (err) {
+            const label = sendBtn.querySelector('.rp-action-label');
+            if (label) {
+              const orig = label.textContent;
+              label.textContent = 'Copied!';
+              setTimeout(() => { label.textContent = orig; }, 1800);
+            }
+          } catch {
             prompt('Copy this link:', window.location.href);
           }
         }
       });
       
-      // Navigation
-      const nextBtn = document.getElementById('nextBtn');
-      const prevBtn = document.getElementById('prevBtn');
-      
-      function navigate(direction) {
-        const targetId = direction === 'next' ? nextId : prevId;
-        if (targetId) {
-          // Smooth transition
-          document.querySelector('.video-card').style.opacity = '0';
-          document.querySelector('.video-card').style.transform = `translateY(${direction === 'next' ? '-20px' : '20px'})`;
-          
-          setTimeout(() => {
-            window.location.href = `/reels/${targetId}`;
-          }, 200);
-        }
-      }
-      
-      if (nextBtn) nextBtn.addEventListener('click', () => navigate('next'));
-      if (prevBtn) prevBtn.addEventListener('click', () => navigate('prev'));
-      
-      // Keyboard navigation
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') {
-          navigate('next');
-        } else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') {
-          navigate('prev');
-        } else if (e.key === 'Escape') {
+      // ===== SMART BACK BUTTON (history-aware) =====
+      const backBtn = document.getElementById('backBtn');
+      backBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        // Track how we got here
+        const referrer = document.referrer;
+        const sameOrigin = referrer && referrer.startsWith(window.location.origin);
+        
+        if (window.history.length > 1 && sameOrigin) {
+          window.history.back();
+        } else {
           window.location.href = '/';
         }
       });
       
-      // Wheel/Scroll snap
-      let wheelTimeout;
-      document.addEventListener('wheel', (e) => {
-        clearTimeout(wheelTimeout);
-        wheelTimeout = setTimeout(() => {
-          if (e.deltaY > 50) navigate('next');
-          else if (e.deltaY < -50) navigate('prev');
-        }, 50);
+      // ===== NAVIGATION (Instagram-style smart algorithm) =====
+      const queue: any[] = (window as any).__REELS_QUEUE__ || [];
+      let currentQueuePos = 0;
+      
+      function navigate(direction: 'next' | 'prev') {
+        let targetId = '';
+        
+        if (direction === 'next') {
+          // Use smart queue if available
+          if (queue.length > 1) {
+            const nextPos = currentQueuePos + 1;
+            if (nextPos < queue.length) {
+              targetId = queue[nextPos].id;
+            }
+          } else if (nextId) {
+            targetId = nextId;
+          }
+        } else {
+          // Back button uses history
+          if (window.history.length > 1) {
+            window.history.back();
+            return;
+          }
+        }
+        
+        if (targetId) {
+          const card = document.getElementById('videoCard');
+          if (card) {
+            card.style.opacity = '0';
+            card.style.transform = `translateY(${direction === 'next' ? '-30px' : '30px'}) scale(0.95)`;
+          }
+          setTimeout(() => {
+            window.location.href = `/reels/${targetId}`;
+          }, 220);
+        }
+      }
+      
+      document.getElementById('nextBtn')?.addEventListener('click', () => navigate('next'));
+      document.getElementById('prevBtn')?.addEventListener('click', () => navigate('prev'));
+      
+      // ===== KEYBOARD =====
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') {
+          e.preventDefault();
+          navigate('next');
+        } else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') {
+          e.preventDefault();
+          navigate('prev');
+        } else if (e.key === 'Escape') {
+          window.history.length > 1 ? window.history.back() : window.location.href = '/';
+        }
       });
       
-      // Touch swipe for mobile
+      // ===== WHEEL SCROLL (debounced) =====
+      let wheelLocked = false;
+      document.addEventListener('wheel', (e) => {
+        if (wheelLocked) return;
+        if (Math.abs(e.deltaY) < 30) return;
+        
+        wheelLocked = true;
+        if (e.deltaY > 0) navigate('next');
+        else navigate('prev');
+        
+        setTimeout(() => { wheelLocked = false; }, 800);
+      }, { passive: true });
+      
+      // ===== TOUCH SWIPE =====
       let touchStartY = 0;
+      let touchStartTime = 0;
+      
       document.addEventListener('touchstart', (e) => {
         touchStartY = e.touches[0].clientY;
-      }, {passive: true});
+        touchStartTime = Date.now();
+      }, { passive: true });
       
       document.addEventListener('touchend', (e) => {
         const touchEndY = e.changedTouches[0].clientY;
         const diff = touchStartY - touchEndY;
+        const timeDiff = Date.now() - touchStartTime;
         
-        if (Math.abs(diff) > 100) {
+        // Fast swipe or long swipe
+        if (Math.abs(diff) > 80 && timeDiff < 600) {
           if (diff > 0) navigate('next');
           else navigate('prev');
         }
-      }, {passive: true});
+      }, { passive: true });
       
-      // Hide loader when iframe loads
-      const iframe = document.getElementById('videoFrame');
+      // ===== HIDE LOADER =====
+      const iframe = document.getElementById('videoFrame') as HTMLIFrameElement;
       const loader = document.getElementById('loader');
       
-      iframe.addEventListener('load', () => {
-        loader.classList.add('hidden');
+      iframe?.addEventListener('load', () => {
+        setTimeout(() => loader?.classList.add('hidden'), 300);
       });
       
-      // Safiya Integration
-      if (window.__REELS_DATA__?.current) {
-        window.dispatchEvent(new CustomEvent('safiya:video-event', {
-          detail: { 
-            action: 'watch', 
-            video: window.__REELS_DATA__.current 
-          }
-        }));
-      }
+      // Fallback: hide loader after 3s no matter what
+      setTimeout(() => loader?.classList.add('hidden'), 3000);
       
-      // Visibility API - pause/resume logic if needed
-      document.addEventListener('visibilitychange', () => {
-        // Could add pause logic here if we had direct video control
-      });
+      // ===== SAFIYA INTEGRATION =====
+      setTimeout(() => {
+        const currentVideo = queue[0];
+        if (currentVideo) {
+          window.dispatchEvent(new CustomEvent('safiya:video-event', {
+            detail: { action: 'watch', video: currentVideo }
+          }));
+        }
+      }, 500);
+      
     })();
   </script>
-</body>
-</html>
+</ImmersiveLayout>
