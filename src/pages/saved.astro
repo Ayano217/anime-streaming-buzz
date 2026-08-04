@@ -3,27 +3,27 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 ---
 
-<BaseLayout title="Saved Videos | AniTubeBuzz" description="Your bookmarked anime videos">
+<BaseLayout title="Saved Videos | AniTubeBuzz">
   <Header slot="header" />
   
-  <div class="lib-page">
+  <div class="slib-page">
     <div class="container">
       
-      <div class="lib-hero">
-        <div class="lib-hero-icon-wrap">
-          <div class="lib-hero-icon">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <div class="slib-hero">
+        <div class="slib-hero-icon-wrap">
+          <div class="slib-hero-icon slib-icon-purple">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
             </svg>
           </div>
         </div>
-        <div class="lib-hero-content">
-          <div class="lib-hero-eyebrow">MY LIBRARY</div>
-          <h1 class="lib-title">Saved Videos</h1>
-          <p class="lib-subtitle" id="libSubtitle">Loading...</p>
+        <div class="slib-hero-content">
+          <div class="slib-hero-eyebrow">MY LIBRARY</div>
+          <h1 class="slib-title">Saved Videos</h1>
+          <p class="slib-subtitle" id="slibSubtitle">Loading...</p>
         </div>
-        <button class="lib-clear-btn" id="libClearBtn" style="display:none">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <button class="slib-clear-btn" id="slibClearBtn" style="display:none">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="3 6 5 6 21 6"/>
             <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/>
           </svg>
@@ -31,18 +31,18 @@ import Header from '../components/Header.astro';
         </button>
       </div>
       
-      <div id="libGrid" class="lib-grid"></div>
+      <div id="slibGrid" class="slib-grid"></div>
       
-      <div id="libEmpty" class="lib-empty" style="display:none">
-        <div class="lib-empty-icon">
-          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <div id="slibEmpty" class="slib-empty" style="display:none">
+        <div class="slib-empty-icon">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
           </svg>
         </div>
-        <h2 class="lib-empty-title">No Saved Videos Yet</h2>
-        <p class="lib-empty-desc">Watch anime and tap <strong>Save</strong> to bookmark videos here</p>
-        <a href="/" class="lib-empty-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <h2 class="slib-empty-title">No Saved Videos Yet</h2>
+        <p class="slib-empty-desc">Watch anime and tap <strong>Save</strong> to bookmark videos here</p>
+        <a href="/" class="slib-empty-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <polygon points="5 3 19 12 5 21 5 3"/>
           </svg>
           Start Watching
@@ -55,10 +55,10 @@ import Header from '../components/Header.astro';
 
 <script is:inline>
 (function() {
-  var grid = document.getElementById('libGrid');
-  var empty = document.getElementById('libEmpty');
-  var subtitle = document.getElementById('libSubtitle');
-  var clearBtn = document.getElementById('libClearBtn');
+  var grid = document.getElementById('slibGrid');
+  var empty = document.getElementById('slibEmpty');
+  var subtitle = document.getElementById('slibSubtitle');
+  var clearBtn = document.getElementById('slibClearBtn');
   
   function esc(s) {
     return String(s || '').replace(/[&<>"']/g, function(c) {
@@ -82,11 +82,6 @@ import Header from '../components/Header.astro';
   function typeLabel(t) {
     var map = { anime: 'ANIME', kdrama: 'K-DRAMA', donghua: 'DONGHUA', movies: 'MOVIE' };
     return map[t] || 'ANIME';
-  }
-  
-  function typeColor(t) {
-    var map = { anime: '#c084fc', kdrama: '#ec4899', donghua: '#f97316', movies: '#7dd3fc' };
-    return map[t] || '#c084fc';
   }
   
   function render() {
@@ -114,31 +109,31 @@ import Header from '../components/Header.astro';
       var initial = channel.charAt(0).toUpperCase();
       var time = fmtTime(v.savedAt);
       var type = typeLabel(v.type);
-      var tColor = typeColor(v.type);
       var delay = Math.min(i * 25, 400);
       
-      html += '<a href="/reels/' + encodeURIComponent(v.id) + '" class="lib-card" style="animation-delay:' + delay + 'ms">' +
-        '<div class="lib-card-thumb">' +
+      html += '<a href="/reels/' + encodeURIComponent(v.id) + '" class="slib-card" style="animation-delay:' + delay + 'ms">' +
+        '<div class="slib-thumb">' +
           (thumb 
-            ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"/><div class="lib-card-noimg" style="display:none">' + initial + '</div>'
-            : '<div class="lib-card-noimg">' + initial + '</div>'
+            ? '<img class="slib-img" src="' + esc(thumb) + '" alt="" loading="lazy" onerror="this.parentElement.classList.add(\'slib-noimg-mode\');this.remove();"/>'
+            : ''
           ) +
-          '<div class="lib-card-shine"></div>' +
-          '<div class="lib-card-badge" style="background:linear-gradient(135deg,' + tColor + ',#e879f9)">' + type + '</div>' +
-          '<button class="lib-card-remove" data-id="' + esc(v.id) + '" aria-label="Remove">' +
+          '<div class="slib-noimg-content"><span class="slib-noimg-letter">' + initial + '</span></div>' +
+          '<div class="slib-shine"></div>' +
+          '<div class="slib-badge">' + type + '</div>' +
+          '<button class="slib-remove" data-id="' + esc(v.id) + '" aria-label="Remove">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
           '</button>' +
-          '<div class="lib-card-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' +
+          '<div class="slib-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' +
         '</div>' +
-        '<div class="lib-card-info">' +
-          '<div class="lib-card-title">' + title + '</div>' +
-          '<div class="lib-card-meta"><span class="lib-card-channel">@' + channel.replace(/\s+/g,'').toLowerCase().slice(0,15) + '</span><span class="lib-card-dot">·</span><span>' + time + '</span></div>' +
+        '<div class="slib-info">' +
+          '<div class="slib-vtitle">' + title + '</div>' +
+          '<div class="slib-meta"><span class="slib-channel">@' + channel.replace(/\s+/g,'').toLowerCase().slice(0,15) + '</span><span class="slib-dot">·</span><span>' + time + '</span></div>' +
         '</div>' +
       '</a>';
     });
     grid.innerHTML = html;
     
-    grid.querySelectorAll('.lib-card-remove').forEach(function(btn) {
+    grid.querySelectorAll('.slib-remove').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -164,47 +159,50 @@ import Header from '../components/Header.astro';
 </script>
 
 <style>
-  .lib-page {
+  /* ═══════════════════════════════════════════════════
+     🔒 ISOLATED: slib- prefix — NO conflicts with home
+     ═══════════════════════════════════════════════════ */
+  .slib-page {
     min-height: calc(100vh - var(--header-h) - 100px);
     padding: 2rem 0 5rem;
   }
   
   /* HERO */
-  .lib-hero {
+  .slib-hero {
     display: flex;
     align-items: center;
-    gap: 22px;
-    padding: 24px 28px;
+    gap: 20px;
+    padding: 22px 26px;
     background: 
       linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(232, 121, 249, 0.05)),
       linear-gradient(180deg, rgba(28, 15, 61, 0.7), rgba(20, 10, 40, 0.8));
     border: 1px solid rgba(192, 132, 252, 0.3);
-    border-radius: 24px;
+    border-radius: 22px;
     margin-bottom: 2rem;
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     position: relative;
     overflow: hidden;
   }
-  .lib-hero::before {
+  .slib-hero::before {
     content: '';
     position: absolute;
     top: -50%;
     right: -20%;
-    width: 400px;
-    height: 400px;
+    width: 380px;
+    height: 380px;
     background: radial-gradient(circle, rgba(192, 132, 252, 0.15) 0%, transparent 60%);
     pointer-events: none;
   }
-  [data-theme="light"] .lib-hero {
+  [data-theme="light"] .slib-hero {
     background: 
       linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(232, 121, 249, 0.03)),
       linear-gradient(180deg, #ffffff, #faf5ff);
     border-color: rgba(168, 85, 247, 0.25);
   }
-  .lib-hero-icon-wrap { position: relative; flex-shrink: 0; }
-  .lib-hero-icon-wrap::before {
+  .slib-hero-icon-wrap { position: relative; flex-shrink: 0; }
+  .slib-hero-icon-wrap::before {
     content: '';
     position: absolute;
     inset: -4px;
@@ -213,339 +211,369 @@ import Header from '../components/Header.astro';
     opacity: 0.4;
     filter: blur(12px);
   }
-  .lib-hero-icon {
+  .slib-hero-icon {
     position: relative;
-    width: 56px; height: 56px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, #a855f7, #c084fc, #e879f9);
-    display: flex; align-items: center; justify-content: center;
+    width: 54px !important;
+    height: 54px !important;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: white;
-    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.5);
   }
-  .lib-hero-content { flex: 1; min-width: 0; position: relative; z-index: 1; }
-  .lib-hero-eyebrow {
+  .slib-icon-purple { background: linear-gradient(135deg, #a855f7, #c084fc, #e879f9); }
+  .slib-icon-cyan { background: linear-gradient(135deg, #06b6d4, #22d3ee, #7dd3fc); }
+  .slib-icon-pink { background: linear-gradient(135deg, #ec4899, #f472b6, #e879f9); }
+  
+  .slib-hero-content { flex: 1; min-width: 0; position: relative; z-index: 1; }
+  .slib-hero-eyebrow {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem; font-weight: 700;
+    font-size: 0.62rem;
+    font-weight: 700;
     color: #e879f9;
     letter-spacing: 0.15em;
     margin-bottom: 4px;
   }
-  .lib-title {
+  .slib-title {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-size: clamp(1.4rem, 3vw, 1.9rem) !important;
     font-weight: 800;
     letter-spacing: -0.03em;
-    margin: 0 0 4px;
+    margin: 0 0 4px !important;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     line-height: 1.1;
   }
-  .lib-subtitle {
+  .slib-subtitle {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.88rem;
-    color: var(--text-secondary);
-    margin: 0;
+    font-size: 0.85rem !important;
+    color: var(--text-secondary) !important;
+    margin: 0 !important;
     font-weight: 500;
   }
-  .lib-clear-btn {
+  .slib-clear-btn {
     display: none;
     align-items: center;
     gap: 6px;
-    padding: 9px 14px;
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.35);
+    padding: 8px 14px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.4);
     border-radius: 100px;
     color: #ef4444;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.25s;
+    flex-shrink: 0;
     position: relative;
     z-index: 1;
-    flex-shrink: 0;
   }
-  .lib-clear-btn:hover {
+  .slib-clear-btn:hover {
     background: rgba(239, 68, 68, 0.2);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
   }
   
   /* ═══════════════════════════════════════════════════
-     🎨 GRID — Home page 5-column style
+     🃏 CARD — Small, clean, isolated
      ═══════════════════════════════════════════════════ */
-  .lib-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1.2rem;
+  .slib-grid {
+    display: grid !important;
+    grid-template-columns: repeat(5, 1fr) !important;
+    gap: 1.1rem !important;
   }
   
-  @media (max-width: 1200px) { .lib-grid { grid-template-columns: repeat(4, 1fr); gap: 1rem; } }
-  @media (max-width: 900px) { .lib-grid { grid-template-columns: repeat(3, 1fr); gap: 0.9rem; } }
-  @media (max-width: 640px) { .lib-grid { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; } }
+  @media (max-width: 1200px) { .slib-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 1rem !important; } }
+  @media (max-width: 900px) { .slib-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 0.85rem !important; } }
+  @media (max-width: 640px) { .slib-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.7rem !important; } }
   
-  /* ═══════════════════════════════════════════════════
-     🃏 CARD — Match home page premium style
-     ═══════════════════════════════════════════════════ */
-  .lib-card {
-    display: block;
-    background: rgba(28, 15, 61, 0.5);
-    border: 1px solid rgba(192, 132, 252, 0.15);
-    border-radius: 14px;
-    overflow: hidden;
-    text-decoration: none;
-    color: inherit;
-    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
-                border-color 0.25s ease,
-                box-shadow 0.35s ease,
-                background 0.25s ease;
-    animation: lib-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
-    position: relative;
-    will-change: transform;
+  .slib-card {
+    display: block !important;
+    background: rgba(28, 15, 61, 0.5) !important;
+    border: 1px solid rgba(192, 132, 252, 0.15) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    text-decoration: none !important;
+    color: inherit !important;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.25s, box-shadow 0.35s, background 0.25s !important;
+    animation: slib-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    position: relative !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
   
-  [data-theme="light"] .lib-card {
-    background: #ffffff;
-    border-color: rgba(168, 85, 247, 0.15);
+  [data-theme="light"] .slib-card {
+    background: #ffffff !important;
+    border-color: rgba(168, 85, 247, 0.15) !important;
   }
   
-  @keyframes lib-in {
+  @keyframes slib-in {
     from { opacity: 0; transform: translateY(15px) scale(0.96); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
   
-  .lib-card:hover {
-    transform: translateY(-6px);
-    background: rgba(36, 21, 72, 0.75);
-    border-color: rgba(192, 132, 252, 0.45);
-    box-shadow: 
-      0 22px 45px rgba(0, 0, 0, 0.35),
-      0 0 30px rgba(192, 132, 252, 0.2);
+  .slib-card:hover {
+    transform: translateY(-6px) !important;
+    background: rgba(36, 21, 72, 0.75) !important;
+    border-color: rgba(192, 132, 252, 0.45) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35), 0 0 25px rgba(192, 132, 252, 0.2) !important;
   }
   
-  [data-theme="light"] .lib-card:hover {
-    background: #faf5ff;
-    box-shadow: 0 22px 45px rgba(168, 85, 247, 0.2);
+  [data-theme="light"] .slib-card:hover {
+    background: #faf5ff !important;
+    box-shadow: 0 20px 40px rgba(168, 85, 247, 0.2) !important;
   }
   
-  /* THUMBNAIL — Fixed size, home-style */
-  .lib-card-thumb {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
-    background: linear-gradient(135deg, #1c0f3d, #241548);
+  /* THUMBNAIL WRAPPER - ISOLATED sizing */
+  .slib-thumb {
+    position: relative !important;
+    width: 100% !important;
+    aspect-ratio: 16 / 9 !important;
+    overflow: hidden !important;
+    background: linear-gradient(135deg, #1c0f3d, #241548) !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
   
-  .lib-card-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s ease;
+  /* Image - fill container */
+  .slib-img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    display: block !important;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s !important;
+    max-width: none !important;
+    max-height: none !important;
+    aspect-ratio: auto !important;
   }
   
-  .lib-card:hover .lib-card-thumb img {
-    transform: scale(1.08);
-    filter: brightness(0.85);
+  .slib-card:hover .slib-img {
+    transform: scale(1.08) !important;
+    filter: brightness(0.85) !important;
   }
   
-  /* Beautiful gradient placeholder (when no thumbnail) */
-  .lib-card-noimg {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  /* Gradient placeholder (behind image, or shown when no image) */
+  .slib-noimg-content {
+    position: absolute !important;
+    inset: 0 !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
     background: 
-      radial-gradient(circle at 30% 30%, rgba(232, 121, 249, 0.4) 0%, transparent 55%),
-      radial-gradient(circle at 70% 70%, rgba(125, 211, 252, 0.35) 0%, transparent 55%),
-      linear-gradient(135deg, #a855f7, #e879f9, #7dd3fc);
-    color: white;
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 2.5rem;
-    font-weight: 800;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    position: relative;
-    overflow: hidden;
+      radial-gradient(circle at 30% 30%, rgba(232, 121, 249, 0.5) 0%, transparent 55%),
+      radial-gradient(circle at 70% 70%, rgba(125, 211, 252, 0.4) 0%, transparent 55%),
+      linear-gradient(135deg, #a855f7, #e879f9, #7dd3fc) !important;
+    overflow: hidden !important;
+    z-index: 1 !important;
   }
   
-  .lib-card-noimg::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: 
-      linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
-    transform: translateX(-100%);
-    animation: shimmer-slow 3s ease-in-out infinite;
+  /* When no image, or image failed to load */
+  .slib-thumb.slib-noimg-mode .slib-noimg-content,
+  .slib-thumb:not(:has(.slib-img)) .slib-noimg-content {
+    display: flex !important;
   }
   
-  @keyframes shimmer-slow {
+  .slib-noimg-content::before {
+    content: '' !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%) !important;
+    transform: translateX(-100%) !important;
+    animation: slib-shimmer 3s ease-in-out infinite !important;
+  }
+  
+  @keyframes slib-shimmer {
     0% { transform: translateX(-100%); }
     50%, 100% { transform: translateX(100%); }
   }
   
+  .slib-noimg-letter {
+    font-family: 'Bricolage Grotesque', sans-serif !important;
+    font-size: 2.2rem !important;
+    font-weight: 800 !important;
+    color: white !important;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+  
   /* Shine sweep on hover */
-  .lib-card-shine {
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      110deg,
-      transparent 25%,
-      rgba(255, 255, 255, 0.15) 50%,
-      transparent 75%
-    );
-    transition: left 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: none;
-    z-index: 2;
+  .slib-shine {
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.18) 50%, transparent 75%) !important;
+    transition: left 0.7s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    pointer-events: none !important;
+    z-index: 3 !important;
   }
   
-  .lib-card:hover .lib-card-shine { left: 100%; }
+  .slib-card:hover .slib-shine { left: 100% !important; }
   
-  /* Badge (top-left) - matches home NEW/HD */
-  .lib-card-badge {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    padding: 3px 8px;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    color: white;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.58rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    border-radius: 5px;
-    text-transform: uppercase;
-    box-shadow: 0 3px 10px rgba(192, 132, 252, 0.4);
-    z-index: 3;
+  /* Badge - CONTAINED, not full width */
+  .slib-badge {
+    position: absolute !important;
+    top: 7px !important;
+    left: 7px !important;
+    padding: 3px 7px !important;
+    background: linear-gradient(135deg, #c084fc, #e879f9) !important;
+    color: white !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.55rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.06em !important;
+    border-radius: 4px !important;
+    text-transform: uppercase !important;
+    box-shadow: 0 3px 10px rgba(192, 132, 252, 0.5) !important;
+    z-index: 4 !important;
+    width: auto !important;
+    max-width: max-content !important;
+    display: inline-block !important;
+    line-height: 1 !important;
   }
   
-  /* Remove button (top-right) */
-  .lib-card-remove {
-    position: absolute;
-    top: 8px; right: 8px;
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(239, 68, 68, 0.5);
-    color: #ef4444;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: all 0.25s;
-    padding: 0;
-    z-index: 4;
+  /* Remove button */
+  .slib-remove {
+    position: absolute !important;
+    top: 7px !important;
+    right: 7px !important;
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(239, 68, 68, 0.5) !important;
+    color: #ef4444 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0 !important;
+    transition: all 0.25s !important;
+    padding: 0 !important;
+    z-index: 5 !important;
   }
-  .lib-card-remove svg { width: 12px; height: 12px; }
-  .lib-card:hover .lib-card-remove { opacity: 1; }
-  .lib-card-remove:hover {
-    background: rgba(239, 68, 68, 0.95);
-    color: white;
-    transform: scale(1.15);
+  .slib-remove svg { width: 11px !important; height: 11px !important; }
+  .slib-card:hover .slib-remove { opacity: 1 !important; }
+  .slib-remove:hover {
+    background: rgba(239, 68, 68, 0.95) !important;
+    color: white !important;
+    transform: scale(1.15) !important;
   }
   
-  /* Play button (center) - premium home style */
-  .lib-card-play {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.5);
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    opacity: 0;
-    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 
-      0 8px 25px rgba(192, 132, 252, 0.65),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    pointer-events: none;
-    z-index: 3;
+  /* Play button - CONTAINED size */
+  .slib-play {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(0.5) !important;
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: white !important;
+    opacity: 0 !important;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    box-shadow: 0 8px 25px rgba(192, 132, 252, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    pointer-events: none !important;
+    z-index: 4 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 42px !important;
+    max-height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
   }
-  .lib-card-play svg { width: 18px; height: 18px; margin-left: 2px; }
+  .slib-play svg {
+    width: 17px !important;
+    height: 17px !important;
+    margin-left: 2px !important;
+    max-width: 17px !important;
+    max-height: 17px !important;
+  }
   
-  .lib-card:hover .lib-card-play {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+  .slib-card:hover .slib-play {
+    opacity: 1 !important;
+    transform: translate(-50%, -50%) scale(1) !important;
   }
   
   /* INFO */
-  .lib-card-info { 
-    padding: 10px 12px 12px;
+  .slib-info {
+    padding: 10px 11px 12px !important;
+    display: block !important;
   }
   
-  .lib-card-title {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.84rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1.35;
-    margin: 0 0 5px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    transition: color 0.25s ease;
-    letter-spacing: -0.005em;
-    min-height: 2.3em;
+  .slib-vtitle {
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    line-height: 1.35 !important;
+    margin: 0 0 5px !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    transition: color 0.25s !important;
+    letter-spacing: -0.005em !important;
+    min-height: 2.3em !important;
   }
   
-  .lib-card:hover .lib-card-title {
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .slib-card:hover .slib-vtitle {
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
   }
   
-  .lib-card-meta {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.63rem;
-    color: var(--text-muted);
-    line-height: 1.2;
+  .slib-meta {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.62rem !important;
+    color: var(--text-muted) !important;
+    line-height: 1.2 !important;
   }
   
-  .lib-card-channel {
-    color: var(--purple);
-    font-weight: 600;
-    max-width: 90px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .slib-channel {
+    color: #c084fc !important;
+    font-weight: 600 !important;
+    max-width: 90px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
   
-  .lib-card-dot { opacity: 0.4; }
+  .slib-dot { opacity: 0.4 !important; }
   
-  /* EMPTY STATE */
-  .lib-empty {
+  /* EMPTY */
+  .slib-empty {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 5rem 2rem;
     text-align: center;
-    min-height: 500px;
+    min-height: 480px;
   }
-  
-  .lib-empty-icon {
-    width: 100px;
-    height: 100px;
-    border-radius: 30px;
+  .slib-empty-icon {
+    width: 96px;
+    height: 96px;
+    border-radius: 28px;
     background: linear-gradient(135deg, rgba(192, 132, 252, 0.12), rgba(232, 121, 249, 0.08));
     display: flex;
     align-items: center;
@@ -554,30 +582,23 @@ import Header from '../components/Header.astro';
     margin-bottom: 1.5rem;
     border: 1px solid rgba(192, 132, 252, 0.25);
   }
-  
-  .lib-empty-title {
+  .slib-empty-title {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 800;
     color: var(--text-primary);
     margin: 0 0 10px;
     letter-spacing: -0.02em;
   }
-  
-  .lib-empty-desc {
+  .slib-empty-desc {
     color: var(--text-secondary);
-    font-size: 0.92rem;
-    max-width: 380px;
-    margin: 0 0 1.6rem;
+    font-size: 0.9rem;
+    max-width: 360px;
+    margin: 0 0 1.5rem;
     line-height: 1.6;
   }
-  
-  .lib-empty-desc strong {
-    color: var(--purple);
-    font-weight: 700;
-  }
-  
-  .lib-empty-btn {
+  .slib-empty-desc strong { color: #c084fc; font-weight: 700; }
+  .slib-empty-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -588,33 +609,28 @@ import Header from '../components/Header.astro';
     text-decoration: none;
     font-family: 'DM Sans', sans-serif;
     font-weight: 700;
-    font-size: 0.88rem;
+    font-size: 0.86rem;
     box-shadow: 0 10px 30px rgba(192, 132, 252, 0.5);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
-  .lib-empty-btn:hover {
+  .slib-empty-btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 15px 40px rgba(192, 132, 252, 0.65);
   }
   
   @media (max-width: 640px) {
-    .lib-hero {
-      padding: 16px 18px;
-      gap: 14px;
-      border-radius: 20px;
-    }
-    .lib-hero-icon { width: 46px; height: 46px; border-radius: 13px; }
-    .lib-hero-icon svg { width: 24px; height: 24px; }
-    .lib-clear-btn { padding: 7px 11px; font-size: 0.7rem; }
-    .lib-card-info { padding: 9px 10px 11px; }
-    .lib-card-title { font-size: 0.78rem; min-height: 2.1em; }
-    .lib-card-meta { font-size: 0.58rem; }
-    .lib-card-badge { font-size: 0.52rem; padding: 2px 6px; top: 6px; left: 6px; }
-    .lib-card-remove { width: 22px; height: 22px; top: 6px; right: 6px; }
-    .lib-card-remove svg { width: 10px; height: 10px; }
-    .lib-card-play { width: 38px; height: 38px; }
-    .lib-card-play svg { width: 16px; height: 16px; }
-    .lib-card-noimg { font-size: 2rem; }
+    .slib-hero { padding: 15px 16px; gap: 12px; border-radius: 18px; }
+    .slib-hero-icon { width: 44px !important; height: 44px !important; border-radius: 12px; }
+    .slib-hero-icon svg { width: 22px !important; height: 22px !important; }
+    .slib-clear-btn { padding: 6px 10px; font-size: 0.68rem; }
+    .slib-info { padding: 8px 9px 10px !important; }
+    .slib-vtitle { font-size: 0.76rem !important; min-height: 2.1em !important; }
+    .slib-meta { font-size: 0.57rem !important; }
+    .slib-badge { font-size: 0.5rem !important; padding: 2px 5px !important; top: 5px !important; left: 5px !important; }
+    .slib-remove { width: 20px !important; height: 20px !important; top: 5px !important; right: 5px !important; }
+    .slib-remove svg { width: 9px !important; height: 9px !important; }
+    .slib-play { width: 36px !important; height: 36px !important; max-width: 36px !important; max-height: 36px !important; min-width: 36px !important; min-height: 36px !important; }
+    .slib-play svg { width: 14px !important; height: 14px !important; }
+    .slib-noimg-letter { font-size: 1.8rem !important; }
   }
 </style>
