@@ -53,6 +53,22 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       }
     })();
   </script>
+
+  <!-- 🔍 EARLY RESUME DETECTION (before anything else) -->
+  <script is:inline>
+    (function(){
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var resumeId = params.get('resume');
+        if (resumeId) {
+          window.__RESUME_ID__ = resumeId;
+          console.log('[RESUME] Detected ID:', resumeId);
+        }
+      } catch(e) {
+        console.error('[RESUME] Detection failed:', e);
+      }
+    })();
+  </script>
 </head>
 
 <body>
@@ -79,7 +95,10 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>
   </button>
 
-  <!-- 🎯 RESUME HIGHLIGHT BADGE (floating top notification) -->
+  <!-- 🔍 DEBUG PANEL (visible on screen) -->
+  <div id="resume-debug" class="resume-debug"></div>
+
+  <!-- Welcome Badge -->
   <div id="resume-badge" class="resume-badge">
     <div class="resume-badge-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -114,94 +133,135 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   </script>
 
   <!-- ═══════════════════════════════════════════════════
-       🎬 RESUME HIGHLIGHT — auto-detect ?resume=xxx
-       Scrolls to card, glows it, shows welcome badge
+       🎯 RESUME HIGHLIGHT WITH DEBUG PANEL
        ═══════════════════════════════════════════════════ -->
   <script is:inline>
   (function(){
-    var params = new URLSearchParams(window.location.search);
-    var resumeId = params.get('resume');
-    if (!resumeId) return;
+    var debugEl = document.getElementById('resume-debug');
+    var logs = [];
     
-    // Clean URL immediately (so refresh doesn't repeat)
+    function debug(msg) {
+      console.log('[RESUME]', msg);
+      logs.push(msg);
+      if (debugEl) {
+        debugEl.innerHTML = '<div class="rd-title">🔍 Resume Debug</div>' + 
+          logs.map(function(l){ return '<div class="rd-line">' + l + '</div>'; }).join('');
+        debugEl.style.display = 'block';
+      }
+    }
+    
+    var resumeId = window.__RESUME_ID__;
+    
+    if (!resumeId) {
+      debug('❌ No ?resume= in URL. URL: ' + window.location.href);
+      // Hide debug after 5 sec if no resume
+      setTimeout(function(){ if(debugEl) debugEl.style.display = 'none'; }, 5000);
+      return;
+    }
+    
+    debug('✅ Resume ID found: ' + resumeId);
+    debug('📍 Current URL: ' + window.location.pathname);
+    
+    // Clean URL immediately
     try {
       var cleanUrl = window.location.pathname + window.location.hash;
       window.history.replaceState({}, '', cleanUrl);
-    } catch(e) {}
+      debug('🧹 URL cleaned');
+    } catch(e) {
+      debug('⚠️ URL clean failed: ' + e.message);
+    }
     
-    // Wait for feed to render (dynamic content)
+    // Wait & search for card
     var attempts = 0;
-    var maxAttempts = 40; // 8 seconds max
+    var maxAttempts = 30;
     
     function findAndHighlight() {
       attempts++;
       
-      // Try multiple selectors to find the card
-      var selectors = [
-        'a[href="/reels/' + resumeId + '"]',
-        'a[href*="/reels/' + resumeId + '"]',
-        '[data-video-id="' + resumeId + '"]',
-        '[data-id="' + resumeId + '"]'
-      ];
+      // Try to find any link that contains the resume ID
+      var allLinks = document.querySelectorAll('a[href]');
+      var foundCard = null;
+      var linkText = '';
       
-      var card = null;
-      for (var i = 0; i < selectors.length; i++) {
-        try {
-          card = document.querySelector(selectors[i]);
-          if (card) break;
-        } catch(e) {}
+      for (var i = 0; i < allLinks.length; i++) {
+        var href = allLinks[i].getAttribute('href') || '';
+        if (href.indexOf(resumeId) !== -1) {
+          foundCard = allLinks[i];
+          linkText = href;
+          break;
+        }
       }
       
-      if (!card && attempts < maxAttempts) {
-        setTimeout(findAndHighlight, 200);
+      if (attempts === 1) {
+        debug('🔎 Attempt ' + attempts + ': Scanning ' + allLinks.length + ' links');
+      }
+      
+      if (!foundCard) {
+        if (attempts < maxAttempts) {
+          setTimeout(findAndHighlight, 300);
+          return;
+        }
+        debug('❌ Card NOT FOUND after ' + attempts + ' attempts');
+        debug('💡 Total links on page: ' + allLinks.length);
+        debug('💡 Searched for ID: ' + resumeId);
+        // Show first 3 links for inspection
+        for (var j = 0; j < Math.min(3, allLinks.length); j++) {
+          debug('   Link ' + (j+1) + ': ' + (allLinks[j].getAttribute('href') || 'no-href').substring(0, 60));
+        }
+        setTimeout(function(){ if(debugEl) debugEl.style.display = 'none'; }, 15000);
         return;
       }
       
-      if (!card) return; // Give up gracefully
+      debug('✅ FOUND! Link: ' + linkText.substring(0, 60));
+      debug('🎯 Element: ' + foundCard.tagName + ' class="' + (foundCard.className || 'none').substring(0, 40) + '"');
       
-      // Get the actual card element (climb up if we got an anchor)
-      var cardEl = card;
-      // Try to find visual card container
-      var parent = card.closest('.card, .anime-card, [class*="card"]');
-      if (parent) cardEl = parent;
+      // Find the visual card container
+      var cardEl = foundCard;
+      var parent = foundCard.closest('.card, .anime-card, [class*="card"], [class*="Card"], article, .item, [class*="tile"]');
+      if (parent) {
+        cardEl = parent;
+        debug('📦 Using parent container: ' + parent.className.substring(0, 40));
+      } else {
+        debug('📦 Using link itself as card');
+      }
       
       // Show welcome badge
       var badge = document.getElementById('resume-badge');
       if (badge) {
         badge.classList.add('show');
-        setTimeout(function(){
-          badge.classList.remove('show');
-        }, 3500);
+        debug('💜 Welcome badge shown');
+        setTimeout(function(){ badge.classList.remove('show'); }, 4000);
       }
       
-      // Scroll into view (centered)
+      // Scroll to card
       setTimeout(function(){
         try {
           cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          debug('📜 Scrolling to card...');
         } catch(e) {
-          // Fallback for old browsers
-          var rect = cardEl.getBoundingClientRect();
-          window.scrollTo(0, window.pageYOffset + rect.top - window.innerHeight / 2 + rect.height / 2);
+          debug('⚠️ Scroll failed: ' + e.message);
         }
         
-        // Add highlight class after scroll settles
+        // Add glow after scroll settles
         setTimeout(function(){
           cardEl.classList.add('resume-highlight');
+          debug('✨ Glow applied!');
           
-          // Remove after 4 seconds
           setTimeout(function(){
             cardEl.classList.remove('resume-highlight');
-          }, 4000);
-        }, 800);
-      }, 400);
+            debug('🏁 Done. Hiding debug in 3s.');
+            setTimeout(function(){ if(debugEl) debugEl.style.display = 'none'; }, 3000);
+          }, 4500);
+        }, 900);
+      }, 500);
     }
     
-    // Wait for DOM + feed
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      setTimeout(findAndHighlight, 800);
+    // Start after full page load
+    if (document.readyState === 'complete') {
+      setTimeout(findAndHighlight, 1000);
     } else {
-      window.addEventListener('DOMContentLoaded', function(){
-        setTimeout(findAndHighlight, 800);
+      window.addEventListener('load', function(){
+        setTimeout(findAndHighlight, 1000);
       });
     }
   })();
@@ -222,15 +282,12 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     --bg-glass:     rgba(10, 5, 23, 0.85);
     --bg-card:      rgba(28, 15, 61, 0.55);
     --bg-card-hover: rgba(36, 21, 72, 0.75);
-
     --text-primary:   #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.75);
     --text-muted:     rgba(255, 255, 255, 0.5);
     --text-faint:     rgba(255, 255, 255, 0.25);
-
     --border-color:  rgba(192, 132, 252, 0.15);
     --border-hover:  rgba(192, 132, 252, 0.45);
-
     --body-bg: linear-gradient(180deg, #1a0b35 0%, #0a0517 100%);
     --header-bg: rgba(10, 5, 23, 0.85);
     --header-bg-scrolled: rgba(10, 5, 23, 0.95);
@@ -248,15 +305,12 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     --bg-glass:     rgba(255, 255, 255, 0.9);
     --bg-card:      #ffffff;
     --bg-card-hover: #faf5ff;
-
     --text-primary:   #1e0f36;
     --text-secondary: rgba(30, 15, 54, 0.8);
     --text-muted:     rgba(30, 15, 54, 0.55);
     --text-faint:     rgba(30, 15, 54, 0.25);
-
     --border-color:  rgba(192, 132, 252, 0.25);
     --border-hover:  rgba(168, 85, 247, 0.5);
-
     --body-bg: linear-gradient(180deg, #f3e8ff 0%, #faf5ff 100%);
     --header-bg: rgba(255, 255, 255, 0.9);
     --header-bg-scrolled: rgba(255, 255, 255, 0.98);
@@ -274,10 +328,8 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     --cyan: #7dd3fc;
     --cyan-bright: #22d3ee;
     --flame: #fb923c;
-
     --grad: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
     --grad-hot: linear-gradient(135deg, #a855f7, #e879f9);
-
     --header-h: 68px;
     --font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-heading: 'Bricolage Grotesque', 'DM Sans', sans-serif;
@@ -287,7 +339,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     --radius-lg: 22px;
     --radius-xl: 32px;
     --max-w: 1440px;
-
     --transition-fast:   0.2s ease;
     --transition-normal: 0.3s ease;
   }
@@ -420,7 +471,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
   #btt:hover { transform: translateY(-3px); }
   
-  /* Hide BTT on mobile — as requested */
   @media (max-width: 768px) {
     #btt { display: none !important; }
   }
@@ -487,7 +537,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     transform: translateY(-6px);
   }
 
-  /* TICKER */
   .ticker-wrap {
     background: rgba(28, 15, 61, 0.5);
     border-top: 1px solid var(--border-color);
@@ -557,9 +606,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
 
   @media (max-width: 768px) {
-    .ticker-track {
-      animation-duration: 30s;
-    }
+    .ticker-track { animation-duration: 30s; }
   }
 
   .video-embed-wrapper {
@@ -645,10 +692,45 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   .reveal.visible { opacity: 1; transform: translateY(0); }
 
   /* ═══════════════════════════════════════════════════
-     🎯 RESUME HIGHLIGHT — Last watched video glow
+     🔍 DEBUG PANEL (visible on screen)
      ═══════════════════════════════════════════════════ */
-  
-  /* Floating welcome badge */
+  .resume-debug {
+    display: none;
+    position: fixed;
+    top: 90px;
+    left: 20px;
+    max-width: 380px;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #e879f9;
+    border-radius: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #f5ecff;
+    z-index: 99997;
+    line-height: 1.5;
+    box-shadow: 0 10px 40px rgba(232, 121, 249, 0.4);
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  .rd-title {
+    font-weight: 700;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(232, 121, 249, 0.3);
+    font-size: 13px;
+  }
+  .rd-line {
+    padding: 2px 0;
+    word-break: break-all;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     🎯 RESUME BADGE + HIGHLIGHT
+     ═══════════════════════════════════════════════════ */
   .resume-badge {
     position: fixed;
     top: 90px;
@@ -693,28 +775,19 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     animation: resume-pulse 2s ease-in-out infinite;
   }
 
-  .resume-badge-icon svg {
-    width: 20px;
-    height: 20px;
-  }
+  .resume-badge-icon svg { width: 20px; height: 20px; }
 
   @keyframes resume-pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.08); }
   }
 
-  .resume-badge-content {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
+  .resume-badge-content { display: flex; flex-direction: column; gap: 2px; }
 
   .resume-badge-title {
     font-family: var(--font-heading);
     font-size: 14px;
     font-weight: 700;
-    color: #f5ecff;
-    letter-spacing: -0.01em;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -725,92 +798,34 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     font-size: 11px;
     font-weight: 500;
     color: rgba(255, 255, 255, 0.65);
-    letter-spacing: 0.01em;
   }
 
   @media (max-width: 640px) {
-    .resume-badge {
-      top: 80px;
-      padding: 10px 16px 10px 10px;
-    }
-    .resume-badge-icon {
-      width: 34px;
-      height: 34px;
-    }
-    .resume-badge-icon svg {
-      width: 17px;
-      height: 17px;
-    }
-    .resume-badge-title {
-      font-size: 13px;
-    }
-    .resume-badge-sub {
-      font-size: 10px;
-    }
+    .resume-badge { top: 80px; padding: 10px 16px 10px 10px; }
+    .resume-badge-icon { width: 34px; height: 34px; }
+    .resume-badge-icon svg { width: 17px; height: 17px; }
+    .resume-badge-title { font-size: 13px; }
+    .resume-badge-sub { font-size: 10px; }
+    .resume-debug { max-width: calc(100% - 40px); font-size: 10px; }
   }
 
-  /* Card highlight animation */
   .resume-highlight {
-    position: relative;
+    position: relative !important;
     z-index: 5;
     animation: resume-card-pulse 2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .resume-highlight::before {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border-radius: inherit;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    z-index: -1;
-    opacity: 0;
-    filter: blur(20px);
-    animation: resume-glow-pulse 4s cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: none;
-  }
-
-  .resume-highlight::after {
-    content: '⏯ Last watched';
-    position: absolute;
-    top: -14px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 4px 12px;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    color: white;
-    font-family: var(--font-heading);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    border-radius: 100px;
-    box-shadow: 0 4px 14px rgba(192, 132, 252, 0.5);
-    z-index: 10;
-    opacity: 0;
-    animation: resume-tag-appear 4s cubic-bezier(0.4, 0, 0.2, 1);
-    pointer-events: none;
-    white-space: nowrap;
+    outline: 3px solid #e879f9 !important;
+    outline-offset: 4px;
+    border-radius: 12px;
+    box-shadow: 
+      0 0 40px rgba(232, 121, 249, 0.6),
+      0 0 80px rgba(192, 132, 252, 0.4) !important;
   }
 
   @keyframes resume-card-pulse {
     0% { transform: scale(1); }
-    30% { transform: scale(1.03); }
-    60% { transform: scale(0.99); }
+    30% { transform: scale(1.05); }
+    60% { transform: scale(0.98); }
     100% { transform: scale(1); }
-  }
-
-  @keyframes resume-glow-pulse {
-    0% { opacity: 0; filter: blur(20px); }
-    20% { opacity: 0.9; filter: blur(24px); }
-    50% { opacity: 0.7; filter: blur(20px); }
-    100% { opacity: 0; filter: blur(16px); }
-  }
-
-  @keyframes resume-tag-appear {
-    0% { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.8); }
-    15% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-    85% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-    100% { opacity: 0; transform: translateX(-50%) translateY(-6px) scale(0.9); }
   }
 
   @media (prefers-reduced-motion: reduce) {
