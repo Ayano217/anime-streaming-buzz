@@ -213,12 +213,12 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
 
     <script is:inline set:html={`window.__REELS_VIDEO__ = ${JSON.stringify(video)}; window.__REELS_QUEUE__ = ${JSON.stringify(feedQueue.slice(0, 30))}; window.__CURRENT_VIDEO_ID__ = ${JSON.stringify(videoId)};`}></script>
 
-    <!-- 🔥 CRITICAL: Inline script (NOT typescript) for back button - runs immediately -->
+    <!-- 🔥 CRITICAL INLINE SCRIPT: Save resume to localStorage IMMEDIATELY on page load + back button handler -->
     <script is:inline>
       (function(){
         var vid = window.__CURRENT_VIDEO_ID__ || '';
         
-        // Save to localStorage IMMEDIATELY on page load
+        // Save to localStorage IMMEDIATELY when reels page loads (so even browser back works)
         try {
           if (vid) {
             localStorage.setItem('anitube_resume_video', vid);
@@ -226,27 +226,36 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
           }
         } catch(e) {}
         
-        // BACK BUTTON — Multiple layers of safety
+        // Back button handler
         function goHome(e) {
           if (e) {
             e.preventDefault();
             e.stopPropagation();
           }
+          // Refresh timestamp for freshness
           try {
             if (vid) {
               localStorage.setItem('anitube_resume_video', vid);
               localStorage.setItem('anitube_resume_time', String(Date.now()));
             }
           } catch(err) {}
-          window.location.href = '/?resume=' + encodeURIComponent(vid);
+          
+          // Try history.back if same origin, else go home
+          try {
+            if (document.referrer && document.referrer.indexOf(window.location.origin) === 0) {
+              window.history.back();
+            } else {
+              window.location.href = '/';
+            }
+          } catch(err) {
+            window.location.href = '/';
+          }
           return false;
         }
         
-        // Attach handler as soon as button exists
         function attachBackHandler() {
           var btn = document.getElementById('backBtn');
           if (btn) {
-            // Remove any existing handlers
             btn.onclick = goHome;
             btn.addEventListener('click', goHome, false);
           } else {
@@ -939,15 +948,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') { e.preventDefault(); navigate('next'); }
         else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') { e.preventDefault(); navigate('prev'); }
-        else if (e.key === 'Escape') {
-          try {
-            if (videoId) {
-              localStorage.setItem('anitube_resume_video', videoId);
-              localStorage.setItem('anitube_resume_time', String(Date.now()));
-            }
-          } catch(e) {}
-          window.location.href = `/?resume=${encodeURIComponent(videoId)}`;
-        }
       });
       
       let wheelLocked = false;
