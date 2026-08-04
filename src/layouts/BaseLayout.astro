@@ -54,12 +54,23 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     })();
   </script>
 
+  <!-- 🎯 EARLY RESUME DETECTION — set global flag before body renders -->
   <script is:inline>
     (function(){
       try {
         var params = new URLSearchParams(window.location.search);
         var resumeId = params.get('resume');
-        if (resumeId) window.__RESUME_ID__ = resumeId;
+        if (resumeId) {
+          window.__RESUME_ID__ = resumeId;
+          // Also save to localStorage as backup
+          try { sessionStorage.setItem('__pending_resume__', resumeId); } catch(e) {}
+        } else {
+          // Check sessionStorage for pending resume (in case URL was already cleaned)
+          try {
+            var pending = sessionStorage.getItem('__pending_resume__');
+            if (pending) window.__RESUME_ID__ = pending;
+          } catch(e) {}
+        }
       } catch(e) {}
     })();
   </script>
@@ -97,8 +108,8 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       </svg>
     </div>
     <div class="resume-badge-content">
-      <div class="resume-badge-title">Welcome back!</div>
-      <div class="resume-badge-sub">Continuing where you left off</div>
+      <div class="resume-badge-title" id="resume-badge-title">Finding your video...</div>
+      <div class="resume-badge-sub" id="resume-badge-sub">Just a moment</div>
     </div>
   </div>
 
@@ -124,12 +135,18 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   </script>
 
   <!-- ═══════════════════════════════════════════════════
-       🎯 RESUME HIGHLIGHT (Final - Premium Glow)
+       🎯 RESUME HIGHLIGHT — Aggressive Card Finder
+       Handles lazy-loaded / infinite scroll feeds
        ═══════════════════════════════════════════════════ -->
   <script is:inline>
   (function(){
     var resumeId = window.__RESUME_ID__;
     if (!resumeId) return;
+    
+    // Only run on home page
+    if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
+      return;
+    }
     
     // Clean URL immediately
     try {
@@ -137,44 +154,40 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       window.history.replaceState({}, '', cleanUrl);
     } catch(e) {}
     
-    var attempts = 0;
-    var maxAttempts = 40;
+    var badge = document.getElementById('resume-badge');
+    var badgeTitle = document.getElementById('resume-badge-title');
+    var badgeSub = document.getElementById('resume-badge-sub');
     
-    function findAndHighlight() {
-      attempts++;
-      
+    // Show badge immediately (searching state)
+    setTimeout(function(){
+      if (badge) badge.classList.add('show');
+    }, 1200);
+    
+    function findCard() {
       var allLinks = document.querySelectorAll('a[href]');
-      var foundCard = null;
-      
       for (var i = 0; i < allLinks.length; i++) {
         var href = allLinks[i].getAttribute('href') || '';
         if (href.indexOf(resumeId) !== -1) {
-          foundCard = allLinks[i];
-          break;
+          return allLinks[i];
         }
       }
+      return null;
+    }
+    
+    function highlightCard(link) {
+      // Clear session backup
+      try { sessionStorage.removeItem('__pending_resume__'); } catch(e) {}
       
-      if (!foundCard) {
-        if (attempts < maxAttempts) {
-          setTimeout(findAndHighlight, 250);
-          return;
-        }
-        return; // Silent fail
-      }
+      // Update badge to success
+      if (badgeTitle) badgeTitle.textContent = 'Welcome back!';
+      if (badgeSub) badgeSub.textContent = 'Continuing where you left off';
       
-      // Find the visual card container (most likely a wrapper div)
-      var cardEl = foundCard;
-      var parent = foundCard.closest('.card, .anime-card, [class*="card"], [class*="Card"], article, .item, [class*="tile"], [class*="Item"]');
+      // Find visual card container
+      var cardEl = link;
+      var parent = link.closest('.card, .anime-card, [class*="card"], [class*="Card"], article, .item, [class*="tile"], [class*="Item"]');
       if (parent) cardEl = parent;
       
-      // Show welcome badge
-      var badge = document.getElementById('resume-badge');
-      if (badge) {
-        badge.classList.add('show');
-        setTimeout(function(){ badge.classList.remove('show'); }, 4000);
-      }
-      
-      // Scroll to card centered
+      // Scroll to card
       setTimeout(function(){
         try {
           cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -183,11 +196,16 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
           window.scrollTo(0, window.pageYOffset + rect.top - window.innerHeight / 2 + rect.height / 2);
         }
         
-        // Apply highlight after scroll settles
+        // Apply glow after scroll settles
         setTimeout(function(){
           cardEl.classList.add('resume-highlight');
           
-          // Remove after 5 seconds
+          // Hide badge after glow starts
+          setTimeout(function(){
+            if (badge) badge.classList.remove('show');
+          }, 3000);
+          
+          // Remove glow after 5 seconds
           setTimeout(function(){
             cardEl.classList.add('resume-highlight-fadeout');
             setTimeout(function(){
@@ -195,15 +213,63 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
               cardEl.classList.remove('resume-highlight-fadeout');
             }, 800);
           }, 5000);
-        }, 900);
-      }, 500);
+        }, 700);
+      }, 200);
     }
     
+    // Try to find & scroll to load more if needed
+    var attempts = 0;
+    var maxAttempts = 60; // Up to 30 seconds
+    var lastScrollY = 0;
+    var scrollTriggerCount = 0;
+    
+    function attemptFind() {
+      attempts++;
+      
+      var card = findCard();
+      if (card) {
+        highlightCard(card);
+        return;
+      }
+      
+      // If not found and page has scrollable content, trigger scroll to load more
+      var docHeight = document.documentElement.scrollHeight;
+      var viewportHeight = window.innerHeight;
+      var currentScroll = window.pageYOffset;
+      
+      // Every 5 attempts, trigger scroll to load more (infinite scroll)
+      if (attempts % 5 === 0 && scrollTriggerCount < 10) {
+        scrollTriggerCount++;
+        var newScroll = currentScroll + viewportHeight * 1.5;
+        if (newScroll < docHeight - viewportHeight) {
+          window.scrollTo({ top: newScroll, behavior: 'auto' });
+        } else {
+          window.scrollTo({ top: docHeight, behavior: 'auto' });
+        }
+        // Wait longer after scroll trigger
+        setTimeout(attemptFind, 800);
+        return;
+      }
+      
+      if (attempts < maxAttempts) {
+        setTimeout(attemptFind, 500);
+      } else {
+        // Failed — hide badge
+        if (badgeTitle) badgeTitle.textContent = 'Video not visible';
+        if (badgeSub) badgeSub.textContent = 'Try scrolling to find it';
+        setTimeout(function(){
+          if (badge) badge.classList.remove('show');
+        }, 3000);
+        try { sessionStorage.removeItem('__pending_resume__'); } catch(e) {}
+      }
+    }
+    
+    // Start after initial page render
     if (document.readyState === 'complete') {
-      setTimeout(findAndHighlight, 1000);
+      setTimeout(attemptFind, 1500);
     } else {
       window.addEventListener('load', function(){
-        setTimeout(findAndHighlight, 1000);
+        setTimeout(attemptFind, 1500);
       });
     }
   })();
@@ -634,7 +700,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   .reveal.visible { opacity: 1; transform: translateY(0); }
 
   /* ═══════════════════════════════════════════════════
-     🎯 RESUME BADGE (top notification)
+     🎯 RESUME BADGE
      ═══════════════════════════════════════════════════ */
   .resume-badge {
     position: fixed;
