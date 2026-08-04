@@ -79,7 +79,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>
   </button>
 
-  <!-- Resume Welcome Badge -->
   <div id="resume-badge" class="resume-badge">
     <div class="resume-badge-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -113,30 +112,72 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   })();
   </script>
 
-  <!-- 🎯 RESUME DETECTION — Reads localStorage, finds card, highlights it -->
+  <!-- 🎯 OPTIMIZED RESUME DETECTION — Uses MutationObserver, no polling, zero lag -->
   <script is:inline>
   (function(){
     try {
       var resumeId = localStorage.getItem('anitube_resume_video');
       var resumeTime = parseInt(localStorage.getItem('anitube_resume_time') || '0', 10);
+      
       if (!resumeId) return;
       
-      // Only honor resume within last 5 minutes
+      // Only within 5 minutes
       if (isNaN(resumeTime) || (Date.now() - resumeTime) > (5 * 60 * 1000)) {
         localStorage.removeItem('anitube_resume_video');
         localStorage.removeItem('anitube_resume_time');
         return;
       }
       
-      // Only run on home page
-      if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') return;
+      // Only on home page
+      var path = window.location.pathname;
+      if (path !== '/' && path !== '/index.html') return;
       
-      var attempts = 0;
-      var maxAttempts = 25;
       var done = false;
+      var observer = null;
+      var timeoutId = null;
+      
+      function highlightCard(link) {
+        if (done) return;
+        done = true;
+        
+        // Cleanup observer immediately (no more DOM watching)
+        if (observer) observer.disconnect();
+        if (timeoutId) clearTimeout(timeoutId);
+        
+        // Cleanup localStorage
+        localStorage.removeItem('anitube_resume_video');
+        localStorage.removeItem('anitube_resume_time');
+        
+        // Find visual card container
+        var card = link.closest('.card, .anime-card, [class*="card"], [class*="Card"], article, .item, [class*="tile"]') || link;
+        
+        // Scroll into view
+        try {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch(e) {}
+        
+        // Show badge
+        var badge = document.getElementById('resume-badge');
+        if (badge) {
+          setTimeout(function(){ badge.classList.add('show'); }, 300);
+          setTimeout(function(){ badge.classList.remove('show'); }, 4000);
+        }
+        
+        // Apply glow
+        setTimeout(function(){
+          card.classList.add('resume-highlight');
+          setTimeout(function(){
+            card.classList.add('resume-highlight-fadeout');
+            setTimeout(function(){
+              card.classList.remove('resume-highlight');
+              card.classList.remove('resume-highlight-fadeout');
+            }, 800);
+          }, 4000);
+        }, 700);
+      }
       
       function findCard() {
-        var anchors = document.querySelectorAll('a[href]');
+        var anchors = document.querySelectorAll('a[href*="/reels/"]');
         for (var i = 0; i < anchors.length; i++) {
           var href = anchors[i].getAttribute('href') || '';
           if (href.indexOf(resumeId) !== -1) {
@@ -146,70 +187,46 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
         return null;
       }
       
-      function highlight(link) {
-        done = true;
-        
-        // Find visual card container
-        var card = link.closest('.card, .anime-card, [class*="card"], [class*="Card"], article, .item, [class*="tile"]');
-        if (!card) card = link;
-        
-        // Scroll into view
-        try {
-          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } catch(e) {
-          var rect = card.getBoundingClientRect();
-          window.scrollTo(0, window.pageYOffset + rect.top - window.innerHeight / 2 + rect.height / 2);
-        }
-        
-        // Show welcome badge
-        var badge = document.getElementById('resume-badge');
-        if (badge) {
-          setTimeout(function(){ badge.classList.add('show'); }, 400);
-          setTimeout(function(){ badge.classList.remove('show'); }, 4200);
-        }
-        
-        // Apply glow after scroll settles
-        setTimeout(function(){
-          card.classList.add('resume-highlight');
-          
-          setTimeout(function(){
-            card.classList.add('resume-highlight-fadeout');
-            setTimeout(function(){
-              card.classList.remove('resume-highlight');
-              card.classList.remove('resume-highlight-fadeout');
-            }, 800);
-          }, 4000);
-        }, 700);
-        
-        // Cleanup localStorage
-        localStorage.removeItem('anitube_resume_video');
-        localStorage.removeItem('anitube_resume_time');
-      }
-      
       function tryFind() {
-        if (done) return;
-        attempts++;
-        
         var link = findCard();
         if (link) {
-          highlight(link);
-          return;
+          highlightCard(link);
+          return true;
         }
+        return false;
+      }
+      
+      function start() {
+        // First try immediately
+        if (tryFind()) return;
         
-        if (attempts < maxAttempts) {
-          setTimeout(tryFind, 400);
-        } else {
-          // Give up
-          localStorage.removeItem('anitube_resume_video');
-          localStorage.removeItem('anitube_resume_time');
-        }
+        // Use MutationObserver to watch for new cards (efficient, no polling)
+        observer = new MutationObserver(function(mutations) {
+          // Debounced check
+          if (tryFind()) return;
+        });
+        
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        });
+        
+        // Safety timeout: give up after 15 seconds
+        timeoutId = setTimeout(function() {
+          if (observer) observer.disconnect();
+          if (!done) {
+            localStorage.removeItem('anitube_resume_video');
+            localStorage.removeItem('anitube_resume_time');
+            done = true;
+          }
+        }, 15000);
       }
       
       if (document.readyState === 'complete') {
-        setTimeout(tryFind, 800);
+        setTimeout(start, 500);
       } else {
         window.addEventListener('load', function(){
-          setTimeout(tryFind, 800);
+          setTimeout(start, 500);
         });
       }
     } catch (e) {
@@ -645,9 +662,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
   .reveal.visible { opacity: 1; transform: translateY(0); }
 
-  /* ═══════════════════════════════════════════════════
-     🎯 RESUME BADGE
-     ═══════════════════════════════════════════════════ */
+  /* Resume Badge */
   .resume-badge {
     position: fixed;
     top: 90px;
@@ -663,10 +678,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(192, 132, 252, 0.4);
     border-radius: 100px;
-    box-shadow: 
-      0 10px 40px rgba(0, 0, 0, 0.4),
-      0 0 30px rgba(192, 132, 252, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(192, 132, 252, 0.3);
     opacity: 0;
     pointer-events: none;
     transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -679,13 +691,10 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
 
   .resume-badge-icon {
-    width: 40px;
-    height: 40px;
+    width: 40px; height: 40px;
     border-radius: 50%;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     color: white;
     flex-shrink: 0;
     box-shadow: 0 4px 14px rgba(192, 132, 252, 0.5);
@@ -725,12 +734,11 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     .resume-badge-sub { font-size: 10px; }
   }
 
-  /* ═══════════════════════════════════════════════════
-     ✨ RESUME CARD HIGHLIGHT — Premium Glow
-     ═══════════════════════════════════════════════════ */
+  /* Card Highlight - use will-change for GPU acceleration */
   .resume-highlight {
     position: relative !important;
     z-index: 5;
+    will-change: transform, box-shadow;
     animation: resume-scale-pop 1s cubic-bezier(0.34, 1.56, 0.64, 1);
     border-radius: 20px;
     box-shadow: 
@@ -770,9 +778,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     border-radius: 100px;
-    box-shadow: 
-      0 4px 20px rgba(232, 121, 249, 0.7),
-      0 0 30px rgba(192, 132, 252, 0.5);
+    box-shadow: 0 4px 20px rgba(232, 121, 249, 0.7), 0 0 30px rgba(192, 132, 252, 0.5);
     z-index: 20;
     white-space: nowrap;
     animation: resume-tag-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -780,16 +786,10 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
 
   .resume-highlight-fadeout {
-    box-shadow: 
-      0 0 0 0 transparent,
-      0 0 0 0 transparent !important;
+    box-shadow: 0 0 0 0 transparent !important;
   }
 
-  .resume-highlight-fadeout::before {
-    opacity: 0;
-    transition: opacity 0.8s ease;
-  }
-
+  .resume-highlight-fadeout::before { opacity: 0; transition: opacity 0.8s ease; }
   .resume-highlight-fadeout::after {
     opacity: 0;
     transform: translateX(-50%) translateY(-8px);
@@ -822,11 +822,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
         0 0 20px 4px rgba(232, 121, 249, 0.7),
         0 0 40px 8px rgba(192, 132, 252, 0.5) !important;
     }
-    .resume-highlight::after {
-      font-size: 9px;
-      padding: 5px 12px;
-      top: -14px;
-    }
+    .resume-highlight::after { font-size: 9px; padding: 5px 12px; top: -14px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
