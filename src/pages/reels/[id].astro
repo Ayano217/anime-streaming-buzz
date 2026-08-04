@@ -9,29 +9,52 @@ const videoId = id || '';
 function getPlatformData(vid: string) {
   if (vid.startsWith('yts_')) {
     const rawId = vid.replace('yts_', '');
-    return { source: 'youtube_shorts', embedUrl: `https://www.youtube.com/embed/${rawId}?loop=1&playlist=${rawId}&rel=0&modestbranding=1&autoplay=1`, aspect: 'portrait', isShort: true };
+    return { source: 'youtube_shorts', embedUrl: `https://www.youtube.com/embed/${rawId}?loop=1&playlist=${rawId}&rel=0&modestbranding=1&autoplay=1`, aspect: 'portrait', isShort: true, rawId };
   }
   if (vid.startsWith('yt_')) {
     const rawId = vid.replace('yt_', '');
-    return { source: 'youtube', embedUrl: `https://www.youtube.com/embed/${rawId}?rel=0&modestbranding=1&autoplay=1`, aspect: 'landscape', isShort: false };
+    return { source: 'youtube', embedUrl: `https://www.youtube.com/embed/${rawId}?rel=0&modestbranding=1&autoplay=1`, aspect: 'landscape', isShort: false, rawId };
   }
   if (vid.startsWith('dm_')) {
     const rawId = vid.replace('dm_', '');
-    return { source: 'dailymotion', embedUrl: `https://www.dailymotion.com/embed/video/${rawId}?autoplay=1&mute=0`, aspect: 'mixed', isShort: false };
+    return { source: 'dailymotion', embedUrl: `https://www.dailymotion.com/embed/video/${rawId}?autoplay=1&mute=0`, aspect: 'mixed', isShort: false, rawId };
   }
   if (vid.startsWith('bili_')) {
     const rawId = vid.replace('bili_', '');
-    return { source: 'bilibili', embedUrl: `https://player.bilibili.com/player.html?bvid=${rawId}&autoplay=1&high_quality=1`, aspect: 'landscape', isShort: false };
+    return { source: 'bilibili', embedUrl: `https://player.bilibili.com/player.html?bvid=${rawId}&autoplay=1&high_quality=1`, aspect: 'landscape', isShort: false, rawId };
   }
   if (vid.startsWith('ody_')) {
     const rawId = vid.replace('ody_', '');
-    return { source: 'odysee', embedUrl: `https://odysee.com/$/embed/${rawId}?autoplay=1`, aspect: 'landscape', isShort: false };
+    return { source: 'odysee', embedUrl: `https://odysee.com/$/embed/${rawId}?autoplay=1`, aspect: 'landscape', isShort: false, rawId };
   }
   if (vid.startsWith('rmb_')) {
     const rawId = vid.replace('rmb_', '');
-    return { source: 'rumble', embedUrl: `https://rumble.com/embed/${rawId}/?autoplay=2`, aspect: 'landscape', isShort: false };
+    return { source: 'rumble', embedUrl: `https://rumble.com/embed/${rawId}/?autoplay=2`, aspect: 'landscape', isShort: false, rawId };
   }
   return null;
+}
+
+// 🖼️ Auto-generate thumbnail URL from video source
+function generateThumbnail(vid: string, apiThumbnail: string = ''): string {
+  // If API already gave us a thumbnail, use it
+  if (apiThumbnail && apiThumbnail.trim()) return apiThumbnail;
+  
+  // Auto-generate based on source
+  if (vid.startsWith('yts_') || vid.startsWith('yt_')) {
+    const rawId = vid.replace(/^(yts_|yt_)/, '');
+    // YouTube's high quality thumbnail
+    return `https://i.ytimg.com/vi/${rawId}/hqdefault.jpg`;
+  }
+  if (vid.startsWith('dm_')) {
+    const rawId = vid.replace('dm_', '');
+    // Dailymotion thumbnail
+    return `https://www.dailymotion.com/thumbnail/video/${rawId}`;
+  }
+  if (vid.startsWith('bili_')) {
+    // Bilibili doesn't have easy thumbnail URLs, leave empty (will use gradient placeholder)
+    return '';
+  }
+  return '';
 }
 
 let video: any = null;
@@ -55,16 +78,23 @@ if (!video) {
   const platformData = getPlatformData(videoId);
   if (platformData) {
     video = {
-      id: videoId, title: 'Anime Content', channel: 'AniTube', thumbnail: '',
+      id: videoId, title: 'Anime Content', channel: 'AniTube',
+      thumbnail: generateThumbnail(videoId, ''),
       embedUrl: platformData.embedUrl, source: platformData.source,
       aspect: platformData.aspect, isShort: platformData.isShort, type: 'anime'
     };
   } else {
     video = {
-      id: videoId, title: 'Anime Video', channel: 'AniTubeBuzz', thumbnail: '',
+      id: videoId, title: 'Anime Video', channel: 'AniTubeBuzz',
+      thumbnail: '',
       embedUrl: `https://www.youtube.com/embed/${videoId.replace(/^(yt_|yts_|dm_|bili_|ody_|rmb_)/, '')}?rel=0&autoplay=1`,
       source: 'youtube', aspect: 'landscape', isShort: false, type: 'anime'
     };
+  }
+} else {
+  // Ensure thumbnail exists - auto-generate if missing
+  if (!video.thumbnail || !video.thumbnail.trim()) {
+    video.thumbnail = generateThumbnail(videoId, '');
   }
 }
 
@@ -262,9 +292,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
   </div>
 
   <style>
-    /* ═══════════════════════════════════════════════════
-       🎬 ROOT - Mobile-friendly (allows body scroll on mobile)
-       ═══════════════════════════════════════════════════ */
     .rp-root {
       position: fixed;
       inset: 0;
@@ -283,35 +310,13 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       z-index: 1;
       animation: rp-fade-in 0.5s ease-out;
     }
+    @keyframes rp-fade-in { from { opacity: 0; } to { opacity: 1; } }
     
-    @keyframes rp-fade-in {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
-    /* AUTO-HIDE fade */
-    .rp-fadeable {
-      transition: opacity 0.4s ease, transform 0.4s ease;
-    }
-    
-    .rp-root.controls-hidden .rp-fadeable {
-      opacity: 0;
-      pointer-events: none;
-    }
-    
+    .rp-fadeable { transition: opacity 0.4s ease, transform 0.4s ease; }
+    .rp-root.controls-hidden .rp-fadeable { opacity: 0; pointer-events: none; }
     .rp-root.controls-hidden .rp-topbar { transform: translateY(-100%); }
     .rp-root.controls-hidden .rp-actions { transform: translateX(20px); }
     .rp-root.controls-hidden .rp-info { transform: translateY(15px); }
-    
-    /* Hide our controls when iframe is fullscreen */
-    .rp-root.fullscreen-mode .rp-topbar,
-    .rp-root.fullscreen-mode .rp-actions,
-    .rp-root.fullscreen-mode .rp-info,
-    .rp-root.fullscreen-mode .rp-nav {
-      opacity: 0 !important;
-      pointer-events: none !important;
-      visibility: hidden !important;
-    }
 
     .rp-topbar {
       position: fixed;
@@ -324,9 +329,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       z-index: 100;
       background: linear-gradient(to bottom, rgba(10, 5, 23, 0.9) 0%, transparent 100%);
       backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
     }
-
     .rp-back {
       width: 38px; height: 38px;
       display: flex; align-items: center; justify-content: center;
@@ -336,69 +339,29 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       border-radius: 50%;
       cursor: pointer;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      backdrop-filter: blur(10px);
       padding: 0;
     }
-
-    .rp-back:hover {
-      background: rgba(192, 132, 252, 0.15);
-      border-color: rgba(192, 132, 252, 0.4);
-      transform: scale(1.05);
-    }
+    .rp-back:hover { background: rgba(192, 132, 252, 0.15); border-color: rgba(192, 132, 252, 0.4); transform: scale(1.05); }
     .rp-back:active { transform: scale(0.94); }
-
-    .rp-brand {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-
+    .rp-brand { display: flex; align-items: center; gap: 7px; position: absolute; left: 50%; transform: translateX(-50%); }
     .rp-brand-text {
       font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 15px;
+      font-weight: 700; font-size: 15px;
       letter-spacing: -0.02em;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-
-    .rp-brand-dot {
-      width: 5px; height: 5px;
-      background: #7dd3fc;
-      border-radius: 50%;
-      box-shadow: 0 0 10px #7dd3fc;
-      animation: rp-pulse 2s infinite;
-    }
-
-    @keyframes rp-pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.8); }
-    }
-
+    .rp-brand-dot { width: 5px; height: 5px; background: #7dd3fc; border-radius: 50%; box-shadow: 0 0 10px #7dd3fc; animation: rp-pulse 2s infinite; }
+    @keyframes rp-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
     .rp-type-badge {
-      display: flex;
-      align-items: center;
-      gap: 4px;
+      display: flex; align-items: center; gap: 4px;
       padding: 5px 9px;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(192, 132, 252, 0.28);
       border-radius: 20px;
-      backdrop-filter: blur(10px);
     }
     .rp-type-emoji { font-size: 11px; line-height: 1; }
-    .rp-type-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 10px;
-      font-weight: 600;
-      color: #f5ecff;
-      letter-spacing: 0.02em;
-      line-height: 1;
-    }
+    .rp-type-label { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; color: #f5ecff; letter-spacing: 0.02em; line-height: 1; }
 
     .rp-stage {
       flex: 1;
@@ -409,7 +372,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       padding: 65px 20px 30px;
       z-index: 1;
     }
-
     .rp-card {
       position: relative;
       width: 100%;
@@ -420,15 +382,9 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
       animation: rp-card-enter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-
-    @keyframes rp-card-enter {
-      from { opacity: 0; transform: translateY(30px) scale(0.95); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
+    @keyframes rp-card-enter { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
     .rp-card-glow {
-      position: absolute;
-      inset: -3px;
+      position: absolute; inset: -3px;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       border-radius: 24px;
       opacity: 0.65;
@@ -436,27 +392,15 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       z-index: -1;
       animation: rp-glow 4s ease-in-out infinite;
     }
-
-    @keyframes rp-glow {
-      0%, 100% { opacity: 0.5; filter: blur(14px); }
-      50% { opacity: 0.8; filter: blur(20px); }
-    }
-
+    @keyframes rp-glow { 0%, 100% { opacity: 0.5; filter: blur(14px); } 50% { opacity: 0.8; filter: blur(20px); } }
     .rp-card-frame {
-      position: absolute;
-      inset: 0;
+      position: absolute; inset: 0;
       background: #000;
       border-radius: 20px;
       overflow: hidden;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(192, 132, 252, 0.35);
     }
-
-    .rp-card-frame iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      display: block;
-    }
+    .rp-card-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
 
     .rp-doubletap-heart {
       position: absolute;
@@ -469,9 +413,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       filter: drop-shadow(0 0 30px rgba(255, 45, 85, 0.9));
     }
     .rp-doubletap-heart svg { width: 100%; height: 100%; }
-    .rp-doubletap-heart.pop {
-      animation: rp-heart-explode 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
+    .rp-doubletap-heart.pop { animation: rp-heart-explode 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
     @keyframes rp-heart-explode {
       0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 0; }
       30% { transform: translate(-50%, -50%) scale(1.3) rotate(0deg); opacity: 1; }
@@ -480,12 +422,9 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
     }
 
     .rp-loader {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
       gap: 20px;
       background: radial-gradient(circle at center, #1a0f2e 0%, #000 100%);
       z-index: 5;
@@ -493,13 +432,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
     }
     .rp-loader.hidden { opacity: 0; pointer-events: none; }
     .rp-loader-orbit { position: relative; width: 60px; height: 60px; }
-    .rp-loader-dot {
-      position: absolute;
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-    }
+    .rp-loader-dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
     .rp-dot-1 { background: #c084fc; box-shadow: 0 0 15px #c084fc; animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     .rp-dot-2 { background: #e879f9; box-shadow: 0 0 15px #e879f9; animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite -0.47s; }
     .rp-dot-3 { background: #7dd3fc; box-shadow: 0 0 15px #7dd3fc; animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite -0.93s; }
@@ -509,31 +442,15 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
     }
     .rp-loader-text {
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
+      font-size: 14px; font-weight: 700;
       letter-spacing: 0.08em;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
       opacity: 0.9;
     }
 
-    /* INFO */
-    .rp-info {
-      position: absolute;
-      bottom: 32px;
-      left: 28px;
-      z-index: 50;
-      max-width: 320px;
-      pointer-events: none;
-    }
-    .rp-channel-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
+    .rp-info { position: absolute; bottom: 32px; left: 28px; z-index: 50; max-width: 320px; pointer-events: none; }
+    .rp-channel-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
     .rp-avatar {
       position: relative;
       width: 36px; height: 36px;
@@ -541,58 +458,40 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       display: flex; align-items: center; justify-content: center;
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-weight: 700;
-      font-size: 14px;
+      font-weight: 700; font-size: 14px;
       color: white;
       border: 2px solid rgba(255, 255, 255, 0.35);
       box-shadow: 0 4px 14px rgba(192, 132, 252, 0.55);
     }
     .rp-avatar-ring {
-      position: absolute;
-      inset: -4px;
-      border-radius: 50%;
+      position: absolute; inset: -4px; border-radius: 50%;
       border: 2px solid transparent;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc) border-box;
       -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
+      -webkit-mask-composite: xor; mask-composite: exclude;
       opacity: 0.4;
       animation: rp-ring-rotate 4s linear infinite;
     }
     @keyframes rp-ring-rotate { to { transform: rotate(360deg); } }
-    .rp-channel-info {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
+    .rp-channel-info { display: flex; flex-direction: column; gap: 2px; }
     .rp-channel-name {
       font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      font-size: 13px;
+      font-weight: 600; font-size: 13px;
       color: white;
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
     }
     .rp-channel-meta {
-      display: flex;
-      align-items: center;
-      gap: 5px;
+      display: flex; align-items: center; gap: 5px;
       font-family: 'Inter', sans-serif;
       font-size: 10px;
       color: rgba(255, 255, 255, 0.7);
       text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
       font-weight: 500;
     }
-    .rp-hd-dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: #7dd3fc;
-      box-shadow: 0 0 8px #7dd3fc;
-      animation: rp-pulse 2s infinite;
-    }
+    .rp-hd-dot { width: 5px; height: 5px; border-radius: 50%; background: #7dd3fc; box-shadow: 0 0 8px #7dd3fc; animation: rp-pulse 2s infinite; }
     .rp-title {
       font-family: 'DM Sans', sans-serif;
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 15px; font-weight: 700;
       color: white;
       line-height: 1.35;
       margin: 0;
@@ -603,9 +502,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       overflow: hidden;
     }
 
-    /* ═══════════════════════════════════════════════════
-       💊 ACTIONS - Compact, safe positioning
-       ═══════════════════════════════════════════════════ */
     .rp-actions {
       position: absolute;
       right: 16px;
@@ -615,24 +511,17 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       gap: 8px;
       z-index: 60;
     }
-    
     .rp-pill {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      display: flex; align-items: center; gap: 8px;
       padding: 5px 12px 5px 5px;
       height: 38px;
       background: linear-gradient(135deg, rgba(28, 15, 61, 0.92), rgba(20, 10, 40, 0.96));
       backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(192, 132, 252, 0.4);
       border-radius: 22px;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 
-        0 6px 20px rgba(0, 0, 0, 0.5),
-        0 0 0 1px rgba(192, 132, 252, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(192, 132, 252, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
       position: relative;
       overflow: hidden;
     }
@@ -647,19 +536,10 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       transition: all 0.3s;
     }
     .rp-icon { width: 14px; height: 14px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .rp-pill-label {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 600;
-      color: #f5ecff;
-      letter-spacing: 0.01em;
-      padding-right: 3px;
-      line-height: 1;
-    }
+    .rp-pill-label { font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; color: #f5ecff; letter-spacing: 0.01em; padding-right: 3px; line-height: 1; }
     .rp-pill::before {
       content: '';
-      position: absolute;
-      top: 0; left: -100%;
+      position: absolute; top: 0; left: -100%;
       width: 100%; height: 100%;
       background: linear-gradient(90deg, transparent 0%, rgba(192, 132, 252, 0.25) 50%, transparent 100%);
       transition: left 0.7s;
@@ -679,13 +559,8 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       border-color: rgba(255, 200, 100, 0.6);
       background: linear-gradient(135deg, rgba(75, 55, 20, 0.9), rgba(50, 35, 10, 0.95));
     }
-    .rp-save.saved .rp-pill-icon {
-      background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
-    }
-    .rp-save.saved .rp-bookmark {
-      fill: currentColor;
-      animation: rp-save-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
+    .rp-save.saved .rp-pill-icon { background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706); }
+    .rp-save.saved .rp-bookmark { fill: currentColor; animation: rp-save-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
     .rp-save.saved .rp-pill-label { color: #fde68a; }
     @keyframes rp-save-pop {
       0% { transform: scale(1); }
@@ -694,9 +569,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       100% { transform: scale(1) rotate(0deg); }
     }
     
-    .rp-send.sent .rp-plane {
-      animation: rp-plane-fly 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+    .rp-send.sent .rp-plane { animation: rp-plane-fly 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
     @keyframes rp-plane-fly {
       0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
       50% { transform: translate(20px, -20px) rotate(30deg); opacity: 0; }
@@ -719,7 +592,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       border-radius: 50%;
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
       backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(192, 132, 252, 0.25);
       color: white;
       display: flex; align-items: center; justify-content: center;
@@ -727,17 +599,10 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       padding: 0;
     }
-    .rp-arrow:hover {
-      background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.15));
-      border-color: rgba(232, 121, 249, 0.6);
-      transform: scale(1.1);
-    }
+    .rp-arrow:hover { background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.15)); border-color: rgba(232, 121, 249, 0.6); transform: scale(1.1); }
     .rp-arrow:active { transform: scale(0.95); }
     .rp-arrow svg { width: 18px; height: 18px; }
 
-    /* ═══════════════════════════════════════════════════
-       💻 DESKTOP (≥1024px)
-       ═══════════════════════════════════════════════════ */
     @media (min-width: 1024px) {
       .rp-nav { display: flex; right: 40px; }
       .rp-actions { right: 40px; bottom: 200px; gap: 10px; }
@@ -748,100 +613,34 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       .rp-pill-label { font-size: 12px; }
     }
 
-    /* ═══════════════════════════════════════════════════
-       📱 MOBILE (≤640px) - Fullscreen, small controls
-       ═══════════════════════════════════════════════════ */
     @media (max-width: 640px) {
-      /* Allow the reels page to be scrollable if needed */
-      body {
-        overflow: auto !important;
-        overflow-x: hidden !important;
-        height: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-      }
-      
-      /* Root stays fixed to viewport but allows internal scroll behavior */
-      .rp-root {
-        position: fixed;
-        touch-action: pan-y;
-      }
-      
       .rp-stage { padding: 0; }
-      
-      .rp-card {
-        max-width: 100%;
-        max-height: 100%;
-        width: 100%;
-        height: 100%;
-        aspect-ratio: auto;
-      }
-      
+      .rp-card { max-width: 100%; max-height: 100%; width: 100%; height: 100%; aspect-ratio: auto; }
       .rp-card-glow { display: none; }
       .rp-card-frame { border-radius: 0; box-shadow: none; }
-      
-      .rp-topbar { 
-        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
-        height: 54px;
-        padding: 0 12px;
-      }
+      .rp-topbar { background: linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, transparent 100%); height: 54px; padding: 0 12px; }
       .rp-back { width: 36px; height: 36px; }
       .rp-back svg { width: 18px; height: 18px; }
       .rp-brand-text { font-size: 14px; }
       .rp-type-badge { padding: 4px 8px; }
       .rp-type-label { font-size: 9px; }
-      .rp-type-emoji { font-size: 10px; }
-      
-      /* Info panel - moved to LEFT bottom, above native controls */
-      .rp-info { 
-        left: 12px; 
-        bottom: 18px; 
-        max-width: calc(100% - 90px); 
-      }
+      .rp-info { left: 12px; bottom: 18px; max-width: calc(100% - 90px); }
       .rp-avatar { width: 30px; height: 30px; font-size: 12px; }
-      .rp-avatar-ring { inset: -3px; }
       .rp-channel-name { font-size: 12px; }
       .rp-channel-meta { font-size: 9px; }
       .rp-hd-dot { width: 4px; height: 4px; }
       .rp-title { font-size: 13px; }
       .rp-channel-row { gap: 8px; margin-bottom: 8px; }
-      
-      /* ═══════════════════════════════════════════════════
-         🎯 ACTIONS on mobile — safe above video controls
-         Video native controls typically at bottom 40-60px
-         Safiya sits at bottom-right ~50-100px
-         Solution: Buttons at bottom:100px, right:10px (small)
-         ═══════════════════════════════════════════════════ */
-      .rp-actions { 
-        right: 10px; 
-        bottom: 110px; /* Above native video controls */
-        gap: 6px; 
-      }
-      .rp-pill { 
-        height: 32px; 
-        padding: 3px 10px 3px 3px; 
-        gap: 6px;
-        border-radius: 18px;
-      }
+      .rp-actions { right: 10px; bottom: 110px; gap: 6px; }
+      .rp-pill { height: 32px; padding: 3px 10px 3px 3px; gap: 6px; border-radius: 18px; }
       .rp-pill-icon { width: 26px; height: 26px; }
       .rp-icon { width: 13px; height: 13px; }
       .rp-pill-label { font-size: 10px; }
     }
 
-    /* ═══════════════════════════════════════════════════
-       📟 TABLET (641-1023px)
-       ═══════════════════════════════════════════════════ */
     @media (min-width: 641px) and (max-width: 1023px) {
       .rp-info { left: 24px; bottom: 40px; }
       .rp-actions { right: 20px; bottom: 200px; }
-    }
-    
-    /* ═══════════════════════════════════════════════════
-       🎬 IFRAME FULLSCREEN - hide our controls
-       ═══════════════════════════════════════════════════ */
-    iframe:fullscreen,
-    iframe:-webkit-full-screen {
-      width: 100vw !important;
-      height: 100vh !important;
     }
   </style>
 
@@ -854,20 +653,29 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       const currentVideo: any = (window as any).__REELS_VIDEO__ || null;
       const queue: any[] = (window as any).__REELS_QUEUE__ || [];
       
-      // ═══════════════════════════════════════════════════
-      // 🎬 AUTO-HIDE CONTROLS
-      // ═══════════════════════════════════════════════════
+      // 🖼️ Thumbnail generator (client-side backup)
+      function getThumbnailUrl(vid: string, existing: string = ''): string {
+        if (existing && existing.trim()) return existing;
+        if (vid.startsWith('yts_') || vid.startsWith('yt_')) {
+          const rawId = vid.replace(/^(yts_|yt_)/, '');
+          return `https://i.ytimg.com/vi/${rawId}/hqdefault.jpg`;
+        }
+        if (vid.startsWith('dm_')) {
+          const rawId = vid.replace('dm_', '');
+          return `https://www.dailymotion.com/thumbnail/video/${rawId}`;
+        }
+        return '';
+      }
+      
+      // AUTO-HIDE CONTROLS
       let hideTimer: any = null;
       const HIDE_DELAY = 3500;
       
       function showControls() {
         root.classList.remove('controls-hidden');
         clearTimeout(hideTimer);
-        hideTimer = setTimeout(() => {
-          root.classList.add('controls-hidden');
-        }, HIDE_DELAY);
+        hideTimer = setTimeout(() => { root.classList.add('controls-hidden'); }, HIDE_DELAY);
       }
-      
       function keepControlsVisible() {
         clearTimeout(hideTimer);
         root.classList.remove('controls-hidden');
@@ -888,69 +696,22 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       let lastMove = 0;
       document.addEventListener('mousemove', function() {
         const now = Date.now();
-        if (now - lastMove > 300) {
-          lastMove = now;
-          showControls();
-        }
+        if (now - lastMove > 300) { lastMove = now; showControls(); }
       });
       
-      document.addEventListener('touchstart', function() {
-        showControls();
-      }, { passive: true });
+      document.addEventListener('touchstart', function() { showControls(); }, { passive: true });
       
-      document.querySelectorAll('.rp-pill, .rp-back, .rp-arrow').forEach(function(el) {
-        el.addEventListener('mouseenter', keepControlsVisible);
-        el.addEventListener('mouseleave', showControls);
-      });
-      
-      // ═══════════════════════════════════════════════════
-      // 🎬 FULLSCREEN DETECTION - hide our overlay
-      // ═══════════════════════════════════════════════════
-      function handleFullscreenChange() {
-        const isFs = !!(
-          document.fullscreenElement ||
-          (document as any).webkitFullscreenElement ||
-          (document as any).mozFullScreenElement ||
-          (document as any).msFullscreenElement
-        );
-        if (isFs) {
-          root.classList.add('fullscreen-mode');
-        } else {
-          root.classList.remove('fullscreen-mode');
-          showControls();
-        }
-      }
-      
-      document.addEventListener('fullscreenchange', handleFullscreenChange);
-      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-      document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-      
-      // On mobile — detect orientation change / window resize (indicates likely fullscreen)
-      let orientationTimer: any = null;
-      window.addEventListener('resize', function() {
-        clearTimeout(orientationTimer);
-        orientationTimer = setTimeout(function() {
-          // If height suddenly grew or aspect changed significantly, likely fullscreen
-          const isLikelyFs = window.innerHeight > screen.height * 0.95;
-          if (isLikelyFs) {
-            root.classList.add('fullscreen-mode');
-          } else {
-            root.classList.remove('fullscreen-mode');
-          }
-        }, 300);
-      });
-      
-      // WATCH HISTORY
+      // WATCH HISTORY - with thumbnail
       try {
         if (currentVideo && videoId) {
+          const goodThumb = getThumbnailUrl(videoId, currentVideo.thumbnail);
           const history = JSON.parse(localStorage.getItem('anitube_history') || '[]');
           const filtered = history.filter((h: any) => h.id !== videoId);
           filtered.unshift({
             id: videoId,
             title: currentVideo.title,
             channel: currentVideo.channel,
-            thumbnail: currentVideo.thumbnail || '',
+            thumbnail: goodThumb,
             type: currentVideo.type || 'anime',
             source: currentVideo.source || 'youtube',
             watchedAt: Date.now()
@@ -959,7 +720,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         }
       } catch (e) { console.warn('History save failed', e); }
       
-      // SAVE
+      // SAVE - with thumbnail
       const saveBtn = document.getElementById('saveBtn');
       const savedVideos: any[] = JSON.parse(localStorage.getItem('anitube_saved') || '[]');
       const isSaved = () => savedVideos.some((s: any) => s.id === videoId);
@@ -981,11 +742,12 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         if (idx > -1) {
           savedVideos.splice(idx, 1);
         } else {
+          const goodThumb = getThumbnailUrl(videoId, currentVideo?.thumbnail);
           savedVideos.unshift({
             id: videoId,
             title: currentVideo?.title || 'Video',
             channel: currentVideo?.channel || 'AniTube',
-            thumbnail: currentVideo?.thumbnail || '',
+            thumbnail: goodThumb,
             type: currentVideo?.type || 'anime',
             source: currentVideo?.source || 'youtube',
             savedAt: Date.now()
@@ -998,7 +760,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       updateSaveUI();
       saveBtn?.addEventListener('click', toggleSave);
       
-      // DOUBLE-TAP TO SAVE
+      // DOUBLE-TAP
       const card = document.getElementById('videoCard');
       const doubleTapHeart = document.getElementById('doubleTapHeart');
       let lastTap = 0;
@@ -1072,10 +834,8 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') { e.preventDefault(); navigate('prev'); }
       });
       
-      // Wheel scroll (desktop only)
       let wheelLocked = false;
       document.addEventListener('wheel', (e) => {
-        // Only handle wheel on desktop, not iframe scroll
         const target = e.target as HTMLElement;
         if (target.closest('iframe')) return;
         if (wheelLocked) return;
@@ -1086,8 +846,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         setTimeout(() => { wheelLocked = false; }, 800);
       }, { passive: true });
       
-      // Touch swipe navigation — ONLY on card edges, not the iframe itself
-      // (so iframe can handle its own touch for video controls)
       let touchStartY = 0;
       let touchStartTime = 0;
       let touchStartOnIframe = false;
@@ -1100,9 +858,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       }, { passive: true });
       
       document.addEventListener('touchend', (e) => {
-        // Don't hijack swipes on the video iframe (let user use native controls)
         if (touchStartOnIframe) return;
-        
         const touchEndY = e.changedTouches[0].clientY;
         const diff = touchStartY - touchEndY;
         const timeDiff = Date.now() - touchStartTime;
