@@ -1,0 +1,480 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout title="Watch History | AniTubeBuzz" description="Videos you have watched">
+  <Header slot="header" />
+  
+  <div class="lib-page">
+    <div class="container">
+      
+      <div class="lib-hero lib-hero-cyan">
+        <div class="lib-hero-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="lib-hero-content">
+          <h1 class="lib-title">Watch History</h1>
+          <p class="lib-subtitle" id="libSubtitle">Loading your history...</p>
+        </div>
+        <button class="lib-clear-btn" id="libClearBtn" style="display:none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/>
+          </svg>
+          Clear All
+        </button>
+      </div>
+      
+      <div id="libGrid" class="lib-grid"></div>
+      
+      <div id="libEmpty" class="lib-empty" style="display:none">
+        <div class="lib-empty-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <h2 class="lib-empty-title">No Watch History Yet</h2>
+        <p class="lib-empty-desc">Videos you watch will appear here so you can easily find them later!</p>
+        <a href="/" class="lib-empty-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          Start Watching
+        </a>
+      </div>
+      
+    </div>
+  </div>
+  
+  <Footer slot="footer" />
+</BaseLayout>
+
+<script is:inline>
+(function() {
+  var grid = document.getElementById('libGrid');
+  var empty = document.getElementById('libEmpty');
+  var subtitle = document.getElementById('libSubtitle');
+  var clearBtn = document.getElementById('libClearBtn');
+  
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+  
+  function fmtTime(ts) {
+    if (!ts) return '';
+    var diff = Date.now() - ts;
+    var mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return mins + 'm ago';
+    var hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    var days = Math.floor(hrs / 24);
+    if (days < 30) return days + 'd ago';
+    return Math.floor(days / 30) + 'mo ago';
+  }
+  
+  function typeLabel(t) {
+    var map = { anime: 'Anime', kdrama: 'K-Drama', donghua: 'Donghua', movies: 'Movie' };
+    return map[t] || 'Anime';
+  }
+  
+  function render() {
+    var items = [];
+    try { items = JSON.parse(localStorage.getItem('anitube_history') || '[]'); } catch(e) {}
+    
+    if (!items.length) {
+      grid.style.display = 'none';
+      empty.style.display = 'flex';
+      subtitle.textContent = 'No videos watched yet';
+      clearBtn.style.display = 'none';
+      return;
+    }
+    
+    empty.style.display = 'none';
+    grid.style.display = 'grid';
+    subtitle.textContent = items.length + ' ' + (items.length === 1 ? 'video' : 'videos') + ' watched';
+    clearBtn.style.display = 'flex';
+    
+    var html = '';
+    items.forEach(function(v, i) {
+      var title = esc(v.title || 'Untitled');
+      var channel = esc(v.channel || 'AniTube');
+      var thumb = v.thumbnail || '';
+      var initial = channel.charAt(0).toUpperCase();
+      var time = fmtTime(v.watchedAt);
+      var type = typeLabel(v.type);
+      
+      html += '<a href="/reels/' + encodeURIComponent(v.id) + '" class="lib-card" style="animation-delay:' + (i * 30) + 'ms">' +
+        '<div class="lib-card-thumb">' +
+          (thumb ? '<img src="' + esc(thumb) + '" alt="' + title + '" loading="lazy"/>' : '<div class="lib-card-noimg">' + initial + '</div>') +
+          '<div class="lib-card-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' +
+          '<div class="lib-card-type">' + type + '</div>' +
+          '<button class="lib-card-remove" data-id="' + esc(v.id) + '" aria-label="Remove">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
+          '</button>' +
+        '</div>' +
+        '<div class="lib-card-info">' +
+          '<div class="lib-card-title">' + title + '</div>' +
+          '<div class="lib-card-meta"><span class="lib-card-channel">@' + channel.replace(/\s+/g,'').toLowerCase() + '</span><span class="lib-card-dot">•</span><span>' + time + '</span></div>' +
+        '</div>' +
+      '</a>';
+    });
+    grid.innerHTML = html;
+    
+    grid.querySelectorAll('.lib-card-remove').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = btn.getAttribute('data-id');
+        var arr = [];
+        try { arr = JSON.parse(localStorage.getItem('anitube_history') || '[]'); } catch(e) {}
+        arr = arr.filter(function(x) { return x.id !== id; });
+        localStorage.setItem('anitube_history', JSON.stringify(arr));
+        render();
+      });
+    });
+  }
+  
+  clearBtn.addEventListener('click', function() {
+    if (confirm('Clear all watch history?')) {
+      localStorage.removeItem('anitube_history');
+      render();
+    }
+  });
+  
+  render();
+})();
+</script>
+
+<style>
+  .lib-page {
+    min-height: calc(100vh - var(--header-h) - 200px);
+    padding: 2rem 0 4rem;
+  }
+  
+  .lib-hero {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 24px 28px;
+    background: linear-gradient(135deg, rgba(28, 15, 61, 0.6), rgba(20, 10, 40, 0.7));
+    border: 1px solid rgba(192, 132, 252, 0.25);
+    border-radius: 24px;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  }
+  
+  [data-theme="light"] .lib-hero {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(240, 249, 255, 0.9));
+  }
+  
+  .lib-hero-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #06b6d4, #7dd3fc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 6px 20px rgba(6, 182, 212, 0.5);
+  }
+  
+  .lib-hero-content { flex: 1; min-width: 0; }
+  
+  .lib-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin: 0 0 4px;
+    background: linear-gradient(135deg, #7dd3fc, #e879f9, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .lib-subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+  
+  .lib-clear-btn {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 100px;
+    color: #ef4444;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .lib-clear-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: translateY(-1px);
+  }
+  
+  .lib-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.2rem;
+  }
+  
+  @media (max-width: 1200px) { .lib-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 900px) { .lib-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 640px) { .lib-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; } }
+  
+  .lib-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: lib-card-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+    display: block;
+    position: relative;
+  }
+  
+  @keyframes lib-card-in {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  
+  .lib-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(125, 211, 252, 0.5);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(125, 211, 252, 0.15);
+  }
+  
+  .lib-card-thumb {
+    position: relative;
+    aspect-ratio: 16/9;
+    background: linear-gradient(135deg, rgba(125, 211, 252, 0.15), rgba(192, 132, 252, 0.1));
+    overflow: hidden;
+  }
+  
+  .lib-card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease, filter 0.3s ease;
+  }
+  
+  .lib-card:hover .lib-card-thumb img {
+    transform: scale(1.08);
+    filter: brightness(0.75);
+  }
+  
+  .lib-card-noimg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #06b6d4, #7dd3fc, #c084fc);
+    color: white;
+  }
+  
+  .lib-card-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7dd3fc, #06b6d4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 8px 30px rgba(6, 182, 212, 0.6);
+  }
+  .lib-card-play svg { width: 22px; height: 22px; margin-left: 2px; }
+  
+  .lib-card:hover .lib-card-play {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  
+  .lib-card-type {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 3px 8px;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    border-radius: 5px;
+    border: 1px solid rgba(125, 211, 252, 0.4);
+    text-transform: uppercase;
+  }
+  
+  .lib-card-remove {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #ef4444;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.25s;
+    padding: 0;
+  }
+  .lib-card-remove svg { width: 12px; height: 12px; }
+  
+  .lib-card:hover .lib-card-remove { opacity: 1; }
+  .lib-card-remove:hover {
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    transform: scale(1.1);
+  }
+  
+  .lib-card-info { padding: 12px 14px 14px; }
+  
+  .lib-card-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.35;
+    margin: 0 0 6px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .lib-card:hover .lib-card-title {
+    background: linear-gradient(135deg, #7dd3fc, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .lib-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+  
+  .lib-card-channel {
+    color: var(--cyan);
+    font-weight: 600;
+    max-width: 80px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .lib-card-dot { opacity: 0.4; }
+  
+  .lib-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    min-height: 400px;
+  }
+  
+  .lib-empty-icon {
+    width: 100px;
+    height: 100px;
+    border-radius: 30px;
+    background: linear-gradient(135deg, rgba(125, 211, 252, 0.15), rgba(6, 182, 212, 0.1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(125, 211, 252, 0.5);
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(125, 211, 252, 0.2);
+  }
+  
+  .lib-empty-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 8px;
+  }
+  
+  .lib-empty-desc {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    max-width: 400px;
+    margin: 0 0 1.5rem;
+    line-height: 1.6;
+  }
+  
+  .lib-empty-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #7dd3fc, #06b6d4);
+    color: white;
+    border-radius: 100px;
+    text-decoration: none;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 8px 25px rgba(6, 182, 212, 0.45);
+    transition: all 0.25s;
+  }
+  
+  .lib-empty-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(6, 182, 212, 0.6);
+  }
+  
+  @media (max-width: 640px) {
+    .lib-hero { padding: 16px 18px; gap: 14px; border-radius: 18px; }
+    .lib-hero-icon { width: 48px; height: 48px; border-radius: 12px; }
+    .lib-hero-icon svg { width: 24px; height: 24px; }
+    .lib-clear-btn { padding: 6px 10px; font-size: 0.7rem; }
+    .lib-card-info { padding: 10px 12px 12px; }
+    .lib-card-title { font-size: 0.82rem; }
+  }
+</style>
