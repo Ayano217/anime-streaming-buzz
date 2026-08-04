@@ -6,23 +6,23 @@ import Header from '../components/Header.astro';
 <BaseLayout title="Liked Videos | AniTubeBuzz">
   <Header slot="header" />
   
-  <div class="slib-page">
+  <div class="atb-saved-page">
     <div class="container">
       
-      <div class="slib-hero slib-hero-pink">
-        <div class="slib-hero-icon-wrap slib-glow-pink">
-          <div class="slib-hero-icon slib-icon-pink">
+      <div class="atb-hero-box atb-hero-pink">
+        <div class="atb-hero-icon-wrap atb-glow-pink">
+          <div class="atb-hero-icon atb-icon-pink">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
           </div>
         </div>
-        <div class="slib-hero-content">
-          <div class="slib-hero-eyebrow slib-eyebrow-pink">MY LIBRARY</div>
-          <h1 class="slib-title slib-title-pink">Liked Videos</h1>
-          <p class="slib-subtitle" id="slibSubtitle">Loading...</p>
+        <div class="atb-hero-text">
+          <div class="atb-hero-eyebrow atb-eyebrow-pink">MY LIBRARY</div>
+          <h1 class="atb-hero-title atb-title-pink">Liked Videos</h1>
+          <p class="atb-hero-sub" id="atbSubtitle">Loading...</p>
         </div>
-        <button class="slib-clear-btn" id="slibClearBtn" style="display:none">
+        <button class="atb-hero-clear" id="atbClearBtn" style="display:none">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="3 6 5 6 21 6"/>
             <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/>
@@ -31,17 +31,17 @@ import Header from '../components/Header.astro';
         </button>
       </div>
       
-      <div id="slibGrid" class="slib-grid"></div>
+      <div id="atbGrid" class="atb-grid"></div>
       
-      <div id="slibEmpty" class="slib-empty" style="display:none">
-        <div class="slib-empty-icon slib-empty-icon-pink">
+      <div id="atbEmpty" class="atb-empty" style="display:none">
+        <div class="atb-empty-icon atb-empty-icon-pink">
           <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
         </div>
-        <h2 class="slib-empty-title">No Liked Videos Yet</h2>
-        <p class="slib-empty-desc">Double-tap videos to show some love ❤️</p>
-        <a href="/" class="slib-empty-btn slib-empty-btn-pink">
+        <h2 class="atb-empty-title">No Liked Videos Yet</h2>
+        <p class="atb-empty-desc">Double-tap videos to show some love ❤️</p>
+        <a href="/" class="atb-empty-btn atb-empty-btn-pink">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
           </svg>
@@ -55,10 +55,10 @@ import Header from '../components/Header.astro';
 
 <script is:inline>
 (function() {
-  var grid = document.getElementById('slibGrid');
-  var empty = document.getElementById('slibEmpty');
-  var subtitle = document.getElementById('slibSubtitle');
-  var clearBtn = document.getElementById('slibClearBtn');
+  var grid = document.getElementById('atbGrid');
+  var empty = document.getElementById('atbEmpty');
+  var subtitle = document.getElementById('atbSubtitle');
+  var clearBtn = document.getElementById('atbClearBtn');
   
   function esc(s) {
     return String(s || '').replace(/[&<>"']/g, function(c) {
@@ -68,6 +68,18 @@ import Header from '../components/Header.astro';
   function typeLabel(t) {
     var map = { anime: 'ANIME', kdrama: 'K-DRAMA', donghua: 'DONGHUA', movies: 'MOVIE' };
     return map[t] || 'ANIME';
+  }
+  function getThumb(id, existing) {
+    if (existing && existing.trim()) return existing;
+    if (id.indexOf('yts_') === 0 || id.indexOf('yt_') === 0) {
+      var raw = id.replace(/^(yts_|yt_)/, '');
+      return 'https://i.ytimg.com/vi/' + raw + '/hqdefault.jpg';
+    }
+    if (id.indexOf('dm_') === 0) {
+      var raw2 = id.replace('dm_', '');
+      return 'https://www.dailymotion.com/thumbnail/video/' + raw2;
+    }
+    return '';
   }
   
   function render() {
@@ -100,44 +112,181 @@ import Header from '../components/Header.astro';
       var v = lookup[id] || { id: id, title: 'Video', channel: 'AniTube', thumbnail: '', type: 'anime' };
       var title = esc(v.title || 'Untitled');
       var channel = esc(v.channel || 'AniTube');
-      var thumb = v.thumbnail || '';
+      var thumb = getThumb(id, v.thumbnail);
       var initial = channel.charAt(0).toUpperCase();
       var type = typeLabel(v.type);
-      var delay = Math.min(i * 20, 400);
+      var delay = Math.min(i * 30, 400);
       
-      html += '<a href="/reels/' + encodeURIComponent(id) + '" class="slib-card slib-card-pink" style="animation-delay:' + delay + 'ms">' +
-        '<div class="slib-thumb">' +
+      html += 
+      '<a href="/reels/' + encodeURIComponent(id) + '" class="atb-card" style="' +
+        'animation-delay:' + delay + 'ms;' +
+        'display:block !important;' +
+        'position:relative !important;' +
+        'width:100% !important;' +
+        'padding:0 !important;' +
+        'margin:0 !important;' +
+        'background:rgba(28,15,61,0.55) !important;' +
+        'border:1px solid rgba(236,72,153,0.18) !important;' +
+        'border-radius:12px !important;' +
+        'overflow:hidden !important;' +
+        'text-decoration:none !important;' +
+        'color:inherit !important;' +
+        'box-sizing:border-box !important;' +
+        'transition:transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.25s, box-shadow 0.35s, background 0.25s !important;' +
+      '">' +
+        '<div style="' +
+          'position:relative !important;' +
+          'width:100% !important;' +
+          'padding-bottom:56.25% !important;' +
+          'overflow:hidden !important;' +
+          'background:linear-gradient(135deg,#831843,#9d174d) !important;' +
+          'display:block !important;' +
+          'margin:0 !important;' +
+        '">' +
           (thumb 
-            ? '<img class="slib-img" src="' + esc(thumb) + '" alt="" loading="lazy" onerror="this.parentElement.classList.add(\'slib-noimg-mode\');this.remove();"/>'
-            : ''
+            ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" style="' +
+                'position:absolute !important;top:0 !important;left:0 !important;' +
+                'width:100% !important;height:100% !important;' +
+                'object-fit:cover !important;display:block !important;' +
+                'max-width:none !important;max-height:none !important;' +
+                'aspect-ratio:auto !important;' +
+                'transition:transform 0.5s ease, filter 0.3s ease !important;' +
+              '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"/>' +
+              '<div style="' +
+                'position:absolute !important;inset:0 !important;display:none !important;' +
+                'align-items:center !important;justify-content:center !important;' +
+                'background:radial-gradient(circle at 30% 30%,rgba(244,114,182,0.5) 0%,transparent 55%),radial-gradient(circle at 70% 70%,rgba(232,121,249,0.4) 0%,transparent 55%),linear-gradient(135deg,#ec4899,#f472b6,#e879f9) !important;' +
+                'font-family:\'Bricolage Grotesque\',sans-serif !important;' +
+                'font-size:2.2rem !important;font-weight:800 !important;' +
+                'color:white !important;text-shadow:0 4px 20px rgba(0,0,0,0.5) !important;' +
+              '">' + initial + '</div>'
+            : '<div style="' +
+                'position:absolute !important;inset:0 !important;display:flex !important;' +
+                'align-items:center !important;justify-content:center !important;' +
+                'background:radial-gradient(circle at 30% 30%,rgba(244,114,182,0.5) 0%,transparent 55%),radial-gradient(circle at 70% 70%,rgba(232,121,249,0.4) 0%,transparent 55%),linear-gradient(135deg,#ec4899,#f472b6,#e879f9) !important;' +
+                'font-family:\'Bricolage Grotesque\',sans-serif !important;' +
+                'font-size:2.2rem !important;font-weight:800 !important;' +
+                'color:white !important;text-shadow:0 4px 20px rgba(0,0,0,0.5) !important;' +
+              '">' + initial + '</div>'
           ) +
-          '<div class="slib-noimg-content slib-noimg-pink"><span class="slib-noimg-letter">' + initial + '</span></div>' +
-          '<div class="slib-shine"></div>' +
-          '<div class="slib-badge slib-badge-pink">' + type + '</div>' +
-          '<div class="slib-heart-tag"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>' +
-          '<button class="slib-remove" data-id="' + esc(id) + '" aria-label="Unlike">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
-          '</button>' +
-          '<div class="slib-play slib-play-pink"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' +
+          
+          '<div style="' +
+            'position:absolute !important;top:7px !important;left:7px !important;' +
+            'padding:3px 7px !important;' +
+            'background:linear-gradient(135deg,#ec4899,#f472b6) !important;' +
+            'color:white !important;' +
+            'font-family:\'JetBrains Mono\',monospace !important;' +
+            'font-size:0.55rem !important;font-weight:800 !important;' +
+            'letter-spacing:0.06em !important;border-radius:4px !important;' +
+            'text-transform:uppercase !important;' +
+            'box-shadow:0 3px 10px rgba(236,72,153,0.5) !important;' +
+            'z-index:4 !important;width:auto !important;max-width:max-content !important;' +
+            'height:auto !important;line-height:1 !important;' +
+          '">' + type + '</div>' +
+          
+          '<div style="' +
+            'position:absolute !important;bottom:7px !important;left:7px !important;' +
+            'width:22px !important;height:22px !important;' +
+            'border-radius:7px !important;' +
+            'background:linear-gradient(135deg,#ec4899,#f472b6) !important;' +
+            'display:flex !important;align-items:center !important;justify-content:center !important;' +
+            'color:white !important;' +
+            'box-shadow:0 3px 10px rgba(236,72,153,0.55) !important;' +
+            'z-index:4 !important;' +
+          '"><svg viewBox="0 0 24 24" fill="currentColor" style="width:12px !important;height:12px !important;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>' +
+          
+          '<button data-remove-id="' + esc(id) + '" aria-label="Unlike" style="' +
+            'position:absolute !important;top:7px !important;right:7px !important;' +
+            'width:24px !important;height:24px !important;' +
+            'border-radius:50% !important;' +
+            'background:rgba(0,0,0,0.75) !important;' +
+            'backdrop-filter:blur(10px) !important;-webkit-backdrop-filter:blur(10px) !important;' +
+            'border:1px solid rgba(239,68,68,0.5) !important;' +
+            'color:#ef4444 !important;cursor:pointer !important;' +
+            'display:flex !important;align-items:center !important;justify-content:center !important;' +
+            'opacity:0 !important;transition:all 0.25s !important;padding:0 !important;z-index:5 !important;' +
+          '"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:11px !important;height:11px !important;"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' +
+          
+          '<div class="atb-play-btn" style="' +
+            'position:absolute !important;top:50% !important;left:50% !important;' +
+            'transform:translate(-50%,-50%) scale(0.5) !important;' +
+            'width:42px !important;height:42px !important;' +
+            'min-width:42px !important;min-height:42px !important;' +
+            'max-width:42px !important;max-height:42px !important;' +
+            'border-radius:50% !important;' +
+            'background:linear-gradient(135deg,#ec4899,#f472b6,#e879f9) !important;' +
+            'display:flex !important;align-items:center !important;justify-content:center !important;' +
+            'color:white !important;opacity:0 !important;' +
+            'transition:all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;' +
+            'box-shadow:0 8px 25px rgba(236,72,153,0.65), inset 0 1px 0 rgba(255,255,255,0.3) !important;' +
+            'pointer-events:none !important;z-index:4 !important;padding:0 !important;margin:0 !important;' +
+          '"><svg viewBox="0 0 24 24" fill="currentColor" style="width:17px !important;height:17px !important;margin-left:2px !important;max-width:17px !important;max-height:17px !important;"><path d="M8 5v14l11-7z"/></svg></div>' +
         '</div>' +
-        '<div class="slib-info">' +
-          '<div class="slib-vtitle">' + title + '</div>' +
-          '<div class="slib-meta"><span class="slib-channel slib-channel-pink">@' + channel.replace(/\s+/g,'').toLowerCase().slice(0,15) + '</span></div>' +
+        
+        '<div style="' +
+          'padding:10px 11px 12px !important;display:block !important;' +
+          'width:100% !important;box-sizing:border-box !important;' +
+        '">' +
+          '<div style="' +
+            'font-family:\'DM Sans\',sans-serif !important;' +
+            'font-size:0.82rem !important;font-weight:700 !important;' +
+            'color:var(--text-primary) !important;line-height:1.35 !important;' +
+            'margin:0 0 5px 0 !important;' +
+            'display:-webkit-box !important;-webkit-line-clamp:2 !important;-webkit-box-orient:vertical !important;' +
+            'overflow:hidden !important;letter-spacing:-0.005em !important;min-height:2.3em !important;' +
+          '">' + title + '</div>' +
+          '<div style="' +
+            'display:flex !important;align-items:center !important;gap:5px !important;' +
+            'font-family:\'JetBrains Mono\',monospace !important;' +
+            'font-size:0.62rem !important;color:var(--text-muted) !important;line-height:1.2 !important;' +
+          '">' +
+            '<span style="' +
+              'color:#ec4899 !important;font-weight:600 !important;' +
+              'max-width:120px !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important;' +
+            '">@' + channel.replace(/\s+/g,'').toLowerCase().slice(0,15) + '</span>' +
+          '</div>' +
         '</div>' +
       '</a>';
     });
     grid.innerHTML = html;
     
-    grid.querySelectorAll('.slib-remove').forEach(function(btn) {
+    grid.querySelectorAll('[data-remove-id]').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        var id = btn.getAttribute('data-id');
+        var id = btn.getAttribute('data-remove-id');
         var arr = [];
         try { arr = JSON.parse(localStorage.getItem('anitube_liked') || '[]'); } catch(e) {}
         arr = arr.filter(function(x) { return x !== id; });
         localStorage.setItem('anitube_liked', JSON.stringify(arr));
         render();
+      });
+    });
+    
+    grid.querySelectorAll('.atb-card').forEach(function(card) {
+      card.addEventListener('mouseenter', function() {
+        card.style.transform = 'translateY(-6px)';
+        card.style.background = 'rgba(36, 21, 72, 0.75)';
+        card.style.borderColor = 'rgba(236, 72, 153, 0.55)';
+        card.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.35), 0 0 25px rgba(236, 72, 153, 0.25)';
+        var img = card.querySelector('img');
+        if (img) { img.style.transform = 'scale(1.08)'; img.style.filter = 'brightness(0.85)'; }
+        var play = card.querySelector('.atb-play-btn');
+        if (play) { play.style.opacity = '1'; play.style.transform = 'translate(-50%,-50%) scale(1)'; }
+        var removeBtn = card.querySelector('[data-remove-id]');
+        if (removeBtn) removeBtn.style.opacity = '1';
+      });
+      card.addEventListener('mouseleave', function() {
+        card.style.transform = '';
+        card.style.background = 'rgba(28,15,61,0.55)';
+        card.style.borderColor = 'rgba(236,72,153,0.18)';
+        card.style.boxShadow = '';
+        var img = card.querySelector('img');
+        if (img) { img.style.transform = ''; img.style.filter = ''; }
+        var play = card.querySelector('.atb-play-btn');
+        if (play) { play.style.opacity = '0'; play.style.transform = 'translate(-50%,-50%) scale(0.5)'; }
+        var removeBtn = card.querySelector('[data-remove-id]');
+        if (removeBtn) removeBtn.style.opacity = '0';
       });
     });
   }
@@ -154,9 +303,9 @@ import Header from '../components/Header.astro';
 </script>
 
 <style>
-  .slib-page { min-height: calc(100vh - var(--header-h) - 100px); padding: 2rem 0 5rem; }
+  .atb-saved-page { min-height: calc(100vh - var(--header-h) - 100px); padding: 2rem 0 5rem; }
   
-  .slib-hero {
+  .atb-hero-box {
     display: flex; align-items: center; gap: 20px;
     padding: 22px 26px;
     background: 
@@ -166,11 +315,12 @@ import Header from '../components/Header.astro';
     border-radius: 22px;
     margin-bottom: 2rem;
     backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     position: relative;
     overflow: hidden;
   }
-  .slib-hero::before {
+  .atb-hero-box::before {
     content: '';
     position: absolute;
     top: -50%; right: -20%;
@@ -178,62 +328,64 @@ import Header from '../components/Header.astro';
     background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, transparent 60%);
     pointer-events: none;
   }
-  [data-theme="light"] .slib-hero {
+  [data-theme="light"] .atb-hero-box {
     background: 
       linear-gradient(135deg, rgba(236, 72, 153, 0.05), rgba(232, 121, 249, 0.03)),
       linear-gradient(180deg, #ffffff, #fdf2f8);
     border-color: rgba(236, 72, 153, 0.2);
   }
-  .slib-hero-icon-wrap { position: relative; flex-shrink: 0; }
-  .slib-glow-pink::before {
+  
+  .atb-hero-icon-wrap { position: relative; flex-shrink: 0; }
+  .atb-glow-pink::before {
     content: '';
-    position: absolute;
-    inset: -4px;
+    position: absolute; inset: -4px;
     background: linear-gradient(135deg, #ec4899, #e879f9);
     border-radius: 20px;
     opacity: 0.4;
     filter: blur(12px);
   }
-  .slib-hero-icon {
+  .atb-hero-icon {
     position: relative;
-    width: 54px !important;
-    height: 54px !important;
+    width: 54px; height: 54px;
     border-radius: 15px;
     display: flex; align-items: center; justify-content: center;
     color: white;
+  }
+  .atb-icon-pink {
+    background: linear-gradient(135deg, #ec4899, #f472b6, #e879f9);
     box-shadow: 0 8px 24px rgba(236, 72, 153, 0.5);
   }
-  .slib-icon-pink { background: linear-gradient(135deg, #ec4899, #f472b6, #e879f9); }
-  .slib-hero-content { flex: 1; min-width: 0; position: relative; z-index: 1; }
-  .slib-eyebrow-pink { color: #f472b6 !important; }
-  .slib-hero-eyebrow {
+  
+  .atb-hero-text { flex: 1; min-width: 0; position: relative; z-index: 1; }
+  .atb-hero-eyebrow {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.62rem; font-weight: 700;
     letter-spacing: 0.15em;
     margin-bottom: 4px;
   }
-  .slib-title {
+  .atb-eyebrow-pink { color: #f472b6; }
+  .atb-hero-title {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: clamp(1.4rem, 3vw, 1.9rem) !important;
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
     font-weight: 800;
     letter-spacing: -0.03em;
-    margin: 0 0 4px !important;
+    margin: 0 0 4px;
     line-height: 1.1;
   }
-  .slib-title-pink {
-    background: linear-gradient(135deg, #ec4899, #e879f9, #f472b6) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    background-clip: text !important;
+  .atb-title-pink {
+    background: linear-gradient(135deg, #ec4899, #e879f9, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
-  .slib-subtitle {
+  .atb-hero-sub {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem !important;
-    color: var(--text-secondary) !important;
-    margin: 0 !important;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
     font-weight: 500;
   }
-  .slib-clear-btn {
+  .atb-hero-clear {
     display: none;
     align-items: center; gap: 6px;
     padding: 8px 14px;
@@ -242,277 +394,37 @@ import Header from '../components/Header.astro';
     border-radius: 100px;
     color: #ef4444;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.74rem; font-weight: 700;
+    font-size: 0.74rem;
+    font-weight: 700;
     cursor: pointer;
     transition: all 0.25s;
     flex-shrink: 0;
     position: relative;
     z-index: 1;
   }
-  .slib-clear-btn:hover {
+  .atb-hero-clear:hover {
     background: rgba(239, 68, 68, 0.2);
     transform: translateY(-2px);
   }
   
-  .slib-grid {
-    display: grid !important;
-    grid-template-columns: repeat(5, 1fr) !important;
-    gap: 1.1rem !important;
+  .atb-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1.1rem;
+    width: 100%;
+    box-sizing: border-box;
   }
-  @media (max-width: 1200px) { .slib-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 1rem !important; } }
-  @media (max-width: 900px) { .slib-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 0.85rem !important; } }
-  @media (max-width: 640px) { .slib-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.7rem !important; } }
+  @media (max-width: 1200px) { .atb-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; } }
+  @media (max-width: 900px) { .atb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; } }
+  @media (max-width: 640px) { .atb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; } }
   
-  .slib-card {
-    display: block !important;
-    background: rgba(28, 15, 61, 0.5) !important;
-    border: 1px solid rgba(236, 72, 153, 0.15) !important;
-    border-radius: 12px !important;
-    overflow: hidden !important;
-    text-decoration: none !important;
-    color: inherit !important;
-    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.25s, box-shadow 0.35s, background 0.25s !important;
-    animation: slib-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
-    position: relative !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-  }
-  [data-theme="light"] .slib-card { background: #ffffff !important; border-color: rgba(236, 72, 153, 0.15) !important; }
-  
-  @keyframes slib-in {
+  @keyframes atbFadeIn {
     from { opacity: 0; transform: translateY(15px) scale(0.96); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
+  .atb-card { animation: atbFadeIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; }
   
-  .slib-card-pink:hover {
-    transform: translateY(-6px) !important;
-    background: rgba(36, 21, 72, 0.75) !important;
-    border-color: rgba(236, 72, 153, 0.55) !important;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35), 0 0 25px rgba(236, 72, 153, 0.25) !important;
-  }
-  [data-theme="light"] .slib-card-pink:hover { background: #fdf2f8 !important; box-shadow: 0 20px 40px rgba(236, 72, 153, 0.2) !important; }
-  
-  .slib-thumb {
-    position: relative !important;
-    width: 100% !important;
-    aspect-ratio: 16 / 9 !important;
-    overflow: hidden !important;
-    background: linear-gradient(135deg, #831843, #9d174d) !important;
-    display: block !important;
-  }
-  
-  .slib-img {
-    position: absolute !important;
-    inset: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    display: block !important;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s !important;
-    max-width: none !important;
-    max-height: none !important;
-    aspect-ratio: auto !important;
-  }
-  .slib-card:hover .slib-img { transform: scale(1.08) !important; filter: brightness(0.85) !important; }
-  
-  .slib-noimg-content {
-    position: absolute !important;
-    inset: 0 !important;
-    display: none !important;
-    align-items: center !important;
-    justify-content: center !important;
-    overflow: hidden !important;
-    z-index: 1 !important;
-  }
-  .slib-noimg-pink {
-    background: 
-      radial-gradient(circle at 30% 30%, rgba(244, 114, 182, 0.5) 0%, transparent 55%),
-      radial-gradient(circle at 70% 70%, rgba(232, 121, 249, 0.4) 0%, transparent 55%),
-      linear-gradient(135deg, #ec4899, #f472b6, #e879f9) !important;
-  }
-  .slib-thumb.slib-noimg-mode .slib-noimg-content,
-  .slib-thumb:not(:has(.slib-img)) .slib-noimg-content { display: flex !important; }
-  .slib-noimg-content::before {
-    content: '' !important;
-    position: absolute !important;
-    inset: 0 !important;
-    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%) !important;
-    transform: translateX(-100%) !important;
-    animation: slib-shimmer 3s ease-in-out infinite !important;
-  }
-  @keyframes slib-shimmer {
-    0% { transform: translateX(-100%); }
-    50%, 100% { transform: translateX(100%); }
-  }
-  .slib-noimg-letter {
-    font-family: 'Bricolage Grotesque', sans-serif !important;
-    font-size: 2.2rem !important;
-    font-weight: 800 !important;
-    color: white !important;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
-    position: relative !important;
-    z-index: 2 !important;
-  }
-  
-  .slib-shine {
-    position: absolute !important;
-    top: 0 !important;
-    left: -100% !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.18) 50%, transparent 75%) !important;
-    transition: left 0.7s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    pointer-events: none !important;
-    z-index: 3 !important;
-  }
-  .slib-card:hover .slib-shine { left: 100% !important; }
-  
-  .slib-badge {
-    position: absolute !important;
-    top: 7px !important;
-    left: 7px !important;
-    padding: 3px 7px !important;
-    color: white !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.55rem !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.06em !important;
-    border-radius: 4px !important;
-    text-transform: uppercase !important;
-    z-index: 4 !important;
-    width: auto !important;
-    max-width: max-content !important;
-    display: inline-block !important;
-    line-height: 1 !important;
-  }
-  .slib-badge-pink {
-    background: linear-gradient(135deg, #ec4899, #f472b6) !important;
-    box-shadow: 0 3px 10px rgba(236, 72, 153, 0.5) !important;
-  }
-  
-  /* Heart tag for liked cards */
-  .slib-heart-tag {
-    position: absolute !important;
-    bottom: 7px !important;
-    left: 7px !important;
-    width: 24px !important;
-    height: 24px !important;
-    border-radius: 7px !important;
-    background: linear-gradient(135deg, #ec4899, #f472b6) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    color: white !important;
-    box-shadow: 0 3px 10px rgba(236, 72, 153, 0.55) !important;
-    z-index: 4 !important;
-  }
-  .slib-heart-tag svg { width: 13px !important; height: 13px !important; }
-  
-  .slib-remove {
-    position: absolute !important;
-    top: 7px !important;
-    right: 7px !important;
-    width: 24px !important;
-    height: 24px !important;
-    border-radius: 50% !important;
-    background: rgba(0, 0, 0, 0.75) !important;
-    backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(239, 68, 68, 0.5) !important;
-    color: #ef4444 !important;
-    cursor: pointer !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    opacity: 0 !important;
-    transition: all 0.25s !important;
-    padding: 0 !important;
-    z-index: 5 !important;
-  }
-  .slib-remove svg { width: 11px !important; height: 11px !important; }
-  .slib-card:hover .slib-remove { opacity: 1 !important; }
-  .slib-remove:hover {
-    background: rgba(239, 68, 68, 0.95) !important;
-    color: white !important;
-    transform: scale(1.15) !important;
-  }
-  
-  .slib-play {
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) scale(0.5) !important;
-    width: 42px !important;
-    height: 42px !important;
-    border-radius: 50% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    color: white !important;
-    opacity: 0 !important;
-    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-    pointer-events: none !important;
-    z-index: 4 !important;
-    padding: 0 !important;
-    max-width: 42px !important;
-    max-height: 42px !important;
-    min-width: 42px !important;
-    min-height: 42px !important;
-  }
-  .slib-play-pink {
-    background: linear-gradient(135deg, #ec4899, #f472b6, #e879f9) !important;
-    box-shadow: 0 8px 25px rgba(236, 72, 153, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
-  }
-  .slib-play svg { width: 17px !important; height: 17px !important; margin-left: 2px !important; max-width: 17px !important; max-height: 17px !important; }
-  .slib-card:hover .slib-play {
-    opacity: 1 !important;
-    transform: translate(-50%, -50%) scale(1) !important;
-  }
-  
-  .slib-info {
-    padding: 10px 11px 12px !important;
-    display: block !important;
-  }
-  .slib-vtitle {
-    font-family: 'DM Sans', sans-serif !important;
-    font-size: 0.82rem !important;
-    font-weight: 700 !important;
-    color: var(--text-primary) !important;
-    line-height: 1.35 !important;
-    margin: 0 0 5px !important;
-    display: -webkit-box !important;
-    -webkit-line-clamp: 2 !important;
-    -webkit-box-orient: vertical !important;
-    overflow: hidden !important;
-    transition: color 0.25s !important;
-    min-height: 2.3em !important;
-  }
-  .slib-card-pink:hover .slib-vtitle {
-    background: linear-gradient(135deg, #ec4899, #e879f9) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    background-clip: text !important;
-  }
-  .slib-meta {
-    display: flex !important;
-    align-items: center !important;
-    gap: 5px !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.62rem !important;
-    color: var(--text-muted) !important;
-    line-height: 1.2 !important;
-  }
-  .slib-channel {
-    font-weight: 600 !important;
-    max-width: 90px !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-  }
-  .slib-channel-pink { color: #ec4899 !important; }
-  
-  .slib-empty {
+  .atb-empty {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -521,71 +433,54 @@ import Header from '../components/Header.astro';
     text-align: center;
     min-height: 480px;
   }
-  .slib-empty-icon {
+  .atb-empty-icon {
     width: 96px; height: 96px;
     border-radius: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     margin-bottom: 1.5rem;
   }
-  .slib-empty-icon-pink {
+  .atb-empty-icon-pink {
     background: linear-gradient(135deg, rgba(236, 72, 153, 0.12), rgba(232, 121, 249, 0.08));
     color: rgba(236, 72, 153, 0.6);
     border: 1px solid rgba(236, 72, 153, 0.28);
   }
-  .slib-empty-title {
+  .atb-empty-title {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1.4rem;
-    font-weight: 800;
+    font-size: 1.4rem; font-weight: 800;
     color: var(--text-primary);
     margin: 0 0 10px;
     letter-spacing: -0.02em;
   }
-  .slib-empty-desc {
+  .atb-empty-desc {
     color: var(--text-secondary);
     font-size: 0.9rem;
     max-width: 360px;
     margin: 0 0 1.5rem;
     line-height: 1.6;
   }
-  .slib-empty-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+  .atb-empty-btn {
+    display: inline-flex; align-items: center; gap: 8px;
     padding: 12px 24px;
     color: white;
     border-radius: 100px;
     text-decoration: none;
     font-family: 'DM Sans', sans-serif;
-    font-weight: 700;
-    font-size: 0.86rem;
+    font-weight: 700; font-size: 0.86rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .slib-empty-btn-pink {
+  .atb-empty-btn-pink {
     background: linear-gradient(135deg, #ec4899, #f472b6, #e879f9);
     box-shadow: 0 10px 30px rgba(236, 72, 153, 0.5);
   }
-  .slib-empty-btn:hover {
+  .atb-empty-btn:hover {
     transform: translateY(-3px);
     box-shadow: 0 15px 40px rgba(236, 72, 153, 0.65);
   }
   
   @media (max-width: 640px) {
-    .slib-hero { padding: 15px 16px; gap: 12px; border-radius: 18px; }
-    .slib-hero-icon { width: 44px !important; height: 44px !important; border-radius: 12px; }
-    .slib-hero-icon svg { width: 22px !important; height: 22px !important; }
-    .slib-clear-btn { padding: 6px 10px; font-size: 0.68rem; }
-    .slib-info { padding: 8px 9px 10px !important; }
-    .slib-vtitle { font-size: 0.76rem !important; min-height: 2.1em !important; }
-    .slib-meta { font-size: 0.57rem !important; }
-    .slib-badge { font-size: 0.5rem !important; padding: 2px 5px !important; top: 5px !important; left: 5px !important; }
-    .slib-heart-tag { width: 20px !important; height: 20px !important; bottom: 5px !important; left: 5px !important; }
-    .slib-heart-tag svg { width: 11px !important; height: 11px !important; }
-    .slib-remove { width: 20px !important; height: 20px !important; top: 5px !important; right: 5px !important; }
-    .slib-remove svg { width: 9px !important; height: 9px !important; }
-    .slib-play { width: 36px !important; height: 36px !important; max-width: 36px !important; max-height: 36px !important; min-width: 36px !important; min-height: 36px !important; }
-    .slib-play svg { width: 14px !important; height: 14px !important; }
-    .slib-noimg-letter { font-size: 1.8rem !important; }
+    .atb-hero-box { padding: 15px 16px; gap: 12px; border-radius: 18px; }
+    .atb-hero-icon { width: 44px; height: 44px; border-radius: 12px; }
+    .atb-hero-icon svg { width: 22px; height: 22px; }
+    .atb-hero-clear { padding: 6px 10px; font-size: 0.68rem; }
   }
 </style>
