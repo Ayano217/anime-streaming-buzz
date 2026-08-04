@@ -54,19 +54,13 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     })();
   </script>
 
-  <!-- 🔍 EARLY RESUME DETECTION (before anything else) -->
   <script is:inline>
     (function(){
       try {
         var params = new URLSearchParams(window.location.search);
         var resumeId = params.get('resume');
-        if (resumeId) {
-          window.__RESUME_ID__ = resumeId;
-          console.log('[RESUME] Detected ID:', resumeId);
-        }
-      } catch(e) {
-        console.error('[RESUME] Detection failed:', e);
-      }
+        if (resumeId) window.__RESUME_ID__ = resumeId;
+      } catch(e) {}
     })();
   </script>
 </head>
@@ -94,9 +88,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   <button id="btt" aria-label="Scroll to top">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>
   </button>
-
-  <!-- 🔍 DEBUG PANEL (visible on screen) -->
-  <div id="resume-debug" class="resume-debug"></div>
 
   <!-- Welcome Badge -->
   <div id="resume-badge" class="resume-badge">
@@ -133,130 +124,81 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   </script>
 
   <!-- ═══════════════════════════════════════════════════
-       🎯 RESUME HIGHLIGHT WITH DEBUG PANEL
+       🎯 RESUME HIGHLIGHT (Final - Premium Glow)
        ═══════════════════════════════════════════════════ -->
   <script is:inline>
   (function(){
-    var debugEl = document.getElementById('resume-debug');
-    var logs = [];
-    
-    function debug(msg) {
-      console.log('[RESUME]', msg);
-      logs.push(msg);
-      if (debugEl) {
-        debugEl.innerHTML = '<div class="rd-title">🔍 Resume Debug</div>' + 
-          logs.map(function(l){ return '<div class="rd-line">' + l + '</div>'; }).join('');
-        debugEl.style.display = 'block';
-      }
-    }
-    
     var resumeId = window.__RESUME_ID__;
-    
-    if (!resumeId) {
-      debug('❌ No ?resume= in URL. URL: ' + window.location.href);
-      // Hide debug after 5 sec if no resume
-      setTimeout(function(){ if(debugEl) debugEl.style.display = 'none'; }, 5000);
-      return;
-    }
-    
-    debug('✅ Resume ID found: ' + resumeId);
-    debug('📍 Current URL: ' + window.location.pathname);
+    if (!resumeId) return;
     
     // Clean URL immediately
     try {
       var cleanUrl = window.location.pathname + window.location.hash;
       window.history.replaceState({}, '', cleanUrl);
-      debug('🧹 URL cleaned');
-    } catch(e) {
-      debug('⚠️ URL clean failed: ' + e.message);
-    }
+    } catch(e) {}
     
-    // Wait & search for card
     var attempts = 0;
-    var maxAttempts = 30;
+    var maxAttempts = 40;
     
     function findAndHighlight() {
       attempts++;
       
-      // Try to find any link that contains the resume ID
       var allLinks = document.querySelectorAll('a[href]');
       var foundCard = null;
-      var linkText = '';
       
       for (var i = 0; i < allLinks.length; i++) {
         var href = allLinks[i].getAttribute('href') || '';
         if (href.indexOf(resumeId) !== -1) {
           foundCard = allLinks[i];
-          linkText = href;
           break;
         }
       }
       
-      if (attempts === 1) {
-        debug('🔎 Attempt ' + attempts + ': Scanning ' + allLinks.length + ' links');
-      }
-      
       if (!foundCard) {
         if (attempts < maxAttempts) {
-          setTimeout(findAndHighlight, 300);
+          setTimeout(findAndHighlight, 250);
           return;
         }
-        debug('❌ Card NOT FOUND after ' + attempts + ' attempts');
-        debug('💡 Total links on page: ' + allLinks.length);
-        debug('💡 Searched for ID: ' + resumeId);
-        // Show first 3 links for inspection
-        for (var j = 0; j < Math.min(3, allLinks.length); j++) {
-          debug('   Link ' + (j+1) + ': ' + (allLinks[j].getAttribute('href') || 'no-href').substring(0, 60));
-        }
-        setTimeout(function(){ if(debugEl) debugEl.style.display = 'none'; }, 15000);
-        return;
+        return; // Silent fail
       }
       
-      debug('✅ FOUND! Link: ' + linkText.substring(0, 60));
-      debug('🎯 Element: ' + foundCard.tagName + ' class="' + (foundCard.className || 'none').substring(0, 40) + '"');
-      
-      // Find the visual card container
+      // Find the visual card container (most likely a wrapper div)
       var cardEl = foundCard;
-      var parent = foundCard.closest('.card, .anime-card, [class*="card"], [class*="Card"], article, .item, [class*="tile"]');
-      if (parent) {
-        cardEl = parent;
-        debug('📦 Using parent container: ' + parent.className.substring(0, 40));
-      } else {
-        debug('📦 Using link itself as card');
-      }
+      var parent = foundCard.closest('.card, .anime-card, [class*="card"], [class*="Card"], article, .item, [class*="tile"], [class*="Item"]');
+      if (parent) cardEl = parent;
       
       // Show welcome badge
       var badge = document.getElementById('resume-badge');
       if (badge) {
         badge.classList.add('show');
-        debug('💜 Welcome badge shown');
         setTimeout(function(){ badge.classList.remove('show'); }, 4000);
       }
       
-      // Scroll to card
+      // Scroll to card centered
       setTimeout(function(){
         try {
           cardEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          debug('📜 Scrolling to card...');
         } catch(e) {
-          debug('⚠️ Scroll failed: ' + e.message);
+          var rect = cardEl.getBoundingClientRect();
+          window.scrollTo(0, window.pageYOffset + rect.top - window.innerHeight / 2 + rect.height / 2);
         }
         
-        // Add glow after scroll settles
+        // Apply highlight after scroll settles
         setTimeout(function(){
           cardEl.classList.add('resume-highlight');
-          debug('✨ Glow applied!');
           
+          // Remove after 5 seconds
           setTimeout(function(){
-            cardEl.classList.remove('resume-highlight');
-            debug('🏁 Done. Hiding debug in 3s.');
-            setTimeout(function(){ if(debugEl) debugEl.style.display = 'none'; }, 3000);
-          }, 4500);
+            cardEl.classList.add('resume-highlight-fadeout');
+            setTimeout(function(){
+              cardEl.classList.remove('resume-highlight');
+              cardEl.classList.remove('resume-highlight-fadeout');
+            }, 800);
+          }, 5000);
         }, 900);
       }, 500);
     }
     
-    // Start after full page load
     if (document.readyState === 'complete') {
       setTimeout(findAndHighlight, 1000);
     } else {
@@ -692,44 +634,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   .reveal.visible { opacity: 1; transform: translateY(0); }
 
   /* ═══════════════════════════════════════════════════
-     🔍 DEBUG PANEL (visible on screen)
-     ═══════════════════════════════════════════════════ */
-  .resume-debug {
-    display: none;
-    position: fixed;
-    top: 90px;
-    left: 20px;
-    max-width: 380px;
-    padding: 12px 14px;
-    background: rgba(0, 0, 0, 0.9);
-    border: 2px solid #e879f9;
-    border-radius: 12px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: #f5ecff;
-    z-index: 99997;
-    line-height: 1.5;
-    box-shadow: 0 10px 40px rgba(232, 121, 249, 0.4);
-    max-height: 70vh;
-    overflow-y: auto;
-  }
-  .rd-title {
-    font-weight: 700;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
-    border-bottom: 1px solid rgba(232, 121, 249, 0.3);
-    font-size: 13px;
-  }
-  .rd-line {
-    padding: 2px 0;
-    word-break: break-all;
-  }
-
-  /* ═══════════════════════════════════════════════════
-     🎯 RESUME BADGE + HIGHLIGHT
+     🎯 RESUME BADGE (top notification)
      ═══════════════════════════════════════════════════ */
   .resume-badge {
     position: fixed;
@@ -772,12 +677,12 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     color: white;
     flex-shrink: 0;
     box-shadow: 0 4px 14px rgba(192, 132, 252, 0.5);
-    animation: resume-pulse 2s ease-in-out infinite;
+    animation: resume-icon-pulse 2s ease-in-out infinite;
   }
 
   .resume-badge-icon svg { width: 20px; height: 20px; }
 
-  @keyframes resume-pulse {
+  @keyframes resume-icon-pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.08); }
   }
@@ -806,26 +711,110 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     .resume-badge-icon svg { width: 17px; height: 17px; }
     .resume-badge-title { font-size: 13px; }
     .resume-badge-sub { font-size: 10px; }
-    .resume-debug { max-width: calc(100% - 40px); font-size: 10px; }
   }
 
+  /* ═══════════════════════════════════════════════════
+     ✨ CARD HIGHLIGHT — BOLD PREMIUM GLOW
+     ═══════════════════════════════════════════════════ */
   .resume-highlight {
     position: relative !important;
     z-index: 5;
-    animation: resume-card-pulse 2s cubic-bezier(0.4, 0, 0.2, 1);
-    outline: 3px solid #e879f9 !important;
-    outline-offset: 4px;
-    border-radius: 12px;
+    animation: resume-scale-pop 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius: 20px;
     box-shadow: 
-      0 0 40px rgba(232, 121, 249, 0.6),
-      0 0 80px rgba(192, 132, 252, 0.4) !important;
+      0 0 0 3px #e879f9,
+      0 0 30px 6px rgba(232, 121, 249, 0.7),
+      0 0 60px 12px rgba(192, 132, 252, 0.5),
+      0 0 100px 20px rgba(125, 211, 252, 0.3) !important;
+    transition: box-shadow 0.6s ease;
   }
 
-  @keyframes resume-card-pulse {
+  .resume-highlight::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc, #e879f9, #c084fc);
+    background-size: 300% 300%;
+    z-index: -1;
+    opacity: 0.85;
+    filter: blur(14px);
+    animation: resume-gradient-move 3s ease infinite;
+    pointer-events: none;
+  }
+
+  .resume-highlight::after {
+    content: '⏯ LAST WATCHED';
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 14px;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    color: white;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-radius: 100px;
+    box-shadow: 
+      0 4px 20px rgba(232, 121, 249, 0.7),
+      0 0 30px rgba(192, 132, 252, 0.5);
+    z-index: 20;
+    white-space: nowrap;
+    animation: resume-tag-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+  }
+
+  .resume-highlight-fadeout {
+    box-shadow: 
+      0 0 0 0 transparent,
+      0 0 0 0 transparent !important;
+  }
+
+  .resume-highlight-fadeout::before {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+
+  .resume-highlight-fadeout::after {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px);
+    transition: all 0.6s ease;
+  }
+
+  @keyframes resume-scale-pop {
     0% { transform: scale(1); }
-    30% { transform: scale(1.05); }
-    60% { transform: scale(0.98); }
+    35% { transform: scale(1.06); }
+    70% { transform: scale(0.98); }
     100% { transform: scale(1); }
+  }
+
+  @keyframes resume-gradient-move {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes resume-tag-bounce {
+    0% { opacity: 0; transform: translateX(-50%) translateY(15px) scale(0.6); }
+    60% { opacity: 1; transform: translateX(-50%) translateY(-3px) scale(1.1); }
+    100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  }
+
+  @media (max-width: 640px) {
+    .resume-highlight {
+      box-shadow: 
+        0 0 0 3px #e879f9,
+        0 0 20px 4px rgba(232, 121, 249, 0.7),
+        0 0 40px 8px rgba(192, 132, 252, 0.5) !important;
+    }
+    .resume-highlight::after {
+      font-size: 9px;
+      padding: 5px 12px;
+      top: -14px;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
