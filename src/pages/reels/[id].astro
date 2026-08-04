@@ -104,12 +104,12 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
 <ImmersiveLayout title={`${video.title} | AniTubeBuzz`}>
   <div 
     id="reels-root" 
-    class="rp-root" 
+    class="rp-root controls-visible" 
     data-videoid={videoId}
     data-next={nextVideo?.id || ''}
   >
     
-    <header class="rp-topbar">
+    <header class="rp-topbar rp-fadeable">
       <button class="rp-back" id="backBtn" aria-label="Back to home">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -159,7 +159,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         </div>
       </div>
 
-      <div class="rp-info">
+      <div class="rp-info rp-fadeable">
         <div class="rp-channel-row">
           <div class="rp-avatar">
             {displayChannel.charAt(0).toUpperCase()}
@@ -176,7 +176,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         <h1 class="rp-title">{video.title}</h1>
       </div>
 
-      <div class="rp-actions">
+      <div class="rp-actions rp-fadeable">
         <button class="rp-pill rp-save" id="saveBtn" aria-label="Save">
           <div class="rp-pill-icon">
             <svg class="rp-icon rp-bookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -196,7 +196,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         </button>
       </div>
 
-      <div class="rp-nav">
+      <div class="rp-nav rp-fadeable">
         <button class="rp-arrow" id="prevBtn" aria-label="Previous">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 15l-6-6-6 6"/>
@@ -213,12 +213,9 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
 
     <script is:inline set:html={`window.__REELS_VIDEO__ = ${JSON.stringify(video)}; window.__REELS_QUEUE__ = ${JSON.stringify(feedQueue.slice(0, 30))}; window.__CURRENT_VIDEO_ID__ = ${JSON.stringify(videoId)};`}></script>
 
-    <!-- 🔥 CRITICAL INLINE SCRIPT: Save resume to localStorage IMMEDIATELY on page load + back button handler -->
     <script is:inline>
       (function(){
         var vid = window.__CURRENT_VIDEO_ID__ || '';
-        
-        // Save to localStorage IMMEDIATELY when reels page loads (so even browser back works)
         try {
           if (vid) {
             localStorage.setItem('anitube_resume_video', vid);
@@ -226,30 +223,21 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
           }
         } catch(e) {}
         
-        // Back button handler
         function goHome(e) {
-          if (e) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-          // Refresh timestamp for freshness
+          if (e) { e.preventDefault(); e.stopPropagation(); }
           try {
             if (vid) {
               localStorage.setItem('anitube_resume_video', vid);
               localStorage.setItem('anitube_resume_time', String(Date.now()));
             }
           } catch(err) {}
-          
-          // Try history.back if same origin, else go home
           try {
             if (document.referrer && document.referrer.indexOf(window.location.origin) === 0) {
               window.history.back();
             } else {
               window.location.href = '/';
             }
-          } catch(err) {
-            window.location.href = '/';
-          }
+          } catch(err) { window.location.href = '/'; }
           return false;
         }
         
@@ -292,22 +280,42 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       z-index: 1;
       animation: rp-fade-in 0.5s ease-out;
     }
-
+    
     @keyframes rp-fade-in {
       from { opacity: 0; }
       to { opacity: 1; }
     }
+    
+    /* AUTO-HIDE controls */
+    .rp-fadeable {
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    
+    .rp-root.controls-hidden .rp-fadeable {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .rp-root.controls-hidden .rp-topbar {
+      transform: translateY(-100%);
+    }
+    
+    .rp-root.controls-hidden .rp-actions {
+      transform: translateX(30px);
+    }
+    
+    .rp-root.controls-hidden .rp-info {
+      transform: translateY(20px);
+    }
 
     .rp-topbar {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 64px;
+      top: 0; left: 0; right: 0;
+      height: 60px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 20px;
+      padding: 0 18px;
       z-index: 100;
       background: linear-gradient(to bottom, rgba(10, 5, 23, 0.9) 0%, transparent 100%);
       backdrop-filter: blur(10px);
@@ -315,11 +323,8 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
     }
 
     .rp-back {
-      width: 42px;
-      height: 42px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
       color: #f5ecff;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -334,7 +339,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       border-color: rgba(192, 132, 252, 0.4);
       transform: scale(1.05);
     }
-
     .rp-back:active { transform: scale(0.94); }
 
     .rp-brand {
@@ -349,7 +353,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
     .rp-brand-text {
       font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif;
       font-weight: 700;
-      font-size: 17px;
+      font-size: 16px;
       letter-spacing: -0.02em;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       -webkit-background-clip: text;
@@ -358,8 +362,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
     }
 
     .rp-brand-dot {
-      width: 6px;
-      height: 6px;
+      width: 6px; height: 6px;
       background: #7dd3fc;
       border-radius: 50%;
       box-shadow: 0 0 10px #7dd3fc;
@@ -374,18 +377,17 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
     .rp-type-badge {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
+      gap: 5px;
+      padding: 5px 10px;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(192, 132, 252, 0.25);
       border-radius: 20px;
       backdrop-filter: blur(10px);
     }
-
-    .rp-type-emoji { font-size: 14px; }
+    .rp-type-emoji { font-size: 12px; }
     .rp-type-label {
       font-family: 'Inter', sans-serif;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       color: #f5ecff;
       letter-spacing: 0.02em;
@@ -397,7 +399,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       align-items: center;
       justify-content: center;
       position: relative;
-      padding: 80px 20px 40px;
+      padding: 70px 20px 30px;
       z-index: 1;
     }
 
@@ -406,8 +408,8 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       width: 100%;
       max-width: 420px;
       aspect-ratio: 9 / 16;
-      max-height: calc(100vh - 130px);
-      max-height: calc(100dvh - 130px);
+      max-height: calc(100vh - 110px);
+      max-height: calc(100dvh - 110px);
       transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
       animation: rp-card-enter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
@@ -439,36 +441,29 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       background: #000;
       border-radius: 20px;
       overflow: hidden;
-      box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.6),
-        0 0 0 1px rgba(192, 132, 252, 0.35);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(192, 132, 252, 0.35);
     }
 
     .rp-card-frame iframe {
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       border: 0;
       display: block;
     }
 
     .rp-doubletap-heart {
       position: absolute;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%) scale(0);
-      width: 100px;
-      height: 100px;
+      width: 100px; height: 100px;
       color: #ff2d55;
       pointer-events: none;
       z-index: 20;
       filter: drop-shadow(0 0 30px rgba(255, 45, 85, 0.9));
     }
-
     .rp-doubletap-heart svg { width: 100%; height: 100%; }
     .rp-doubletap-heart.pop {
       animation: rp-heart-explode 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-
     @keyframes rp-heart-explode {
       0% { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 0; }
       30% { transform: translate(-50%, -50%) scale(1.3) rotate(0deg); opacity: 1; }
@@ -488,38 +483,25 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       z-index: 5;
       transition: opacity 0.5s;
     }
-
     .rp-loader.hidden { opacity: 0; pointer-events: none; }
-
-    .rp-loader-orbit {
-      position: relative;
-      width: 60px;
-      height: 60px;
-    }
-
+    .rp-loader-orbit { position: relative; width: 60px; height: 60px; }
     .rp-loader-dot {
       position: absolute;
-      width: 14px;
-      height: 14px;
+      width: 14px; height: 14px;
       border-radius: 50%;
-      top: 50%;
-      left: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%);
     }
-
     .rp-dot-1 { background: #c084fc; box-shadow: 0 0 15px #c084fc; animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
     .rp-dot-2 { background: #e879f9; box-shadow: 0 0 15px #e879f9; animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite -0.47s; }
     .rp-dot-3 { background: #7dd3fc; box-shadow: 0 0 15px #7dd3fc; animation: rp-orbit 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite -0.93s; }
-
     @keyframes rp-orbit {
       0% { transform: translate(-50%, -50%) rotate(0deg) translateX(22px) rotate(0deg); }
       100% { transform: translate(-50%, -50%) rotate(360deg) translateX(22px) rotate(-360deg); }
     }
-
     .rp-loader-text {
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
+      font-size: 14px; font-weight: 700;
       letter-spacing: 0.08em;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       -webkit-background-clip: text;
@@ -528,39 +510,34 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       opacity: 0.9;
     }
 
+    /* INFO */
     .rp-info {
       position: absolute;
-      bottom: 40px;
-      left: 32px;
+      bottom: 35px;
+      left: 30px;
       z-index: 50;
-      max-width: 340px;
+      max-width: 320px;
       pointer-events: none;
     }
-
     .rp-channel-row {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
+      gap: 10px;
+      margin-bottom: 10px;
     }
-
     .rp-avatar {
       position: relative;
-      width: 42px;
-      height: 42px;
+      width: 38px; height: 38px;
       border-radius: 50%;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       font-family: 'Bricolage Grotesque', sans-serif;
       font-weight: 700;
-      font-size: 17px;
+      font-size: 15px;
       color: white;
       border: 2px solid rgba(255, 255, 255, 0.35);
-      box-shadow: 0 4px 16px rgba(192, 132, 252, 0.55);
+      box-shadow: 0 4px 14px rgba(192, 132, 252, 0.55);
     }
-
     .rp-avatar-ring {
       position: absolute;
       inset: -4px;
@@ -573,48 +550,41 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       opacity: 0.4;
       animation: rp-ring-rotate 4s linear infinite;
     }
-
     @keyframes rp-ring-rotate {
       to { transform: rotate(360deg); }
     }
-
     .rp-channel-info {
       display: flex;
       flex-direction: column;
       gap: 2px;
     }
-
     .rp-channel-name {
       font-family: 'Inter', sans-serif;
       font-weight: 600;
-      font-size: 15px;
+      font-size: 14px;
       color: white;
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
     }
-
     .rp-channel-meta {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       font-family: 'Inter', sans-serif;
-      font-size: 11px;
+      font-size: 10px;
       color: rgba(255, 255, 255, 0.7);
       text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
       font-weight: 500;
     }
-
     .rp-hd-dot {
-      width: 6px;
-      height: 6px;
+      width: 5px; height: 5px;
       border-radius: 50%;
       background: #7dd3fc;
       box-shadow: 0 0 8px #7dd3fc;
       animation: rp-pulse 2s infinite;
     }
-
     .rp-title {
       font-family: 'DM Sans', sans-serif;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       color: white;
       line-height: 1.35;
@@ -626,116 +596,97 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       overflow: hidden;
     }
 
+    /* ACTIONS — position raised HIGH to avoid Safiya */
     .rp-actions {
       position: absolute;
-      right: 20px;
-      bottom: 260px;
+      right: 18px;
+      bottom: 280px;
       display: flex;
       flex-direction: column;
       gap: 10px;
       z-index: 60;
     }
-
+    
     .rp-pill {
       display: flex;
       align-items: center;
       gap: 10px;
       padding: 6px 14px 6px 6px;
-      height: 44px;
-      background: linear-gradient(135deg, rgba(28, 15, 61, 0.85), rgba(20, 10, 40, 0.9));
+      height: 42px;
+      background: linear-gradient(135deg, rgba(28, 15, 61, 0.9), rgba(20, 10, 40, 0.95));
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(192, 132, 252, 0.35);
+      border: 1px solid rgba(192, 132, 252, 0.4);
       border-radius: 24px;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 
-        0 6px 20px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(192, 132, 252, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        0 6px 20px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(192, 132, 252, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
       position: relative;
       overflow: hidden;
     }
-
     .rp-pill-icon {
-      width: 32px;
-      height: 32px;
+      width: 30px; height: 30px;
       border-radius: 50%;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       color: white;
       flex-shrink: 0;
-      box-shadow: 0 3px 10px rgba(192, 132, 252, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      box-shadow: 0 3px 10px rgba(192, 132, 252, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
       transition: all 0.3s;
     }
-
-    .rp-icon {
-      width: 16px;
-      height: 16px;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
+    .rp-icon { width: 15px; height: 15px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .rp-pill-label {
       font-family: 'Inter', sans-serif;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       color: #f5ecff;
       letter-spacing: 0.01em;
-      padding-right: 4px;
+      padding-right: 3px;
     }
-
     .rp-pill::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent 0%, rgba(192, 132, 252, 0.2) 50%, transparent 100%);
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent 0%, rgba(192, 132, 252, 0.25) 50%, transparent 100%);
       transition: left 0.7s;
       pointer-events: none;
     }
-
     .rp-pill:hover {
       transform: translateX(-3px);
-      background: linear-gradient(135deg, rgba(48, 25, 90, 0.9), rgba(35, 18, 65, 0.95));
-      border-color: rgba(232, 121, 249, 0.6);
+      background: linear-gradient(135deg, rgba(48, 25, 90, 0.95), rgba(35, 18, 65, 1));
+      border-color: rgba(232, 121, 249, 0.7);
     }
-
     .rp-pill:hover::before { left: 100%; }
     .rp-pill:hover .rp-pill-icon { transform: scale(1.08); }
     .rp-pill:hover .rp-icon { transform: scale(1.1); }
     .rp-pill:active { transform: translateX(-2px) scale(0.97); }
-
+    
     .rp-save.saved {
-      border-color: rgba(255, 200, 100, 0.55);
-      background: linear-gradient(135deg, rgba(75, 55, 20, 0.85), rgba(50, 35, 10, 0.9));
+      border-color: rgba(255, 200, 100, 0.6);
+      background: linear-gradient(135deg, rgba(75, 55, 20, 0.9), rgba(50, 35, 10, 0.95));
     }
-
     .rp-save.saved .rp-pill-icon {
       background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
     }
-
     .rp-save.saved .rp-bookmark {
       fill: currentColor;
       animation: rp-save-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-
     .rp-save.saved .rp-pill-label { color: #fde68a; }
-
     @keyframes rp-save-pop {
       0% { transform: scale(1); }
       40% { transform: scale(1.35) rotate(-8deg); }
       70% { transform: scale(0.92) rotate(4deg); }
       100% { transform: scale(1) rotate(0deg); }
     }
-
+    
     .rp-send.sent .rp-plane {
       animation: rp-plane-fly 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
     @keyframes rp-plane-fly {
       0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
       50% { transform: translate(20px, -20px) rotate(30deg); opacity: 0; }
@@ -745,37 +696,31 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
 
     .rp-nav {
       position: absolute;
-      right: 32px;
+      right: 30px;
       top: 50%;
       transform: translateY(-50%);
       display: none;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
       z-index: 50;
     }
-
     .rp-arrow {
-      width: 44px;
-      height: 44px;
+      width: 42px; height: 42px;
       border-radius: 50%;
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(192, 132, 252, 0.25);
       color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       cursor: pointer;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
-
     .rp-arrow:hover {
       background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.15));
       border-color: rgba(232, 121, 249, 0.6);
       transform: scale(1.1);
     }
-
     .rp-arrow:active { transform: scale(0.95); }
     .rp-arrow svg { width: 20px; height: 20px; }
 
@@ -785,6 +730,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       .rp-info { left: 40px; bottom: 60px; }
     }
 
+    /* MOBILE — Buttons much higher up to avoid Safiya + native video controls */
     @media (max-width: 640px) {
       .rp-stage { padding: 0; }
       .rp-card {
@@ -793,15 +739,30 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       .rp-card-glow { display: none; }
       .rp-card-frame { border-radius: 0; box-shadow: none; }
       .rp-topbar { background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, transparent 100%); }
-      .rp-info { left: 16px; bottom: 95px; max-width: calc(100% - 130px); }
-      .rp-actions { right: 12px; bottom: 240px; gap: 8px; }
-      .rp-pill { height: 40px; padding: 5px 12px 5px 5px; gap: 8px; }
-      .rp-pill-icon { width: 30px; height: 30px; }
-      .rp-icon { width: 15px; height: 15px; }
-      .rp-pill-label { font-size: 12px; }
-      .rp-title { font-size: 16px; }
-      .rp-type-badge { padding: 5px 10px; }
-      .rp-type-label { font-size: 11px; }
+      
+      /* Info at bottom left - very low */
+      .rp-info { 
+        left: 14px; 
+        bottom: 20px; 
+        max-width: calc(100% - 100px); 
+      }
+      .rp-title { font-size: 14px; }
+      .rp-channel-name { font-size: 13px; }
+      .rp-channel-meta { font-size: 9px; }
+      
+      /* Actions - HIGH above Safiya AND video native controls (typically bottom 60-80px) */
+      .rp-actions { 
+        right: 10px; 
+        bottom: 90px; /* Safe above native video controls */
+        gap: 8px; 
+      }
+      .rp-pill { height: 36px; padding: 4px 12px 4px 4px; gap: 7px; }
+      .rp-pill-icon { width: 28px; height: 28px; }
+      .rp-icon { width: 14px; height: 14px; }
+      .rp-pill-label { font-size: 11px; }
+      
+      .rp-type-badge { padding: 4px 8px; }
+      .rp-type-label { font-size: 10px; }
     }
 
     @media (min-width: 641px) and (max-width: 1023px) {
@@ -818,6 +779,63 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       const videoId = root.dataset.videoid || '';
       const currentVideo: any = (window as any).__REELS_VIDEO__ || null;
       const queue: any[] = (window as any).__REELS_QUEUE__ || [];
+      
+      // ═══════════════════════════════════════════════════
+      // 🎬 AUTO-HIDE CONTROLS (Instagram/YouTube style)
+      // ═══════════════════════════════════════════════════
+      let hideTimer: any = null;
+      const HIDE_DELAY = 3500; // 3.5 seconds
+      
+      function showControls() {
+        root.classList.remove('controls-hidden');
+        root.classList.add('controls-visible');
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => {
+          root.classList.add('controls-hidden');
+          root.classList.remove('controls-visible');
+        }, HIDE_DELAY);
+      }
+      
+      function keepControlsVisible() {
+        clearTimeout(hideTimer);
+        root.classList.remove('controls-hidden');
+      }
+      
+      // Start with controls visible, then auto-hide
+      showControls();
+      
+      // Show controls on any tap/click on the page
+      document.addEventListener('click', function(e) {
+        // Don't retrigger on button clicks (they handle themselves)
+        const target = e.target as HTMLElement;
+        if (target.closest('.rp-pill, .rp-back, .rp-arrow, .rp-type-badge')) {
+          keepControlsVisible();
+          setTimeout(showControls, 100);
+          return;
+        }
+        showControls();
+      });
+      
+      // Show on mouse move (desktop)
+      let lastMove = 0;
+      document.addEventListener('mousemove', function() {
+        const now = Date.now();
+        if (now - lastMove > 300) {
+          lastMove = now;
+          showControls();
+        }
+      });
+      
+      // Show on touch (mobile)
+      document.addEventListener('touchstart', function() {
+        showControls();
+      }, { passive: true });
+      
+      // Keep visible when hovering buttons
+      document.querySelectorAll('.rp-pill, .rp-back, .rp-arrow').forEach(function(el) {
+        el.addEventListener('mouseenter', keepControlsVisible);
+        el.addEventListener('mouseleave', showControls);
+      });
       
       // WATCH HISTORY
       try {
