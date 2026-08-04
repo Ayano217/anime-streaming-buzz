@@ -53,16 +53,6 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       }
     })();
   </script>
-
-  <script is:inline>
-    (function(){
-      try {
-        var params = new URLSearchParams(window.location.search);
-        var resumeId = params.get('resume');
-        if (resumeId) window.__RESUME_ID__ = resumeId;
-      } catch(e) {}
-    })();
-  </script>
 </head>
 
 <body>
@@ -89,7 +79,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>
   </button>
 
-  <!-- Welcome Badge (only shows AFTER card found) -->
+  <!-- Resume Welcome Badge -->
   <div id="resume-badge" class="resume-badge">
     <div class="resume-badge-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -123,112 +113,110 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   })();
   </script>
 
-  <!-- ═══════════════════════════════════════════════════
-       🎯 RESUME HIGHLIGHT — Move card to top + glow
-       Silent, fast, no lag
-       ═══════════════════════════════════════════════════ -->
+  <!-- 🎯 RESUME DETECTION — Reads localStorage, finds card, highlights it -->
   <script is:inline>
   (function(){
-    var resumeId = window.__RESUME_ID__;
-    if (!resumeId) return;
-    
-    // Only on home page
-    if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') return;
-    
-    // Clean URL immediately
     try {
-      var cleanUrl = window.location.pathname + window.location.hash;
-      window.history.replaceState({}, '', cleanUrl);
-    } catch(e) {}
-    
-    var attempts = 0;
-    var maxAttempts = 20; // 10 seconds max — no scroll interference
-    var done = false;
-    
-    function findCard() {
-      var allLinks = document.querySelectorAll('a[href]');
-      for (var i = 0; i < allLinks.length; i++) {
-        var href = allLinks[i].getAttribute('href') || '';
-        if (href.indexOf(resumeId) !== -1) {
-          return allLinks[i];
-        }
-      }
-      return null;
-    }
-    
-    function moveAndHighlight() {
-      if (done) return;
-      attempts++;
+      var resumeId = localStorage.getItem('anitube_resume_video');
+      var resumeTime = parseInt(localStorage.getItem('anitube_resume_time') || '0', 10);
+      if (!resumeId) return;
       
-      var link = findCard();
-      
-      if (!link) {
-        if (attempts < maxAttempts) {
-          setTimeout(moveAndHighlight, 500);
-        }
-        // Silent fail — no annoying badge
+      // Only honor resume within last 5 minutes
+      if (isNaN(resumeTime) || (Date.now() - resumeTime) > (5 * 60 * 1000)) {
+        localStorage.removeItem('anitube_resume_video');
+        localStorage.removeItem('anitube_resume_time');
         return;
       }
       
-      done = true;
+      // Only run on home page
+      if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') return;
       
-      // Find the visual card container
-      var cardEl = link;
-      var parent = link.closest('.card, .anime-card, [class*="card"], [class*="Card"], article, .item, [class*="tile"]');
-      if (parent) cardEl = parent;
+      var attempts = 0;
+      var maxAttempts = 25;
+      var done = false;
       
-      // Try to move card to first position in its parent container
-      var container = cardEl.parentElement;
-      if (container && container.firstElementChild !== cardEl) {
+      function findCard() {
+        var anchors = document.querySelectorAll('a[href]');
+        for (var i = 0; i < anchors.length; i++) {
+          var href = anchors[i].getAttribute('href') || '';
+          if (href.indexOf(resumeId) !== -1) {
+            return anchors[i];
+          }
+        }
+        return null;
+      }
+      
+      function highlight(link) {
+        done = true;
+        
+        // Find visual card container
+        var card = link.closest('.card, .anime-card, [class*="card"], [class*="Card"], article, .item, [class*="tile"]');
+        if (!card) card = link;
+        
+        // Scroll into view
         try {
-          // Save original position with smooth animation
-          cardEl.style.transition = 'none';
-          container.insertBefore(cardEl, container.firstElementChild);
-          
-          // Force reflow then add glow
-          void cardEl.offsetWidth;
-          cardEl.style.transition = '';
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         } catch(e) {
-          console.warn('Could not move card:', e);
+          var rect = card.getBoundingClientRect();
+          window.scrollTo(0, window.pageYOffset + rect.top - window.innerHeight / 2 + rect.height / 2);
+        }
+        
+        // Show welcome badge
+        var badge = document.getElementById('resume-badge');
+        if (badge) {
+          setTimeout(function(){ badge.classList.add('show'); }, 400);
+          setTimeout(function(){ badge.classList.remove('show'); }, 4200);
+        }
+        
+        // Apply glow after scroll settles
+        setTimeout(function(){
+          card.classList.add('resume-highlight');
+          
+          setTimeout(function(){
+            card.classList.add('resume-highlight-fadeout');
+            setTimeout(function(){
+              card.classList.remove('resume-highlight');
+              card.classList.remove('resume-highlight-fadeout');
+            }, 800);
+          }, 4000);
+        }, 700);
+        
+        // Cleanup localStorage
+        localStorage.removeItem('anitube_resume_video');
+        localStorage.removeItem('anitube_resume_time');
+      }
+      
+      function tryFind() {
+        if (done) return;
+        attempts++;
+        
+        var link = findCard();
+        if (link) {
+          highlight(link);
+          return;
+        }
+        
+        if (attempts < maxAttempts) {
+          setTimeout(tryFind, 400);
+        } else {
+          // Give up
+          localStorage.removeItem('anitube_resume_video');
+          localStorage.removeItem('anitube_resume_time');
         }
       }
       
-      // Scroll to top smoothly (card is now at top)
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      
-      // Show welcome badge
-      var badge = document.getElementById('resume-badge');
-      if (badge) {
-        setTimeout(function(){
-          badge.classList.add('show');
-        }, 400);
-        setTimeout(function(){
-          badge.classList.remove('show');
-        }, 4000);
+      if (document.readyState === 'complete') {
+        setTimeout(tryFind, 800);
+      } else {
+        window.addEventListener('load', function(){
+          setTimeout(tryFind, 800);
+        });
       }
-      
-      // Add glow after slight delay (let scroll complete)
-      setTimeout(function(){
-        cardEl.classList.add('resume-highlight');
-        
-        // Remove glow after 4 seconds
-        setTimeout(function(){
-          cardEl.classList.add('resume-highlight-fadeout');
-          setTimeout(function(){
-            cardEl.classList.remove('resume-highlight');
-            cardEl.classList.remove('resume-highlight-fadeout');
-          }, 800);
-        }, 4000);
-      }, 600);
-    }
-    
-    // Start after load
-    if (document.readyState === 'complete') {
-      setTimeout(moveAndHighlight, 800);
-    } else {
-      window.addEventListener('load', function(){
-        setTimeout(moveAndHighlight, 800);
-      });
+    } catch (e) {
+      try {
+        localStorage.removeItem('anitube_resume_video');
+        localStorage.removeItem('anitube_resume_time');
+      } catch(err) {}
     }
   })();
   </script>
@@ -658,7 +646,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   .reveal.visible { opacity: 1; transform: translateY(0); }
 
   /* ═══════════════════════════════════════════════════
-     🎯 RESUME BADGE (only shows AFTER card found)
+     🎯 RESUME BADGE
      ═══════════════════════════════════════════════════ */
   .resume-badge {
     position: fixed;
@@ -738,7 +726,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
 
   /* ═══════════════════════════════════════════════════
-     ✨ CARD HIGHLIGHT — Premium Glow
+     ✨ RESUME CARD HIGHLIGHT — Premium Glow
      ═══════════════════════════════════════════════════ */
   .resume-highlight {
     position: relative !important;
