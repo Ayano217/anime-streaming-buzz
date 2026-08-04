@@ -80,8 +80,13 @@ import Header from '../components/Header.astro';
   }
   
   function typeLabel(t) {
-    var map = { anime: 'Anime', kdrama: 'K-Drama', donghua: 'Donghua', movies: 'Movie' };
-    return map[t] || 'Anime';
+    var map = { anime: 'ANIME', kdrama: 'K-DRAMA', donghua: 'DONGHUA', movies: 'MOVIE' };
+    return map[t] || 'ANIME';
+  }
+  
+  function typeColor(t) {
+    var map = { anime: '#c084fc', kdrama: '#ec4899', donghua: '#f97316', movies: '#7dd3fc' };
+    return map[t] || '#c084fc';
   }
   
   function render() {
@@ -109,21 +114,25 @@ import Header from '../components/Header.astro';
       var initial = channel.charAt(0).toUpperCase();
       var time = fmtTime(v.savedAt);
       var type = typeLabel(v.type);
+      var tColor = typeColor(v.type);
       var delay = Math.min(i * 25, 400);
       
       html += '<a href="/reels/' + encodeURIComponent(v.id) + '" class="lib-card" style="animation-delay:' + delay + 'ms">' +
         '<div class="lib-card-thumb">' +
-          (thumb ? '<img src="' + esc(thumb) + '" alt="" loading="lazy"/>' : '<div class="lib-card-noimg">' + initial + '</div>') +
-          '<div class="lib-card-overlay"></div>' +
-          '<div class="lib-card-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' +
-          '<div class="lib-card-type">' + type + '</div>' +
+          (thumb 
+            ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';"/><div class="lib-card-noimg" style="display:none">' + initial + '</div>'
+            : '<div class="lib-card-noimg">' + initial + '</div>'
+          ) +
+          '<div class="lib-card-shine"></div>' +
+          '<div class="lib-card-badge" style="background:linear-gradient(135deg,' + tColor + ',#e879f9)">' + type + '</div>' +
           '<button class="lib-card-remove" data-id="' + esc(v.id) + '" aria-label="Remove">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
           '</button>' +
+          '<div class="lib-card-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>' +
         '</div>' +
         '<div class="lib-card-info">' +
           '<div class="lib-card-title">' + title + '</div>' +
-          '<div class="lib-card-meta">@' + channel.replace(/\s+/g,'').toLowerCase() + ' <span class="lib-card-dot">·</span> ' + time + '</div>' +
+          '<div class="lib-card-meta"><span class="lib-card-channel">@' + channel.replace(/\s+/g,'').toLowerCase().slice(0,15) + '</span><span class="lib-card-dot">·</span><span>' + time + '</span></div>' +
         '</div>' +
       '</a>';
     });
@@ -160,26 +169,24 @@ import Header from '../components/Header.astro';
     padding: 2rem 0 5rem;
   }
   
+  /* HERO */
   .lib-hero {
     display: flex;
     align-items: center;
     gap: 22px;
-    padding: 26px 30px;
+    padding: 24px 28px;
     background: 
       linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(232, 121, 249, 0.05)),
       linear-gradient(180deg, rgba(28, 15, 61, 0.7), rgba(20, 10, 40, 0.8));
     border: 1px solid rgba(192, 132, 252, 0.3);
-    border-radius: 28px;
-    margin-bottom: 2.5rem;
+    border-radius: 24px;
+    margin-bottom: 2rem;
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    box-shadow: 
-      0 20px 60px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     position: relative;
     overflow: hidden;
   }
-  
   .lib-hero::before {
     content: '';
     position: absolute;
@@ -190,19 +197,13 @@ import Header from '../components/Header.astro';
     background: radial-gradient(circle, rgba(192, 132, 252, 0.15) 0%, transparent 60%);
     pointer-events: none;
   }
-  
   [data-theme="light"] .lib-hero {
     background: 
       linear-gradient(135deg, rgba(168, 85, 247, 0.05), rgba(232, 121, 249, 0.03)),
       linear-gradient(180deg, #ffffff, #faf5ff);
-    border-color: rgba(168, 85, 247, 0.2);
+    border-color: rgba(168, 85, 247, 0.25);
   }
-  
-  .lib-hero-icon-wrap {
-    position: relative;
-    flex-shrink: 0;
-  }
-  
+  .lib-hero-icon-wrap { position: relative; flex-shrink: 0; }
   .lib-hero-icon-wrap::before {
     content: '';
     position: absolute;
@@ -212,70 +213,53 @@ import Header from '../components/Header.astro';
     opacity: 0.4;
     filter: blur(12px);
   }
-  
   .lib-hero-icon {
     position: relative;
-    width: 58px;
-    height: 58px;
+    width: 56px; height: 56px;
     border-radius: 16px;
     background: linear-gradient(135deg, #a855f7, #c084fc, #e879f9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     color: white;
-    box-shadow: 
-      0 8px 24px rgba(168, 85, 247, 0.5),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
-  
-  .lib-hero-content {
-    flex: 1;
-    min-width: 0;
-    position: relative;
-    z-index: 1;
-  }
-  
+  .lib-hero-content { flex: 1; min-width: 0; position: relative; z-index: 1; }
   .lib-hero-eyebrow {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    font-weight: 700;
+    font-size: 0.65rem; font-weight: 700;
     color: #e879f9;
     letter-spacing: 0.15em;
     margin-bottom: 4px;
   }
-  
   .lib-title {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-size: clamp(1.5rem, 3vw, 2rem);
     font-weight: 800;
-    letter-spacing: -0.035em;
-    margin: 0 0 6px;
+    letter-spacing: -0.03em;
+    margin: 0 0 4px;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     line-height: 1.1;
   }
-  
   .lib-subtitle {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     color: var(--text-secondary);
     margin: 0;
     font-weight: 500;
   }
-  
   .lib-clear-btn {
     display: none;
     align-items: center;
     gap: 6px;
-    padding: 9px 16px;
+    padding: 9px 14px;
     background: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.35);
     border-radius: 100px;
     color: #ef4444;
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -283,37 +267,48 @@ import Header from '../components/Header.astro';
     z-index: 1;
     flex-shrink: 0;
   }
-  
   .lib-clear-btn:hover {
     background: rgba(239, 68, 68, 0.2);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
   }
   
+  /* ═══════════════════════════════════════════════════
+     🎨 GRID — Home page 5-column style
+     ═══════════════════════════════════════════════════ */
   .lib-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 1.4rem;
+    gap: 1.2rem;
   }
   
-  @media (max-width: 1200px) { .lib-grid { grid-template-columns: repeat(4, 1fr); gap: 1.2rem; } }
-  @media (max-width: 900px) { .lib-grid { grid-template-columns: repeat(3, 1fr); gap: 1rem; } }
-  @media (max-width: 640px) { .lib-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; } }
+  @media (max-width: 1200px) { .lib-grid { grid-template-columns: repeat(4, 1fr); gap: 1rem; } }
+  @media (max-width: 900px) { .lib-grid { grid-template-columns: repeat(3, 1fr); gap: 0.9rem; } }
+  @media (max-width: 640px) { .lib-grid { grid-template-columns: repeat(2, 1fr); gap: 0.7rem; } }
   
+  /* ═══════════════════════════════════════════════════
+     🃏 CARD — Match home page premium style
+     ═══════════════════════════════════════════════════ */
   .lib-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 18px;
+    display: block;
+    background: rgba(28, 15, 61, 0.5);
+    border: 1px solid rgba(192, 132, 252, 0.15);
+    border-radius: 14px;
     overflow: hidden;
     text-decoration: none;
-    color: var(--text-primary);
-    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), 
+    color: inherit;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
                 border-color 0.25s ease,
-                box-shadow 0.35s ease;
+                box-shadow 0.35s ease,
+                background 0.25s ease;
     animation: lib-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
-    display: block;
     position: relative;
     will-change: transform;
+  }
+  
+  [data-theme="light"] .lib-card {
+    background: #ffffff;
+    border-color: rgba(168, 85, 247, 0.15);
   }
   
   @keyframes lib-in {
@@ -322,107 +317,123 @@ import Header from '../components/Header.astro';
   }
   
   .lib-card:hover {
-    transform: translateY(-8px);
-    border-color: rgba(192, 132, 252, 0.55);
+    transform: translateY(-6px);
+    background: rgba(36, 21, 72, 0.75);
+    border-color: rgba(192, 132, 252, 0.45);
     box-shadow: 
-      0 22px 50px rgba(0, 0, 0, 0.35),
+      0 22px 45px rgba(0, 0, 0, 0.35),
       0 0 30px rgba(192, 132, 252, 0.2);
   }
   
+  [data-theme="light"] .lib-card:hover {
+    background: #faf5ff;
+    box-shadow: 0 22px 45px rgba(168, 85, 247, 0.2);
+  }
+  
+  /* THUMBNAIL — Fixed size, home-style */
   .lib-card-thumb {
     position: relative;
-    aspect-ratio: 16/9;
-    background: linear-gradient(135deg, rgba(192, 132, 252, 0.15), rgba(125, 211, 252, 0.1));
+    width: 100%;
+    aspect-ratio: 16 / 9;
     overflow: hidden;
+    background: linear-gradient(135deg, #1c0f3d, #241548);
   }
   
   .lib-card-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: block;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s ease;
   }
   
-  .lib-card:hover .lib-card-thumb img { transform: scale(1.1); }
-  
-  .lib-card-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to bottom, transparent 40%, rgba(0, 0, 0, 0.7) 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
+  .lib-card:hover .lib-card-thumb img {
+    transform: scale(1.08);
+    filter: brightness(0.85);
   }
   
-  .lib-card:hover .lib-card-overlay { opacity: 1; }
-  
+  /* Beautiful gradient placeholder (when no thumbnail) */
   .lib-card-noimg {
     width: 100%;
     height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: 
+      radial-gradient(circle at 30% 30%, rgba(232, 121, 249, 0.4) 0%, transparent 55%),
+      radial-gradient(circle at 70% 70%, rgba(125, 211, 252, 0.35) 0%, transparent 55%),
+      linear-gradient(135deg, #a855f7, #e879f9, #7dd3fc);
+    color: white;
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 3.2rem;
+    font-size: 2.5rem;
     font-weight: 800;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    color: white;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
   }
   
-  .lib-card-play {
+  .lib-card-noimg::before {
+    content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.6);
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    opacity: 0;
-    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    box-shadow: 
-      0 10px 35px rgba(192, 132, 252, 0.7),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    inset: 0;
+    background: 
+      linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.15) 50%, transparent 70%);
+    transform: translateX(-100%);
+    animation: shimmer-slow 3s ease-in-out infinite;
+  }
+  
+  @keyframes shimmer-slow {
+    0% { transform: translateX(-100%); }
+    50%, 100% { transform: translateX(100%); }
+  }
+  
+  /* Shine sweep on hover */
+  .lib-card-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      110deg,
+      transparent 25%,
+      rgba(255, 255, 255, 0.15) 50%,
+      transparent 75%
+    );
+    transition: left 0.7s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
-  }
-  .lib-card-play svg { width: 24px; height: 24px; margin-left: 3px; }
-  
-  .lib-card:hover .lib-card-play {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    z-index: 2;
   }
   
-  .lib-card-type {
+  .lib-card:hover .lib-card-shine { left: 100%; }
+  
+  /* Badge (top-left) - matches home NEW/HD */
+  .lib-card-badge {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    padding: 4px 10px;
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    top: 8px;
+    left: 8px;
+    padding: 3px 8px;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
     color: white;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
-    font-weight: 700;
+    font-size: 0.58rem;
+    font-weight: 800;
     letter-spacing: 0.06em;
-    border-radius: 6px;
-    border: 1px solid rgba(192, 132, 252, 0.4);
+    border-radius: 5px;
     text-transform: uppercase;
+    box-shadow: 0 3px 10px rgba(192, 132, 252, 0.4);
+    z-index: 3;
   }
   
+  /* Remove button (top-right) */
   .lib-card-remove {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 30px;
-    height: 30px;
+    top: 8px; right: 8px;
+    width: 26px; height: 26px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid rgba(239, 68, 68, 0.5);
     color: #ef4444;
     cursor: pointer;
@@ -432,32 +443,64 @@ import Header from '../components/Header.astro';
     opacity: 0;
     transition: all 0.25s;
     padding: 0;
-    z-index: 5;
+    z-index: 4;
   }
-  .lib-card-remove svg { width: 13px; height: 13px; }
-  
+  .lib-card-remove svg { width: 12px; height: 12px; }
   .lib-card:hover .lib-card-remove { opacity: 1; }
   .lib-card-remove:hover {
     background: rgba(239, 68, 68, 0.95);
     color: white;
-    transform: scale(1.12);
+    transform: scale(1.15);
   }
   
-  .lib-card-info { padding: 13px 15px 15px; }
+  /* Play button (center) - premium home style */
+  .lib-card-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    opacity: 0;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 
+      0 8px 25px rgba(192, 132, 252, 0.65),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    pointer-events: none;
+    z-index: 3;
+  }
+  .lib-card-play svg { width: 18px; height: 18px; margin-left: 2px; }
+  
+  .lib-card:hover .lib-card-play {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  
+  /* INFO */
+  .lib-card-info { 
+    padding: 10px 12px 12px;
+  }
   
   .lib-card-title {
     font-family: 'DM Sans', sans-serif;
-    font-size: 0.92rem;
+    font-size: 0.84rem;
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1.35;
-    margin: 0 0 6px;
+    margin: 0 0 5px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     transition: color 0.25s ease;
     letter-spacing: -0.005em;
+    min-height: 2.3em;
   }
   
   .lib-card:hover .lib-card-title {
@@ -468,12 +511,19 @@ import Header from '../components/Header.astro';
   }
   
   .lib-card-meta {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    color: var(--text-muted);
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.63rem;
+    color: var(--text-muted);
+    line-height: 1.2;
+  }
+  
+  .lib-card-channel {
+    color: var(--purple);
+    font-weight: 600;
+    max-width: 90px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -493,9 +543,9 @@ import Header from '../components/Header.astro';
   }
   
   .lib-empty-icon {
-    width: 110px;
-    height: 110px;
-    border-radius: 32px;
+    width: 100px;
+    height: 100px;
+    border-radius: 30px;
     background: linear-gradient(135deg, rgba(192, 132, 252, 0.12), rgba(232, 121, 249, 0.08));
     display: flex;
     align-items: center;
@@ -503,12 +553,11 @@ import Header from '../components/Header.astro';
     color: rgba(192, 132, 252, 0.55);
     margin-bottom: 1.5rem;
     border: 1px solid rgba(192, 132, 252, 0.25);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
   
   .lib-empty-title {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     font-weight: 800;
     color: var(--text-primary);
     margin: 0 0 10px;
@@ -517,9 +566,9 @@ import Header from '../components/Header.astro';
   
   .lib-empty-desc {
     color: var(--text-secondary);
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     max-width: 380px;
-    margin: 0 0 1.8rem;
+    margin: 0 0 1.6rem;
     line-height: 1.6;
   }
   
@@ -532,14 +581,14 @@ import Header from '../components/Header.astro';
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 13px 26px;
+    padding: 12px 24px;
     background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     color: white;
     border-radius: 100px;
     text-decoration: none;
     font-family: 'DM Sans', sans-serif;
     font-weight: 700;
-    font-size: 0.92rem;
+    font-size: 0.88rem;
     box-shadow: 0 10px 30px rgba(192, 132, 252, 0.5);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -551,17 +600,21 @@ import Header from '../components/Header.astro';
   
   @media (max-width: 640px) {
     .lib-hero {
-      padding: 18px 20px;
+      padding: 16px 18px;
       gap: 14px;
-      border-radius: 22px;
-      flex-wrap: wrap;
+      border-radius: 20px;
     }
-    .lib-hero-icon { width: 48px; height: 48px; border-radius: 14px; }
+    .lib-hero-icon { width: 46px; height: 46px; border-radius: 13px; }
     .lib-hero-icon svg { width: 24px; height: 24px; }
-    .lib-clear-btn { padding: 7px 12px; font-size: 0.72rem; }
-    .lib-card-info { padding: 11px 12px 13px; }
-    .lib-card-title { font-size: 0.85rem; }
-    .lib-card-meta { font-size: 0.62rem; }
-    .lib-card-type { font-size: 0.55rem; padding: 3px 8px; }
+    .lib-clear-btn { padding: 7px 11px; font-size: 0.7rem; }
+    .lib-card-info { padding: 9px 10px 11px; }
+    .lib-card-title { font-size: 0.78rem; min-height: 2.1em; }
+    .lib-card-meta { font-size: 0.58rem; }
+    .lib-card-badge { font-size: 0.52rem; padding: 2px 6px; top: 6px; left: 6px; }
+    .lib-card-remove { width: 22px; height: 22px; top: 6px; right: 6px; }
+    .lib-card-remove svg { width: 10px; height: 10px; }
+    .lib-card-play { width: 38px; height: 38px; }
+    .lib-card-play svg { width: 16px; height: 16px; }
+    .lib-card-noimg { font-size: 2rem; }
   }
 </style>
