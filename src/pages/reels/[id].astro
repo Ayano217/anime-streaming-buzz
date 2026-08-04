@@ -89,11 +89,9 @@ function buildRelatedFeed(current: any, all: any[]): any[] {
 const feedQueue = buildRelatedFeed(video, allVideos);
 const nextVideo = feedQueue[1] || null;
 
-// Better channel display
 const displayChannel = (video.channel || 'AniTube').trim();
 const channelHandle = displayChannel.replace(/\s+/g, '').toLowerCase().slice(0, 25);
 
-// Type label with emoji
 const typeInfo: any = {
   anime: { label: 'Anime', emoji: '🎌' },
   kdrama: { label: 'K-Drama', emoji: '🎭' },
@@ -111,7 +109,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
     data-next={nextVideo?.id || ''}
   >
     
-    <!-- Top Bar (NO COUNTER, cleaner) -->
     <header class="rp-topbar">
       <button class="rp-back" id="backBtn" aria-label="Back to home">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -124,14 +121,12 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         <div class="rp-brand-dot"></div>
       </div>
       
-      <!-- Type badge (replaces counter) -->
       <div class="rp-type-badge">
         <span class="rp-type-emoji">{currentType.emoji}</span>
         <span class="rp-type-label">{currentType.label}</span>
       </div>
     </header>
 
-    <!-- Video Stage -->
     <main class="rp-stage">
       
       <div class="rp-card" id="videoCard">
@@ -156,7 +151,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
             <div class="rp-loader-text">AniTubeBuzz</div>
           </div>
           
-          <!-- Double-tap heart animation overlay -->
           <div class="rp-doubletap-heart" id="doubleTapHeart">
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
@@ -165,7 +159,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         </div>
       </div>
 
-      <!-- Info Panel (Better UI) -->
       <div class="rp-info">
         <div class="rp-channel-row">
           <div class="rp-avatar">
@@ -183,7 +176,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         <h1 class="rp-title">{video.title}</h1>
       </div>
 
-      <!-- Action Pills -->
       <div class="rp-actions">
         <button class="rp-pill rp-save" id="saveBtn" aria-label="Save">
           <div class="rp-pill-icon">
@@ -204,7 +196,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         </button>
       </div>
 
-      <!-- Desktop Nav -->
       <div class="rp-nav">
         <button class="rp-arrow" id="prevBtn" aria-label="Previous">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -220,7 +211,56 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
 
     </main>
 
-    <script is:inline set:html={`window.__REELS_VIDEO__ = ${JSON.stringify(video)}; window.__REELS_QUEUE__ = ${JSON.stringify(feedQueue.slice(0, 30))};`}></script>
+    <script is:inline set:html={`window.__REELS_VIDEO__ = ${JSON.stringify(video)}; window.__REELS_QUEUE__ = ${JSON.stringify(feedQueue.slice(0, 30))}; window.__CURRENT_VIDEO_ID__ = ${JSON.stringify(videoId)};`}></script>
+
+    <!-- 🔥 CRITICAL: Inline script (NOT typescript) for back button - runs immediately -->
+    <script is:inline>
+      (function(){
+        var vid = window.__CURRENT_VIDEO_ID__ || '';
+        
+        // Save to localStorage IMMEDIATELY on page load
+        try {
+          if (vid) {
+            localStorage.setItem('anitube_resume_video', vid);
+            localStorage.setItem('anitube_resume_time', String(Date.now()));
+          }
+        } catch(e) {}
+        
+        // BACK BUTTON — Multiple layers of safety
+        function goHome(e) {
+          if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+          try {
+            if (vid) {
+              localStorage.setItem('anitube_resume_video', vid);
+              localStorage.setItem('anitube_resume_time', String(Date.now()));
+            }
+          } catch(err) {}
+          window.location.href = '/?resume=' + encodeURIComponent(vid);
+          return false;
+        }
+        
+        // Attach handler as soon as button exists
+        function attachBackHandler() {
+          var btn = document.getElementById('backBtn');
+          if (btn) {
+            // Remove any existing handlers
+            btn.onclick = goHome;
+            btn.addEventListener('click', goHome, false);
+          } else {
+            setTimeout(attachBackHandler, 50);
+          }
+        }
+        
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', attachBackHandler);
+        } else {
+          attachBackHandler();
+        }
+      })();
+    </script>
 
   </div>
 
@@ -322,7 +362,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       50% { opacity: 0.5; transform: scale(0.8); }
     }
 
-    /* NEW: Type badge (replaces counter) */
     .rp-type-badge {
       display: flex;
       align-items: center;
@@ -334,10 +373,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       backdrop-filter: blur(10px);
     }
 
-    .rp-type-emoji {
-      font-size: 14px;
-    }
-
+    .rp-type-emoji { font-size: 14px; }
     .rp-type-label {
       font-family: 'Inter', sans-serif;
       font-size: 12px;
@@ -406,7 +442,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       display: block;
     }
 
-    /* Double tap heart animation */
     .rp-doubletap-heart {
       position: absolute;
       top: 50%;
@@ -421,7 +456,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
     }
 
     .rp-doubletap-heart svg { width: 100%; height: 100%; }
-
     .rp-doubletap-heart.pop {
       animation: rp-heart-explode 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
@@ -485,7 +519,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       opacity: 0.9;
     }
 
-    /* IMPROVED INFO PANEL */
     .rp-info {
       position: absolute;
       bottom: 40px;
@@ -548,7 +581,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       font-size: 15px;
       color: white;
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-      letter-spacing: -0.01em;
     }
 
     .rp-channel-meta {
@@ -583,7 +615,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      letter-spacing: -0.01em;
     }
 
     .rp-actions {
@@ -662,31 +693,20 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       transform: translateX(-3px);
       background: linear-gradient(135deg, rgba(48, 25, 90, 0.9), rgba(35, 18, 65, 0.95));
       border-color: rgba(232, 121, 249, 0.6);
-      box-shadow: 
-        0 10px 30px rgba(192, 132, 252, 0.35),
-        0 0 20px rgba(232, 121, 249, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.15);
     }
 
     .rp-pill:hover::before { left: 100%; }
-
-    .rp-pill:hover .rp-pill-icon {
-      transform: scale(1.08);
-      box-shadow: 0 5px 16px rgba(232, 121, 249, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-    }
-
+    .rp-pill:hover .rp-pill-icon { transform: scale(1.08); }
     .rp-pill:hover .rp-icon { transform: scale(1.1); }
     .rp-pill:active { transform: translateX(-2px) scale(0.97); }
 
     .rp-save.saved {
       border-color: rgba(255, 200, 100, 0.55);
       background: linear-gradient(135deg, rgba(75, 55, 20, 0.85), rgba(50, 35, 10, 0.9));
-      box-shadow: 0 8px 24px rgba(255, 200, 100, 0.3), 0 0 15px rgba(255, 200, 100, 0.15);
     }
 
     .rp-save.saved .rp-pill-icon {
       background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
-      box-shadow: 0 4px 14px rgba(251, 191, 36, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
 
     .rp-save.saved .rp-bookmark {
@@ -739,7 +759,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       justify-content: center;
       cursor: pointer;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
     }
 
     .rp-arrow:hover {
@@ -806,7 +825,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
             watchedAt: Date.now()
           });
           localStorage.setItem('anitube_history', JSON.stringify(filtered.slice(0, 100)));
-          localStorage.setItem('anitube_last_watched', videoId);
         }
       } catch (e) { console.warn('History save failed', e); }
       
@@ -849,7 +867,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       updateSaveUI();
       saveBtn?.addEventListener('click', toggleSave);
       
-      // DOUBLE-TAP TO SAVE (Instagram style)
+      // DOUBLE-TAP
       const card = document.getElementById('videoCard');
       const doubleTapHeart = document.getElementById('doubleTapHeart');
       let lastTap = 0;
@@ -857,11 +875,10 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       card?.addEventListener('click', (e) => {
         const now = Date.now();
         if (now - lastTap < 350) {
-          // Double tap!
           if (!isSaved()) toggleSave();
           if (doubleTapHeart) {
             doubleTapHeart.classList.remove('pop');
-            void (doubleTapHeart as HTMLElement).offsetWidth; // reflow
+            void (doubleTapHeart as HTMLElement).offsetWidth;
             doubleTapHeart.classList.add('pop');
           }
           lastTap = 0;
@@ -898,13 +915,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         }
       });
       
-      // BACK — always home with resume param
-      const backBtn = document.getElementById('backBtn');
-      backBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        window.location.href = `/?resume=${encodeURIComponent(videoId)}`;
-      });
-      
       // NAVIGATION
       function navigate(direction: 'next' | 'prev') {
         let targetId = '';
@@ -929,7 +939,15 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') { e.preventDefault(); navigate('next'); }
         else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') { e.preventDefault(); navigate('prev'); }
-        else if (e.key === 'Escape') { window.location.href = `/?resume=${encodeURIComponent(videoId)}`; }
+        else if (e.key === 'Escape') {
+          try {
+            if (videoId) {
+              localStorage.setItem('anitube_resume_video', videoId);
+              localStorage.setItem('anitube_resume_time', String(Date.now()));
+            }
+          } catch(e) {}
+          window.location.href = `/?resume=${encodeURIComponent(videoId)}`;
+        }
       });
       
       let wheelLocked = false;
