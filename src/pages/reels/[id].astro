@@ -121,11 +121,13 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
 ---
 
 <ImmersiveLayout title={`${video.title} | AniTubeBuzz`}>
+  <!-- ✅ Change A: data-aspect added -->
   <div 
     id="reels-root" 
     class="rp-root" 
     data-videoid={videoId}
     data-next={nextVideo?.id || ''}
+    data-aspect={video.aspect || 'portrait'}
   >
     
     <header class="rp-topbar">
@@ -415,6 +417,8 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       padding: 65px 20px 30px;
       z-index: 1;
     }
+
+    /* ✅ Change B: Default card (portrait 9:16) */
     .rp-card {
       position: relative;
       width: 100%;
@@ -425,6 +429,23 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
       animation: rp-card-enter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
+
+    /* ✅ Change B: 16:9 landscape video — cinematic player */
+    .rp-root[data-aspect="landscape"] .rp-card {
+      aspect-ratio: 16 / 9;
+      max-width: 780px;
+      max-height: calc(100vh - 120px);
+      max-height: calc(100dvh - 120px);
+    }
+
+    /* ✅ Change B: Mixed (Dailymotion) — default to landscape */
+    .rp-root[data-aspect="mixed"] .rp-card {
+      aspect-ratio: 16 / 9;
+      max-width: 780px;
+      max-height: calc(100vh - 120px);
+      max-height: calc(100dvh - 120px);
+    }
+
     @keyframes rp-card-enter { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
     .rp-card-glow {
       position: absolute; inset: -3px;
@@ -543,6 +564,22 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       gap: 10px;
       z-index: 60;
     }
+
+    /* ✅ Change D: Landscape — actions move down since video is shorter vertically */
+    .rp-root[data-aspect="landscape"] .rp-actions,
+    .rp-root[data-aspect="mixed"] .rp-actions {
+      bottom: 80px;
+      right: calc(50% - 430px);
+    }
+
+    /* ✅ Change D: Landscape — info panel adjust */
+    .rp-root[data-aspect="landscape"] .rp-info,
+    .rp-root[data-aspect="mixed"] .rp-info {
+      bottom: 20px;
+      left: calc(50% - 390px);
+      max-width: 400px;
+    }
+
     .rp-pill {
       display: flex; align-items: center; gap: 10px;
       padding: 6px 14px 6px 6px;
@@ -679,6 +716,20 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         width: 100%;
         aspect-ratio: 9 / 16;
         margin: 0;
+      }
+
+      /* ✅ Change C: Mobile landscape — wider, shorter */
+      .rp-root[data-aspect="landscape"] .rp-card,
+      .rp-root[data-aspect="mixed"] .rp-card {
+        aspect-ratio: 16 / 9;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      /* ✅ Change C: Mobile landscape stage — less top padding */
+      .rp-root[data-aspect="landscape"] .rp-stage,
+      .rp-root[data-aspect="mixed"] .rp-stage {
+        padding-top: 60px;
       }
       
       .rp-card-glow { display: none; }
@@ -1020,7 +1071,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       // Wheel navigation ONLY on desktop
       let wheelLocked = false;
       document.addEventListener('wheel', (e) => {
-        // Skip if mobile (screen width <= 640)
         if (window.innerWidth <= 640) return;
         const target = e.target as HTMLElement;
         if (target.closest('iframe')) return;
@@ -1032,7 +1082,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         setTimeout(() => { wheelLocked = false; }, 800);
       }, { passive: true });
       
-      // Touch swipe navigation - only in stage area (not on info/actions)
+      // Touch swipe navigation
       let touchStartY = 0;
       let touchStartTime = 0;
       let touchStartInStage = false;
@@ -1062,7 +1112,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       });
       setTimeout(() => loader?.classList.add('hidden'), 3500);
       
-      // Safiya - only trigger, but hide on mobile if possible
       setTimeout(() => {
         if (currentVideo) {
           window.dispatchEvent(new CustomEvent('safiya:video-event', {
@@ -1071,14 +1120,11 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         }
       }, 500);
       
-      // Try to hide Safiya on mobile (or reposition)
       if (window.innerWidth <= 640) {
         setTimeout(() => {
-          // Add CSS to reposition Safiya on mobile
           const safiyaStyle = document.createElement('style');
           safiyaStyle.textContent = `
             @media (max-width: 640px) {
-              /* Move Safiya to top-right to avoid video timeline */
               [id*="safiya"], [class*="safiya"] {
                 bottom: auto !important;
                 top: 68px !important;
