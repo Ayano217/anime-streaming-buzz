@@ -94,13 +94,31 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   <!-- ═══ LOADER + BACK TO TOP ═══ -->
   <script is:inline>
   (function(){
-    window.addEventListener('load', function(){
-      setTimeout(function(){
-        var l = document.getElementById('loader');
-        if(l){ l.style.opacity='0'; setTimeout(function(){ l.style.display='none'; },500); }
-      }, 500);
-    });
+    // Hide loader — fallback ensures it always hides even if iframes stuck
+function hideLoader() {
+  var l = document.getElementById('loader');
+  if(l){ 
+    l.style.opacity='0'; 
+    setTimeout(function(){ l.style.display='none'; }, 500); 
+  }
+}
 
+// Try load event first (fast)
+window.addEventListener('load', function(){
+  setTimeout(hideLoader, 500);
+});
+
+// FALLBACK: Always hide after 2 seconds regardless
+setTimeout(hideLoader, 2000);
+
+// Also hide when DOM is ready (for slow iframe pages)
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  setTimeout(hideLoader, 1500);
+} else {
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(hideLoader, 1500);
+  });
+}
     var btt = document.getElementById('btt');
     if(btt){
       var bttVisible = false;
