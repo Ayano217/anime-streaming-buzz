@@ -42,7 +42,7 @@ const { title = 'AniTubeBuzz' } = Astro.props;
       -moz-osx-font-smoothing: grayscale;
     }
 
-    /* DESKTOP — locked/immersive */
+    /* ═══ DESKTOP — fully immersive, locked ═══ */
     @media (min-width: 641px) {
       html, body {
         overflow: hidden;
@@ -57,19 +57,27 @@ const { title = 'AniTubeBuzz' } = Astro.props;
       }
     }
 
-    /* MOBILE — scrollable */
+    /* ═══ MOBILE — scrollable like a normal page ═══ */
     @media (max-width: 640px) {
-      html, body {
+      html {
+        overflow-x: hidden;
+        overflow-y: auto;
+        height: auto;
+      }
+      body {
         overflow-x: hidden;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         height: auto;
-        width: 100%;
+        min-height: 100vh;
+        min-height: 100dvh;
       }
       #immersive-app {
         position: relative;
         width: 100%;
         height: auto;
+        min-height: 100vh;
+        min-height: 100dvh;
         overflow: visible;
       }
     }
