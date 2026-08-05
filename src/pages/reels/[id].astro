@@ -88,7 +88,7 @@ if (!video) {
 }
 
 function buildRelatedFeed(current: any, all: any[]): any[] {
-  if (!all || all.length === 0) return [current];
+  if (!all || all.length === 0) return [];
   const pool = all.filter(v => v.id !== current.id);
   const scored = pool.map(v => {
     let score = 0;
@@ -102,24 +102,16 @@ function buildRelatedFeed(current: any, all: any[]): any[] {
     return { video: v, score };
   });
   scored.sort((a, b) => b.score - a.score);
-  return [current, ...scored.map(s => s.video)];
+  return scored.map(s => s.video);
 }
 
-const feedQueue = buildRelatedFeed(video, allVideos);
-const nextVideo = feedQueue[1] || null;
+const relatedFeed = buildRelatedFeed(video, allVideos);
+const nextVideo = relatedFeed[0] || null;
+const prevVideo = relatedFeed[1] || null;
 
 const displayChannel = (video.channel || 'AniTube').trim();
 const channelHandle = displayChannel.replace(/\s+/g, '').toLowerCase().slice(0, 25);
 
-const typeInfo: any = {
-  anime: { label: 'Anime', emoji: '🎌' },
-  kdrama: { label: 'K-Drama', emoji: '🎭' },
-  donghua: { label: 'Donghua', emoji: '🐉' },
-  movies: { label: 'Movie', emoji: '🎬' }
-};
-const currentType = typeInfo[video.type] || typeInfo.anime;
-
-// Determine aspect for CSS
 const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
 ---
 
@@ -129,15 +121,17 @@ const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
     class="rp-root" 
     data-videoid={videoId}
     data-next={nextVideo?.id || ''}
+    data-prev={prevVideo?.id || ''}
     data-aspect={videoAspect}
   >
     
     <!-- ═══ TOP BAR ═══ -->
     <header class="rp-topbar">
-      <button class="rp-back" id="backBtn" aria-label="Back to home">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <button class="rp-home-btn" id="homeBtn" aria-label="Back to Home">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
+        <span class="rp-home-label">Home</span>
       </button>
       
       <div class="rp-brand">
@@ -145,155 +139,134 @@ const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
         <div class="rp-brand-dot"></div>
       </div>
       
-      <div class="rp-type-badge">
-        <span class="rp-type-emoji">{currentType.emoji}</span>
-        <span class="rp-type-label">{currentType.label}</span>
-      </div>
+      <!-- 💬 CHAT BUTTON (neon glow, premium) -->
+      <button class="rp-chat-btn" id="chatBtn" aria-label="Global Chat">
+        <div class="rp-chat-glow"></div>
+        <svg class="rp-chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+        </svg>
+        <span class="rp-chat-label">Chat</span>
+        <span class="rp-chat-count" id="chatCount">47</span>
+        <span class="rp-chat-live"></span>
+      </button>
     </header>
 
-    <!-- ═══ MAIN VIDEO STAGE ═══ -->
-    <main class="rp-stage">
+    <!-- ═══ MAIN CONTENT — Desktop: 2 columns | Mobile: stacked ═══ -->
+    <div class="rp-main">
       
-      <div class="rp-card" id="videoCard">
-        <div class="rp-card-glow"></div>
-        <div class="rp-card-frame">
-          <iframe 
-            id="videoFrame"
-            src={video.embedUrl}
-            title={video.title}
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowfullscreen
-            loading="eager"
-          ></iframe>
-          
-          <div class="rp-loader" id="loader">
-            <div class="rp-loader-orbit">
-              <div class="rp-loader-dot rp-dot-1"></div>
-              <div class="rp-loader-dot rp-dot-2"></div>
-              <div class="rp-loader-dot rp-dot-3"></div>
+      <!-- LEFT: Video + Info + Actions -->
+      <div class="rp-left">
+        
+        <div class="rp-card" id="videoCard">
+          <div class="rp-card-glow"></div>
+          <div class="rp-card-frame">
+            <iframe 
+              id="videoFrame"
+              src={video.embedUrl}
+              title={video.title}
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowfullscreen
+              loading="eager"
+            ></iframe>
+            
+            <div class="rp-loader" id="loader">
+              <div class="rp-loader-orbit">
+                <div class="rp-loader-dot rp-dot-1"></div>
+                <div class="rp-loader-dot rp-dot-2"></div>
+                <div class="rp-loader-dot rp-dot-3"></div>
+              </div>
+              <div class="rp-loader-text">AniTubeBuzz</div>
             </div>
-            <div class="rp-loader-text">AniTubeBuzz</div>
-          </div>
-          
-          <div class="rp-doubletap-heart" id="doubleTapHeart">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      <!-- Info panel (DESKTOP only) -->
-      <div class="rp-info rp-desktop-only">
-        <div class="rp-channel-row">
-          <div class="rp-avatar">
-            {displayChannel.charAt(0).toUpperCase()}
-            <div class="rp-avatar-ring"></div>
-          </div>
-          <div class="rp-channel-info">
-            <span class="rp-channel-name">@{channelHandle}</span>
-            <span class="rp-channel-meta">
-              <span class="rp-hd-dot"></span>
-              HD Quality
-            </span>
+            
+            <div class="rp-doubletap-heart" id="doubleTapHeart">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
+            </div>
           </div>
         </div>
-        <h1 class="rp-title">{video.title}</h1>
-      </div>
 
-      <!-- Actions (DESKTOP only) -->
-      <div class="rp-actions rp-desktop-only">
-        <button class="rp-pill rp-save" id="saveBtnDesktop" aria-label="Save">
-          <div class="rp-pill-icon">
-            <svg class="rp-icon rp-bookmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Action buttons row (both desktop + mobile) -->
+        <div class="rp-actions-row">
+          <button class="rp-action-btn rp-btn-save" id="saveBtn" aria-label="Save">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="rp-action-icon rp-icon-bookmark">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
             </svg>
-          </div>
-          <span class="rp-pill-label">Save</span>
-        </button>
-        
-        <button class="rp-pill rp-send" id="sendBtnDesktop" aria-label="Share">
-          <div class="rp-pill-icon">
-            <svg class="rp-icon rp-plane" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <span class="rp-action-label">Save</span>
+          </button>
+          
+          <button class="rp-action-btn rp-btn-send" id="sendBtn" aria-label="Share">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="rp-action-icon rp-icon-plane">
               <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
             </svg>
-          </div>
-          <span class="rp-pill-label">Send</span>
-        </button>
-      </div>
-
-      <!-- Nav arrows (DESKTOP only) -->
-      <div class="rp-nav rp-desktop-only">
-        <button class="rp-arrow" id="prevBtn" aria-label="Previous">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 15l-6-6-6 6"/>
-          </svg>
-        </button>
-        <button class="rp-arrow" id="nextBtn" aria-label="Next">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 9l6 6 6-6"/>
-          </svg>
-        </button>
-      </div>
-
-    </main>
-
-    <!-- ═══ 📱 MOBILE SECTION — Below video (YouTube app style) ═══ -->
-    <section class="rp-mobile-section">
-      
-      <div class="rp-mobile-actions">
-        <button class="rp-mobile-btn rp-mobile-save" id="saveBtnMobile" aria-label="Save">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="rp-mobile-icon rp-mobile-bookmark">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-          </svg>
-          <span class="rp-mobile-btn-label">Save</span>
-        </button>
+            <span class="rp-action-label">Send</span>
+          </button>
+          
+          <button class="rp-action-btn rp-btn-prev" id="prevBtn" aria-label="Previous video">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="rp-action-icon">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            <span class="rp-action-label">Prev</span>
+          </button>
+          
+          <button class="rp-action-btn rp-btn-next" id="nextBtn" aria-label="Next video">
+            <span class="rp-action-label">Next</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="rp-action-icon">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
         
-        <button class="rp-mobile-btn rp-mobile-send" id="sendBtnMobile" aria-label="Share">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="rp-mobile-icon rp-mobile-plane">
-            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-          </svg>
-          <span class="rp-mobile-btn-label">Send</span>
-        </button>
-        
-        <button class="rp-mobile-btn rp-mobile-next" id="nextBtnMobile" aria-label="Next video">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="rp-mobile-icon">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-          <span class="rp-mobile-btn-label">Next</span>
-        </button>
-      </div>
-      
-      <div class="rp-mobile-info">
-        <div class="rp-mobile-channel-row">
-          <div class="rp-mobile-avatar">
-            {displayChannel.charAt(0).toUpperCase()}
-          </div>
-          <div class="rp-mobile-channel-info">
-            <div class="rp-mobile-channel-name">@{channelHandle}</div>
-            <div class="rp-mobile-channel-sub">
-              <span class="rp-mobile-hd-dot"></span>
-              HD Quality · {currentType.label}
+        <!-- Info card -->
+        <div class="rp-info-card">
+          <div class="rp-channel-row">
+            <div class="rp-avatar">
+              {displayChannel.charAt(0).toUpperCase()}
+            </div>
+            <div class="rp-channel-info">
+              <div class="rp-channel-name">@{channelHandle}</div>
+              <div class="rp-channel-sub">
+                <span class="rp-hd-dot"></span>
+                HD Quality
+              </div>
             </div>
           </div>
+          <h1 class="rp-video-title">{video.title}</h1>
         </div>
-        <h2 class="rp-mobile-title">{video.title}</h2>
+        
       </div>
+
+      <!-- RIGHT: Related videos feed (vertical, YouTube-style) -->
+      <aside class="rp-right">
+        <div class="rp-feed-header">
+          <div class="rp-feed-title">
+            <span class="rp-feed-bar"></span>
+            <span>Up Next</span>
+          </div>
+          <div class="rp-feed-count" id="feedCount">0</div>
+        </div>
+        
+        <div class="rp-feed" id="relatedFeed"></div>
+        
+        <div class="rp-feed-loading" id="feedLoading" style="display:none;">
+          <div class="rp-feed-spinner"></div>
+          <span>Loading more...</span>
+        </div>
+      </aside>
       
-      <div class="rp-mobile-hint">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <path d="M12 19V5M5 12l7-7 7 7"/>
-        </svg>
-        Swipe up for next video
-      </div>
-      
-    </section>
+    </div>
 
     <!-- ═══ DATA INJECTION ═══ -->
-    <script is:inline set:html={`window.__REELS_VIDEO__ = ${JSON.stringify(video)}; window.__REELS_QUEUE__ = ${JSON.stringify(feedQueue.slice(0, 30))}; window.__CURRENT_VIDEO_ID__ = ${JSON.stringify(videoId)};`}></script>
+    <script is:inline set:html={`
+      window.__REELS_VIDEO__ = ${JSON.stringify(video)};
+      window.__REELS_FEED__ = ${JSON.stringify(relatedFeed.slice(0, 20))};
+      window.__CURRENT_VIDEO_ID__ = ${JSON.stringify(videoId)};
+      window.__NEXT_ID__ = ${JSON.stringify(nextVideo?.id || '')};
+      window.__PREV_ID__ = ${JSON.stringify(prevVideo?.id || '')};
+    `}></script>
 
-    <!-- ═══ BACK BUTTON HANDLER (runs immediately) ═══ -->
+    <!-- ═══ HOME BUTTON HANDLER (saves resume) ═══ -->
     <script is:inline>
       (function(){
         var vid = window.__CURRENT_VIDEO_ID__ || '';
@@ -312,30 +285,24 @@ const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
               localStorage.setItem('anitube_resume_time', String(Date.now()));
             }
           } catch(err) {}
-          try {
-            if (document.referrer && document.referrer.indexOf(window.location.origin) === 0) {
-              window.history.back();
-            } else {
-              window.location.href = '/';
-            }
-          } catch(err) { window.location.href = '/'; }
+          window.location.href = '/';
           return false;
         }
         
-        function attachBackHandler() {
-          var btn = document.getElementById('backBtn');
+        function attachHomeHandler() {
+          var btn = document.getElementById('homeBtn');
           if (btn) {
             btn.onclick = goHome;
             btn.addEventListener('click', goHome, false);
           } else {
-            setTimeout(attachBackHandler, 50);
+            setTimeout(attachHomeHandler, 50);
           }
         }
         
         if (document.readyState === 'loading') {
-          document.addEventListener('DOMContentLoaded', attachBackHandler);
+          document.addEventListener('DOMContentLoaded', attachHomeHandler);
         } else {
-          attachBackHandler();
+          attachHomeHandler();
         }
       })();
     </script>
@@ -343,130 +310,259 @@ const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════
-       🎨 CSS — Complete styles for desktop + mobile + landscape
+       🎨 CSS — Complete rebuild
        ═══════════════════════════════════════════════════════════ -->
   <style>
     /* ═══ ROOT ═══ */
     .rp-root {
-      position: fixed;
-      inset: 0;
-      width: 100vw;
-      height: 100vh;
-      height: 100dvh;
+      position: relative;
+      min-height: 100vh;
+      min-height: 100dvh;
       background: 
-        radial-gradient(ellipse at 20% 20%, rgba(192, 132, 252, 0.18) 0%, transparent 55%),
-        radial-gradient(ellipse at 85% 75%, rgba(125, 211, 252, 0.12) 0%, transparent 55%),
+        radial-gradient(ellipse at 20% 20%, rgba(192, 132, 252, 0.15) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 75%, rgba(125, 211, 252, 0.1) 0%, transparent 55%),
         linear-gradient(180deg, #0a0517 0%, #150a29 50%, #0a0517 100%);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
       user-select: none;
       -webkit-user-select: none;
-      z-index: 1;
-      animation: rp-fade-in 0.5s ease-out;
     }
-    @keyframes rp-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
     /* ═══ TOP BAR ═══ */
     .rp-topbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 58px;
+      position: sticky;
+      top: 0;
+      left: 0; right: 0;
+      height: 60px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 16px;
+      padding: 0 20px;
       z-index: 100;
-      background: linear-gradient(to bottom, rgba(10, 5, 23, 0.95) 0%, rgba(10, 5, 23, 0.4) 60%, transparent 100%);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      background: rgba(10, 5, 23, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(192, 132, 252, 0.12);
     }
-    .rp-back {
-      width: 38px; height: 38px;
-      display: flex; align-items: center; justify-content: center;
-      color: #f5ecff;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 50%;
-      cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      padding: 0;
-    }
-    .rp-back:hover { background: rgba(192, 132, 252, 0.15); border-color: rgba(192, 132, 252, 0.4); transform: scale(1.05); }
-    .rp-back:active { transform: scale(0.94); }
-    .rp-brand { display: flex; align-items: center; gap: 7px; position: absolute; left: 50%; transform: translateX(-50%); }
-    .rp-brand-text {
-      font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif;
-      font-weight: 700; font-size: 15px;
-      letter-spacing: -0.02em;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .rp-brand-dot { width: 5px; height: 5px; background: #7dd3fc; border-radius: 50%; box-shadow: 0 0 10px #7dd3fc; animation: rp-pulse 2s infinite; }
-    @keyframes rp-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
-    .rp-type-badge {
-      display: flex; align-items: center; gap: 4px;
-      padding: 5px 9px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(192, 132, 252, 0.28);
-      border-radius: 20px;
-    }
-    .rp-type-emoji { font-size: 11px; line-height: 1; }
-    .rp-type-label { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; color: #f5ecff; letter-spacing: 0.02em; line-height: 1; }
-
-    /* ═══ STAGE ═══ */
-    .rp-stage {
-      flex: 1;
+    
+    .rp-home-btn {
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 8px;
+      padding: 8px 14px 8px 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(192, 132, 252, 0.25);
+      border-radius: 100px;
+      color: #f5ecff;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .rp-home-btn:hover {
+      background: rgba(192, 132, 252, 0.15);
+      border-color: rgba(192, 132, 252, 0.5);
+      transform: translateX(-2px);
+    }
+    .rp-home-btn:active { transform: translateX(-1px) scale(0.97); }
+    .rp-home-label { line-height: 1; }
+    
+    .rp-brand {
+      display: flex; align-items: center; gap: 7px;
+      position: absolute; left: 50%; transform: translateX(-50%);
+    }
+    .rp-brand-text {
+      font-family: 'Bricolage Grotesque', 'DM Sans', sans-serif;
+      font-weight: 700; font-size: 16px;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .rp-brand-dot {
+      width: 6px; height: 6px;
+      background: #7dd3fc;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #7dd3fc;
+      animation: rp-pulse 2s infinite;
+    }
+    @keyframes rp-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+    
+    /* ═══ 💬 CHAT BUTTON — Premium neon glow ═══ */
+    .rp-chat-btn {
       position: relative;
-      padding: 65px 20px 30px;
-      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px 8px 12px;
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.15), rgba(232, 121, 249, 0.1), rgba(125, 211, 252, 0.15));
+      border: 1px solid rgba(232, 121, 249, 0.5);
+      border-radius: 100px;
+      color: #ffffff;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 
+        0 0 20px rgba(232, 121, 249, 0.35),
+        0 0 40px rgba(192, 132, 252, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      overflow: visible;
+      animation: rp-chat-glow-pulse 3s ease-in-out infinite;
+    }
+    
+    @keyframes rp-chat-glow-pulse {
+      0%, 100% {
+        box-shadow: 
+          0 0 20px rgba(232, 121, 249, 0.35),
+          0 0 40px rgba(192, 132, 252, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      }
+      50% {
+        box-shadow: 
+          0 0 30px rgba(232, 121, 249, 0.6),
+          0 0 60px rgba(192, 132, 252, 0.4),
+          0 0 80px rgba(125, 211, 252, 0.25),
+          inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      }
+    }
+    
+    .rp-chat-glow {
+      position: absolute;
+      inset: -6px;
+      border-radius: 100px;
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc, #e879f9, #c084fc);
+      background-size: 300% 300%;
+      opacity: 0.4;
+      filter: blur(14px);
+      z-index: -1;
+      animation: rp-chat-glow-move 5s linear infinite;
+      pointer-events: none;
+    }
+    
+    @keyframes rp-chat-glow-move {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+    
+    .rp-chat-btn:hover {
+      transform: translateY(-1px) scale(1.03);
+      border-color: rgba(232, 121, 249, 0.8);
+    }
+    .rp-chat-btn:hover .rp-chat-glow { opacity: 0.7; }
+    .rp-chat-btn:active { transform: translateY(0) scale(0.97); }
+    
+    .rp-chat-icon {
+      width: 16px; height: 16px;
+      color: #ffffff;
+      filter: drop-shadow(0 0 6px rgba(232, 121, 249, 0.8));
+    }
+    
+    .rp-chat-label {
+      line-height: 1;
+      color: #ffffff;
+      text-shadow: 0 0 8px rgba(232, 121, 249, 0.5);
+    }
+    
+    .rp-chat-count {
+      padding: 2px 8px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #7dd3fc;
+      line-height: 1;
+      text-shadow: 0 0 6px rgba(125, 211, 252, 0.8);
+    }
+    
+    .rp-chat-live {
+      position: absolute;
+      top: -2px; right: -2px;
+      width: 8px; height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981, 0 0 20px rgba(16, 185, 129, 0.5);
+      animation: rp-chat-live-pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes rp-chat-live-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.6; }
     }
 
-    /* ═══ VIDEO CARD — Portrait (default, 9:16) ═══ */
+    /* ═══ MAIN LAYOUT ═══ */
+    .rp-main {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 24px;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px 20px 60px;
+    }
+
+    .rp-left {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 0;
+    }
+    
+    .rp-right {
+      min-width: 0;
+    }
+
+    /* ═══ VIDEO CARD ═══ */
     .rp-card {
       position: relative;
       width: 100%;
-      max-width: 420px;
-      aspect-ratio: 9 / 16;
-      max-height: calc(100vh - 100px);
-      max-height: calc(100dvh - 100px);
-      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+      aspect-ratio: 16 / 9;
       animation: rp-card-enter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-
-    /* ═══ VIDEO CARD — Landscape (16:9) ═══ */
-    .rp-root[data-aspect="landscape"] .rp-card,
-    .rp-root[data-aspect="mixed"] .rp-card {
-      aspect-ratio: 16 / 9;
-      max-width: 860px;
-      max-height: calc(100vh - 140px);
-      max-height: calc(100dvh - 140px);
+    
+    /* Portrait (9:16 shorts) — smaller centered */
+    .rp-root[data-aspect="portrait"] .rp-card {
+      aspect-ratio: 9 / 16;
+      max-width: 420px;
+      margin: 0 auto;
     }
-
-    @keyframes rp-card-enter { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-
+    
+    @keyframes rp-card-enter {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
     .rp-card-glow {
       position: absolute; inset: -3px;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      border-radius: 24px;
-      opacity: 0.65;
-      filter: blur(14px);
+      border-radius: 20px;
+      opacity: 0.5;
+      filter: blur(12px);
       z-index: -1;
       animation: rp-glow 4s ease-in-out infinite;
     }
-    @keyframes rp-glow { 0%, 100% { opacity: 0.5; filter: blur(14px); } 50% { opacity: 0.8; filter: blur(20px); } }
-
+    @keyframes rp-glow {
+      0%, 100% { opacity: 0.4; filter: blur(12px); }
+      50% { opacity: 0.7; filter: blur(18px); }
+    }
+    
     .rp-card-frame {
       position: absolute; inset: 0;
       background: #000;
-      border-radius: 20px;
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(192, 132, 252, 0.35);
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(192, 132, 252, 0.3);
     }
-    .rp-card-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .rp-card-frame iframe {
+      width: 100%; height: 100%;
+      border: 0; display: block;
+    }
 
     /* ═══ DOUBLE TAP HEART ═══ */
     .rp-doubletap-heart {
@@ -513,125 +609,74 @@ const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
       font-size: 14px; font-weight: 700;
       letter-spacing: 0.08em;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       opacity: 0.9;
     }
 
-    /* ═══ DESKTOP OVERLAY: INFO ═══ */
-    .rp-info {
-      position: absolute; bottom: 32px; left: 28px; z-index: 50; max-width: 320px; pointer-events: none;
-    }
-    .rp-channel-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .rp-avatar {
-      position: relative;
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      display: flex; align-items: center; justify-content: center;
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-weight: 700; font-size: 14px;
-      color: white;
-      border: 2px solid rgba(255, 255, 255, 0.35);
-      box-shadow: 0 4px 14px rgba(192, 132, 252, 0.55);
-    }
-    .rp-avatar-ring {
-      position: absolute; inset: -4px; border-radius: 50%;
-      border: 2px solid transparent;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc) border-box;
-      -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor; mask-composite: exclude;
-      opacity: 0.4;
-      animation: rp-ring-rotate 4s linear infinite;
-    }
-    @keyframes rp-ring-rotate { to { transform: rotate(360deg); } }
-    .rp-channel-info { display: flex; flex-direction: column; gap: 2px; }
-    .rp-channel-name { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; color: white; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9); }
-    .rp-channel-meta { display: flex; align-items: center; gap: 5px; font-family: 'Inter', sans-serif; font-size: 10px; color: rgba(255, 255, 255, 0.7); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9); font-weight: 500; }
-    .rp-hd-dot { width: 5px; height: 5px; border-radius: 50%; background: #7dd3fc; box-shadow: 0 0 8px #7dd3fc; animation: rp-pulse 2s infinite; }
-    .rp-title {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 15px; font-weight: 700;
-      color: white;
-      line-height: 1.35;
-      margin: 0;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95);
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-
-    /* Landscape — info repositioned below video card center */
-    .rp-root[data-aspect="landscape"] .rp-info,
-    .rp-root[data-aspect="mixed"] .rp-info {
-      bottom: 16px;
-      left: calc(50% - 400px);
-      max-width: 400px;
-    }
-
-    /* ═══ DESKTOP OVERLAY: ACTIONS ═══ */
-    .rp-actions {
-      position: absolute;
-      right: 40px;
-      bottom: 200px;
+    /* ═══ ACTIONS ROW ═══ */
+    .rp-actions-row {
       display: flex;
-      flex-direction: column;
       gap: 10px;
-      z-index: 60;
+      align-items: center;
+      flex-wrap: wrap;
     }
-
-    /* Landscape — actions repositioned */
-    .rp-root[data-aspect="landscape"] .rp-actions,
-    .rp-root[data-aspect="mixed"] .rp-actions {
-      bottom: 100px;
-      right: calc(50% - 470px);
-    }
-
-    .rp-pill {
-      display: flex; align-items: center; gap: 10px;
-      padding: 6px 14px 6px 6px;
-      height: 42px;
-      background: linear-gradient(135deg, rgba(28, 15, 61, 0.92), rgba(20, 10, 40, 0.96));
+    
+    .rp-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 16px;
+      height: 40px;
+      background: linear-gradient(135deg, rgba(28, 15, 61, 0.85), rgba(20, 10, 40, 0.92));
       backdrop-filter: blur(20px);
-      border: 1px solid rgba(192, 132, 252, 0.4);
-      border-radius: 24px;
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(192, 132, 252, 0.35);
+      border-radius: 100px;
+      color: #f5ecff;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      position: relative;
-      overflow: hidden;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
-    .rp-pill-icon {
-      width: 30px; height: 30px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      display: flex; align-items: center; justify-content: center;
-      color: white;
+    
+    .rp-action-btn:hover {
+      background: linear-gradient(135deg, rgba(48, 25, 90, 0.9), rgba(35, 18, 65, 0.95));
+      border-color: rgba(232, 121, 249, 0.6);
+      transform: translateY(-2px);
+    }
+    .rp-action-btn:active { transform: translateY(0) scale(0.96); }
+    
+    .rp-action-icon {
+      width: 16px; height: 16px;
       flex-shrink: 0;
-      box-shadow: 0 3px 10px rgba(192, 132, 252, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      color: #e879f9;
       transition: all 0.3s;
     }
-    .rp-icon { width: 15px; height: 15px; transition: all 0.3s; }
-    .rp-pill-label { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: #f5ecff; letter-spacing: 0.01em; padding-right: 3px; line-height: 1; }
-    .rp-pill:hover {
-      transform: translateX(-3px);
-      background: linear-gradient(135deg, rgba(48, 25, 90, 0.95), rgba(35, 18, 65, 1));
-      border-color: rgba(232, 121, 249, 0.7);
-    }
-    .rp-pill:hover .rp-pill-icon { transform: scale(1.08); }
-    .rp-pill:active { transform: translateX(-2px) scale(0.97); }
     
-    .rp-save.saved, .rp-mobile-save.saved {
+    .rp-action-label { line-height: 1; }
+    
+    /* Next button — special primary style */
+    .rp-btn-next {
+      margin-left: auto;
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.25), rgba(232, 121, 249, 0.15));
+      border-color: rgba(232, 121, 249, 0.55);
+    }
+    .rp-btn-next .rp-action-icon { color: #c084fc; }
+    
+    /* Saved state */
+    .rp-btn-save.saved {
       background: linear-gradient(135deg, rgba(75, 55, 20, 0.9), rgba(50, 35, 10, 0.95)) !important;
       border-color: rgba(255, 200, 100, 0.6) !important;
     }
-    .rp-save.saved .rp-pill-icon { background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706); }
-    .rp-save.saved .rp-bookmark { fill: currentColor; }
-    .rp-save.saved .rp-pill-label { color: #fde68a; }
-    .rp-mobile-save.saved .rp-mobile-icon { color: #fbbf24; fill: #fbbf24; }
-    .rp-mobile-save.saved .rp-mobile-btn-label { color: #fde68a; }
+    .rp-btn-save.saved .rp-action-icon { color: #fbbf24; fill: #fbbf24; }
+    .rp-btn-save.saved .rp-action-label { color: #fde68a; }
     
-    .rp-send.sent .rp-plane, .rp-mobile-send.sent .rp-mobile-plane {
+    /* Sent animation */
+    .rp-btn-send.sent .rp-icon-plane {
       animation: rp-plane-fly 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
     @keyframes rp-plane-fly {
@@ -641,269 +686,457 @@ const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
       100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
     }
 
-    /* ═══ DESKTOP NAV ARROWS ═══ */
-    .rp-nav {
-      position: absolute;
-      right: 40px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      z-index: 50;
+    /* ═══ INFO CARD ═══ */
+    .rp-info-card {
+      background: rgba(28, 15, 61, 0.4);
+      border: 1px solid rgba(192, 132, 252, 0.2);
+      border-radius: 16px;
+      padding: 16px;
     }
-    .rp-arrow {
+    
+    .rp-channel-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .rp-avatar {
       width: 40px; height: 40px;
       border-radius: 50%;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(192, 132, 252, 0.25);
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: white;
-      display: flex; align-items: center; justify-content: center;
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 12px rgba(192, 132, 252, 0.5);
+      flex-shrink: 0;
+    }
+    
+    .rp-channel-info { flex: 1; min-width: 0; }
+    
+    .rp-channel-name {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: #f5ecff;
+      line-height: 1.2;
+    }
+    
+    .rp-channel-sub {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 3px;
+      font-weight: 500;
+    }
+    
+    .rp-hd-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #7dd3fc;
+      box-shadow: 0 0 6px #7dd3fc;
+      animation: rp-pulse 2s infinite;
+    }
+    
+    .rp-video-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #f5ecff;
+      line-height: 1.4;
+      margin: 0;
+      letter-spacing: -0.005em;
+    }
+
+    /* ═══ RIGHT SIDE: RELATED FEED ═══ */
+    .rp-feed-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+    
+    .rp-feed-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: #f5ecff;
+    }
+    
+    .rp-feed-bar {
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
+      border-radius: 3px;
+      box-shadow: 0 0 10px rgba(232, 121, 249, 0.6);
+    }
+    
+    .rp-feed-count {
+      padding: 4px 10px;
+      background: rgba(192, 132, 252, 0.15);
+      border: 1px solid rgba(192, 132, 252, 0.3);
+      border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #c084fc;
+    }
+    
+    .rp-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    /* Video card in feed - horizontal layout */
+    .rp-feed-item {
+      display: flex;
+      gap: 10px;
+      padding: 8px;
+      background: rgba(28, 15, 61, 0.35);
+      border: 1px solid rgba(192, 132, 252, 0.15);
+      border-radius: 12px;
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      padding: 0;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: rp-feed-enter 0.4s ease backwards;
     }
-    .rp-arrow:hover { background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.15)); border-color: rgba(232, 121, 249, 0.6); transform: scale(1.1); }
-    .rp-arrow svg { width: 18px; height: 18px; }
-
-    /* ═══ MOBILE SECTION (hidden on desktop) ═══ */
-    .rp-mobile-section {
-      display: none;
+    
+    @keyframes rp-feed-enter {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
     }
-
-    /* ═══ DESKTOP ≥641px ═══ */
-    @media (min-width: 641px) {
-      .rp-mobile-section { display: none !important; }
-      .rp-desktop-only { display: flex; }
-      .rp-nav { display: flex; }
+    
+    .rp-feed-item:hover {
+      background: rgba(36, 21, 72, 0.6);
+      border-color: rgba(232, 121, 249, 0.5);
+      transform: translateX(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(192, 132, 252, 0.15);
     }
-
-    /* ═══ TABLET ═══ */
-    @media (min-width: 641px) and (max-width: 1023px) {
-      .rp-info { left: 24px; bottom: 40px; }
-      .rp-actions { right: 20px; bottom: 200px; }
-      
-      .rp-root[data-aspect="landscape"] .rp-info,
-      .rp-root[data-aspect="mixed"] .rp-info {
-        left: 24px;
-      }
-      .rp-root[data-aspect="landscape"] .rp-actions,
-      .rp-root[data-aspect="mixed"] .rp-actions {
-        right: 20px;
-        bottom: 80px;
-      }
+    
+    .rp-feed-thumb {
+      position: relative;
+      flex-shrink: 0;
+      width: 160px;
+      aspect-ratio: 16 / 9;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid rgba(192, 132, 252, 0.2);
     }
+    
+    .rp-feed-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    
+    .rp-feed-item:hover .rp-feed-thumb img {
+      transform: scale(1.08);
+    }
+    
+    .rp-feed-thumb-play {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.5);
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 2;
+      box-shadow: 0 6px 20px rgba(192, 132, 252, 0.6);
+    }
+    
+    .rp-feed-item:hover .rp-feed-thumb-play {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    
+    .rp-feed-thumb-play svg { width: 14px; height: 14px; padding-left: 2px; }
+    
+    .rp-feed-type-badge {
+      position: absolute;
+      bottom: 5px;
+      left: 5px;
+      padding: 2px 6px;
+      background: rgba(10, 5, 23, 0.9);
+      color: #fbbf24;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      font-weight: 800;
+      border-radius: 3px;
+      z-index: 3;
+      letter-spacing: 0.05em;
+    }
+    
+    .rp-feed-new-badge {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      padding: 2px 6px;
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      color: white;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      font-weight: 800;
+      border-radius: 3px;
+      z-index: 3;
+      letter-spacing: 0.05em;
+    }
+    
+    .rp-feed-info {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2px 0;
+    }
+    
+    .rp-feed-title-text {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #f5ecff;
+      line-height: 1.35;
+      margin: 0 0 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      transition: color 0.3s ease;
+    }
+    
+    .rp-feed-item:hover .rp-feed-title-text {
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .rp-feed-channel {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.55);
+      font-weight: 500;
+    }
+    
+    /* Product row in feed */
+    .rp-feed-product-row {
+      padding: 12px;
+      background: linear-gradient(135deg, rgba(28,15,61,0.5), rgba(20,10,45,0.4));
+      border: 1px solid rgba(192,132,252,0.25);
+      border-radius: 12px;
+      animation: rp-feed-enter 0.4s ease backwards;
+    }
+    
+    .rp-feed-product-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: #e879f9;
+      text-transform: uppercase;
+    }
+    
+    .rp-feed-product-header::before {
+      content: '';
+      width: 3px;
+      height: 12px;
+      background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
+      border-radius: 2px;
+    }
+    
+    .rp-feed-product-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
+      padding: 2px 0 6px;
+    }
+    
+    .rp-feed-product-scroll::-webkit-scrollbar { height: 4px; }
+    .rp-feed-product-scroll::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.3); border-radius: 2px; }
+    
+    .rp-feed-product-item {
+      flex: 0 0 auto;
+      width: 110px;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: transform 0.25s ease;
+    }
+    
+    .rp-feed-product-item:hover { transform: translateY(-2px); }
+    
+    .rp-feed-product-thumb {
+      position: relative;
+      width: 100%;
+      padding-top: 75%;
+      border-radius: 8px;
+      overflow: hidden;
+      background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(232,121,249,0.1));
+      border: 1px solid rgba(192,132,252,0.2);
+      margin-bottom: 5px;
+    }
+    
+    .rp-feed-product-thumb img {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    
+    .rp-feed-product-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      color: #f5ecff;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 2px;
+    }
+    
+    .rp-feed-product-price {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 800;
+      color: #7dd3fc;
+    }
+    
+    /* Feed loading spinner */
+    .rp-feed-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px;
+      color: rgba(255, 255, 255, 0.5);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+    
+    .rp-feed-spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(192, 132, 252, 0.2);
+      border-top-color: #c084fc;
+      border-radius: 50%;
+      animation: rp-spin 0.8s linear infinite;
+    }
+    
+    @keyframes rp-spin { to { transform: rotate(360deg); } }
 
     /* ═══════════════════════════════════════════════════
-       📱 MOBILE ≤640px — Scroll-friendly layout
+       📱 MOBILE ≤900px — Stack layout
        ═══════════════════════════════════════════════════ */
-    @media (max-width: 640px) {
-      /* Root becomes scrollable — works with ImmersiveLayout mobile unlock */
-      .rp-root {
-        position: relative !important;
-        min-height: 100vh;
-        min-height: 100dvh;
-        height: auto !important;
-        overflow: visible !important;
+    @media (max-width: 900px) {
+      .rp-main {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 12px 12px 40px;
       }
       
-      /* Hide desktop overlays */
-      .rp-desktop-only { display: none !important; }
-      
-      /* Show mobile section */
-      .rp-mobile-section {
-        display: block !important;
-        padding: 16px 16px 100px 16px;
-        background: transparent;
+      .rp-topbar {
+        padding: 0 12px;
+        height: 56px;
       }
       
-      /* Stage — no fixed positioning */
-      .rp-stage {
-        padding: 54px 0 0 0;
-        min-height: auto;
-        flex: 0 0 auto;
+      .rp-home-btn {
+        padding: 7px 12px 7px 10px;
+        font-size: 12px;
       }
+      .rp-home-btn svg { width: 16px; height: 16px; }
       
-      /* Portrait video on mobile — full width, 9:16 */
-      .rp-card {
-        max-width: 100%;
-        max-height: none;
-        width: 100%;
-        aspect-ratio: 9 / 16;
-        margin: 0;
-      }
+      .rp-brand-text { font-size: 14px; }
       
-      /* Landscape video on mobile — full width, 16:9 */
-      .rp-root[data-aspect="landscape"] .rp-card,
-      .rp-root[data-aspect="mixed"] .rp-card {
-        aspect-ratio: 16 / 9;
-        width: 100%;
-        max-width: 100%;
-        max-height: none;
+      .rp-chat-btn {
+        padding: 7px 12px 7px 10px;
+        font-size: 12px;
       }
+      .rp-chat-icon { width: 14px; height: 14px; }
+      .rp-chat-count { font-size: 10px; padding: 2px 7px; }
+      
+      /* Video card - full width, no aspect override */
+      .rp-card { max-width: 100%; margin: 0; }
       
       .rp-card-glow { display: none; }
-      .rp-card-frame { border-radius: 0; box-shadow: none; }
-      
-      /* Top bar mobile adjustments */
-      .rp-topbar {
-        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
-        height: 54px;
-        padding: 0 12px;
-      }
-      .rp-back { width: 36px; height: 36px; }
-      .rp-back svg { width: 18px; height: 18px; }
-      .rp-brand-text { font-size: 14px; }
-      .rp-type-badge { padding: 4px 8px; }
-      .rp-type-label { font-size: 9px; }
-      
-      /* ═══ MOBILE ACTIONS ROW ═══ */
-      .rp-mobile-actions {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 16px;
-        justify-content: flex-start;
+      .rp-card-frame {
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
       }
       
-      .rp-mobile-btn {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        padding: 9px 16px;
-        height: 40px;
-        background: linear-gradient(135deg, rgba(28, 15, 61, 0.9), rgba(20, 10, 40, 0.95));
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(192, 132, 252, 0.4);
-        border-radius: 100px;
-        color: #f5ecff;
-        cursor: pointer;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        font-family: 'Inter', sans-serif;
-        font-size: 12px;
-        font-weight: 600;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      .rp-actions-row {
+        gap: 8px;
       }
       
-      .rp-mobile-btn:active {
-        transform: scale(0.95);
-        background: linear-gradient(135deg, rgba(48, 25, 90, 0.95), rgba(35, 18, 65, 1));
+      .rp-action-btn {
+        padding: 8px 12px;
+        font-size: 11.5px;
+        height: 38px;
       }
       
-      .rp-mobile-icon {
-        width: 16px;
-        height: 16px;
-        flex-shrink: 0;
-        color: #e879f9;
-        transition: all 0.3s;
-      }
+      .rp-action-icon { width: 14px; height: 14px; }
       
-      .rp-mobile-btn-label {
-        line-height: 1;
-      }
-      
-      .rp-mobile-next {
-        margin-left: auto;
-        background: linear-gradient(135deg, rgba(192, 132, 252, 0.25), rgba(232, 121, 249, 0.15));
-        border-color: rgba(232, 121, 249, 0.55);
-      }
-      .rp-mobile-next .rp-mobile-icon { color: #c084fc; }
-      
-      /* ═══ MOBILE INFO CARD ═══ */
-      .rp-mobile-info {
-        background: rgba(28, 15, 61, 0.4);
-        border: 1px solid rgba(192, 132, 252, 0.2);
-        border-radius: 16px;
+      .rp-info-card {
         padding: 14px;
-        margin-bottom: 12px;
+        border-radius: 14px;
       }
       
-      .rp-mobile-channel-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
+      .rp-avatar { width: 36px; height: 36px; font-size: 14px; }
+      .rp-channel-name { font-size: 13px; }
+      .rp-channel-sub { font-size: 10px; }
+      .rp-video-title { font-size: 15px; }
+      
+      /* Related feed - stacked below */
+      .rp-feed-title { font-size: 14px; }
+      .rp-feed-count { font-size: 10px; }
+      
+      .rp-feed-item {
+        padding: 7px;
       }
       
-      .rp-mobile-avatar {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-family: 'Bricolage Grotesque', sans-serif;
-        font-weight: 700;
-        font-size: 13px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 3px 10px rgba(192, 132, 252, 0.5);
-        flex-shrink: 0;
+      .rp-feed-thumb {
+        width: 130px;
       }
       
-      .rp-mobile-channel-info { flex: 1; min-width: 0; }
-      
-      .rp-mobile-channel-name {
-        font-family: 'Inter', sans-serif;
-        font-size: 13px;
-        font-weight: 600;
-        color: #f5ecff;
-        line-height: 1.2;
-      }
-      
-      .rp-mobile-channel-sub {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-family: 'Inter', sans-serif;
-        font-size: 10px;
-        color: rgba(255, 255, 255, 0.6);
-        margin-top: 2px;
-        font-weight: 500;
-      }
-      
-      .rp-mobile-hd-dot {
-        width: 5px; height: 5px;
-        border-radius: 50%;
-        background: #7dd3fc;
-        box-shadow: 0 0 6px #7dd3fc;
-        animation: rp-pulse 2s infinite;
-      }
-      
-      .rp-mobile-title {
-        font-family: 'DM Sans', sans-serif;
-        font-size: 14px;
-        font-weight: 700;
-        color: #f5ecff;
-        line-height: 1.4;
-        margin: 0;
-        letter-spacing: -0.005em;
-      }
-      
-      /* ═══ SWIPE HINT ═══ */
-      .rp-mobile-hint {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 10px;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 10px;
-        color: rgba(255, 255, 255, 0.4);
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-      }
-      
-      .rp-mobile-hint svg {
-        animation: rp-hint-bounce 2s ease-in-out infinite;
-      }
-      
-      @keyframes rp-hint-bounce {
-        0%, 100% { transform: translateY(0); opacity: 0.4; }
-        50% { transform: translateY(-3px); opacity: 0.7; }
-      }
+      .rp-feed-title-text { font-size: 12px; }
+      .rp-feed-channel { font-size: 9.5px; }
+    }
+    
+    /* Very small phones */
+    @media (max-width: 400px) {
+      .rp-home-label { display: none; }
+      .rp-chat-label { display: none; }
+      .rp-brand-text { font-size: 13px; }
     }
   </style>
 
@@ -915,8 +1148,11 @@ const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
       
       const videoId = root.dataset.videoid || '';
       const currentVideo: any = (window as any).__REELS_VIDEO__ || null;
-      const queue: any[] = (window as any).__REELS_QUEUE__ || [];
+      const feedData: any[] = (window as any).__REELS_FEED__ || [];
+      const nextId = (window as any).__NEXT_ID__ || '';
+      const prevId = (window as any).__PREV_ID__ || '';
       
+      // ═══ THUMBNAIL HELPER ═══
       function getThumbnailUrl(vid: string, existing: string = ''): string {
         if (existing && existing.trim()) return existing;
         if (vid.startsWith('yts_') || vid.startsWith('yt_')) {
@@ -928,6 +1164,26 @@ const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
           return `https://www.dailymotion.com/thumbnail/video/${rawId}`;
         }
         return '';
+      }
+      
+      function esc(s: string): string {
+        return String(s || '').replace(/[&<>"']/g, (c: string) => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c] || c));
+      }
+      
+      function trunc(s: string, n: number): string {
+        s = String(s || '');
+        return s.length > n ? s.slice(0, n).trim() + '…' : s;
+      }
+      
+      function shuffle<T>(arr: T[]): T[] {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
       }
       
       // ═══ WATCH HISTORY ═══
@@ -950,23 +1206,22 @@ const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
       } catch (e) { console.warn('History save failed', e); }
       
       // ═══ SAVE FUNCTIONALITY ═══
-      const saveBtnDesktop = document.getElementById('saveBtnDesktop');
-      const saveBtnMobile = document.getElementById('saveBtnMobile');
+      const saveBtn = document.getElementById('saveBtn');
       const savedVideos: any[] = JSON.parse(localStorage.getItem('anitube_saved') || '[]');
       const isSaved = () => savedVideos.some((s: any) => s.id === videoId);
       
       function updateSaveUI() {
         const saved = isSaved();
-        [saveBtnDesktop, saveBtnMobile].forEach(btn => {
-          if (!btn) return;
-          if (saved) {
-            btn.classList.add('saved');
-          } else {
-            btn.classList.remove('saved');
-          }
-          const label = btn.querySelector('.rp-pill-label, .rp-mobile-btn-label');
-          if (label) label.textContent = saved ? 'Saved' : 'Save';
-        });
+        if (!saveBtn) return;
+        if (saved) {
+          saveBtn.classList.add('saved');
+          const label = saveBtn.querySelector('.rp-action-label');
+          if (label) label.textContent = 'Saved';
+        } else {
+          saveBtn.classList.remove('saved');
+          const label = saveBtn.querySelector('.rp-action-label');
+          if (label) label.textContent = 'Save';
+        }
       }
       
       function toggleSave() {
@@ -990,8 +1245,7 @@ const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
       }
       
       updateSaveUI();
-      saveBtnDesktop?.addEventListener('click', toggleSave);
-      saveBtnMobile?.addEventListener('click', toggleSave);
+      saveBtn?.addEventListener('click', toggleSave);
       
       // ═══ DOUBLE-TAP TO SAVE ═══
       const card = document.getElementById('videoCard');
@@ -1014,24 +1268,24 @@ const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
       });
       
       // ═══ SEND / SHARE ═══
-      const sendBtnDesktop = document.getElementById('sendBtnDesktop');
-      const sendBtnMobile = document.getElementById('sendBtnMobile');
+      const sendBtn = document.getElementById('sendBtn');
       
-      async function handleSend(btn: HTMLElement) {
+      async function handleSend() {
+        if (!sendBtn) return;
         const shareData = {
           title: (currentVideo?.title || 'AniTube Video'),
           text: 'Check out this on AniTubeBuzz!',
           url: window.location.href
         };
         const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
-        btn.classList.add('sent');
-        setTimeout(() => btn.classList.remove('sent'), 600);
+        sendBtn.classList.add('sent');
+        setTimeout(() => sendBtn.classList.remove('sent'), 600);
         if (isMobile && (navigator as any).share) {
           try { await (navigator as any).share(shareData); } catch { }
         } else {
           try {
             await navigator.clipboard.writeText(window.location.href);
-            const label = btn.querySelector('.rp-pill-label, .rp-mobile-btn-label');
+            const label = sendBtn.querySelector('.rp-action-label');
             if (label) {
               const orig = label.textContent;
               label.textContent = 'Copied!';
@@ -1043,83 +1297,43 @@ const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
         }
       }
       
-      sendBtnDesktop?.addEventListener('click', () => handleSend(sendBtnDesktop));
-      sendBtnMobile?.addEventListener('click', () => handleSend(sendBtnMobile));
+      sendBtn?.addEventListener('click', handleSend);
       
       // ═══ NAVIGATION ═══
       let navigating = false;
       
-      function navigate(direction: 'next' | 'prev') {
-        if (navigating) return;
-        
-        let targetId = '';
-        if (direction === 'next') {
-          if (queue.length > 1) targetId = queue[1].id;
-        } else {
-          if (window.history.length > 1) { window.history.back(); return; }
+      function navigateToVideo(targetId: string) {
+        if (navigating || !targetId) return;
+        navigating = true;
+        const c = document.getElementById('videoCard');
+        if (c) {
+          c.style.opacity = '0';
+          c.style.transform = 'scale(0.96)';
+          c.style.transition = 'all 0.25s ease';
         }
-        if (targetId) {
-          navigating = true;
-          const c = document.getElementById('videoCard');
-          if (c) {
-            c.style.opacity = '0';
-            c.style.transform = `translateY(${direction === 'next' ? '-30px' : '30px'}) scale(0.95)`;
-          }
-          setTimeout(() => { window.location.href = `/reels/${targetId}`; }, 220);
-        }
+        setTimeout(() => { window.location.href = `/reels/${targetId}`; }, 220);
       }
       
-      document.getElementById('nextBtn')?.addEventListener('click', () => navigate('next'));
-      document.getElementById('nextBtnMobile')?.addEventListener('click', () => navigate('next'));
-      document.getElementById('prevBtn')?.addEventListener('click', () => navigate('prev'));
+      const nextBtn = document.getElementById('nextBtn');
+      const prevBtn = document.getElementById('prevBtn');
+      
+      nextBtn?.addEventListener('click', () => {
+        if (nextId) navigateToVideo(nextId);
+      });
+      
+      prevBtn?.addEventListener('click', () => {
+        if (prevId) navigateToVideo(prevId);
+        else if (window.history.length > 1) window.history.back();
+      });
       
       // Keyboard navigation
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') { e.preventDefault(); navigate('next'); }
-        else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') { e.preventDefault(); navigate('prev'); }
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') {
+          if (nextId) { e.preventDefault(); navigateToVideo(nextId); }
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') {
+          if (prevId) { e.preventDefault(); navigateToVideo(prevId); }
+        }
       });
-      
-      // Wheel navigation — DESKTOP ONLY
-      let wheelLocked = false;
-      document.addEventListener('wheel', (e) => {
-        if (window.innerWidth <= 640) return;
-        const target = e.target as HTMLElement;
-        if (target.closest('iframe')) return;
-        if (wheelLocked) return;
-        if (Math.abs(e.deltaY) < 30) return;
-        wheelLocked = true;
-        if (e.deltaY > 0) navigate('next');
-        else navigate('prev');
-        setTimeout(() => { wheelLocked = false; }, 800);
-      }, { passive: true });
-      
-      // Touch swipe — outside iframe only, mobile-friendly
-      let touchStartY = 0;
-      let touchStartTime = 0;
-      let touchValid = false;
-      
-      document.addEventListener('touchstart', (e) => {
-        const target = e.target as HTMLElement;
-        // Only activate swipe on areas OUTSIDE the iframe/video
-        touchValid = !target.closest('iframe') && !target.closest('.rp-card-frame');
-        if (touchValid) {
-          touchStartY = e.touches[0].clientY;
-          touchStartTime = Date.now();
-        }
-      }, { passive: true });
-      
-      document.addEventListener('touchend', (e) => {
-        if (!touchValid) return;
-        const touchEndY = e.changedTouches[0].clientY;
-        const diff = touchStartY - touchEndY;
-        const timeDiff = Date.now() - touchStartTime;
-        // Need strong intentional swipe (120px in 400ms)
-        if (Math.abs(diff) > 120 && timeDiff < 400) {
-          if (diff > 0) navigate('next');
-          else navigate('prev');
-        }
-        touchValid = false;
-      }, { passive: true });
       
       // ═══ LOADER HIDE ═══
       const iframe = document.getElementById('videoFrame') as HTMLIFrameElement;
@@ -1138,24 +1352,183 @@ const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
         }
       }, 500);
       
-      // ═══ SAFIYA MOBILE REPOSITION ═══
-      if (window.innerWidth <= 640) {
-        const safiyaStyle = document.createElement('style');
-        safiyaStyle.textContent = `
-          @media (max-width: 640px) {
-            [id*="safiya"], [class*="safiya"] {
-              bottom: auto !important;
-              top: 68px !important;
-              right: 10px !important;
-              transform: scale(0.75) !important;
-              transform-origin: top right !important;
-              opacity: 0.7 !important;
-              z-index: 90 !important;
+      // ═══ CHAT BUTTON (placeholder for now) ═══
+      const chatBtn = document.getElementById('chatBtn');
+      chatBtn?.addEventListener('click', () => {
+        alert('💬 Global Chat coming soon! Stay tuned bro 🔥');
+      });
+      
+      // Fake live chat counter (random 20-80)
+      const chatCountEl = document.getElementById('chatCount');
+      if (chatCountEl) {
+        const baseCount = 20 + Math.floor(Math.random() * 60);
+        chatCountEl.textContent = String(baseCount);
+        setInterval(() => {
+          const variation = Math.floor(Math.random() * 7) - 3;
+          const newCount = Math.max(15, baseCount + variation);
+          chatCountEl.textContent = String(newCount);
+        }, 4000);
+      }
+      
+      // ═══════════════════════════════════════════
+      // 🔥 RELATED FEED — Infinite scroll + products
+      // ═══════════════════════════════════════════
+      const feedEl = document.getElementById('relatedFeed');
+      const feedLoadingEl = document.getElementById('feedLoading');
+      const feedCountEl = document.getElementById('feedCount');
+      
+      let feedItems: any[] = feedData.slice();
+      let feedRendered = 0;
+      let productPool: any[] = [];
+      let loadingMore = false;
+      let feedTotal = 0;
+      let cardsSinceProduct = 0;
+      
+      function makeFeedItem(v: any, i: number): HTMLElement {
+        const el = document.createElement('a');
+        el.href = `/reels/${v.id}`;
+        el.className = 'rp-feed-item';
+        el.style.animationDelay = `${(i % 6) * 50}ms`;
+        
+        const thumb = getThumbnailUrl(v.id, v.thumbnail || '');
+        const typeLabels: any = {
+          anime: '🎌 ANIME',
+          kdrama: '🇰🇷 K-DRAMA',
+          donghua: '🐼 DONGHUA',
+          movies: '🎬 MOVIE'
+        };
+        const typeLabel = typeLabels[v.type] || '🎬 VIDEO';
+        
+        const imgHtml = thumb
+          ? `<img src="${esc(thumb)}" alt="${esc(v.title || '')}" loading="lazy" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))';" />`
+          : `<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:1.4rem;">📺</div>`;
+        
+        el.innerHTML = `
+          <div class="rp-feed-thumb">
+            ${imgHtml}
+            ${v.isNew ? '<div class="rp-feed-new-badge">NEW</div>' : ''}
+            <div class="rp-feed-type-badge">${typeLabel}</div>
+            <div class="rp-feed-thumb-play">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+          </div>
+          <div class="rp-feed-info">
+            <h3 class="rp-feed-title-text">${esc(trunc(v.title || 'Video', 90))}</h3>
+            <div class="rp-feed-channel">@${esc((v.channel || 'anitube').replace(/\s+/g, '').toLowerCase().slice(0, 20))}</div>
+          </div>
+        `;
+        
+        return el;
+      }
+      
+      function makeProductRow(products: any[]): HTMLElement {
+        const row = document.createElement('div');
+        row.className = 'rp-feed-product-row';
+        
+        const items = products.slice(0, 6).map(p => {
+          const img = p.image
+            ? `<img src="${esc(p.image)}" alt="${esc(p.title || '')}" loading="lazy" onerror="this.style.display='none'" />`
+            : '';
+          return `
+            <a href="/product/${esc(p.id)}" class="rp-feed-product-item">
+              <div class="rp-feed-product-thumb">${img}</div>
+              <div class="rp-feed-product-title">${esc(trunc(p.title || '', 30))}</div>
+              <div class="rp-feed-product-price">${esc(p.price || '')}</div>
+            </a>
+          `;
+        }).join('');
+        
+        row.innerHTML = `
+          <div class="rp-feed-product-header">✨ Recommended</div>
+          <div class="rp-feed-product-scroll">${items}</div>
+        `;
+        
+        return row;
+      }
+      
+      function renderBatch() {
+        if (!feedEl) return;
+        const batchSize = 6;
+        const end = Math.min(feedRendered + batchSize, feedItems.length);
+        
+        for (let i = feedRendered; i < end; i++) {
+          feedEl.appendChild(makeFeedItem(feedItems[i], i));
+          feedTotal++;
+          cardsSinceProduct++;
+          
+          // Insert product row every 4 videos
+          if (cardsSinceProduct >= 4 && productPool.length > 0) {
+            const products = shuffle(productPool).slice(0, 6);
+            feedEl.appendChild(makeProductRow(products));
+            cardsSinceProduct = 0;
+          }
+        }
+        
+        feedRendered = end;
+        if (feedCountEl) feedCountEl.textContent = String(feedTotal);
+      }
+      
+      async function fetchMoreVideos() {
+        if (loadingMore) return;
+        loadingMore = true;
+        if (feedLoadingEl) feedLoadingEl.style.display = 'flex';
+        
+        try {
+          const types = ['anime', 'donghua', 'kdrama', 'movies'];
+          const type = types[Math.floor(Math.random() * types.length)];
+          const page = Math.floor(Math.random() * 5) + 1;
+          const res = await fetch(`/api/social-feed?type=${type}&page=${page}&limit=10`);
+          const data = await res.json();
+          
+          if (data.success && data.videos) {
+            const existingIds = new Set(feedItems.map(v => v.id));
+            existingIds.add(videoId);
+            const fresh = data.videos.filter((v: any) => !existingIds.has(v.id));
+            feedItems = feedItems.concat(fresh);
+            renderBatch();
+          }
+        } catch (e) {
+          console.warn('Feed load failed', e);
+        }
+        
+        if (feedLoadingEl) feedLoadingEl.style.display = 'none';
+        loadingMore = false;
+      }
+      
+      async function loadProducts() {
+        try {
+          const res = await fetch('/api/products?limit=30');
+          const data = await res.json();
+          if (data.success && data.products) {
+            productPool = data.products;
+          }
+        } catch (e) { console.warn('Products fail', e); }
+      }
+      
+      // Initial render
+      loadProducts().then(() => {
+        renderBatch();
+      });
+      
+      // Infinite scroll — trigger when near bottom
+      let scrollTimer: any = null;
+      window.addEventListener('scroll', () => {
+        if (scrollTimer) clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+          if (loadingMore) return;
+          const scrollBottom = window.scrollY + window.innerHeight;
+          const pageHeight = document.documentElement.scrollHeight;
+          
+          if (scrollBottom > pageHeight - 800) {
+            // If we have more pre-loaded items, render them first
+            if (feedRendered < feedItems.length) {
+              renderBatch();
+            } else {
+              fetchMoreVideos();
             }
           }
-        `;
-        document.head.appendChild(safiyaStyle);
-      }
+        }, 150);
+      }, { passive: true });
       
     })();
   </script>
