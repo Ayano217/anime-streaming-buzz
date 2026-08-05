@@ -31,26 +31,47 @@ const { title = 'AniTubeBuzz' } = Astro.props;
       --text-muted: rgba(255,255,255,0.5);
     }
     *, *::before, *::after { box-sizing: border-box; }
+
     html, body {
       margin: 0;
       padding: 0;
       background: #000;
       color: #fff;
       font-family: 'DM Sans', 'Inter', sans-serif;
-      overflow: hidden;
-      height: 100%;
-      width: 100%;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
-    body.immersive-body {
-      background: #000 !important;
+
+    /* DESKTOP — locked/immersive */
+    @media (min-width: 641px) {
+      html, body {
+        overflow: hidden;
+        height: 100%;
+        width: 100%;
+      }
+      #immersive-app {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
     }
-    #immersive-app {
-      position: relative;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
+
+    /* MOBILE — scrollable */
+    @media (max-width: 640px) {
+      html, body {
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        height: auto;
+        width: 100%;
+      }
+      #immersive-app {
+        position: relative;
+        width: 100%;
+        height: auto;
+        overflow: visible;
+      }
     }
   </style>
 </body>
