@@ -17,7 +17,7 @@ function getPlatformData(vid: string) {
   }
   if (vid.startsWith('dm_')) {
     const rawId = vid.replace('dm_', '');
-    return { source: 'dailymotion', embedUrl: `https://www.dailymotion.com/embed/video/${rawId}?autoplay=1&mute=0`, aspect: 'mixed', isShort: false, rawId };
+    return { source: 'dailymotion', embedUrl: `https://www.dailymotion.com/embed/video/${rawId}?autoplay=1&mute=0`, aspect: 'landscape', isShort: false, rawId };
   }
   if (vid.startsWith('bili_')) {
     const rawId = vid.replace('bili_', '');
@@ -118,18 +118,21 @@ const typeInfo: any = {
   movies: { label: 'Movie', emoji: '🎬' }
 };
 const currentType = typeInfo[video.type] || typeInfo.anime;
+
+// Determine aspect for CSS
+const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
 ---
 
 <ImmersiveLayout title={`${video.title} | AniTubeBuzz`}>
-  <!-- ✅ Change A: data-aspect added -->
   <div 
     id="reels-root" 
     class="rp-root" 
     data-videoid={videoId}
     data-next={nextVideo?.id || ''}
-    data-aspect={video.aspect || 'portrait'}
+    data-aspect={videoAspect}
   >
     
+    <!-- ═══ TOP BAR ═══ -->
     <header class="rp-topbar">
       <button class="rp-back" id="backBtn" aria-label="Back to home">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -148,6 +151,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       </div>
     </header>
 
+    <!-- ═══ MAIN VIDEO STAGE ═══ -->
     <main class="rp-stage">
       
       <div class="rp-card" id="videoCard">
@@ -180,7 +184,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         </div>
       </div>
 
-      <!-- Info panel (DESKTOP only - bottom left overlay) -->
+      <!-- Info panel (DESKTOP only) -->
       <div class="rp-info rp-desktop-only">
         <div class="rp-channel-row">
           <div class="rp-avatar">
@@ -198,7 +202,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         <h1 class="rp-title">{video.title}</h1>
       </div>
 
-      <!-- Actions (DESKTOP only - right side overlay) -->
+      <!-- Actions (DESKTOP only) -->
       <div class="rp-actions rp-desktop-only">
         <button class="rp-pill rp-save" id="saveBtnDesktop" aria-label="Save">
           <div class="rp-pill-icon">
@@ -219,6 +223,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         </button>
       </div>
 
+      <!-- Nav arrows (DESKTOP only) -->
       <div class="rp-nav rp-desktop-only">
         <button class="rp-arrow" id="prevBtn" aria-label="Previous">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -234,10 +239,9 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
 
     </main>
 
-    <!-- 📱 MOBILE-ONLY SECTION - Below video (like YouTube app) -->
+    <!-- ═══ 📱 MOBILE SECTION — Below video (YouTube app style) ═══ -->
     <section class="rp-mobile-section">
       
-      <!-- Action buttons row -->
       <div class="rp-mobile-actions">
         <button class="rp-mobile-btn rp-mobile-save" id="saveBtnMobile" aria-label="Save">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="rp-mobile-icon rp-mobile-bookmark">
@@ -261,7 +265,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         </button>
       </div>
       
-      <!-- Info section -->
       <div class="rp-mobile-info">
         <div class="rp-mobile-channel-row">
           <div class="rp-mobile-avatar">
@@ -278,7 +281,6 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         <h2 class="rp-mobile-title">{video.title}</h2>
       </div>
       
-      <!-- Swipe hint -->
       <div class="rp-mobile-hint">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M12 19V5M5 12l7-7 7 7"/>
@@ -288,8 +290,10 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       
     </section>
 
+    <!-- ═══ DATA INJECTION ═══ -->
     <script is:inline set:html={`window.__REELS_VIDEO__ = ${JSON.stringify(video)}; window.__REELS_QUEUE__ = ${JSON.stringify(feedQueue.slice(0, 30))}; window.__CURRENT_VIDEO_ID__ = ${JSON.stringify(videoId)};`}></script>
 
+    <!-- ═══ BACK BUTTON HANDLER (runs immediately) ═══ -->
     <script is:inline>
       (function(){
         var vid = window.__CURRENT_VIDEO_ID__ || '';
@@ -338,10 +342,11 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
 
   </div>
 
+  <!-- ═══════════════════════════════════════════════════════════
+       🎨 CSS — Complete styles for desktop + mobile + landscape
+       ═══════════════════════════════════════════════════════════ -->
   <style>
-    /* ═══════════════════════════════════════════════════
-       🎬 ROOT - Desktop fixed, Mobile scrollable
-       ═══════════════════════════════════════════════════ */
+    /* ═══ ROOT ═══ */
     .rp-root {
       position: fixed;
       inset: 0;
@@ -362,6 +367,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
     }
     @keyframes rp-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
+    /* ═══ TOP BAR ═══ */
     .rp-topbar {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -408,6 +414,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
     .rp-type-emoji { font-size: 11px; line-height: 1; }
     .rp-type-label { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; color: #f5ecff; letter-spacing: 0.02em; line-height: 1; }
 
+    /* ═══ STAGE ═══ */
     .rp-stage {
       flex: 1;
       display: flex;
@@ -418,7 +425,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       z-index: 1;
     }
 
-    /* ✅ Change B: Default card (portrait 9:16) */
+    /* ═══ VIDEO CARD — Portrait (default, 9:16) ═══ */
     .rp-card {
       position: relative;
       width: 100%;
@@ -430,23 +437,17 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       animation: rp-card-enter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    /* ✅ Change B: 16:9 landscape video — cinematic player */
-    .rp-root[data-aspect="landscape"] .rp-card {
-      aspect-ratio: 16 / 9;
-      max-width: 780px;
-      max-height: calc(100vh - 120px);
-      max-height: calc(100dvh - 120px);
-    }
-
-    /* ✅ Change B: Mixed (Dailymotion) — default to landscape */
+    /* ═══ VIDEO CARD — Landscape (16:9) ═══ */
+    .rp-root[data-aspect="landscape"] .rp-card,
     .rp-root[data-aspect="mixed"] .rp-card {
       aspect-ratio: 16 / 9;
-      max-width: 780px;
-      max-height: calc(100vh - 120px);
-      max-height: calc(100dvh - 120px);
+      max-width: 860px;
+      max-height: calc(100vh - 140px);
+      max-height: calc(100dvh - 140px);
     }
 
     @keyframes rp-card-enter { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
     .rp-card-glow {
       position: absolute; inset: -3px;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
@@ -457,6 +458,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       animation: rp-glow 4s ease-in-out infinite;
     }
     @keyframes rp-glow { 0%, 100% { opacity: 0.5; filter: blur(14px); } 50% { opacity: 0.8; filter: blur(20px); } }
+
     .rp-card-frame {
       position: absolute; inset: 0;
       background: #000;
@@ -466,6 +468,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
     }
     .rp-card-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
 
+    /* ═══ DOUBLE TAP HEART ═══ */
     .rp-doubletap-heart {
       position: absolute;
       top: 50%; left: 50%;
@@ -485,6 +488,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       100% { transform: translate(-50%, -50%) scale(1.5) rotate(0deg); opacity: 0; }
     }
 
+    /* ═══ LOADER ═══ */
     .rp-loader {
       position: absolute; inset: 0;
       display: flex; flex-direction: column;
@@ -513,8 +517,10 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       opacity: 0.9;
     }
 
-    /* DESKTOP overlay elements */
-    .rp-info { position: absolute; bottom: 32px; left: 28px; z-index: 50; max-width: 320px; pointer-events: none; }
+    /* ═══ DESKTOP OVERLAY: INFO ═══ */
+    .rp-info {
+      position: absolute; bottom: 32px; left: 28px; z-index: 50; max-width: 320px; pointer-events: none;
+    }
     .rp-channel-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
     .rp-avatar {
       position: relative;
@@ -555,6 +561,15 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       overflow: hidden;
     }
 
+    /* Landscape — info repositioned below video card center */
+    .rp-root[data-aspect="landscape"] .rp-info,
+    .rp-root[data-aspect="mixed"] .rp-info {
+      bottom: 16px;
+      left: calc(50% - 400px);
+      max-width: 400px;
+    }
+
+    /* ═══ DESKTOP OVERLAY: ACTIONS ═══ */
     .rp-actions {
       position: absolute;
       right: 40px;
@@ -565,19 +580,11 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       z-index: 60;
     }
 
-    /* ✅ Change D: Landscape — actions move down since video is shorter vertically */
+    /* Landscape — actions repositioned */
     .rp-root[data-aspect="landscape"] .rp-actions,
     .rp-root[data-aspect="mixed"] .rp-actions {
-      bottom: 80px;
-      right: calc(50% - 430px);
-    }
-
-    /* ✅ Change D: Landscape — info panel adjust */
-    .rp-root[data-aspect="landscape"] .rp-info,
-    .rp-root[data-aspect="mixed"] .rp-info {
-      bottom: 20px;
-      left: calc(50% - 390px);
-      max-width: 400px;
+      bottom: 100px;
+      right: calc(50% - 470px);
     }
 
     .rp-pill {
@@ -634,6 +641,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       100% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
     }
 
+    /* ═══ DESKTOP NAV ARROWS ═══ */
     .rp-nav {
       position: absolute;
       right: 40px;
@@ -659,41 +667,48 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
     .rp-arrow:hover { background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.15)); border-color: rgba(232, 121, 249, 0.6); transform: scale(1.1); }
     .rp-arrow svg { width: 18px; height: 18px; }
 
-    /* ═══════════════════════════════════════════════════
-       📱 MOBILE SECTION - Below video (YouTube-style)
-       ═══════════════════════════════════════════════════ */
+    /* ═══ MOBILE SECTION (hidden on desktop) ═══ */
     .rp-mobile-section {
       display: none;
     }
 
-    /* DESKTOP show desktop-only elements */
+    /* ═══ DESKTOP ≥641px ═══ */
     @media (min-width: 641px) {
       .rp-mobile-section { display: none !important; }
       .rp-desktop-only { display: flex; }
       .rp-nav { display: flex; }
     }
 
+    /* ═══ TABLET ═══ */
+    @media (min-width: 641px) and (max-width: 1023px) {
+      .rp-info { left: 24px; bottom: 40px; }
+      .rp-actions { right: 20px; bottom: 200px; }
+      
+      .rp-root[data-aspect="landscape"] .rp-info,
+      .rp-root[data-aspect="mixed"] .rp-info {
+        left: 24px;
+      }
+      .rp-root[data-aspect="landscape"] .rp-actions,
+      .rp-root[data-aspect="mixed"] .rp-actions {
+        right: 20px;
+        bottom: 80px;
+      }
+    }
+
     /* ═══════════════════════════════════════════════════
-       📱 MOBILE ≤640px — Full restructure
+       📱 MOBILE ≤640px — Scroll-friendly layout
        ═══════════════════════════════════════════════════ */
     @media (max-width: 640px) {
-      /* Root becomes scrollable */
+      /* Root becomes scrollable — works with ImmersiveLayout mobile unlock */
       .rp-root {
         position: relative !important;
         min-height: 100vh;
         min-height: 100dvh;
         height: auto !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
+        overflow: visible !important;
       }
       
-      body {
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-      }
-      
-      /* Hide all desktop overlays on mobile */
+      /* Hide desktop overlays */
       .rp-desktop-only { display: none !important; }
       
       /* Show mobile section */
@@ -703,13 +718,14 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         background: transparent;
       }
       
-      /* Stage takes viewport-appropriate space */
+      /* Stage — no fixed positioning */
       .rp-stage {
-        padding: 65px 0 0 0;
+        padding: 54px 0 0 0;
         min-height: auto;
         flex: 0 0 auto;
       }
       
+      /* Portrait video on mobile — full width, 9:16 */
       .rp-card {
         max-width: 100%;
         max-height: none;
@@ -717,24 +733,20 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         aspect-ratio: 9 / 16;
         margin: 0;
       }
-
-      /* ✅ Change C: Mobile landscape — wider, shorter */
+      
+      /* Landscape video on mobile — full width, 16:9 */
       .rp-root[data-aspect="landscape"] .rp-card,
       .rp-root[data-aspect="mixed"] .rp-card {
         aspect-ratio: 16 / 9;
         width: 100%;
         max-width: 100%;
-      }
-
-      /* ✅ Change C: Mobile landscape stage — less top padding */
-      .rp-root[data-aspect="landscape"] .rp-stage,
-      .rp-root[data-aspect="mixed"] .rp-stage {
-        padding-top: 60px;
+        max-height: none;
       }
       
       .rp-card-glow { display: none; }
       .rp-card-frame { border-radius: 0; box-shadow: none; }
       
+      /* Top bar mobile adjustments */
       .rp-topbar {
         background: linear-gradient(to bottom, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
         height: 54px;
@@ -746,7 +758,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       .rp-type-badge { padding: 4px 8px; }
       .rp-type-label { font-size: 9px; }
       
-      /* MOBILE ACTIONS - Row of pill buttons below video */
+      /* ═══ MOBILE ACTIONS ROW ═══ */
       .rp-mobile-actions {
         display: flex;
         gap: 10px;
@@ -798,7 +810,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       }
       .rp-mobile-next .rp-mobile-icon { color: #c084fc; }
       
-      /* MOBILE INFO */
+      /* ═══ MOBILE INFO CARD ═══ */
       .rp-mobile-info {
         background: rgba(28, 15, 61, 0.4);
         border: 1px solid rgba(192, 132, 252, 0.2);
@@ -870,6 +882,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         letter-spacing: -0.005em;
       }
       
+      /* ═══ SWIPE HINT ═══ */
       .rp-mobile-hint {
         display: flex;
         align-items: center;
@@ -892,13 +905,9 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         50% { transform: translateY(-3px); opacity: 0.7; }
       }
     }
-
-    @media (min-width: 641px) and (max-width: 1023px) {
-      .rp-info { left: 24px; bottom: 40px; }
-      .rp-actions { right: 20px; bottom: 200px; }
-    }
   </style>
 
+  <!-- ═══ MAIN INTERACTION SCRIPT ═══ -->
   <script>
     (function() {
       const root = document.getElementById('reels-root') as HTMLElement;
@@ -921,7 +930,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         return '';
       }
       
-      // WATCH HISTORY
+      // ═══ WATCH HISTORY ═══
       try {
         if (currentVideo && videoId) {
           const goodThumb = getThumbnailUrl(videoId, currentVideo.thumbnail);
@@ -940,28 +949,24 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         }
       } catch (e) { console.warn('History save failed', e); }
       
-      // SAVE — synced across both mobile & desktop buttons
+      // ═══ SAVE FUNCTIONALITY ═══
       const saveBtnDesktop = document.getElementById('saveBtnDesktop');
       const saveBtnMobile = document.getElementById('saveBtnMobile');
       const savedVideos: any[] = JSON.parse(localStorage.getItem('anitube_saved') || '[]');
       const isSaved = () => savedVideos.some((s: any) => s.id === videoId);
       
       function updateSaveUI() {
-        if (isSaved()) {
-          saveBtnDesktop?.classList.add('saved');
-          saveBtnMobile?.classList.add('saved');
-          const dLabel = saveBtnDesktop?.querySelector('.rp-pill-label');
-          const mLabel = saveBtnMobile?.querySelector('.rp-mobile-btn-label');
-          if (dLabel) dLabel.textContent = 'Saved';
-          if (mLabel) mLabel.textContent = 'Saved';
-        } else {
-          saveBtnDesktop?.classList.remove('saved');
-          saveBtnMobile?.classList.remove('saved');
-          const dLabel = saveBtnDesktop?.querySelector('.rp-pill-label');
-          const mLabel = saveBtnMobile?.querySelector('.rp-mobile-btn-label');
-          if (dLabel) dLabel.textContent = 'Save';
-          if (mLabel) mLabel.textContent = 'Save';
-        }
+        const saved = isSaved();
+        [saveBtnDesktop, saveBtnMobile].forEach(btn => {
+          if (!btn) return;
+          if (saved) {
+            btn.classList.add('saved');
+          } else {
+            btn.classList.remove('saved');
+          }
+          const label = btn.querySelector('.rp-pill-label, .rp-mobile-btn-label');
+          if (label) label.textContent = saved ? 'Saved' : 'Save';
+        });
       }
       
       function toggleSave() {
@@ -988,7 +993,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       saveBtnDesktop?.addEventListener('click', toggleSave);
       saveBtnMobile?.addEventListener('click', toggleSave);
       
-      // DOUBLE-TAP
+      // ═══ DOUBLE-TAP TO SAVE ═══
       const card = document.getElementById('videoCard');
       const doubleTapHeart = document.getElementById('doubleTapHeart');
       let lastTap = 0;
@@ -1008,7 +1013,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         }
       });
       
-      // SEND — both mobile & desktop
+      // ═══ SEND / SHARE ═══
       const sendBtnDesktop = document.getElementById('sendBtnDesktop');
       const sendBtnMobile = document.getElementById('sendBtnMobile');
       
@@ -1041,8 +1046,12 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       sendBtnDesktop?.addEventListener('click', () => handleSend(sendBtnDesktop));
       sendBtnMobile?.addEventListener('click', () => handleSend(sendBtnMobile));
       
-      // NAVIGATION
+      // ═══ NAVIGATION ═══
+      let navigating = false;
+      
       function navigate(direction: 'next' | 'prev') {
+        if (navigating) return;
+        
         let targetId = '';
         if (direction === 'next') {
           if (queue.length > 1) targetId = queue[1].id;
@@ -1050,6 +1059,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
           if (window.history.length > 1) { window.history.back(); return; }
         }
         if (targetId) {
+          navigating = true;
           const c = document.getElementById('videoCard');
           if (c) {
             c.style.opacity = '0';
@@ -1063,12 +1073,13 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       document.getElementById('nextBtnMobile')?.addEventListener('click', () => navigate('next'));
       document.getElementById('prevBtn')?.addEventListener('click', () => navigate('prev'));
       
+      // Keyboard navigation
       document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') { e.preventDefault(); navigate('next'); }
         else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') { e.preventDefault(); navigate('prev'); }
       });
       
-      // Wheel navigation ONLY on desktop
+      // Wheel navigation — DESKTOP ONLY
       let wheelLocked = false;
       document.addEventListener('wheel', (e) => {
         if (window.innerWidth <= 640) return;
@@ -1082,29 +1093,35 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         setTimeout(() => { wheelLocked = false; }, 800);
       }, { passive: true });
       
-      // Touch swipe navigation
+      // Touch swipe — outside iframe only, mobile-friendly
       let touchStartY = 0;
       let touchStartTime = 0;
-      let touchStartInStage = false;
+      let touchValid = false;
       
       document.addEventListener('touchstart', (e) => {
         const target = e.target as HTMLElement;
-        touchStartInStage = !!target.closest('.rp-stage') && !target.closest('iframe, .rp-card-frame');
-        touchStartY = e.touches[0].clientY;
-        touchStartTime = Date.now();
-      }, { passive: true });
-      
-      document.addEventListener('touchend', (e) => {
-        if (!touchStartInStage) return;
-        const touchEndY = e.changedTouches[0].clientY;
-        const diff = touchStartY - touchEndY;
-        const timeDiff = Date.now() - touchStartTime;
-        if (Math.abs(diff) > 100 && timeDiff < 500) {
-          if (diff > 0) navigate('next');
-          else navigate('prev');
+        // Only activate swipe on areas OUTSIDE the iframe/video
+        touchValid = !target.closest('iframe') && !target.closest('.rp-card-frame');
+        if (touchValid) {
+          touchStartY = e.touches[0].clientY;
+          touchStartTime = Date.now();
         }
       }, { passive: true });
       
+      document.addEventListener('touchend', (e) => {
+        if (!touchValid) return;
+        const touchEndY = e.changedTouches[0].clientY;
+        const diff = touchStartY - touchEndY;
+        const timeDiff = Date.now() - touchStartTime;
+        // Need strong intentional swipe (120px in 400ms)
+        if (Math.abs(diff) > 120 && timeDiff < 400) {
+          if (diff > 0) navigate('next');
+          else navigate('prev');
+        }
+        touchValid = false;
+      }, { passive: true });
+      
+      // ═══ LOADER HIDE ═══
       const iframe = document.getElementById('videoFrame') as HTMLIFrameElement;
       const loader = document.getElementById('loader');
       iframe?.addEventListener('load', () => {
@@ -1112,6 +1129,7 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
       });
       setTimeout(() => loader?.classList.add('hidden'), 3500);
       
+      // ═══ SAFIYA EVENT ═══
       setTimeout(() => {
         if (currentVideo) {
           window.dispatchEvent(new CustomEvent('safiya:video-event', {
@@ -1120,24 +1138,23 @@ const currentType = typeInfo[video.type] || typeInfo.anime;
         }
       }, 500);
       
+      // ═══ SAFIYA MOBILE REPOSITION ═══
       if (window.innerWidth <= 640) {
-        setTimeout(() => {
-          const safiyaStyle = document.createElement('style');
-          safiyaStyle.textContent = `
-            @media (max-width: 640px) {
-              [id*="safiya"], [class*="safiya"] {
-                bottom: auto !important;
-                top: 68px !important;
-                right: 10px !important;
-                transform: scale(0.75) !important;
-                transform-origin: top right !important;
-                opacity: 0.7 !important;
-                z-index: 90 !important;
-              }
+        const safiyaStyle = document.createElement('style');
+        safiyaStyle.textContent = `
+          @media (max-width: 640px) {
+            [id*="safiya"], [class*="safiya"] {
+              bottom: auto !important;
+              top: 68px !important;
+              right: 10px !important;
+              transform: scale(0.75) !important;
+              transform-origin: top right !important;
+              opacity: 0.7 !important;
+              z-index: 90 !important;
             }
-          `;
-          document.head.appendChild(safiyaStyle);
-        }, 1000);
+          }
+        `;
+        document.head.appendChild(safiyaStyle);
       }
       
     })();
