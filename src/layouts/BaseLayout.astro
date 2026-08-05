@@ -91,6 +91,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     </div>
   </div>
 
+  <!-- ═══ LOADER + BACK TO TOP ═══ -->
   <script is:inline>
   (function(){
     window.addEventListener('load', function(){
@@ -102,17 +103,21 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
     var btt = document.getElementById('btt');
     if(btt){
+      var bttVisible = false;
       window.addEventListener('scroll',function(){
         var show = window.scrollY > 400;
-        btt.style.opacity = show ? '1' : '0';
-        btt.style.pointerEvents = show ? 'auto' : 'none';
+        if (show !== bttVisible) {
+          bttVisible = show;
+          btt.style.opacity = show ? '1' : '0';
+          btt.style.pointerEvents = show ? 'auto' : 'none';
+        }
       }, { passive: true });
       btt.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); });
     }
   })();
   </script>
 
-  <!-- 🎯 OPTIMIZED RESUME DETECTION — Uses MutationObserver, no polling, zero lag -->
+  <!-- ═══ OPTIMIZED RESUME DETECTION — Debounced MutationObserver ═══ -->
   <script is:inline>
   (function(){
     try {
@@ -135,21 +140,25 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       var done = false;
       var observer = null;
       var timeoutId = null;
+      var debounceTimer = null;
+      
+      function cleanup() {
+        done = true;
+        if (observer) { observer.disconnect(); observer = null; }
+        if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+        if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null; }
+        localStorage.removeItem('anitube_resume_video');
+        localStorage.removeItem('anitube_resume_time');
+      }
       
       function highlightCard(link) {
         if (done) return;
-        done = true;
-        
-        // Cleanup observer immediately (no more DOM watching)
-        if (observer) observer.disconnect();
-        if (timeoutId) clearTimeout(timeoutId);
-        
-        // Cleanup localStorage
-        localStorage.removeItem('anitube_resume_video');
-        localStorage.removeItem('anitube_resume_time');
         
         // Find visual card container
         var card = link.closest('.card, .anime-card, [class*="card"], [class*="Card"], article, .item, [class*="tile"]') || link;
+        
+        // Cleanup FIRST — stop all observers immediately
+        cleanup();
         
         // Scroll into view
         try {
@@ -188,6 +197,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       }
       
       function tryFind() {
+        if (done) return true;
         var link = findCard();
         if (link) {
           highlightCard(link);
@@ -200,10 +210,13 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
         // First try immediately
         if (tryFind()) return;
         
-        // Use MutationObserver to watch for new cards (efficient, no polling)
-        observer = new MutationObserver(function(mutations) {
-          // Debounced check
-          if (tryFind()) return;
+        // Debounced MutationObserver — waits 200ms after last mutation before checking
+        observer = new MutationObserver(function() {
+          if (done) return;
+          if (debounceTimer) clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(function() {
+            tryFind();
+          }, 200);
         });
         
         observer.observe(document.body, {
@@ -211,22 +224,17 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
           subtree: true
         });
         
-        // Safety timeout: give up after 15 seconds
+        // Safety timeout: give up after 10 seconds (was 15, reduced)
         timeoutId = setTimeout(function() {
-          if (observer) observer.disconnect();
-          if (!done) {
-            localStorage.removeItem('anitube_resume_video');
-            localStorage.removeItem('anitube_resume_time');
-            done = true;
-          }
-        }, 15000);
+          if (!done) cleanup();
+        }, 10000);
       }
       
       if (document.readyState === 'complete') {
-        setTimeout(start, 500);
+        setTimeout(start, 300);
       } else {
         window.addEventListener('load', function(){
-          setTimeout(start, 500);
+          setTimeout(start, 300);
         });
       }
     } catch (e) {
@@ -342,16 +350,21 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.35); border-radius: 9px; }
 
+  /* ═══ AMBIENT BACKGROUND — GPU optimized ═══ */
   .ambient-bg {
     position: fixed; inset: 0;
     z-index: 0; overflow: hidden;
     pointer-events: none;
+    will-change: auto;
+    contain: strict;
   }
 
   .ambient-glow {
     position: absolute;
     border-radius: 50%;
     filter: blur(100px);
+    will-change: auto;
+    contain: layout style;
   }
 
   .ambient-glow-1 {
@@ -368,6 +381,16 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
 
   [data-theme="light"] .ambient-glow-1 { background: rgba(168, 85, 247, 0.1); }
   [data-theme="light"] .ambient-glow-2 { background: rgba(125, 211, 252, 0.08); }
+
+  /* Mobile: smaller ambient blurs for performance */
+  @media (max-width: 640px) {
+    .ambient-glow-1,
+    .ambient-glow-2 {
+      width: 300px;
+      height: 300px;
+      filter: blur(80px);
+    }
+  }
 
   .grad-text {
     background: var(--grad);
@@ -662,7 +685,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   }
   .reveal.visible { opacity: 1; transform: translateY(0); }
 
-  /* Resume Badge */
+  /* ═══ RESUME BADGE ═══ */
   .resume-badge {
     position: fixed;
     top: 90px;
@@ -734,7 +757,7 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     .resume-badge-sub { font-size: 10px; }
   }
 
-  /* Card Highlight - use will-change for GPU acceleration */
+  /* ═══ CARD HIGHLIGHT ═══ */
   .resume-highlight {
     position: relative !important;
     z-index: 5;
