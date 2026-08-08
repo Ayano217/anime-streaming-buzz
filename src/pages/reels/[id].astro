@@ -236,7 +236,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                       allowfullscreen
                       loading="eager"
-                      sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
+                      sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-orientation-lock"
                       class="rp-ext-iframe"
                     ></iframe>
                     <div class="rp-ext-mask-top"></div>
@@ -402,10 +402,18 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
                   <a class={`rp-ext-ep-card ${ep.number === animeEpNum ? 'active' : ''}`} 
                      href={`/reels/${ep.embedId}`}
                      data-ep-num={ep.number}>
-                    <div class="rp-ext-ep-num">{ep.number}</div>
+                    <div class="rp-ext-ep-thumb">
+                      {ep.thumbnail ? (
+                        <img src={ep.thumbnail} alt={`Episode ${ep.number}`} loading="lazy" onerror="this.style.opacity=0.3" />
+                      ) : (
+                        <div class="rp-ext-ep-num-fallback">{ep.number}</div>
+                      )}
+                      <div class="rp-ext-ep-num-badge">{ep.number}</div>
+                      {ep.number === animeEpNum && <div class="rp-ext-ep-active-overlay"></div>}
+                    </div>
                     <div class="rp-ext-ep-info">
                       <div class="rp-ext-ep-title">Episode {ep.number}</div>
-                      <div class="rp-ext-ep-meta">{ep.number === animeEpNum ? '▶ Playing' : 'Click to watch'}</div>
+                      <div class="rp-ext-ep-meta">{ep.number === animeEpNum ? '▶ Playing now' : 'Click to watch'}</div>
                     </div>
                     {ep.number === animeEpNum && <div class="rp-ext-ep-playing"><span></span><span></span><span></span></div>}
                   </a>
@@ -500,10 +508,10 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
     /* Iframe scaled + positioned so ONLY video player visible */
     .rp-ext-iframe {
       position: absolute;
-      top: -180px;
+      top: -220px;
       left: 0;
       width: 100%;
-      height: calc(100% + 500px);
+      height: calc(100% + 600px);
       border: 0;
       transform-origin: top left;
     }
@@ -523,7 +531,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       bottom: 0;
       left: 0;
       right: 0;
-      height: 0;
+      height: 130px;
       background: #000;
       z-index: 10;
       pointer-events: auto;
@@ -1152,7 +1160,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
     }
     .rp-ext-ep-card {
       display: grid;
-      grid-template-columns: 44px 1fr auto;
+      grid-template-columns: 100px 1fr auto;
       gap: 12px;
       align-items: center;
       padding: 10px 12px;
@@ -1174,23 +1182,55 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       border-color: rgba(192, 132, 252, 0.6);
       box-shadow: 0 4px 16px rgba(192, 132, 252, 0.2);
     }
-    .rp-ext-ep-num {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #c084fc, #e879f9);
+    .rp-ext-ep-thumb {
+      position: relative;
+      width: 100px;
+      height: 60px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1a0f3d;
+      border: 1px solid rgba(192, 132, 252, 0.2);
+    }
+    .rp-ext-ep-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .rp-ext-ep-num-fallback {
+      width: 100%;
+      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: linear-gradient(135deg, #c084fc, #e879f9);
       color: #fff;
       font-weight: 800;
-      font-size: 16px;
+      font-size: 20px;
       font-family: 'Bricolage Grotesque', sans-serif;
-      box-shadow: 0 4px 12px rgba(192, 132, 252, 0.3);
     }
-    .rp-ext-ep-card.active .rp-ext-ep-num {
-      background: linear-gradient(135deg, #10b981, #34d399);
-      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+    .rp-ext-ep-num-badge {
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      padding: 2px 6px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      border-radius: 4px;
+      z-index: 2;
+    }
+    .rp-ext-ep-active-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.4), rgba(52, 211, 153, 0.4));
+      z-index: 1;
+    }
+    .rp-ext-ep-card.active .rp-ext-ep-thumb {
+      border-color: rgba(16, 185, 129, 0.6);
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
     }
     .rp-ext-ep-info { min-width: 0; }
     .rp-ext-ep-title {
