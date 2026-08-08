@@ -161,7 +161,10 @@ const metaText = metaParts.join(' • ');
         data-type={video.type}
       >
         <div class="rp-grid">
+
+          <!-- MAIN -->
           <div class="rp-main">
+
             <div class="rp-player" id="videoCard" data-aspect={videoAspect}>
               <div class="rp-player-frame">
                 <iframe
@@ -173,7 +176,6 @@ const metaText = metaParts.join(' • ');
                   allowfullscreen
                   loading="eager"
                 ></iframe>
-
                 <div class="rp-vloader" id="videoLoader">
                   <div class="rp-orbit">
                     <div class="rp-dot rp-d1"></div>
@@ -182,7 +184,6 @@ const metaText = metaParts.join(' • ');
                   </div>
                   <div class="rp-brand">AniTubeBuzz</div>
                 </div>
-
                 <div class="rp-heart" id="doubleTapHeart">
                   <svg viewBox="0 0 24 24" fill="currentColor" style="width:100%;height:100%;">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
@@ -204,7 +205,6 @@ const metaText = metaParts.join(' • ');
                   </div>
                 </div>
               </div>
-
               <div class="rp-actions">
                 <button class="rp-btn" id="likeBtn">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -212,21 +212,18 @@ const metaText = metaParts.join(' • ');
                   </svg>
                   <span class="rp-btn-lbl">Like</span>
                 </button>
-
                 <button class="rp-btn" id="saveBtn">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                   </svg>
                   <span class="rp-btn-lbl">Save</span>
                 </button>
-
                 <button class="rp-btn" id="sendBtn">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="rp-plane">
                     <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"></path>
                   </svg>
                   <span class="rp-btn-lbl">Share</span>
                 </button>
-
                 <button class="rp-btn rp-btn-next" id="nextBtn">
                   <span class="rp-btn-lbl">Next</span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -263,7 +260,8 @@ const metaText = metaParts.join(' • ');
               <button class="rp-hook-btn">Discover →</button>
             </div>
 
-            <section class="rp-comments" id="commentsSection">
+            <!-- COMMENTS -->
+            <section class="rp-comments">
               <div class="rp-comments-head">
                 <h3 class="rp-comments-title"><span id="commentCount">0</span> Comments</h3>
                 <button class="rp-sort-btn">
@@ -275,7 +273,6 @@ const metaText = metaParts.join(' • ');
                   <span>Sort by</span>
                 </button>
               </div>
-
               <div class="rp-comment-input-row">
                 <div class="rp-my-av" id="userInitial">Y</div>
                 <div class="rp-comment-input-wrap">
@@ -286,12 +283,12 @@ const metaText = metaParts.join(' • ');
                   </div>
                 </div>
               </div>
-
               <div id="commentsList" class="rp-comments-list">
                 <div class="rp-comments-empty"><p>No comments yet. Be the first! 💬</p></div>
               </div>
             </section>
 
+            <!-- MORE VIDEOS -->
             <section class="rp-more-section" id="moreSection">
               <div class="rp-section-head">
                 <div class="rp-section-title">
@@ -306,8 +303,10 @@ const metaText = metaParts.join(' • ');
                 <span>Loading more...</span>
               </div>
             </section>
+
           </div>
 
+          <!-- SIDEBAR -->
           <aside class="rp-sidebar">
             <div id="seriesSection" class="rp-series-section" style="display:none;">
               <div class="rp-sidebar-head">
@@ -339,6 +338,7 @@ const metaText = metaParts.join(' • ');
 
             <div id="relatedFeed" class="rp-side-list"></div>
           </aside>
+
         </div>
       </div>
     </div>
@@ -346,232 +346,117 @@ const metaText = metaParts.join(' • ');
 
   <Footer slot="footer" />
 
-  <script
-    is:inline
-    set:html={`
-      window.__REELS_VIDEO__ = ${JSON.stringify(video)};
-      window.__REELS_FEED__ = ${JSON.stringify(allVideos.slice(0, 50))};
-      window.__CURRENT_VIDEO_ID__ = ${JSON.stringify(videoId)};
-      window.__SERIES_NAME__ = ${JSON.stringify(seriesName)};
-      window.__CHANNEL_NAME__ = ${JSON.stringify(displayChannel)};
-    `}
-  ></script>
+  <script is:inline set:html={`
+    window.__REELS_VIDEO__ = ${JSON.stringify(video)};
+    window.__REELS_FEED__ = ${JSON.stringify(allVideos.slice(0, 50))};
+    window.__CURRENT_VIDEO_ID__ = ${JSON.stringify(videoId)};
+    window.__SERIES_NAME__ = ${JSON.stringify(seriesName)};
+    window.__CHANNEL_NAME__ = ${JSON.stringify(displayChannel)};
+  `}></script>
 
   <style is:global>
     @keyframes atNaCardIn {
       from { opacity: 0; transform: translateY(15px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
     .at-na-card {
       transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-      display: block;
-      animation: atNaCardIn 0.4s ease backwards;
+      cursor: pointer; text-decoration: none; color: inherit;
+      display: block; animation: atNaCardIn 0.4s ease backwards;
     }
     .at-na-card:hover { transform: translateY(-4px); }
-
     .at-na-thumb {
-      position: relative;
-      width: 100%;
-      padding-top: 56.25%;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #0d0520;
-      border: 1px solid rgba(232, 121, 249, 0.35);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      transition: all 0.35s ease;
+      position: relative; width: 100%; padding-top: 56.25%;
+      border-radius: 12px; overflow: hidden; background: #0d0520;
+      border: 1px solid rgba(232,121,249,0.35);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: all 0.35s ease;
     }
     .at-na-card:hover .at-na-thumb {
-      border-color: rgba(232, 121, 249, 0.9);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(192, 132, 252, 0.5);
+      border-color: rgba(232,121,249,0.9);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5), 0 0 20px rgba(192,132,252,0.5);
     }
-
     .at-na-img {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: cover; display: block;
       transition: transform 0.5s ease, filter 0.3s ease;
     }
     .at-na-card:hover .at-na-img { transform: scale(1.08); filter: brightness(0.65); }
-
     .at-na-shine {
-      position: absolute;
-      top: 0;
-      left: -80%;
-      width: 60%;
-      height: 100%;
+      position: absolute; top: 0; left: -80%; width: 60%; height: 100%;
       background: linear-gradient(105deg, transparent, rgba(255,255,255,0.2), transparent);
-      z-index: 3;
-      transition: left 0.8s ease;
-      pointer-events: none;
+      z-index: 3; transition: left 0.8s ease; pointer-events: none;
     }
     .at-na-card:hover .at-na-shine { left: 120%; }
-
     .at-na-overlay {
-      position: absolute;
-      inset: 0;
+      position: absolute; inset: 0;
       background: linear-gradient(180deg, transparent 40%, rgba(10,5,23,0.85) 100%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-      z-index: 3;
+      opacity: 0; transition: opacity 0.3s ease; pointer-events: none; z-index: 3;
     }
     .at-na-card:hover .at-na-overlay { opacity: 1; }
-
     .at-na-play {
-      position: absolute;
-      top: 50%;
-      left: 50%;
+      position: absolute; top: 50%; left: 50%;
       transform: translate(-50%,-50%) scale(0.4);
-      width: 44px;
-      height: 44px;
-      z-index: 5;
-      opacity: 0;
-      transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
-      pointer-events: none;
+      width: 44px; height: 44px; z-index: 5; opacity: 0;
+      transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1); pointer-events: none;
     }
     .at-na-card:hover .at-na-play { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-
     .at-na-card:hover .at-na-title {
       background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
-
     @media (max-width: 768px) {
       .at-na-card:hover { transform: translateY(-2px); }
       .at-na-play { opacity: 0.75 !important; transform: translate(-50%,-50%) scale(0.7) !important; }
     }
-
-    .rp-comment .rp-c-avatar,
-    .rp-reply .rp-c-avatar {
-      width: 40px !important;
-      max-width: 40px !important;
-      min-width: 40px !important;
-      height: 40px !important;
-      max-height: 40px !important;
-      min-height: 40px !important;
-      border-radius: 50% !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      color: white !important;
+    .rp-comment { display: grid !important; grid-template-columns: 40px 1fr !important; gap: 12px !important; align-items: start !important; }
+    .rp-reply { display: grid !important; grid-template-columns: 32px 1fr !important; gap: 10px !important; align-items: start !important; }
+    .rp-comment .rp-c-avatar, .rp-reply .rp-c-avatar {
+      width: 40px !important; max-width: 40px !important; min-width: 40px !important;
+      height: 40px !important; max-height: 40px !important; min-height: 40px !important;
+      border-radius: 50% !important; display: flex !important; align-items: center !important;
+      justify-content: center !important; color: white !important;
       font-family: 'Bricolage Grotesque', sans-serif !important;
-      font-weight: 700 !important;
-      font-size: 15px !important;
-      flex-shrink: 0 !important;
-      overflow: hidden !important;
-      background-size: cover !important;
-      background-position: center !important;
-      background-repeat: no-repeat !important;
-      box-sizing: border-box !important;
-      padding: 0 !important;
-      margin: 0 !important;
+      font-weight: 700 !important; font-size: 15px !important; flex-shrink: 0 !important;
+      overflow: hidden !important; box-sizing: border-box !important; padding: 0 !important; margin: 0 !important;
     }
-
     .rp-reply .rp-c-avatar {
-      width: 32px !important;
-      max-width: 32px !important;
-      min-width: 32px !important;
-      height: 32px !important;
-      max-height: 32px !important;
-      min-height: 32px !important;
+      width: 32px !important; max-width: 32px !important; min-width: 32px !important;
+      height: 32px !important; max-height: 32px !important; min-height: 32px !important;
       font-size: 13px !important;
-    }
-
-    .rp-comment {
-      display: grid !important;
-      grid-template-columns: 40px 1fr !important;
-      gap: 12px !important;
-      align-items: start !important;
-    }
-
-    .rp-reply {
-      display: grid !important;
-      grid-template-columns: 32px 1fr !important;
-      gap: 10px !important;
-      align-items: start !important;
     }
   </style>
 
   <style>
     .rp-section { padding: 24px 0 40px; }
     .rp-container { max-width: 1600px; margin: 0 auto; padding: 0 20px; }
-
-    .rp-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) 400px;
-      gap: 28px;
-      align-items: start;
-    }
-
-    .rp-main {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      min-width: 0;
-    }
-
+    .rp-grid { display: grid; grid-template-columns: minmax(0,1fr) 400px; gap: 28px; align-items: start; }
+    .rp-main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
     .rp-sidebar {
-      position: sticky;
-      top: 88px;
-      display: flex;
-      flex-direction: column;
-      max-height: calc(100vh - 100px);
-      min-width: 0;
-      overflow-y: auto;
-      padding-right: 4px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(192,132,252,0.3) transparent;
+      position: sticky; top: 88px; display: flex; flex-direction: column;
+      max-height: calc(100vh - 100px); min-width: 0; overflow-y: auto;
+      padding-right: 4px; scrollbar-width: thin; scrollbar-color: rgba(192,132,252,0.3) transparent;
     }
     .rp-sidebar::-webkit-scrollbar { width: 4px; }
     .rp-sidebar::-webkit-scrollbar-thumb { background: rgba(192,132,252,0.3); border-radius: 2px; }
-
-    .rp-divider {
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(192,132,252,0.3), transparent);
-      margin: 20px 0;
-    }
+    .rp-divider { height: 1px; background: linear-gradient(90deg,transparent,rgba(192,132,252,0.3),transparent); margin: 20px 0; }
 
     .rp-player {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      border-radius: 16px;
-      overflow: hidden;
-      background: #000;
-      box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.3), 0 20px 50px rgba(0, 0, 0, 0.5);
-      isolation: isolate;
+      position: relative; width: 100%; aspect-ratio: 16/9;
+      border-radius: 16px; overflow: hidden; background: #000;
+      box-shadow: 0 0 0 1px rgba(192,132,252,0.3), 0 20px 50px rgba(0,0,0,0.5); isolation: isolate;
     }
-    .rp-player[data-aspect="portrait"] {
-      aspect-ratio: 9 / 16;
-      max-width: 400px;
-      margin: 0 auto;
-    }
+    .rp-player[data-aspect="portrait"] { aspect-ratio: 9/16; max-width: 400px; margin: 0 auto; }
     .rp-player-frame { position: absolute; inset: 0; overflow: hidden; }
     .rp-player-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
 
     .rp-heart {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(0);
-      width: 100px;
-      height: 100px;
-      color: #ff2d55;
-      pointer-events: none;
-      z-index: 15;
-      filter: drop-shadow(0 0 30px rgba(255, 45, 85, 0.9));
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%) scale(0);
+      width: 100px; height: 100px; color: #ff2d55;
+      pointer-events: none; z-index: 15;
+      filter: drop-shadow(0 0 30px rgba(255,45,85,0.9));
     }
-    .rp-heart.pop { animation: rpHeartPop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .rp-heart.pop { animation: rpHeartPop 0.9s cubic-bezier(0.34,1.56,0.64,1); }
     @keyframes rpHeartPop {
       0% { transform: translate(-50%,-50%) scale(0) rotate(-15deg); opacity: 0; }
       30% { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
@@ -580,16 +465,10 @@ const metaText = metaParts.join(' • ');
     }
 
     .rp-vloader {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      background: radial-gradient(circle at center, #1a0f2e 0%, #050208 100%);
-      z-index: 12;
-      transition: opacity 0.6s ease, visibility 0.6s ease;
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px;
+      background: radial-gradient(circle at center,#1a0f2e 0%,#050208 100%);
+      z-index: 12; transition: opacity 0.6s ease, visibility 0.6s ease;
     }
     .rp-vloader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
     .rp-orbit { position: relative; width: 60px; height: 60px; }
@@ -602,133 +481,72 @@ const metaText = metaParts.join(' • ');
       100% { transform: translate(-50%,-50%) rotate(360deg) translateX(22px) rotate(-360deg); }
     }
     .rp-brand {
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      font-family: 'Bricolage Grotesque', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: 0.08em;
+      background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     }
 
     .rp-title {
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.3;
-      margin: 4px 0 0;
-      letter-spacing: -0.015em;
+      font-family: 'Bricolage Grotesque', sans-serif; font-size: 22px; font-weight: 700;
+      color: var(--text-primary); line-height: 1.3; margin: 4px 0 0; letter-spacing: -0.015em;
     }
 
     .rp-meta-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
-      padding: 14px 16px;
-      background: linear-gradient(135deg, rgba(28, 15, 61, 0.6), rgba(20, 10, 40, 0.4));
-      border: 1px solid rgba(192, 132, 252, 0.2);
-      border-radius: 14px;
-      backdrop-filter: blur(12px);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap; padding: 14px 16px;
+      background: linear-gradient(135deg,rgba(28,15,61,0.6),rgba(20,10,40,0.4));
+      border: 1px solid rgba(192,132,252,0.2); border-radius: 14px; backdrop-filter: blur(12px);
     }
-    [data-theme="light"] .rp-meta-bar { background: rgba(255, 255, 255, 0.7); }
-
+    [data-theme="light"] .rp-meta-bar { background: rgba(255,255,255,0.7); }
     .rp-channel { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
     .rp-avatar {
-      width: 44px;
-      height: 44px;
-      min-width: 44px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-weight: 800;
-      font-size: 17px;
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 6px 18px rgba(192, 132, 252, 0.5);
-      flex-shrink: 0;
+      width: 44px; height: 44px; min-width: 44px; border-radius: 50%;
+      background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-family: 'Bricolage Grotesque',sans-serif;
+      font-weight: 800; font-size: 17px; border: 2px solid rgba(255,255,255,0.2);
+      box-shadow: 0 6px 18px rgba(192,132,252,0.5); flex-shrink: 0;
     }
     .rp-channel-info { flex: 1; min-width: 0; }
     .rp-channel-name {
-      font-family: 'Inter', 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.2;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-family: 'Inter','DM Sans',sans-serif; font-size: 14px; font-weight: 700;
+      color: var(--text-primary); line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .rp-channel-meta {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 4px;
-      font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'JetBrains Mono',monospace; font-size: 11px;
+      color: var(--text-muted); margin-top: 4px; font-weight: 600;
     }
     .rp-live {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #7dd3fc;
-      box-shadow: 0 0 8px #7dd3fc;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #7dd3fc; box-shadow: 0 0 8px #7dd3fc;
       animation: rpPulse 1.5s ease-in-out infinite;
     }
     @keyframes rpPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
+      0%,100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.5; transform: scale(0.8); }
     }
 
     .rp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .rp-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 9px 16px;
-      height: 38px;
-      background: rgba(10, 5, 23, 0.7);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(192, 132, 252, 0.3);
-      border-radius: 100px;
-      color: var(--text-primary);
-      cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      font-family: 'Inter', sans-serif;
-      font-size: 12.5px;
-      font-weight: 600;
-      white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 16px; height: 38px;
+      background: rgba(10,5,23,0.7); backdrop-filter: blur(12px);
+      border: 1px solid rgba(192,132,252,0.3); border-radius: 100px;
+      color: var(--text-primary); cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+      font-family: 'Inter',sans-serif; font-size: 12.5px; font-weight: 600; white-space: nowrap;
     }
-    [data-theme="light"] .rp-btn { background: rgba(255, 255, 255, 0.9); }
-    .rp-btn:hover {
-      border-color: rgba(232, 121, 249, 0.7);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(192, 132, 252, 0.3);
-    }
+    [data-theme="light"] .rp-btn { background: rgba(255,255,255,0.9); }
+    .rp-btn:hover { border-color: rgba(232,121,249,0.7); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(192,132,252,0.3); }
     .rp-btn:active { transform: translateY(0) scale(0.96); }
     .rp-btn svg { color: #e879f9; flex-shrink: 0; }
-    .rp-btn-next {
-      background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.2));
-      border-color: rgba(232, 121, 249, 0.6);
-    }
+    .rp-btn-next { background: linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2)); border-color: rgba(232,121,249,0.6); }
     .rp-btn-next svg { color: #c084fc; }
-    .rp-btn.active[id="saveBtn"] {
-      background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(245, 158, 11, 0.15)) !important;
-      border-color: rgba(251, 191, 36, 0.6) !important;
-    }
+    .rp-btn.active[id="saveBtn"] { background: linear-gradient(135deg,rgba(251,191,36,0.25),rgba(245,158,11,0.15)) !important; border-color: rgba(251,191,36,0.6) !important; }
     .rp-btn.active[id="saveBtn"] svg { color: #fbbf24 !important; fill: #fbbf24 !important; }
-    .rp-btn.active[id="likeBtn"] {
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(220, 38, 38, 0.15)) !important;
-      border-color: rgba(239, 68, 68, 0.6) !important;
-    }
+    .rp-btn.active[id="likeBtn"] { background: linear-gradient(135deg,rgba(239,68,68,0.25),rgba(220,38,38,0.15)) !important; border-color: rgba(239,68,68,0.6) !important; }
     .rp-btn.active[id="likeBtn"] svg { color: #ef4444 !important; fill: #ef4444 !important; }
     .rp-btn.sent .rp-plane { animation: rpFly 0.6s ease; }
     @keyframes rpFly {
@@ -739,639 +557,182 @@ const metaText = metaParts.join(' • ');
     }
 
     .rp-desc {
-      background: linear-gradient(135deg, rgba(28, 15, 61, 0.5), rgba(20, 10, 40, 0.3));
-      border: 1px solid rgba(192, 132, 252, 0.2);
-      border-radius: 14px;
-      padding: 14px 18px;
+      background: linear-gradient(135deg,rgba(28,15,61,0.5),rgba(20,10,40,0.3));
+      border: 1px solid rgba(192,132,252,0.2); border-radius: 14px; padding: 14px 18px;
     }
-    [data-theme="light"] .rp-desc { background: rgba(255, 255, 255, 0.8); }
+    [data-theme="light"] .rp-desc { background: rgba(255,255,255,0.8); }
     .rp-desc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
     .rp-desc-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      font-weight: 700;
-      color: #c084fc;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'JetBrains Mono',monospace; font-size: 11px; font-weight: 700;
+      color: #c084fc; letter-spacing: 0.08em; text-transform: uppercase;
     }
     .rp-desc-tgl {
-      background: rgba(125, 211, 252, 0.15);
-      border: 1px solid rgba(125, 211, 252, 0.3);
-      padding: 4px 12px;
-      border-radius: 100px;
-      color: #7dd3fc;
-      cursor: pointer;
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 700;
+      background: rgba(125,211,252,0.15); border: 1px solid rgba(125,211,252,0.3);
+      padding: 4px 12px; border-radius: 100px; color: #7dd3fc; cursor: pointer;
+      font-family: 'Inter',sans-serif; font-size: 11px; font-weight: 700;
     }
     .rp-desc-body { max-height: 70px; overflow: hidden; transition: max-height 0.4s ease; }
     .rp-desc-body.expanded { max-height: 800px; }
-    .rp-desc-body p {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 13.5px;
-      line-height: 1.6;
-      color: var(--text-secondary);
-      margin: 0;
-      white-space: pre-wrap;
-    }
+    .rp-desc-body p { font-family: 'DM Sans',sans-serif; font-size: 13.5px; line-height: 1.6; color: var(--text-secondary); margin: 0; white-space: pre-wrap; }
 
     .rp-hook {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 18px;
-      background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(249, 115, 22, 0.08));
-      border: 1px solid rgba(249, 115, 22, 0.3);
-      border-radius: 14px;
-      cursor: pointer;
-      transition: all 0.3s ease;
+      display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+      background: linear-gradient(135deg,rgba(239,68,68,0.12),rgba(249,115,22,0.08));
+      border: 1px solid rgba(249,115,22,0.3); border-radius: 14px; cursor: pointer; transition: all 0.3s ease;
     }
-    .rp-hook:hover { border-color: rgba(249, 115, 22, 0.5); transform: translateY(-2px); }
+    .rp-hook:hover { border-color: rgba(249,115,22,0.5); transform: translateY(-2px); }
     .rp-hook-icon { font-size: 26px; animation: rpFire 2s ease infinite; }
-    @keyframes rpFire {
-      0%, 100% { transform: scale(1) rotate(0); }
-      50% { transform: scale(1.1) rotate(5deg); }
-    }
+    @keyframes rpFire { 0%,100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.1) rotate(5deg); } }
     .rp-hook-text { flex: 1; }
-    .rp-hook-title {
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      color: #fb923c;
-    }
-    .rp-hook-sub {
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
+    .rp-hook-title { font-family: 'Bricolage Grotesque',sans-serif; font-size: 14px; font-weight: 700; color: #fb923c; }
+    .rp-hook-sub { font-family: 'Inter',sans-serif; font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
     .rp-hook-btn {
-      padding: 8px 16px;
-      background: linear-gradient(135deg, #fb923c, #f97316);
-      border: 0;
-      border-radius: 100px;
-      color: white;
-      font-weight: 700;
-      font-size: 12px;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);
+      padding: 8px 16px; background: linear-gradient(135deg,#fb923c,#f97316);
+      border: 0; border-radius: 100px; color: white; font-weight: 700; font-size: 12px;
+      cursor: pointer; box-shadow: 0 4px 14px rgba(249,115,22,0.4);
     }
 
     .rp-comments { padding: 20px 0; }
-
-    .rp-comments-head {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      margin-bottom: 20px;
-    }
-    .rp-comments-title {
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin: 0;
-    }
+    .rp-comments-head { display: flex; align-items: center; gap: 24px; margin-bottom: 20px; }
+    .rp-comments-title { font-family: 'Bricolage Grotesque',sans-serif; font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
     .rp-sort-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 12px;
-      background: transparent;
-      border: 0;
-      color: var(--text-secondary);
-      cursor: pointer;
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      border-radius: 100px;
-      transition: background 0.2s ease;
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px;
+      background: transparent; border: 0; color: var(--text-secondary); cursor: pointer;
+      font-family: 'Inter',sans-serif; font-size: 13px; font-weight: 600;
+      border-radius: 100px; transition: background 0.2s ease;
     }
     .rp-sort-btn:hover { background: rgba(192,132,252,0.08); }
-    .rp-sort-btn svg { color: var(--text-primary); }
-
-    .rp-comment-input-row {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
+    .rp-comment-input-row { display: flex; gap: 12px; margin-bottom: 24px; }
     .rp-my-av {
-      width: 40px;
-      height: 40px;
-      min-width: 40px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-weight: 700;
-      font-size: 15px;
-      box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
-      flex-shrink: 0;
+      width: 40px; height: 40px; min-width: 40px; border-radius: 50%;
+      background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-family: 'Bricolage Grotesque',sans-serif;
+      font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(192,132,252,0.4); flex-shrink: 0;
     }
-
     .rp-comment-input-wrap { flex: 1; min-width: 0; }
-
     .rp-comment-input {
-      width: 100%;
-      background: transparent;
-      border: 0;
-      border-bottom: 1px solid rgba(192, 132, 252, 0.3);
-      outline: 0;
-      padding: 8px 0;
-      color: var(--text-primary);
-      font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      transition: border-color 0.2s ease;
+      width: 100%; background: transparent; border: 0;
+      border-bottom: 1px solid rgba(192,132,252,0.3); outline: 0;
+      padding: 8px 0; color: var(--text-primary); font-family: 'Inter',sans-serif;
+      font-size: 14px; transition: border-color 0.2s ease;
     }
     .rp-comment-input:focus { border-bottom-color: #e879f9; border-bottom-width: 2px; }
     .rp-comment-input::placeholder { color: var(--text-muted); }
-
-    .rp-comment-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 12px;
-    }
+    .rp-comment-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
     .rp-cancel-btn {
-      padding: 8px 16px;
-      background: transparent;
-      border: 0;
-      color: var(--text-secondary);
-      font-weight: 600;
-      font-size: 13px;
-      cursor: pointer;
-      border-radius: 100px;
-      font-family: 'Inter', sans-serif;
-      transition: background 0.2s ease;
+      padding: 8px 16px; background: transparent; border: 0; color: var(--text-secondary);
+      font-weight: 600; font-size: 13px; cursor: pointer; border-radius: 100px;
+      font-family: 'Inter',sans-serif; transition: background 0.2s ease;
     }
-    .rp-cancel-btn:hover { background: rgba(192, 132, 252, 0.1); }
+    .rp-cancel-btn:hover { background: rgba(192,132,252,0.1); }
     .rp-submit-btn {
-      padding: 8px 16px;
-      background: linear-gradient(135deg, #c084fc, #e879f9);
-      border: 0;
-      color: white;
-      font-weight: 700;
-      font-size: 13px;
-      cursor: pointer;
-      border-radius: 100px;
-      font-family: 'Inter', sans-serif;
-      transition: transform 0.2s ease;
+      padding: 8px 16px; background: linear-gradient(135deg,#c084fc,#e879f9);
+      border: 0; color: white; font-weight: 700; font-size: 13px; cursor: pointer;
+      border-radius: 100px; font-family: 'Inter',sans-serif; transition: transform 0.2s ease;
     }
     .rp-submit-btn:hover { transform: scale(1.05); }
-
     .rp-comments-list { display: flex; flex-direction: column; gap: 20px; }
-    .rp-comments-empty {
-      padding: 40px 20px;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 14px;
-    }
+    .rp-comments-empty { padding: 40px 20px; text-align: center; color: var(--text-muted); font-size: 14px; }
 
-    .rp-comment {
-      display: grid;
-      grid-template-columns: 40px 1fr;
-      gap: 12px;
-      animation: rpCommentIn 0.4s ease;
-    }
-    @keyframes rpCommentIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .rp-c-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-weight: 700;
-      font-size: 15px;
-      overflow: hidden;
-    }
-
+    .rp-comment { display: grid; grid-template-columns: 40px 1fr; gap: 12px; animation: rpCommentIn 0.4s ease; }
+    @keyframes rpCommentIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .rp-c-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-family: 'Bricolage Grotesque',sans-serif; font-weight: 700; font-size: 15px; overflow: hidden; }
     .rp-c-body { min-width: 0; overflow: hidden; }
-
-    .rp-c-head {
-      display: flex;
-      align-items: baseline;
-      gap: 8px;
-      margin-bottom: 4px;
-      flex-wrap: wrap;
-    }
-    .rp-c-name {
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    .rp-c-time {
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    .rp-c-text {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      line-height: 1.4;
-      color: var(--text-primary);
-      margin: 0 0 8px;
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-    }
-
-    .rp-c-actions {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
+    .rp-c-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+    .rp-c-name { font-family: 'Inter',sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .rp-c-time { font-family: 'Inter',sans-serif; font-size: 12px; color: var(--text-muted); }
+    .rp-c-text { font-family: 'DM Sans',sans-serif; font-size: 14px; line-height: 1.4; color: var(--text-primary); margin: 0 0 8px; word-wrap: break-word; overflow-wrap: break-word; }
+    .rp-c-actions { display: flex; align-items: center; gap: 4px; }
     .rp-c-action {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 10px;
-      background: transparent;
-      border: 0;
-      border-radius: 100px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 500;
-      font-family: 'Inter', sans-serif;
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 10px;
+      background: transparent; border: 0; border-radius: 100px; color: var(--text-secondary);
+      cursor: pointer; font-size: 12px; font-weight: 500; font-family: 'Inter',sans-serif;
       transition: background 0.2s ease;
     }
-    .rp-c-action:hover { background: rgba(192, 132, 252, 0.1); }
+    .rp-c-action:hover { background: rgba(192,132,252,0.1); }
     .rp-c-action.active { color: #e879f9; }
     .rp-c-action.active svg { fill: #e879f9; }
-    .rp-c-count { font-family: 'Inter', sans-serif; font-size: 12px; min-width: 6px; }
-
+    .rp-c-count { font-family: 'Inter',sans-serif; font-size: 12px; min-width: 6px; }
     .rp-c-reply-btn {
-      background: transparent;
-      border: 0;
-      color: var(--text-secondary);
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 8px 12px;
-      border-radius: 100px;
-      margin-left: 4px;
+      background: transparent; border: 0; color: var(--text-secondary);
+      font-family: 'Inter',sans-serif; font-size: 12px; font-weight: 600;
+      cursor: pointer; padding: 8px 12px; border-radius: 100px; margin-left: 4px;
     }
-    .rp-c-reply-btn:hover { background: rgba(192, 132, 252, 0.1); }
-
+    .rp-c-reply-btn:hover { background: rgba(192,132,252,0.1); }
     .rp-reply-container { margin-top: 12px; }
-    .rp-reply-input-row {
-      display: grid;
-      grid-template-columns: 32px 1fr;
-      gap: 10px;
-    }
+    .rp-reply-input-row { display: grid; grid-template-columns: 32px 1fr; gap: 10px; }
     .rp-reply-input-row .rp-my-av { width: 32px; height: 32px; min-width: 32px; font-size: 13px; }
     .rp-reply-input {
-      width: 100%;
-      background: transparent;
-      border: 0;
-      border-bottom: 1px solid rgba(192, 132, 252, 0.3);
-      outline: 0;
-      padding: 6px 0;
-      color: var(--text-primary);
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
+      width: 100%; background: transparent; border: 0;
+      border-bottom: 1px solid rgba(192,132,252,0.3); outline: 0;
+      padding: 6px 0; color: var(--text-primary); font-family: 'Inter',sans-serif; font-size: 13px;
     }
     .rp-reply-input:focus { border-bottom-color: #e879f9; }
-
     .rp-replies-toggle {
-      background: transparent;
-      border: 0;
-      color: #7dd3fc;
-      cursor: pointer;
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 8px 12px;
-      border-radius: 100px;
-      margin-top: 8px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      background: transparent; border: 0; color: #7dd3fc; cursor: pointer;
+      font-family: 'Inter',sans-serif; font-size: 13px; font-weight: 700;
+      padding: 8px 12px; border-radius: 100px; margin-top: 8px;
+      display: inline-flex; align-items: center; gap: 6px;
     }
-    .rp-replies-toggle:hover { background: rgba(125, 211, 252, 0.1); }
-
+    .rp-replies-toggle:hover { background: rgba(125,211,252,0.1); }
     .rp-replies { margin-top: 12px; display: none; flex-direction: column; gap: 16px; }
     .rp-replies.show { display: flex; }
-
-    .rp-reply {
-      display: grid;
-      grid-template-columns: 32px 1fr;
-      gap: 10px;
-      animation: rpCommentIn 0.3s ease;
-    }
+    .rp-reply { display: grid; grid-template-columns: 32px 1fr; gap: 10px; animation: rpCommentIn 0.3s ease; }
     .rp-reply .rp-c-avatar { width: 32px; height: 32px; font-size: 13px; }
     .rp-reply .rp-c-name { font-size: 12.5px; }
     .rp-reply .rp-c-time { font-size: 11px; }
     .rp-reply .rp-c-text { font-size: 13px; }
 
     .rp-more-section { margin-top: 20px; }
-    .rp-section-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      padding: 0 4px;
-    }
-    .rp-section-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-    .rp-section-bar {
-      width: 4px;
-      height: 22px;
-      background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
-      border-radius: 3px;
-      box-shadow: 0 0 12px rgba(232, 121, 249, 0.7);
-    }
-    .rp-section-tag {
-      padding: 5px 12px;
-      background: linear-gradient(135deg, rgba(192, 132, 252, 0.2), rgba(232, 121, 249, 0.1));
-      border: 1px solid rgba(192, 132, 252, 0.35);
-      border-radius: 100px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      font-weight: 800;
-      color: #c084fc;
-      letter-spacing: 0.12em;
-    }
-
-    .rp-feed-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      min-height: 200px;
-    }
-    @media (max-width: 1200px) { .rp-feed-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 768px) { .rp-feed-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
-
-    .rp-more-loading {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 2rem 0;
-      color: var(--text-muted);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.85rem;
-    }
+    .rp-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 0 4px; }
+    .rp-section-title { display: flex; align-items: center; gap: 12px; font-family: 'Bricolage Grotesque',sans-serif; font-size: 18px; font-weight: 700; color: var(--text-primary); }
+    .rp-section-bar { width: 4px; height: 22px; background: linear-gradient(180deg,#c084fc,#e879f9,#7dd3fc); border-radius: 3px; box-shadow: 0 0 12px rgba(232,121,249,0.7); }
+    .rp-section-tag { padding: 5px 12px; background: linear-gradient(135deg,rgba(192,132,252,0.2),rgba(232,121,249,0.1)); border: 1px solid rgba(192,132,252,0.35); border-radius: 100px; font-family: 'JetBrains Mono',monospace; font-size: 10px; font-weight: 800; color: #c084fc; letter-spacing: 0.12em; }
+    .rp-feed-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; min-height: 200px; }
+    @media (max-width: 1200px) { .rp-feed-grid { grid-template-columns: repeat(3,1fr); } }
+    @media (max-width: 768px) { .rp-feed-grid { grid-template-columns: repeat(2,1fr); gap: 12px; } }
+    .rp-more-loading { display: none; align-items: center; justify-content: center; gap: 12px; padding: 2rem 0; color: var(--text-muted); font-family: 'JetBrains Mono',monospace; font-size: 0.85rem; }
     .rp-more-loading.show { display: flex; }
-    .rp-spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid rgba(192, 132, 252, 0.2);
-      border-top-color: #c084fc;
-      border-radius: 50%;
-      animation: rpSpin 0.8s linear infinite;
-    }
+    .rp-spinner { width: 20px; height: 20px; border: 2px solid rgba(192,132,252,0.2); border-top-color: #c084fc; border-radius: 50%; animation: rpSpin 0.8s linear infinite; }
     @keyframes rpSpin { to { transform: rotate(360deg); } }
 
-    .rp-sidebar-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-      padding: 0 4px;
-    }
-    .rp-sidebar-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-    .rp-sidebar-count {
-      padding: 4px 10px;
-      background: rgba(192, 132, 252, 0.15);
-      border: 1px solid rgba(192, 132, 252, 0.3);
-      border-radius: 100px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      font-weight: 700;
-      color: #c084fc;
-    }
-
-    .rp-autoplay {
-      margin-bottom: 14px;
-      padding: 10px 14px;
-      background: linear-gradient(135deg, rgba(28, 15, 61, 0.6), rgba(20, 10, 40, 0.4));
-      border: 1px solid rgba(192, 132, 252, 0.2);
-      border-radius: 12px;
-    }
-    [data-theme="light"] .rp-autoplay { background: rgba(255, 255, 255, 0.7); }
-    .rp-autoplay-label {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-secondary);
-    }
+    .rp-sidebar-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding: 0 4px; }
+    .rp-sidebar-title { display: flex; align-items: center; gap: 12px; font-family: 'Bricolage Grotesque',sans-serif; font-size: 16px; font-weight: 700; color: var(--text-primary); }
+    .rp-sidebar-count { padding: 4px 10px; background: rgba(192,132,252,0.15); border: 1px solid rgba(192,132,252,0.3); border-radius: 100px; font-family: 'JetBrains Mono',monospace; font-size: 11px; font-weight: 700; color: #c084fc; }
+    .rp-autoplay { margin-bottom: 14px; padding: 10px 14px; background: linear-gradient(135deg,rgba(28,15,61,0.6),rgba(20,10,40,0.4)); border: 1px solid rgba(192,132,252,0.2); border-radius: 12px; }
+    [data-theme="light"] .rp-autoplay { background: rgba(255,255,255,0.7); }
+    .rp-autoplay-label { display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-family: 'Inter',sans-serif; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
     .rp-autoplay-label input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
-    .rp-switch {
-      position: relative;
-      width: 36px;
-      height: 20px;
-      background: rgba(192, 132, 252, 0.2);
-      border-radius: 100px;
-      transition: background 0.25s ease;
-    }
-    .rp-switch::after {
-      content: '';
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 16px;
-      height: 16px;
-      background: white;
-      border-radius: 50%;
-      transition: transform 0.25s ease;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    }
-    .rp-autoplay-label input:checked ~ .rp-switch { background: linear-gradient(135deg, #c084fc, #e879f9); }
+    .rp-switch { position: relative; width: 36px; height: 20px; background: rgba(192,132,252,0.2); border-radius: 100px; transition: background 0.25s ease; }
+    .rp-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; background: white; border-radius: 50%; transition: transform 0.25s ease; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+    .rp-autoplay-label input:checked ~ .rp-switch { background: linear-gradient(135deg,#c084fc,#e879f9); }
     .rp-autoplay-label input:checked ~ .rp-switch::after { transform: translateX(16px); }
-
     .rp-side-list { display: flex; flex-direction: column; gap: 8px; }
 
     .rp-si {
-      display: grid;
-      grid-template-columns: 168px 1fr;
-      gap: 10px;
-      padding: 6px;
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 12px;
-      text-decoration: none;
-      color: inherit;
-      cursor: pointer;
-      transition: all 0.25s ease;
+      display: grid; grid-template-columns: 168px 1fr; gap: 10px; padding: 6px;
+      background: transparent; border: 1px solid transparent; border-radius: 12px;
+      text-decoration: none; color: inherit; cursor: pointer; transition: all 0.25s ease;
       animation: rpSiIn 0.4s ease backwards;
     }
-    @keyframes rpSiIn {
-      from { opacity: 0; transform: translateX(15px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    .rp-si:hover {
-      background: rgba(192, 132, 252, 0.08);
-      border-color: rgba(232, 121, 249, 0.3);
-    }
-    .rp-si.current {
-      background: rgba(192, 132, 252, 0.12);
-      border-color: rgba(232, 121, 249, 0.5);
-    }
-
-    .rp-si-thumb {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16/9;
-      border-radius: 10px;
-      overflow: hidden;
-      background: #0d0520;
-    }
-    .rp-si-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      transition: transform 0.4s ease;
-    }
+    @keyframes rpSiIn { from { opacity: 0; transform: translateX(15px); } to { opacity: 1; transform: translateX(0); } }
+    .rp-si:hover { background: rgba(192,132,252,0.08); border-color: rgba(232,121,249,0.3); }
+    .rp-si.current { background: rgba(192,132,252,0.12); border-color: rgba(232,121,249,0.5); }
+    .rp-si-thumb { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 10px; overflow: hidden; background: #0d0520; }
+    .rp-si-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; }
     .rp-si:hover .rp-si-thumb img { transform: scale(1.05); }
-
-    .rp-si-duration {
-      position: absolute;
-      bottom: 4px;
-      right: 4px;
-      padding: 2px 6px;
-      background: rgba(0, 0, 0, 0.85);
-      color: white;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      font-weight: 700;
-      border-radius: 4px;
-    }
-    .rp-si-new {
-      position: absolute;
-      top: 4px;
-      left: 4px;
-      padding: 2px 6px;
-      background: linear-gradient(135deg, #ef4444, #f97316);
-      color: white;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9px;
-      font-weight: 800;
-      border-radius: 4px;
-    }
-    .rp-si-ep {
-      position: absolute;
-      top: 4px;
-      left: 4px;
-      padding: 2px 8px;
-      background: linear-gradient(135deg, #fbbf24, #f97316);
-      color: white;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      font-weight: 800;
-      border-radius: 4px;
-      z-index: 3;
-    }
-    .rp-si-playing {
-      position: absolute;
-      inset: 0;
-      background: rgba(192,132,252,0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      font-weight: 800;
-      z-index: 4;
-      backdrop-filter: blur(2px);
-    }
-
-    .rp-si-info {
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      padding: 2px 4px 2px 0;
-    }
-    .rp-si-title {
-      font-family: 'Inter', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-primary);
-      line-height: 1.35;
-      margin: 0 0 4px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .rp-si-channel {
-      font-family: 'Inter', sans-serif;
-      font-size: 11.5px;
-      color: var(--text-muted);
-      margin-bottom: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .rp-si-meta {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
+    .rp-si-duration { position: absolute; bottom: 4px; right: 4px; padding: 2px 6px; background: rgba(0,0,0,0.85); color: white; font-family: 'JetBrains Mono',monospace; font-size: 10px; font-weight: 700; border-radius: 4px; }
+    .rp-si-new { position: absolute; top: 4px; left: 4px; padding: 2px 6px; background: linear-gradient(135deg,#ef4444,#f97316); color: white; font-family: 'JetBrains Mono',monospace; font-size: 9px; font-weight: 800; border-radius: 4px; }
+    .rp-si-ep { position: absolute; top: 4px; left: 4px; padding: 2px 8px; background: linear-gradient(135deg,#fbbf24,#f97316); color: white; font-family: 'JetBrains Mono',monospace; font-size: 10px; font-weight: 800; border-radius: 4px; z-index: 3; }
+    .rp-si-info { min-width: 0; display: flex; flex-direction: column; padding: 2px 4px 2px 0; }
+    .rp-si-title { font-family: 'Inter',sans-serif; font-size: 13px; font-weight: 600; color: var(--text-primary); line-height: 1.35; margin: 0 0 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .rp-si-channel { font-family: 'Inter',sans-serif; font-size: 11.5px; color: var(--text-muted); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rp-si-meta { font-family: 'Inter',sans-serif; font-size: 11px; color: var(--text-muted); }
     .rp-si-ad { position: relative; }
-    .rp-si-ad::before {
-      content: '💎 AD';
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      padding: 2px 6px;
-      background: linear-gradient(135deg, #fbbf24, #f97316);
-      color: white;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 9px;
-      font-weight: 800;
-      border-radius: 4px;
-      z-index: 4;
-    }
-    .rp-si-price {
-      display: inline-block;
-      padding: 2px 8px;
-      background: linear-gradient(135deg, #fbbf24, #f97316);
-      color: white;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      font-weight: 800;
-      border-radius: 100px;
-      margin-top: 4px;
-    }
+    .rp-si-ad::before { content: 'AD'; position: absolute; top: 4px; right: 4px; padding: 2px 6px; background: linear-gradient(135deg,#fbbf24,#f97316); color: white; font-family: 'JetBrains Mono',monospace; font-size: 9px; font-weight: 800; border-radius: 4px; z-index: 4; }
+    .rp-si-price { display: inline-block; padding: 2px 8px; background: linear-gradient(135deg,#fbbf24,#f97316); color: white; font-family: 'JetBrains Mono',monospace; font-size: 11px; font-weight: 800; border-radius: 100px; margin-top: 4px; }
 
     @media (max-width: 960px) {
       .rp-grid { grid-template-columns: 1fr; gap: 20px; }
@@ -1393,14 +754,13 @@ const metaText = metaParts.join(' • ');
 
   <script>
     (function () {
-      const root = document.getElementById('reels-root');
+      var root = document.getElementById('reels-root');
       if (!root) return;
 
-      const videoId = root.dataset.videoid || '';
-      const currentVideo = window.__REELS_VIDEO__ || null;
-      const feedData = window.__REELS_FEED__ || [];
-      const seriesName = window.__SERIES_NAME__ || '';
-      const channelName = window.__CHANNEL_NAME__ || '';
+      var videoId = root.dataset.videoid || '';
+      var currentVideo = (window as any).__REELS_VIDEO__ || null;
+      var feedData = (window as any).__REELS_FEED__ || [];
+      var seriesName = (window as any).__SERIES_NAME__ || '';
 
       try {
         if (videoId) {
@@ -1409,7 +769,7 @@ const metaText = metaParts.join(' • ');
         }
       } catch (e) {}
 
-      function getThumb(vid, existing = '') {
+      function getThumb(vid: string, existing: string): string {
         if (existing && existing.trim()) return existing;
         if (vid.startsWith('yts_') || vid.startsWith('yt_')) {
           return 'https://i.ytimg.com/vi/' + vid.replace(/^(yts_|yt_)/, '') + '/hqdefault.jpg';
@@ -1420,386 +780,274 @@ const metaText = metaParts.join(' • ');
         return '';
       }
 
-      function esc(s) {
+      function esc(s: string): string {
         return String(s || '').replace(/[&<>"']/g, function (c) {
-          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] || c;
+          var map: any = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+          return map[c] || c;
         });
       }
 
-      function trunc(s, n) {
+      function trunc(s: string, n: number): string {
         s = String(s || '');
-        return s.length > n ? s.slice(0, n).trim() + '…' : s;
+        return s.length > n ? s.slice(0, n).trim() + '\u2026' : s;
       }
 
-      function timeAgo(ts) {
-        const diff = Date.now() - ts;
-        const s = Math.floor(diff / 1000);
+      function timeAgo(ts: number): string {
+        var diff = Date.now() - ts;
+        var s = Math.floor(diff / 1000);
         if (s < 60) return 'just now';
-        const m = Math.floor(s / 60);
+        var m = Math.floor(s / 60);
         if (m < 60) return m + ' minute' + (m !== 1 ? 's' : '') + ' ago';
-        const h = Math.floor(m / 60);
+        var h = Math.floor(m / 60);
         if (h < 24) return h + ' hour' + (h !== 1 ? 's' : '') + ' ago';
-        const d = Math.floor(h / 24);
+        var d = Math.floor(h / 24);
         if (d < 30) return d + ' day' + (d !== 1 ? 's' : '') + ' ago';
         return Math.floor(d / 30) + ' months ago';
       }
 
+      function imgEl(src: string, cls: string): HTMLImageElement {
+        var img = document.createElement('img');
+        img.src = src;
+        if (cls) img.className = cls;
+        img.loading = 'lazy';
+        img.onerror = function () {
+          (img as any).style.display = 'none';
+          if (img.parentElement) {
+            img.parentElement.style.background = 'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))';
+          }
+        };
+        return img;
+      }
+
+      function fallbackDiv(emoji: string, size: string): HTMLDivElement {
+        var d = document.createElement('div');
+        d.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:' + size + ';background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));';
+        d.textContent = emoji;
+        return d;
+      }
+
+      // History
       try {
         if (currentVideo && videoId) {
-          const goodThumb = getThumb(videoId, currentVideo.thumbnail);
-          const history = JSON.parse(localStorage.getItem('anitube_history') || '[]');
-          const filtered = history.filter(function (h) { return h.id !== videoId; });
-          filtered.unshift({
-            id: videoId,
-            title: currentVideo.title,
-            channel: currentVideo.channel,
-            thumbnail: goodThumb,
-            type: currentVideo.type || 'anime',
-            source: currentVideo.source || 'youtube',
-            watchedAt: Date.now()
-          });
-          localStorage.setItem('anitube_history', JSON.stringify(filtered.slice(0, 100)));
+          var goodThumb = getThumb(videoId, currentVideo.thumbnail || '');
+          var history: any[] = JSON.parse(localStorage.getItem('anitube_history') || '[]');
+          history = history.filter(function (h: any) { return h.id !== videoId; });
+          history.unshift({ id: videoId, title: currentVideo.title, channel: currentVideo.channel, thumbnail: goodThumb, type: currentVideo.type || 'anime', source: currentVideo.source || 'youtube', watchedAt: Date.now() });
+          localStorage.setItem('anitube_history', JSON.stringify(history.slice(0, 100)));
         }
       } catch (e) {}
 
-      const likeBtn = document.getElementById('likeBtn');
-      const likedVideos = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
-
-      function isLiked() {
-        return likedVideos.includes(videoId);
-      }
-
+      // Like
+      var likeBtn = document.getElementById('likeBtn');
+      var likedVideos: string[] = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
+      function isLiked() { return likedVideos.indexOf(videoId) > -1; }
       function updateLikeUI() {
         if (!likeBtn) return;
-        const lbl = likeBtn.querySelector('.rp-btn-lbl');
-        if (isLiked()) {
-          likeBtn.classList.add('active');
-          if (lbl) lbl.textContent = 'Liked';
-        } else {
-          likeBtn.classList.remove('active');
-          if (lbl) lbl.textContent = 'Like';
-        }
+        var lbl = likeBtn.querySelector('.rp-btn-lbl');
+        if (isLiked()) { likeBtn.classList.add('active'); if (lbl) lbl.textContent = 'Liked'; }
+        else { likeBtn.classList.remove('active'); if (lbl) lbl.textContent = 'Like'; }
       }
-
       function toggleLike() {
-        const idx = likedVideos.indexOf(videoId);
-        if (idx > -1) likedVideos.splice(idx, 1);
-        else likedVideos.push(videoId);
+        var idx = likedVideos.indexOf(videoId);
+        if (idx > -1) likedVideos.splice(idx, 1); else likedVideos.push(videoId);
         localStorage.setItem('anitube_liked', JSON.stringify(likedVideos));
         updateLikeUI();
       }
-
       updateLikeUI();
-      likeBtn && likeBtn.addEventListener('click', toggleLike);
+      if (likeBtn) likeBtn.addEventListener('click', toggleLike);
 
-      const saveBtn = document.getElementById('saveBtn');
-      const savedVideos = JSON.parse(localStorage.getItem('anitube_saved') || '[]');
-
-      function isSaved() {
-        return savedVideos.some(function (s) { return s.id === videoId; });
-      }
-
+      // Save
+      var saveBtn = document.getElementById('saveBtn');
+      var savedVideos: any[] = JSON.parse(localStorage.getItem('anitube_saved') || '[]');
+      function isSaved() { return savedVideos.some(function (s: any) { return s.id === videoId; }); }
       function updateSaveUI() {
         if (!saveBtn) return;
-        const lbl = saveBtn.querySelector('.rp-btn-lbl');
-        if (isSaved()) {
-          saveBtn.classList.add('active');
-          if (lbl) lbl.textContent = 'Saved';
-        } else {
-          saveBtn.classList.remove('active');
-          if (lbl) lbl.textContent = 'Save';
-        }
+        var lbl = saveBtn.querySelector('.rp-btn-lbl');
+        if (isSaved()) { saveBtn.classList.add('active'); if (lbl) lbl.textContent = 'Saved'; }
+        else { saveBtn.classList.remove('active'); if (lbl) lbl.textContent = 'Save'; }
       }
-
       function toggleSave() {
-        const idx = savedVideos.findIndex(function (s) { return s.id === videoId; });
-        if (idx > -1) {
-          savedVideos.splice(idx, 1);
-        } else {
-          savedVideos.unshift({
-            id: videoId,
-            title: currentVideo && currentVideo.title ? currentVideo.title : 'Video',
-            channel: currentVideo && currentVideo.channel ? currentVideo.channel : 'AniTube',
-            thumbnail: getThumb(videoId, currentVideo && currentVideo.thumbnail ? currentVideo.thumbnail : ''),
-            type: currentVideo && currentVideo.type ? currentVideo.type : 'anime',
-            source: currentVideo && currentVideo.source ? currentVideo.source : 'youtube',
-            savedAt: Date.now()
-          });
-        }
+        var idx = savedVideos.findIndex(function (s: any) { return s.id === videoId; });
+        if (idx > -1) { savedVideos.splice(idx, 1); }
+        else { savedVideos.unshift({ id: videoId, title: currentVideo ? currentVideo.title : 'Video', channel: currentVideo ? currentVideo.channel : 'AniTube', thumbnail: getThumb(videoId, currentVideo ? currentVideo.thumbnail : ''), type: currentVideo ? currentVideo.type : 'anime', source: currentVideo ? currentVideo.source : 'youtube', savedAt: Date.now() }); }
         localStorage.setItem('anitube_saved', JSON.stringify(savedVideos));
         updateSaveUI();
       }
-
       updateSaveUI();
-      saveBtn && saveBtn.addEventListener('click', toggleSave);
+      if (saveBtn) saveBtn.addEventListener('click', toggleSave);
 
-      const videoCard = document.getElementById('videoCard');
-      const heart = document.getElementById('doubleTapHeart');
-      let lastTap = 0;
-
-      videoCard && videoCard.addEventListener('click', function () {
-        const now = Date.now();
-        if (now - lastTap < 350) {
-          if (!isLiked()) toggleLike();
-          if (heart) {
-            heart.classList.remove('pop');
-            void heart.offsetWidth;
-            heart.classList.add('pop');
-          }
-          lastTap = 0;
-        } else {
-          lastTap = now;
-        }
-      });
-
-      const sendBtn = document.getElementById('sendBtn');
-      async function handleSend() {
-        if (!sendBtn) return;
-        const shareData = { title: (currentVideo && currentVideo.title) || 'AniTubeBuzz', url: window.location.href };
-        const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
-
-        sendBtn.classList.add('sent');
-        setTimeout(function () {
-          sendBtn.classList.remove('sent');
-        }, 600);
-
-        if (isMobile && navigator.share) {
-          try {
-            await navigator.share(shareData);
-          } catch (e) {}
-        } else {
-          try {
-            await navigator.clipboard.writeText(window.location.href);
-            const lbl = sendBtn.querySelector('.rp-btn-lbl');
-            if (lbl) {
-              const orig = lbl.textContent;
-              lbl.textContent = 'Copied!';
-              setTimeout(function () {
-                lbl.textContent = orig;
-              }, 1800);
-            }
-          } catch (e) {
-            prompt('Copy:', window.location.href);
-          }
-        }
-      }
-      sendBtn && sendBtn.addEventListener('click', handleSend);
-
-      let seriesEpisodes = [];
-      let sideItems = feedData.filter(function (v) { return v.id !== videoId; }).slice();
-      let navigating = false;
-
-      function goTo(targetId) {
-        if (navigating || !targetId) return;
-        navigating = true;
-        const c = document.getElementById('videoCard');
-        if (c) {
-          c.style.opacity = '0.4';
-          c.style.transition = 'opacity 0.2s';
-        }
-        setTimeout(function () {
-          window.location.href = '/reels/' + targetId;
-        }, 180);
-      }
-
-      document.getElementById('nextBtn') &&
-        document.getElementById('nextBtn').addEventListener('click', function () {
-          if (seriesEpisodes.length > 0) {
-            const currentIdx = seriesEpisodes.findIndex(function (v) { return v.id === videoId; });
-            const next = seriesEpisodes[currentIdx + 1];
-            if (next) {
-              goTo(next.id);
-              return;
-            }
-          }
-          if (sideItems[0]) goTo(sideItems[0].id);
+      // Double tap
+      var videoCard = document.getElementById('videoCard');
+      var heart = document.getElementById('doubleTapHeart');
+      var lastTap = 0;
+      if (videoCard) {
+        videoCard.addEventListener('click', function () {
+          var now = Date.now();
+          if (now - lastTap < 350) {
+            if (!isLiked()) toggleLike();
+            if (heart) { heart.classList.remove('pop'); void (heart as HTMLElement).offsetWidth; heart.classList.add('pop'); }
+            lastTap = 0;
+          } else { lastTap = now; }
         });
-
-      const iframe = document.getElementById('videoFrame');
-      const videoLoader = document.getElementById('videoLoader');
-      function hideVideoLoader() {
-        videoLoader && videoLoader.classList.add('hidden');
       }
-      iframe && iframe.addEventListener('load', function () { setTimeout(hideVideoLoader, 500); });
-      setTimeout(hideVideoLoader, 3500);
 
+      // Share
+      var sendBtn = document.getElementById('sendBtn');
+      if (sendBtn) {
+        sendBtn.addEventListener('click', async function () {
+          var isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
+          sendBtn!.classList.add('sent');
+          setTimeout(function () { sendBtn!.classList.remove('sent'); }, 600);
+          if (isMobile && (navigator as any).share) {
+            try { await (navigator as any).share({ title: currentVideo ? currentVideo.title : 'AniTubeBuzz', url: window.location.href }); } catch (e) {}
+          } else {
+            try {
+              await navigator.clipboard.writeText(window.location.href);
+              var lbl = sendBtn!.querySelector('.rp-btn-lbl');
+              if (lbl) { var orig = lbl.textContent; lbl.textContent = 'Copied!'; setTimeout(function () { lbl!.textContent = orig; }, 1800); }
+            } catch (e) { prompt('Copy:', window.location.href); }
+          }
+        });
+      }
+
+      // Video loader
+      var iframe = document.getElementById('videoFrame') as HTMLIFrameElement;
+      var videoLoader = document.getElementById('videoLoader');
+      function hideLoader() { if (videoLoader) videoLoader.classList.add('hidden'); }
+      if (iframe) iframe.addEventListener('load', function () { setTimeout(hideLoader, 500); });
+      setTimeout(hideLoader, 3500);
+
+      // Safiya event
       setTimeout(function () {
         if (currentVideo) {
-          try {
-            window.dispatchEvent(new CustomEvent('safiya:video-event', {
-              detail: { action: 'watch', video: currentVideo }
-            }));
-          } catch (e) {}
+          try { window.dispatchEvent(new CustomEvent('safiya:video-event', { detail: { action: 'watch', video: currentVideo } })); } catch (e) {}
         }
       }, 800);
 
-      const descToggle = document.getElementById('descToggle');
-      const descContent = document.getElementById('descContent');
-      descToggle && descToggle.addEventListener('click', function () {
-        if (!descContent) return;
-        const expanded = descContent.classList.toggle('expanded');
-        descToggle.textContent = expanded ? 'Show less' : 'Show more';
-      });
-
-      const moreSection = document.getElementById('moreSection');
-      document.getElementById('hookBanner') &&
-        document.getElementById('hookBanner').addEventListener('click', function () {
-          moreSection && moreSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Description toggle
+      var descToggle = document.getElementById('descToggle');
+      var descContent = document.getElementById('descContent');
+      if (descToggle && descContent) {
+        descToggle.addEventListener('click', function () {
+          var expanded = descContent!.classList.toggle('expanded');
+          descToggle!.textContent = expanded ? 'Show less' : 'Show more';
         });
+      }
 
-      const commentsList = document.getElementById('commentsList');
-      const commentInput = document.getElementById('commentInput');
-      const commentActions = document.getElementById('commentActions');
-      const submitBtn = document.getElementById('submitComment');
-      const cancelBtn = document.getElementById('cancelComment');
-      const commentCount = document.getElementById('commentCount');
-      const userInitial = document.getElementById('userInitial');
-      const CHAT_KEY = 'anitube_chat_' + videoId;
-      const USER_KEY = 'anitube_username';
+      // Hook banner
+      var hookBanner = document.getElementById('hookBanner');
+      var moreSection = document.getElementById('moreSection');
+      if (hookBanner && moreSection) {
+        hookBanner.addEventListener('click', function () { moreSection!.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+      }
 
-      let username = localStorage.getItem(USER_KEY);
+      // ═══ COMMENTS ═══
+      var commentsList = document.getElementById('commentsList');
+      var commentInput = document.getElementById('commentInput') as HTMLInputElement;
+      var commentActions = document.getElementById('commentActions');
+      var submitCommentBtn = document.getElementById('submitComment');
+      var cancelCommentBtn = document.getElementById('cancelComment');
+      var commentCountEl = document.getElementById('commentCount');
+      var userInitialEl = document.getElementById('userInitial');
+      var CHAT_KEY = 'anitube_chat_' + videoId;
+      var USER_KEY = 'anitube_username';
+
+      var username = localStorage.getItem(USER_KEY);
       if (!username) {
-        const names = ['SakuraFan', 'NarutoKid', 'OtakuHero', 'AnimeVibes', 'MangaLover', 'WeebLife', 'AnimeVIP', 'SenpaiChan', 'KawaiiUser', 'DemonSlayer'];
+        var names = ['SakuraFan','NarutoKid','OtakuHero','AnimeVibes','MangaLover','WeebLife','AnimeVIP','SenpaiChan','KawaiiUser','DemonSlayer'];
         username = names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 999);
         localStorage.setItem(USER_KEY, username);
       }
-      if (userInitial) userInitial.textContent = username.charAt(0).toUpperCase();
+      if (userInitialEl) userInitialEl.textContent = username.charAt(0).toUpperCase();
 
-      function userColor(name) {
-        const colors = [
-          'linear-gradient(135deg, #c084fc, #e879f9)',
-          'linear-gradient(135deg, #7dd3fc, #22d3ee)',
-          'linear-gradient(135deg, #f472b6, #ec4899)',
-          'linear-gradient(135deg, #fbbf24, #f97316)',
-          'linear-gradient(135deg, #34d399, #10b981)',
-          'linear-gradient(135deg, #a78bfa, #8b5cf6)',
-          'linear-gradient(135deg, #60a5fa, #3b82f6)',
-          'linear-gradient(135deg, #f87171, #ef4444)'
-        ];
-        let hash = 0;
-        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      function userColor(name: string): string {
+        var colors = ['linear-gradient(135deg,#c084fc,#e879f9)','linear-gradient(135deg,#7dd3fc,#22d3ee)','linear-gradient(135deg,#f472b6,#ec4899)','linear-gradient(135deg,#fbbf24,#f97316)','linear-gradient(135deg,#34d399,#10b981)','linear-gradient(135deg,#a78bfa,#8b5cf6)','linear-gradient(135deg,#60a5fa,#3b82f6)','linear-gradient(135deg,#f87171,#ef4444)'];
+        var hash = 0;
+        for (var i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
         return colors[Math.abs(hash) % colors.length];
       }
 
-      function loadComments() {
-        try {
-          return JSON.parse(localStorage.getItem(CHAT_KEY) || '[]');
-        } catch (e) {
-          return [];
-        }
+      function loadComments(): any[] {
+        try { return JSON.parse(localStorage.getItem(CHAT_KEY) || '[]'); } catch (e) { return []; }
       }
-
-      function saveComments(list) {
-        try {
-          localStorage.setItem(CHAT_KEY, JSON.stringify(list.slice(-100)));
-        } catch (e) {}
+      function saveComments(list: any[]) {
+        try { localStorage.setItem(CHAT_KEY, JSON.stringify(list.slice(-100))); } catch (e) {}
       }
-
-      function totalCommentCount(list) {
-        let n = list.length;
-        list.forEach(function (c) { if (c.replies) n += c.replies.length; });
+      function totalCount(list: any[]): number {
+        var n = list.length;
+        list.forEach(function (c: any) { if (c.replies) n += c.replies.length; });
         return n;
       }
 
-      commentInput && commentInput.addEventListener('focus', function () {
-        if (commentActions) commentActions.style.display = 'flex';
-      });
-
-      cancelBtn && cancelBtn.addEventListener('click', function () {
-        if (commentInput) commentInput.value = '';
-        if (commentActions) commentActions.style.display = 'none';
-        commentInput && commentInput.blur();
-      });
+      if (commentInput) {
+        commentInput.addEventListener('focus', function () { if (commentActions) commentActions.style.display = 'flex'; });
+      }
+      if (cancelCommentBtn) {
+        cancelCommentBtn.addEventListener('click', function () {
+          if (commentInput) commentInput.value = '';
+          if (commentActions) commentActions.style.display = 'none';
+          if (commentInput) commentInput.blur();
+        });
+      }
 
       function renderComments() {
         if (!commentsList) return;
-        const list = loadComments();
-        if (commentCount) commentCount.textContent = String(totalCommentCount(list));
-
+        var list = loadComments();
+        if (commentCountEl) commentCountEl.textContent = String(totalCount(list));
         if (list.length === 0) {
-          commentsList.innerHTML = '<div class="rp-comments-empty"><p>No comments yet. Be the first! 💬</p></div>';
+          commentsList.innerHTML = '<div class="rp-comments-empty"><p>No comments yet. Be the first! \uD83D\uDCAC</p></div>';
           return;
         }
-
-        commentsList.innerHTML = list.map(function (c, i) {
-          const liked = c.liked ? 'active' : '';
-          const disliked = c.disliked ? 'active' : '';
-          const likes = c.likes || 0;
-          const replies = c.replies || [];
-
-          const repliesHtml = replies.length > 0
-            ? '<button class="rp-replies-toggle" data-idx="' + i + '">' +
+        commentsList.innerHTML = list.map(function (c: any, i: number) {
+          var liked = c.liked ? 'active' : '';
+          var disliked = c.disliked ? 'active' : '';
+          var likes = c.likes || 0;
+          var replies: any[] = c.replies || [];
+          var repliesHtml = '';
+          if (replies.length > 0) {
+            repliesHtml =
+              '<button class="rp-replies-toggle" data-idx="' + i + '">' +
                 '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>' +
                 '<span>' + replies.length + ' ' + (replies.length === 1 ? 'reply' : 'replies') + '</span>' +
               '</button>' +
               '<div class="rp-replies" data-idx="' + i + '">' +
-                replies.map(function (r) {
+                replies.map(function (r: any) {
                   return '<div class="rp-reply">' +
                     '<div class="rp-c-avatar" style="background:' + userColor(r.name) + ';">' + esc(r.name.charAt(0).toUpperCase()) + '</div>' +
-                    '<div class="rp-c-body">' +
-                      '<div class="rp-c-head">' +
-                        '<span class="rp-c-name">@' + esc(r.name) + '</span>' +
-                        '<span class="rp-c-time">' + timeAgo(r.time) + '</span>' +
-                      '</div>' +
-                      '<div class="rp-c-text">' + esc(r.text) + '</div>' +
-                    '</div>' +
-                  '</div>';
+                    '<div class="rp-c-body"><div class="rp-c-head"><span class="rp-c-name">@' + esc(r.name) + '</span><span class="rp-c-time">' + timeAgo(r.time) + '</span></div>' +
+                    '<div class="rp-c-text">' + esc(r.text) + '</div></div></div>';
                 }).join('') +
-              '</div>'
-            : '';
-
+              '</div>';
+          }
           return '<div class="rp-comment" data-idx="' + i + '">' +
             '<div class="rp-c-avatar" style="background:' + userColor(c.name) + ';">' + esc(c.name.charAt(0).toUpperCase()) + '</div>' +
             '<div class="rp-c-body">' +
-              '<div class="rp-c-head">' +
-                '<span class="rp-c-name">@' + esc(c.name) + '</span>' +
-                '<span class="rp-c-time">' + timeAgo(c.time) + '</span>' +
-              '</div>' +
+              '<div class="rp-c-head"><span class="rp-c-name">@' + esc(c.name) + '</span><span class="rp-c-time">' + timeAgo(c.time) + '</span></div>' +
               '<div class="rp-c-text">' + esc(c.text) + '</div>' +
               '<div class="rp-c-actions">' +
-                '<button class="rp-c-action ' + liked + '" data-idx="' + i + '" data-action="like">' +
-                  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>' +
-                  '<span class="rp-c-count">' + (likes > 0 ? likes : '') + '</span>' +
-                '</button>' +
-                '<button class="rp-c-action ' + disliked + '" data-idx="' + i + '" data-action="dislike">' +
-                  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zM17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg>' +
-                '</button>' +
+                '<button class="rp-c-action ' + liked + '" data-idx="' + i + '" data-action="like"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg><span class="rp-c-count">' + (likes > 0 ? likes : '') + '</span></button>' +
+                '<button class="rp-c-action ' + disliked + '" data-idx="' + i + '" data-action="dislike"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zM17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"></path></svg></button>' +
                 '<button class="rp-c-reply-btn" data-idx="' + i + '">Reply</button>' +
               '</div>' +
               '<div class="rp-reply-container" data-idx="' + i + '"></div>' +
               repliesHtml +
-            '</div>' +
-          '</div>';
+            '</div></div>';
         }).join('');
 
         commentsList.querySelectorAll('.rp-c-action').forEach(function (btn) {
           btn.addEventListener('click', function () {
-            const idx = parseInt(btn.dataset.idx || '0', 10);
-            const action = btn.dataset.action;
-            const list = loadComments();
+            var el = btn as HTMLElement;
+            var idx = parseInt(el.dataset.idx || '0', 10);
+            var action = el.dataset.action;
+            var list = loadComments();
             if (!list[idx]) return;
-
             if (action === 'like') {
-              if (list[idx].liked) {
-                list[idx].liked = false;
-                list[idx].likes = Math.max(0, (list[idx].likes || 0) - 1);
-              } else {
-                list[idx].liked = true;
-                list[idx].likes = (list[idx].likes || 0) + 1;
-                if (list[idx].disliked) list[idx].disliked = false;
-              }
+              if (list[idx].liked) { list[idx].liked = false; list[idx].likes = Math.max(0, (list[idx].likes || 0) - 1); }
+              else { list[idx].liked = true; list[idx].likes = (list[idx].likes || 0) + 1; list[idx].disliked = false; }
             } else if (action === 'dislike') {
-              if (list[idx].disliked) {
-                list[idx].disliked = false;
-              } else {
-                list[idx].disliked = true;
-                if (list[idx].liked) {
-                  list[idx].liked = false;
-                  list[idx].likes = Math.max(0, (list[idx].likes || 0) - 1);
-                }
-              }
+              if (list[idx].disliked) { list[idx].disliked = false; }
+              else { list[idx].disliked = true; if (list[idx].liked) { list[idx].liked = false; list[idx].likes = Math.max(0, (list[idx].likes || 0) - 1); } }
             }
-
             saveComments(list);
             renderComments();
           });
@@ -1807,68 +1055,56 @@ const metaText = metaParts.join(' • ');
 
         commentsList.querySelectorAll('.rp-c-reply-btn').forEach(function (btn) {
           btn.addEventListener('click', function () {
-            const idx = parseInt(btn.dataset.idx || '0', 10);
-            const container = commentsList.querySelector('.rp-reply-container[data-idx="' + idx + '"]');
+            var el = btn as HTMLElement;
+            var idx = parseInt(el.dataset.idx || '0', 10);
+            var container = commentsList!.querySelector('.rp-reply-container[data-idx="' + idx + '"]') as HTMLElement;
             if (!container) return;
-
-            if (container.querySelector('input')) {
-              container.innerHTML = '';
-              return;
-            }
-
-            container.innerHTML =
-              '<div class="rp-reply-input-row">' +
-                '<div class="rp-my-av" style="background:' + userColor(username || 'Y') + '">' + (username || 'Y').charAt(0).toUpperCase() + '</div>' +
-                '<div>' +
-                  '<input type="text" class="rp-reply-input" placeholder="Add a reply..." maxlength="300" />' +
-                  '<div class="rp-comment-actions" style="display:flex;">' +
-                    '<button class="rp-cancel-btn rp-cancel-reply">Cancel</button>' +
-                    '<button class="rp-submit-btn rp-submit-reply">Reply</button>' +
-                  '</div>' +
-                '</div>' +
-              '</div>';
-
-            const input = container.querySelector('input');
-            const cancelReply = container.querySelector('.rp-cancel-reply');
-            const submitReply = container.querySelector('.rp-submit-reply');
-
-            input && input.focus();
-            cancelReply && cancelReply.addEventListener('click', function () { container.innerHTML = ''; });
-
-            function doSubmit() {
-              const text = input && input.value ? input.value.trim() : '';
+            if (container.querySelector('input')) { container.innerHTML = ''; return; }
+            var av = document.createElement('div');
+            av.className = 'rp-my-av';
+            av.style.cssText = 'width:32px;height:32px;min-width:32px;font-size:13px;background:' + userColor(username || 'Y');
+            av.textContent = (username || 'Y').charAt(0).toUpperCase();
+            var wrap = document.createElement('div');
+            var inp = document.createElement('input');
+            inp.type = 'text'; inp.className = 'rp-reply-input'; inp.placeholder = 'Add a reply...'; inp.maxLength = 300;
+            var acts = document.createElement('div');
+            acts.className = 'rp-comment-actions'; acts.style.display = 'flex';
+            var cancelR = document.createElement('button'); cancelR.className = 'rp-cancel-btn'; cancelR.textContent = 'Cancel';
+            var submitR = document.createElement('button'); submitR.className = 'rp-submit-btn'; submitR.textContent = 'Reply';
+            acts.appendChild(cancelR); acts.appendChild(submitR);
+            wrap.appendChild(inp); wrap.appendChild(acts);
+            var row = document.createElement('div'); row.className = 'rp-reply-input-row';
+            row.appendChild(av); row.appendChild(wrap);
+            container.innerHTML = ''; container.appendChild(row);
+            inp.focus();
+            cancelR.addEventListener('click', function () { container.innerHTML = ''; });
+            function doReply() {
+              var text = inp.value.trim();
               if (!text) return;
-              const list = loadComments();
+              var list = loadComments();
               if (!list[idx].replies) list[idx].replies = [];
               list[idx].replies.push({ name: username, text: text, time: Date.now() });
-              saveComments(list);
-              renderComments();
+              saveComments(list); renderComments();
             }
-
-            submitReply && submitReply.addEventListener('click', doSubmit);
-            input && input.addEventListener('keydown', function (e) {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                doSubmit();
-              }
-            });
+            submitR.addEventListener('click', doReply);
+            inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); doReply(); } });
           });
         });
 
         commentsList.querySelectorAll('.rp-replies-toggle').forEach(function (btn) {
           btn.addEventListener('click', function () {
-            const idx = btn.dataset.idx;
-            const repliesDiv = commentsList.querySelector('.rp-replies[data-idx="' + idx + '"]');
-            repliesDiv && repliesDiv.classList.toggle('show');
+            var idx = (btn as HTMLElement).dataset.idx;
+            var rd = commentsList!.querySelector('.rp-replies[data-idx="' + idx + '"]');
+            if (rd) rd.classList.toggle('show');
           });
         });
       }
 
       function submitComment() {
         if (!commentInput) return;
-        const text = commentInput.value.trim();
+        var text = commentInput.value.trim();
         if (!text) return;
-        const list = loadComments();
+        var list = loadComments();
         list.unshift({ name: username, text: text, time: Date.now(), likes: 0, replies: [] });
         saveComments(list);
         commentInput.value = '';
@@ -1876,234 +1112,243 @@ const metaText = metaParts.join(' • ');
         commentInput.blur();
         renderComments();
       }
-
-      submitBtn && submitBtn.addEventListener('click', submitComment);
-      commentInput && commentInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          submitComment();
-        }
-      });
+      if (submitCommentBtn) submitCommentBtn.addEventListener('click', submitComment);
+      if (commentInput) {
+        commentInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submitComment(); } });
+      }
       renderComments();
+
+      // ═══ SERIES ═══
+      var seriesEpisodes: any[] = [];
 
       async function loadSeriesEpisodes() {
         if (!seriesName || seriesName.length < 5) return;
         try {
-          const res = await fetch('/api/social-feed?related=true&series=' + encodeURIComponent(seriesName) + '&limit=25');
-          const data = await res.json();
-
+          var res = await fetch('/api/social-feed?related=true&series=' + encodeURIComponent(seriesName) + '&limit=25');
+          var data = await res.json();
           if (data.success && data.videos && data.videos.length > 0) {
-            const seriesWords = seriesName.toLowerCase().split(/\s+/).filter(function (w) { return w.length > 3; });
-
-            seriesEpisodes = data.videos.filter(function (v) {
+            var words = seriesName.toLowerCase().split(/\s+/).filter(function (w: string) { return w.length > 3; });
+            seriesEpisodes = data.videos.filter(function (v: any) {
               if (v.id === videoId) return false;
-              const title = (v.title || '').toLowerCase();
-              const matches = seriesWords.filter(function (w) { return title.includes(w); }).length;
-              return matches >= Math.max(2, Math.ceil(seriesWords.length * 0.5));
+              var title = (v.title || '').toLowerCase();
+              var matches = words.filter(function (w: string) { return title.indexOf(w) > -1; }).length;
+              return matches >= Math.max(2, Math.ceil(words.length * 0.5));
             });
-
-            if (seriesEpisodes.length >= 2) {
-              renderSeriesEpisodes();
-            }
+            if (seriesEpisodes.length >= 2) renderSeriesEpisodes();
           }
         } catch (e) {}
       }
 
       function renderSeriesEpisodes() {
-        const seriesSection = document.getElementById('seriesSection');
-        const seriesList = document.getElementById('seriesList');
-        const seriesCount = document.getElementById('seriesCount');
-        if (!seriesList || !seriesSection || seriesEpisodes.length === 0) return;
-
-        seriesSection.style.display = 'block';
-        if (seriesCount) seriesCount.textContent = String(seriesEpisodes.length);
-
-        seriesList.innerHTML = seriesEpisodes.slice(0, 15).map(function (v, i) {
-          const thumb = getThumb(v.id, v.thumbnail || '');
-          const imgHtml = thumb
-            ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" onerror="this.style.display=\\'none\\';this.parentElement.style.background=\\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\\';" />'
-            : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:1.5rem;">📺</div>';
-          const epLabel = v.episodeNumber ? 'EP ' + v.episodeNumber : (i + 1);
-
-          return '<a href="/reels/' + esc(v.id) + '" class="rp-si" style="animation-delay:' + (i * 40) + 'ms;">' +
-            '<div class="rp-si-thumb">' + imgHtml +
-              '<div class="rp-si-ep">' + epLabel + '</div>' +
-            '</div>' +
-            '<div class="rp-si-info">' +
-              '<h3 class="rp-si-title">' + esc(trunc(v.title || 'Episode', 80)) + '</h3>' +
-              '<div class="rp-si-channel">' + esc((v.channel || '').slice(0, 25)) + '</div>' +
-            '</div>' +
-          '</a>';
-        }).join('');
+        var sec = document.getElementById('seriesSection');
+        var list = document.getElementById('seriesList');
+        var cnt = document.getElementById('seriesCount');
+        if (!sec || !list || seriesEpisodes.length === 0) return;
+        sec.style.display = 'block';
+        if (cnt) cnt.textContent = String(seriesEpisodes.length);
+        list.innerHTML = '';
+        seriesEpisodes.slice(0, 15).forEach(function (v: any, i: number) {
+          var a = document.createElement('a');
+          a.href = '/reels/' + v.id;
+          a.className = 'rp-si';
+          a.style.animationDelay = (i * 40) + 'ms';
+          var thumb = getThumb(v.id, v.thumbnail || '');
+          var thumbDiv = document.createElement('div');
+          thumbDiv.className = 'rp-si-thumb';
+          if (thumb) { thumbDiv.appendChild(imgEl(thumb, '')); }
+          else { thumbDiv.appendChild(fallbackDiv('\uD83D\uDCFA', '1.5rem')); }
+          var epBadge = document.createElement('div');
+          epBadge.className = 'rp-si-ep';
+          epBadge.textContent = v.episodeNumber ? 'EP ' + v.episodeNumber : String(i + 1);
+          thumbDiv.appendChild(epBadge);
+          var info = document.createElement('div'); info.className = 'rp-si-info';
+          var titleEl = document.createElement('h3'); titleEl.className = 'rp-si-title'; titleEl.textContent = trunc(v.title || 'Episode', 80);
+          var chanEl = document.createElement('div'); chanEl.className = 'rp-si-channel'; chanEl.textContent = (v.channel || '').slice(0, 25);
+          info.appendChild(titleEl); info.appendChild(chanEl);
+          a.appendChild(thumbDiv); a.appendChild(info);
+          list!.appendChild(a);
+        });
       }
 
       loadSeriesEpisodes();
 
-      const sidebarFeed = document.getElementById('relatedFeed');
-      const sidebarCount = document.getElementById('sidebarCount');
-      let sideRendered = 0;
-      let productPool = [];
+      // ═══ NEXT ═══
+      var navigating = false;
+      var sideItems: any[] = feedData.filter(function (v: any) { return v.id !== videoId; });
 
-      function makeSidebarItem(v, i) {
-        const el = document.createElement('a');
-        el.href = v.isAnimeDetail ? '/anime/' + v.id : '/reels/' + v.id;
-        el.className = 'rp-si';
-        el.style.animationDelay = ((i % 10) * 40) + 'ms';
-
-        const thumb = getThumb(v.id, v.thumbnail || '');
-        const chan = (v.channel || 'AniTube').slice(0, 30);
-        const views = Math.floor(Math.random() * 500 + 50) + 'K views';
-        const ago = ['2 hours ago', '5 hours ago', '1 day ago', '3 days ago', '1 week ago'][Math.floor(Math.random() * 5)];
-        const dur = Math.floor(Math.random() * 20 + 5) + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0');
-
-        const imgHtml = thumb
-          ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" onerror="this.style.display=\\'none\\';this.parentElement.style.background=\\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\\';" />'
-          : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:1.5rem;">📺</div>';
-
-        el.innerHTML =
-          '<div class="rp-si-thumb">' + imgHtml +
-            (v.isNew ? '<div class="rp-si-new">NEW</div>' : '') +
-            '<div class="rp-si-duration">' + dur + '</div>' +
-          '</div>' +
-          '<div class="rp-si-info">' +
-            '<h3 class="rp-si-title">' + esc(trunc(v.title || 'Video', 100)) + '</h3>' +
-            '<div class="rp-si-channel">' + esc(chan) + '</div>' +
-            '<div class="rp-si-meta">' + views + ' • ' + ago + '</div>' +
-          '</div>';
-
-        return el;
+      function goTo(targetId: string) {
+        if (navigating || !targetId) return;
+        navigating = true;
+        var c = document.getElementById('videoCard');
+        if (c) { (c as HTMLElement).style.opacity = '0.4'; (c as HTMLElement).style.transition = 'opacity 0.2s'; }
+        setTimeout(function () { window.location.href = '/reels/' + targetId; }, 180);
       }
 
-      function makeSidebarAd(p, i) {
-        const el = document.createElement('a');
-        el.href = '/product/' + esc(p.id);
-        el.className = 'rp-si rp-si-ad';
-        el.style.animationDelay = ((i % 10) * 40) + 'ms';
+      var nextBtn = document.getElementById('nextBtn');
+      if (nextBtn) {
+        nextBtn.addEventListener('click', function () {
+          if (seriesEpisodes.length > 0) {
+            var ci = seriesEpisodes.findIndex(function (v: any) { return v.id === videoId; });
+            var next = seriesEpisodes[ci + 1];
+            if (next) { goTo(next.id); return; }
+          }
+          if (sideItems[0]) goTo(sideItems[0].id);
+        });
+      }
 
-        const imgHtml = p.image
-          ? '<img src="' + esc(p.image) + '" alt="" loading="lazy" onerror="this.style.display=\\'none\\';" />'
-          : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(251,191,36,0.3),rgba(249,115,22,0.2));display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🛍️</div>';
+      // ═══ SIDEBAR ═══
+      var sidebarFeed = document.getElementById('relatedFeed');
+      var sidebarCountEl = document.getElementById('sidebarCount');
+      var sideRendered = 0;
+      var productPool: any[] = [];
 
-        el.innerHTML =
-          '<div class="rp-si-thumb">' + imgHtml + '</div>' +
-          '<div class="rp-si-info">' +
-            '<h3 class="rp-si-title">' + esc(trunc(p.title, 80)) + '</h3>' +
-            '<div class="rp-si-price">' + esc(p.price) + '</div>' +
-          '</div>';
+      function makeSidebarItem(v: any, i: number): HTMLElement {
+        var a = document.createElement('a');
+        a.href = v.isAnimeDetail ? '/anime/' + v.id : '/reels/' + v.id;
+        a.className = 'rp-si';
+        a.style.animationDelay = ((i % 10) * 40) + 'ms';
+        var thumb = getThumb(v.id, v.thumbnail || '');
+        var tDiv = document.createElement('div'); tDiv.className = 'rp-si-thumb';
+        if (thumb) { tDiv.appendChild(imgEl(thumb, '')); }
+        else { tDiv.appendChild(fallbackDiv('\uD83D\uDCFA', '1.5rem')); }
+        if (v.isNew) { var nb = document.createElement('div'); nb.className = 'rp-si-new'; nb.textContent = 'NEW'; tDiv.appendChild(nb); }
+        var dur = Math.floor(Math.random() * 20 + 5) + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0');
+        var db = document.createElement('div'); db.className = 'rp-si-duration'; db.textContent = dur; tDiv.appendChild(db);
+        var info = document.createElement('div'); info.className = 'rp-si-info';
+        var tEl = document.createElement('h3'); tEl.className = 'rp-si-title'; tEl.textContent = trunc(v.title || 'Video', 100);
+        var cEl = document.createElement('div'); cEl.className = 'rp-si-channel'; cEl.textContent = (v.channel || 'AniTube').slice(0, 30);
+        var views = Math.floor(Math.random() * 500 + 50) + 'K views';
+        var ago = ['2 hours ago','5 hours ago','1 day ago','3 days ago','1 week ago'][Math.floor(Math.random() * 5)];
+        var mEl = document.createElement('div'); mEl.className = 'rp-si-meta'; mEl.textContent = views + ' \u2022 ' + ago;
+        info.appendChild(tEl); info.appendChild(cEl); info.appendChild(mEl);
+        a.appendChild(tDiv); a.appendChild(info);
+        return a;
+      }
 
-        return el;
+      function makeSidebarAd(p: any, i: number): HTMLElement {
+        var a = document.createElement('a');
+        a.href = '/product/' + p.id;
+        a.className = 'rp-si rp-si-ad';
+        a.style.animationDelay = ((i % 10) * 40) + 'ms';
+        var tDiv = document.createElement('div'); tDiv.className = 'rp-si-thumb';
+        if (p.image) { tDiv.appendChild(imgEl(p.image, '')); }
+        else { tDiv.appendChild(fallbackDiv('\uD83D\uDED2', '1.5rem')); }
+        var info = document.createElement('div'); info.className = 'rp-si-info';
+        var tEl = document.createElement('h3'); tEl.className = 'rp-si-title'; tEl.textContent = trunc(p.title, 80);
+        var pEl = document.createElement('div'); pEl.className = 'rp-si-price'; pEl.textContent = p.price;
+        info.appendChild(tEl); info.appendChild(pEl);
+        a.appendChild(tDiv); a.appendChild(info);
+        return a;
       }
 
       function renderSidebar() {
         if (!sidebarFeed) return;
-        const batchSize = 12;
-        const end = Math.min(sideRendered + batchSize, sideItems.length);
-        let placed = 0;
-
-        for (let i = sideRendered; i < end; i++) {
+        var batchSize = 12;
+        var end = Math.min(sideRendered + batchSize, sideItems.length);
+        var placed = 0;
+        for (var i = sideRendered; i < end; i++) {
           sidebarFeed.appendChild(makeSidebarItem(sideItems[i], i));
           placed++;
           if (placed % 5 === 0 && productPool.length > 0) {
-            const p = productPool[Math.floor(Math.random() * productPool.length)];
+            var p = productPool[Math.floor(Math.random() * productPool.length)];
             if (p) sidebarFeed.appendChild(makeSidebarAd(p, i));
           }
         }
-
         sideRendered = end;
-        if (sidebarCount) sidebarCount.textContent = String(sideRendered);
+        if (sidebarCountEl) sidebarCountEl.textContent = String(sideRendered);
       }
 
-      const moreEl = document.getElementById('moreFeed');
-      const moreLoadingEl = document.getElementById('moreLoading');
-      let moreItems = sideItems.slice();
-      let moreRendered = 0;
-      let loadingMore = false;
-      let cardsSinceProduct = 0;
+      // ═══ MORE FEED ═══
+      var moreEl = document.getElementById('moreFeed');
+      var moreLoadingEl = document.getElementById('moreLoading');
+      var moreItems: any[] = sideItems.slice();
+      var moreRendered = 0;
+      var loadingMore = false;
+      var cardsSinceProduct = 0;
 
-      function makeCard(v, i) {
-        const t = v.title || 'Video';
-        const img = getThumb(v.id, v.thumbnail || '');
-        const delay = ((i % 8) * 40) + 'ms';
-        const typeLabel = {
-          movies: '🎬 MOVIE',
-          kdrama: '🇰🇷 K-DRAMA',
-          donghua: '🐼 DONGHUA',
-          anime: '🎌 ANIME'
-        }[v.type] || '';
-
-        const imgHtml = img
-          ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="at-na-img" onerror="this.style.display=\\'none\\';this.parentElement.style.background=\\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\\';" />'
-          : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>';
-
-        const el = document.createElement('a');
-        el.href = v.isAnimeDetail ? '/anime/' + v.id : '/reels/' + v.id;
-        el.className = 'at-na-card';
-        el.style.animationDelay = delay;
-        el.style.textDecoration = 'none';
-
-        el.innerHTML =
-          '<div class="at-na-thumb">' +
-            imgHtml +
-            '<div class="at-na-shine"></div>' +
-            '<div class="at-na-overlay"></div>' +
-            '<div class="at-na-play">' +
-              '<div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:2px;box-shadow:0 8px 25px rgba(192,132,252,0.7);z-index:2;">' +
-                '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>' +
-              '</div>' +
-            '</div>' +
-            (v.isNew ? '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\\'JetBrains Mono\\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">NEW</div>' : '') +
-            '<div style="position:absolute;bottom:6px;left:6px;padding:2px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\\'JetBrains Mono\\',monospace;font-size:0.5rem;font-weight:800;border-radius:4px;z-index:6;">' + typeLabel + '</div>' +
-          '</div>' +
-          '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
-            '<h3 class="at-na-title" style="font-family:\\'Bricolage Grotesque\\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(t, 55)) + '</h3>' +
-            '<div style="font-family:\\'JetBrains Mono\\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;">' + esc(v.channel || 'Channel') + '</div>' +
-          '</div>';
-
-        return el;
+      function makeCard(v: any, i: number): HTMLElement {
+        var t = v.title || 'Video';
+        var img = getThumb(v.id, v.thumbnail || '');
+        var typeMap: any = { movies: '\uD83C\uDFAC MOVIE', kdrama: '\uD83C\uDDF0\uD83C\uDDF7 K-DRAMA', donghua: '\uD83D\uDC3C DONGHUA', anime: '\uD83C\uDF8C ANIME' };
+        var typeLabel = typeMap[v.type] || '';
+        var a = document.createElement('a');
+        a.href = v.isAnimeDetail ? '/anime/' + v.id : '/reels/' + v.id;
+        a.className = 'at-na-card';
+        a.style.animationDelay = ((i % 8) * 40) + 'ms';
+        a.style.textDecoration = 'none';
+        var thumbDiv = document.createElement('div'); thumbDiv.className = 'at-na-thumb';
+        if (img) { thumbDiv.appendChild(imgEl(img, 'at-na-img')); }
+        else { thumbDiv.appendChild(fallbackDiv('\uD83D\uDCFA', '2rem')); }
+        var shine = document.createElement('div'); shine.className = 'at-na-shine'; thumbDiv.appendChild(shine);
+        var overlay = document.createElement('div'); overlay.className = 'at-na-overlay'; thumbDiv.appendChild(overlay);
+        var play = document.createElement('div'); play.className = 'at-na-play';
+        play.innerHTML = '<div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:2px;box-shadow:0 8px 25px rgba(192,132,252,0.7);z-index:2;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg></div>';
+        thumbDiv.appendChild(play);
+        if (v.isNew) {
+          var nb = document.createElement('div');
+          nb.style.cssText = 'position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;';
+          nb.textContent = 'NEW'; thumbDiv.appendChild(nb);
+        }
+        if (typeLabel) {
+          var tb = document.createElement('div');
+          tb.style.cssText = 'position:absolute;bottom:6px;left:6px;padding:2px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:4px;z-index:6;';
+          tb.textContent = typeLabel; thumbDiv.appendChild(tb);
+        }
+        var info = document.createElement('div'); info.style.cssText = 'padding:8px 3px 4px;position:relative;z-index:1;';
+        var titleEl = document.createElement('h3');
+        titleEl.className = 'at-na-title';
+        titleEl.style.cssText = 'font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;';
+        titleEl.textContent = trunc(t, 55);
+        var chanEl = document.createElement('div');
+        chanEl.style.cssText = 'font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;';
+        chanEl.textContent = v.channel || 'Channel';
+        info.appendChild(titleEl); info.appendChild(chanEl);
+        a.appendChild(thumbDiv); a.appendChild(info);
+        return a;
       }
 
-      function makeInlineProductCard(p, i) {
-        const el = document.createElement('a');
-        el.href = '/product/' + esc(p.id);
-        el.className = 'at-na-card';
-        el.style.animationDelay = ((i % 8) * 40) + 'ms';
-        el.style.textDecoration = 'none';
-
-        const imgHtml = p.image
-          ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="at-na-img" onerror="this.style.display=\\'none\\';" />'
-          : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(251,191,36,0.3),rgba(249,115,22,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">🛍️</div>';
-
-        el.innerHTML =
-          '<div class="at-na-thumb" style="border-color:rgba(251,191,36,0.5);">' +
-            imgHtml +
-            '<div class="at-na-shine"></div>' +
-            '<div class="at-na-overlay"></div>' +
-            '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;font-family:\\'JetBrains Mono\\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">💎 AD</div>' +
-            '<div style="position:absolute;bottom:6px;left:6px;padding:2px 7px;background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;font-family:\\'JetBrains Mono\\',monospace;font-size:0.6rem;font-weight:800;border-radius:4px;z-index:6;">' + esc(p.price) + '</div>' +
-          '</div>' +
-          '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
-            '<h3 class="at-na-title" style="font-family:\\'Bricolage Grotesque\\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(p.title, 55)) + '</h3>' +
-            '<div style="font-family:\\'JetBrains Mono\\',monospace;font-size:0.58rem;color:#fbbf24;opacity:0.9;">Sponsored</div>' +
-          '</div>';
-
-        return el;
+      function makeProductCard(p: any, i: number): HTMLElement {
+        var a = document.createElement('a');
+        a.href = '/product/' + p.id;
+        a.className = 'at-na-card';
+        a.style.cssText = 'animation-delay:' + ((i % 8) * 40) + 'ms;text-decoration:none;';
+        var thumbDiv = document.createElement('div'); thumbDiv.className = 'at-na-thumb'; thumbDiv.style.borderColor = 'rgba(251,191,36,0.5)';
+        if (p.image) { thumbDiv.appendChild(imgEl(p.image, 'at-na-img')); }
+        else { thumbDiv.appendChild(fallbackDiv('\uD83D\uDED2', '2rem')); }
+        var shine = document.createElement('div'); shine.className = 'at-na-shine'; thumbDiv.appendChild(shine);
+        var overlay = document.createElement('div'); overlay.className = 'at-na-overlay'; thumbDiv.appendChild(overlay);
+        var adBadge = document.createElement('div');
+        adBadge.style.cssText = 'position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:4px;z-index:6;';
+        adBadge.textContent = 'AD'; thumbDiv.appendChild(adBadge);
+        var priceBadge = document.createElement('div');
+        priceBadge.style.cssText = 'position:absolute;bottom:6px;left:6px;padding:2px 7px;background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.6rem;font-weight:800;border-radius:4px;z-index:6;';
+        priceBadge.textContent = p.price; thumbDiv.appendChild(priceBadge);
+        var info = document.createElement('div'); info.style.cssText = 'padding:8px 3px 4px;position:relative;z-index:1;';
+        var titleEl = document.createElement('h3');
+        titleEl.className = 'at-na-title';
+        titleEl.style.cssText = 'font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;';
+        titleEl.textContent = trunc(p.title, 55);
+        var sponsEl = document.createElement('div');
+        sponsEl.style.cssText = 'font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:#fbbf24;opacity:0.9;';
+        sponsEl.textContent = 'Sponsored';
+        info.appendChild(titleEl); info.appendChild(sponsEl);
+        a.appendChild(thumbDiv); a.appendChild(info);
+        return a;
       }
 
       function renderMoreBatch() {
         if (!moreEl) return;
-        const batchSize = 8;
-        const end = Math.min(moreRendered + batchSize, moreItems.length);
-
-        for (let i = moreRendered; i < end; i++) {
+        var batchSize = 8;
+        var end = Math.min(moreRendered + batchSize, moreItems.length);
+        for (var i = moreRendered; i < end; i++) {
           moreEl.appendChild(makeCard(moreItems[i], i));
           cardsSinceProduct++;
           if (cardsSinceProduct >= 6 && productPool.length > 0) {
-            const p = productPool[Math.floor(Math.random() * productPool.length)];
-            if (p) moreEl.appendChild(makeInlineProductCard(p, i));
+            var p = productPool[Math.floor(Math.random() * productPool.length)];
+            if (p) moreEl.appendChild(makeProductCard(p, i));
             cardsSinceProduct = 0;
           }
         }
-
         moreRendered = end;
       }
 
@@ -2111,33 +1356,30 @@ const metaText = metaParts.join(' • ');
         if (loadingMore) return;
         loadingMore = true;
         if (moreLoadingEl) moreLoadingEl.classList.add('show');
-
         try {
-          const types = ['anime', 'donghua', 'kdrama', 'movies'];
-          const type = types[Math.floor(Math.random() * types.length)];
-          const page = Math.floor(Math.random() * 5) + 1;
-          const res = await fetch('/api/social-feed?type=' + type + '&page=' + page + '&limit=15');
-          const data = await res.json();
-
+          var types = ['anime','donghua','kdrama','movies'];
+          var type = types[Math.floor(Math.random() * types.length)];
+          var page = Math.floor(Math.random() * 5) + 1;
+          var res = await fetch('/api/social-feed?type=' + type + '&page=' + page + '&limit=15');
+          var data = await res.json();
           if (data.success && data.videos) {
-            const existing = new Set(moreItems.map(function (v) { return v.id; }));
+            var existing = new Set(moreItems.map(function (v: any) { return v.id; }));
             existing.add(videoId);
-            const fresh = data.videos.filter(function (v) { return !existing.has(v.id); });
+            var fresh = data.videos.filter(function (v: any) { return !existing.has(v.id); });
             moreItems = moreItems.concat(fresh);
             sideItems = sideItems.concat(fresh);
             renderMoreBatch();
             renderSidebar();
           }
         } catch (e) {}
-
         if (moreLoadingEl) moreLoadingEl.classList.remove('show');
         loadingMore = false;
       }
 
       async function loadProducts() {
         try {
-          const res = await fetch('/api/products?limit=30');
-          const data = await res.json();
+          var res = await fetch('/api/products?limit=30');
+          var data = await res.json();
           if (data.success && data.products) productPool = data.products;
         } catch (e) {}
       }
@@ -2147,13 +1389,13 @@ const metaText = metaParts.join(' • ');
         renderMoreBatch();
       });
 
-      let scrollTimer = null;
+      var scrollTimer: any = null;
       window.addEventListener('scroll', function () {
         if (scrollTimer) clearTimeout(scrollTimer);
         scrollTimer = setTimeout(function () {
           if (loadingMore) return;
-          const bottom = window.scrollY + window.innerHeight;
-          const height = document.documentElement.scrollHeight;
+          var bottom = window.scrollY + window.innerHeight;
+          var height = document.documentElement.scrollHeight;
           if (bottom > height - 800) {
             if (moreRendered < moreItems.length) renderMoreBatch();
             else fetchMore();
@@ -2161,10 +1403,9 @@ const metaText = metaParts.join(' • ');
         }, 100);
       }, { passive: true });
 
-      const autoplayToggle = document.getElementById('autoplayToggle');
+      var autoplayToggle = document.getElementById('autoplayToggle') as HTMLInputElement;
       if (autoplayToggle) {
-        const saved = localStorage.getItem('anitube_autoplay');
-        if (saved === 'false') autoplayToggle.checked = false;
+        if (localStorage.getItem('anitube_autoplay') === 'false') autoplayToggle.checked = false;
         autoplayToggle.addEventListener('change', function () {
           localStorage.setItem('anitube_autoplay', String(autoplayToggle.checked));
         });
