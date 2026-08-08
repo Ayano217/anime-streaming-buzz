@@ -8,10 +8,8 @@ import Footer from '../../components/Footer.astro';
 const { slug } = Astro.params;
 const animeSlug = slug || '';
 
-// Fetch anime info from Kitsu (parallel with external search)
+// Fetch anime info from Kitsu
 let anime = null;
-let externalMatch = null;
-
 try {
   const url = new URL('/api/anime', Astro.url.origin);
   url.searchParams.set('action', 'detail');
@@ -23,28 +21,31 @@ try {
   }
 } catch (e) {}
 
-// Try to find on AnimoTVSlash SERVER-SIDE for instant redirect
-if (anime) {
+// Try to find on AnimoTVSlash - SERVER SIDE
+let redirectUrl = null;
+if (anime && anime.title) {
   try {
-    const cleanTitle = (anime.title || '').split(':')[0].split('|')[0].trim();
+    const cleanTitle = anime.title.split(':')[0].split('|')[0].split(' - ')[0].trim();
     const extUrl = new URL('/api/anime-external', Astro.url.origin);
     extUrl.searchParams.set('action', 'find');
     extUrl.searchParams.set('q', cleanTitle);
     const extRes = await fetch(extUrl);
     if (extRes.ok) {
       const extData = await extRes.json();
-      if (extData.success && extData.found && extData.firstEpisodeId) {
-        externalMatch = extData;
+      if (extData.success && extData.found && extData.anime && extData.anime.slug) {
+        // Build first episode ID
+        redirectUrl = `/reels/anime_${extData.anime.slug}_ep1`;
       }
     }
   } catch (e) {}
 }
 
-// If found on external — INSTANT REDIRECT via meta refresh + JS
-if (externalMatch && externalMatch.firstEpisodeId) {
-  return Astro.redirect(`/reels/${externalMatch.firstEpisodeId}`);
+// SERVER-SIDE REDIRECT if found
+if (redirectUrl) {
+  return Astro.redirect(redirectUrl, 302);
 }
 
+// Otherwise show "not available" page
 const animeTitle = anime?.title || animeSlug.replace(/-/g, ' ');
 const animeImage = anime?.image || anime?.coverImage || '';
 const animeCover = anime?.coverImage || anime?.image || '';
@@ -88,17 +89,10 @@ const animeStatus = anime?.status || '';
             <div class="ar-status-icon">😢</div>
             <div class="ar-status-text">
               <div class="ar-status-title">Not available yet</div>
-              <div class="ar-status-sub">This anime might not be added to our library yet</div>
+              <div class="ar-status-sub">This anime might not be added to our library yet. Check back later!</div>
             </div>
           </div>
           <div class="ar-actions">
-            <button class="ar-btn ar-btn-primary" id="retryBtn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="23 4 23 10 17 10"></polyline>
-                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-              </svg>
-              <span>Retry</span>
-            </button>
             <a class="ar-btn ar-btn-secondary" href="/">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -198,12 +192,7 @@ const animeStatus = anime?.status || '';
       0%, 100% { opacity: 0.3; }
       50% { opacity: 0.6; }
     }
-    .ar-info {
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
+    .ar-info { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
     .ar-badges { display: flex; flex-wrap: wrap; gap: 8px; }
     .ar-badge {
       display: inline-flex;
@@ -275,10 +264,7 @@ const animeStatus = anime?.status || '';
       border-radius: 14px;
       margin-top: 8px;
     }
-    .ar-status-icon {
-      font-size: 32px;
-      flex-shrink: 0;
-    }
+    .ar-status-icon { font-size: 32px; flex-shrink: 0; }
     .ar-status-text { min-width: 0; flex: 1; }
     .ar-status-title {
       font-family: 'Bricolage Grotesque', sans-serif;
@@ -292,12 +278,7 @@ const animeStatus = anime?.status || '';
       color: rgba(255, 255, 255, 0.6);
       font-family: 'JetBrains Mono', monospace;
     }
-    .ar-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 8px;
-      flex-wrap: wrap;
-    }
+    .ar-actions { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
     .ar-btn {
       display: inline-flex;
       align-items: center;
@@ -311,14 +292,6 @@ const animeStatus = anime?.status || '';
       text-decoration: none;
       font-family: inherit;
       transition: all 0.2s;
-    }
-    .ar-btn-primary {
-      background: linear-gradient(135deg, #c084fc, #e879f9);
-      color: #fff;
-    }
-    .ar-btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(192, 132, 252, 0.5);
     }
     .ar-btn-secondary {
       background: rgba(255, 255, 255, 0.08);
@@ -358,23 +331,9 @@ const animeStatus = anime?.status || '';
         padding: 20px;
         gap: 24px;
       }
-      .ar-poster-wrap {
-        max-width: 220px;
-        margin: 0 auto;
-      }
+      .ar-poster-wrap { max-width: 220px; margin: 0 auto; }
       .ar-container { padding: 0 16px; }
       .ar-section { padding: 30px 0; }
     }
   </style>
-
-  <script is:inline>
-    (function() {
-      var retryBtn = document.getElementById('retryBtn');
-      if (retryBtn) {
-        retryBtn.addEventListener('click', function() {
-          window.location.reload();
-        });
-      }
-    })();
-  </script>
 </BaseLayout>
