@@ -201,7 +201,12 @@ const hasDescription = description.length > 0;
                     <span>HD Quality</span>
                     <span class="atbrp-sep">·</span>
                     <span>{typeLabel}</span>
-                    {publishText && <><span class="atbrp-sep">·</span><span>{publishText}</span></>}
+                     {publishText && (
+                      <Fragment>
+                        <span class="atbrp-sep">·</span>
+                        <span>{publishText}</span>
+                      </Fragment>
+                    )}
                   </div>
                 </div>
               </div>
