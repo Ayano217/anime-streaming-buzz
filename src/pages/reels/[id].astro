@@ -19,7 +19,7 @@ function getPlatformData(vid: string) {
   }
   if (vid.startsWith('dm_')) {
     const rawId = vid.replace('dm_', '');
-    return { source: 'dailymotion', embedUrl: `https://www.dailymotion.com/embed/video/${rawId}?autoplay=1&mute=0`, aspect: 'landscape', isShort: false, rawId };
+    return { source: 'dailymotion', embedUrl: `https://www.dailymotion.com/embed/video/${rawId}?autoplay=1&mute=0&ui-logo=0&sharing-enable=0`, aspect: 'landscape', isShort: false, rawId };
   }
   if (vid.startsWith('bili_')) {
     const rawId = vid.replace('bili_', '');
@@ -127,26 +127,26 @@ if (video.publishedAt) {
     const now = new Date();
     const diff = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
     if (diff < 1) publishText = 'Today';
-    else if (diff < 7) publishText = `${diff} days ago`;
-    else if (diff < 30) publishText = `${Math.floor(diff / 7)} weeks ago`;
-    else if (diff < 365) publishText = `${Math.floor(diff / 30)} months ago`;
-    else publishText = `${Math.floor(diff / 365)} years ago`;
+    else if (diff < 7) publishText = diff + ' days ago';
+    else if (diff < 30) publishText = Math.floor(diff / 7) + ' weeks ago';
+    else if (diff < 365) publishText = Math.floor(diff / 30) + ' months ago';
+    else publishText = Math.floor(diff / 365) + ' years ago';
   } catch(e) {}
 }
 
 const description = (video.description || '').trim();
 const hasDescription = description.length > 0;
 
-// Build channel sub-info string (avoids Fragment issue)
-const channelSubExtras: string[] = ['HD Quality', typeLabel];
-if (publishText) channelSubExtras.push(publishText);
+const metaParts: string[] = ['HD', typeLabel];
+if (publishText) metaParts.push(publishText);
+const metaText = metaParts.join(' · ');
 ---
 
 <BaseLayout title={`${video.title} | AniTubeBuzz`}>
   <Header slot="header" />
 
-  <section class="section-block" style="padding-top: 2rem;">
-    <div class="container">
+  <section class="atbrp-section">
+    <div class="atbrp-container">
       
       <div 
         id="reels-root" 
@@ -154,134 +154,164 @@ if (publishText) channelSubExtras.push(publishText);
         data-next={nextVideo?.id || ''}
         data-prev={prevVideo?.id || ''}
         data-aspect={videoAspect}
-        class="atbrp-root"
+        data-source={video.source}
+        data-title={video.title}
       >
         
-        <div class="atbrp-main">
+        <div class="atbrp-grid">
           
-          <div class="atbrp-left">
+          <!-- ═══════════ LEFT: MAIN CONTENT ═══════════ -->
+          <div class="atbrp-main">
             
-            <div class="atbrp-player" id="videoCard" data-aspect={videoAspect}>
-              <div class="atbrp-player-glow"></div>
-              <div class="atbrp-player-frame">
-                <iframe 
-                  id="videoFrame"
-                  src={video.embedUrl}
-                  title={video.title}
-                  frameborder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowfullscreen
-                  loading="eager"
-                ></iframe>
-                <div class="atbrp-loader" id="videoLoader">
-                  <div class="atbrp-loader-orbit">
-                    <div class="atbrp-loader-dot" style="background:#c084fc;box-shadow:0 0 15px #c084fc;animation:atbrp-orbit 1.4s cubic-bezier(0.4,0,0.2,1) infinite;"></div>
-                    <div class="atbrp-loader-dot" style="background:#e879f9;box-shadow:0 0 15px #e879f9;animation:atbrp-orbit 1.4s cubic-bezier(0.4,0,0.2,1) infinite -0.47s;"></div>
-                    <div class="atbrp-loader-dot" style="background:#7dd3fc;box-shadow:0 0 15px #7dd3fc;animation:atbrp-orbit 1.4s cubic-bezier(0.4,0,0.2,1) infinite -0.93s;"></div>
+            <!-- ═══ VIDEO PLAYER (FIXED - NO GIANT GLOW) ═══ -->
+            <div class="atbrp-player-wrap">
+              <div class="atbrp-player" id="videoCard" data-aspect={videoAspect}>
+                <div class="atbrp-player-frame">
+                  <iframe 
+                    id="videoFrame"
+                    src={video.embedUrl}
+                    title={video.title}
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                    loading="eager"
+                  ></iframe>
+                  
+                  <div class="atbrp-video-loader" id="videoLoader">
+                    <div class="atbrp-orbit">
+                      <div class="atbrp-orbit-dot atbrp-orbit-1"></div>
+                      <div class="atbrp-orbit-dot atbrp-orbit-2"></div>
+                      <div class="atbrp-orbit-dot atbrp-orbit-3"></div>
+                    </div>
+                    <div class="atbrp-orbit-text">AniTubeBuzz</div>
                   </div>
-                  <div class="atbrp-loader-text">AniTubeBuzz</div>
-                </div>
-                <div class="atbrp-heart" id="doubleTapHeart">
-                  <svg viewBox="0 0 24 24" fill="currentColor" style="width:100%;height:100%;">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                  </svg>
+                  
+                  <div class="atbrp-heart" id="doubleTapHeart">
+                    <svg viewBox="0 0 24 24" fill="currentColor" style="width:100%;height:100%;">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                  </div>
                 </div>
               </div>
             </div>
 
+            <!-- ═══ TITLE ═══ -->
             <h1 class="atbrp-title">{video.title}</h1>
 
-            <div class="atbrp-cr-row">
+            <!-- ═══ META BAR: Channel + Actions ═══ -->
+            <div class="atbrp-meta-bar">
               <div class="atbrp-channel">
-                <div class="atbrp-avatar">{displayChannel.charAt(0).toUpperCase()}</div>
+                <div class="atbrp-avatar">
+                  <span>{displayChannel.charAt(0).toUpperCase()}</span>
+                </div>
                 <div class="atbrp-channel-info">
                   <div class="atbrp-channel-name">{displayChannel}</div>
-                  <div class="atbrp-channel-sub">
+                  <div class="atbrp-channel-meta">
                     <span class="atbrp-live-dot"></span>
-                    <span>{channelSubExtras.join(' · ')}</span>
+                    <span>{metaText}</span>
                   </div>
                 </div>
               </div>
               
               <div class="atbrp-actions">
-                <button class="atbrp-btn" id="saveBtn">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="atbrp-btn-icon-bookmark">
+                <button class="atbrp-btn" id="likeBtn" data-tooltip="Like">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
+                  <span class="atbrp-btn-label">Like</span>
+                </button>
+                <button class="atbrp-btn" id="saveBtn" data-tooltip="Save">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                   </svg>
                   <span class="atbrp-btn-label">Save</span>
                 </button>
-                <button class="atbrp-btn" id="sendBtn">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="atbrp-btn-icon-plane">
+                <button class="atbrp-btn" id="sendBtn" data-tooltip="Share">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="atbrp-plane">
                     <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
                   </svg>
-                  <span class="atbrp-btn-label">Send</span>
+                  <span class="atbrp-btn-label">Share</span>
                 </button>
-                <button class="atbrp-btn" id="prevBtn">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="15 18 9 12 15 6"/>
-                  </svg>
-                  <span class="atbrp-btn-label">Prev</span>
-                </button>
-                <button class="atbrp-btn atbrp-btn-next" id="nextBtn">
+                <button class="atbrp-btn atbrp-btn-next" id="nextBtn" data-tooltip="Next Video">
                   <span class="atbrp-btn-label">Next</span>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="9 18 15 12 9 6"/>
                   </svg>
                 </button>
               </div>
             </div>
 
+            <!-- ═══ DESCRIPTION ═══ -->
             {hasDescription && (
               <div class="atbrp-desc" id="descBox">
                 <div class="atbrp-desc-header">
-                  <span class="atbrp-desc-tag">📝 Description</span>
+                  <div class="atbrp-desc-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                      <polyline points="14 2 14 8 20 8"/>
+                      <line x1="16" y1="13" x2="8" y2="13"/>
+                      <line x1="16" y1="17" x2="8" y2="17"/>
+                    </svg>
+                    <span>Description</span>
+                  </div>
                   <button class="atbrp-desc-toggle" id="descToggle">Show more</button>
                 </div>
-                <div class="atbrp-desc-content" id="descContent">
-                  <p class="atbrp-desc-text">{description}</p>
+                <div class="atbrp-desc-body" id="descContent">
+                  <p>{description}</p>
                 </div>
               </div>
             )}
 
+            <!-- ═══ SUGGESTION BANNER (Hook!) ═══ -->
+            <div class="atbrp-hook" id="hookBanner">
+              <div class="atbrp-hook-icon">🔥</div>
+              <div class="atbrp-hook-text">
+                <div class="atbrp-hook-title">Trending Now</div>
+                <div class="atbrp-hook-sub">Fans are watching similar videos right now!</div>
+              </div>
+              <button class="atbrp-hook-btn" id="scrollToMore">Discover →</button>
+            </div>
+
+            <!-- ═══ LIVE CHAT ═══ -->
             <section class="atbrp-chat" id="chatSection">
               <div class="atbrp-chat-header">
                 <div class="atbrp-chat-header-left">
-                  <div class="atbrp-chat-icon-wrap">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <div class="atbrp-chat-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
                     </svg>
                   </div>
                   <div>
                     <div class="atbrp-chat-title">Live Chat</div>
                     <div class="atbrp-chat-sub">
-                      <span class="atbrp-live-dot" style="background:#10b981;box-shadow:0 0 6px #10b981;"></span>
-                      <span id="chatOnlineCount">128</span> fans online
+                      <span class="atbrp-live-dot" style="background:#10b981;box-shadow:0 0 8px #10b981;"></span>
+                      <span id="chatOnline">128</span> fans watching now
                     </div>
                   </div>
                 </div>
-                <div class="atbrp-chat-count" id="commentCount">0 messages</div>
+                <div class="atbrp-chat-count" id="chatCount">0 msgs</div>
               </div>
               
               <div class="atbrp-chat-messages" id="chatMessages">
                 <div class="atbrp-chat-empty">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;">
+                  <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.25;">
                     <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
                   </svg>
-                  <p>Be the first to comment on this video!</p>
+                  <p>Be the first to comment! 💬</p>
                 </div>
               </div>
               
-              <div class="atbrp-chat-input-wrap">
-                <div class="atbrp-chat-avatar" id="userInitial">Y</div>
-                <div class="atbrp-chat-input-inner">
+              <div class="atbrp-chat-input-row">
+                <div class="atbrp-my-avatar" id="userInitial">Y</div>
+                <div class="atbrp-input-box">
                   <input 
                     type="text" 
                     id="chatInput" 
-                    class="atbrp-chat-input" 
-                    placeholder="Say something about this video..."
+                    class="atbrp-input" 
+                    placeholder="Say something..."
                     maxlength="200"
                   />
-                  <button class="atbrp-chat-send" id="chatSend">
+                  <button class="atbrp-send-btn" id="chatSend">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
                     </svg>
@@ -290,28 +320,47 @@ if (publishText) channelSubExtras.push(publishText);
               </div>
             </section>
 
-            <section style="margin-top: 12px;">
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:0 4px;">
-                <span style="width:4px;height:22px;background:linear-gradient(180deg,#c084fc,#e879f9,#7dd3fc);border-radius:3px;box-shadow:0 0 10px rgba(232,121,249,0.6);"></span>
-                <span style="font-family:'Bricolage Grotesque',sans-serif;font-size:17px;font-weight:700;color:var(--text-primary);">More Videos</span>
+            <!-- ═══ MORE VIDEOS (HOME PAGE CARD STYLE) ═══ -->
+            <section class="atbrp-more-section" id="moreSection">
+              <div class="atbrp-section-head">
+                <div class="atbrp-section-title">
+                  <span class="atbrp-section-bar"></span>
+                  <span>More Like This</span>
+                </div>
+                <div class="atbrp-section-tag">FOR YOU</div>
               </div>
-              <div id="moreFeed" class="atbrp-more-feed"></div>
-              <div id="moreLoading" style="display:none;padding:2rem 0;text-align:center;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:0.85rem;">
-                <span>Loading more videos...</span>
+              <div id="moreFeed" class="atbrp-feed-grid"></div>
+              <div id="moreLoading" class="atbrp-more-loading">
+                <div class="atbrp-spinner"></div>
+                <span>Loading more magic...</span>
               </div>
             </section>
             
           </div>
 
-          <aside class="atbrp-right">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 4px;">
-              <div style="display:flex;align-items:center;gap:10px;font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:700;color:var(--text-primary);">
-                <span style="width:4px;height:20px;background:linear-gradient(180deg,#c084fc,#e879f9,#7dd3fc);border-radius:3px;box-shadow:0 0 10px rgba(232,121,249,0.6);"></span>
+          <!-- ═══════════ RIGHT: SIDEBAR ═══════════ -->
+          <aside class="atbrp-sidebar">
+            
+            <!-- Sidebar Header -->
+            <div class="atbrp-sidebar-head">
+              <div class="atbrp-sidebar-title">
+                <span class="atbrp-section-bar"></span>
                 <span>Up Next</span>
               </div>
-              <div id="feedCount" style="padding:4px 10px;background:rgba(192,132,252,0.15);border:1px solid rgba(192,132,252,0.3);border-radius:100px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#c084fc;">0</div>
+              <div class="atbrp-sidebar-count" id="sidebarCount">0</div>
             </div>
-            <div id="relatedFeed" class="atbrp-side-feed"></div>
+            
+            <!-- Autoplay toggle -->
+            <div class="atbrp-autoplay">
+              <label class="atbrp-autoplay-label">
+                <span>Autoplay</span>
+                <input type="checkbox" id="autoplayToggle" checked>
+                <span class="atbrp-switch"></span>
+              </label>
+            </div>
+            
+            <div id="relatedFeed" class="atbrp-side-list"></div>
+            
           </aside>
           
         </div>
@@ -325,347 +374,250 @@ if (publishText) channelSubExtras.push(publishText);
 
   <script is:inline set:html={`
     window.__REELS_VIDEO__ = ${JSON.stringify(video)};
-    window.__REELS_FEED__ = ${JSON.stringify(relatedFeed.slice(0, 30))};
+    window.__REELS_FEED__ = ${JSON.stringify(relatedFeed.slice(0, 40))};
     window.__CURRENT_VIDEO_ID__ = ${JSON.stringify(videoId)};
     window.__NEXT_ID__ = ${JSON.stringify(nextVideo?.id || '')};
     window.__PREV_ID__ = ${JSON.stringify(prevVideo?.id || '')};
   `}></script>
 
   <style>
-    .atbrp-more-feed {
+    /* ═══════════════════════════════════════════════
+       ATBRP — GOD LEVEL PREMIUM REELS PAGE
+       Isolated CSS - no conflicts with global styles
+    ═══════════════════════════════════════════════ */
+    
+    .atbrp-section {
+      padding: 24px 0 40px;
+      position: relative;
+      contain: layout style;
+    }
+    
+    .atbrp-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    /* ═══ GRID LAYOUT ═══ */
+    .atbrp-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-      min-height: 200px;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 28px;
+      align-items: start;
     }
-    @media (max-width: 1100px) { .atbrp-more-feed { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
-    @media (max-width: 768px)  { .atbrp-more-feed { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
-
-    @keyframes atNaCardIn {
-      from { opacity: 0; transform: translateY(15px); }
-      to   { opacity: 1; transform: translateY(0); }
+    
+    .atbrp-main {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-width: 0;
     }
-
-    .at-na-card {
-      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-      display: block;
-      animation: atNaCardIn 0.4s ease backwards;
+    
+    .atbrp-sidebar {
+      position: sticky;
+      top: 88px;
+      max-height: calc(100vh - 100px);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
     }
-    .at-na-card:hover { transform: translateY(-4px); }
-
-    .at-na-thumb {
+    
+    /* ═══ VIDEO PLAYER — FIXED, NO GIANT GLOW ═══ */
+    .atbrp-player-wrap {
       position: relative;
       width: 100%;
-      padding-top: 56.25%;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #0d0520;
-      border: 1px solid rgba(232, 121, 249, 0.35);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      transition: all 0.35s ease;
+      contain: layout style;
     }
-    .at-na-card:hover .at-na-thumb {
-      border-color: rgba(232, 121, 249, 0.9);
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(192, 132, 252, 0.5);
-    }
-
-    .at-na-img {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      display: block;
-      transition: transform 0.5s ease, filter 0.3s ease;
-    }
-    .at-na-card:hover .at-na-img {
-      transform: scale(1.08);
-      filter: brightness(0.65);
-    }
-
-    .at-na-shine {
-      position: absolute;
-      top: 0; left: -80%;
-      width: 60%; height: 100%;
-      background: linear-gradient(105deg, transparent, rgba(255,255,255,0.2), transparent);
-      z-index: 3;
-      transition: left 0.8s ease;
-      pointer-events: none;
-    }
-    .at-na-card:hover .at-na-shine { left: 120%; }
-
-    .at-na-overlay {
-      position: absolute; inset: 0;
-      background: linear-gradient(180deg, transparent 40%, rgba(10,5,23,0.85) 100%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-      z-index: 3;
-    }
-    .at-na-card:hover .at-na-overlay { opacity: 1; }
-
-    .at-na-play {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%) scale(0.4);
-      width: 44px; height: 44px;
-      z-index: 5;
-      opacity: 0;
-      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-      pointer-events: none;
-    }
-    .at-na-card:hover .at-na-play {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
-
-    .at-na-card:hover .at-na-title {
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    @media (max-width: 768px) {
-      .at-na-card:hover { transform: translateY(-2px); }
-      .at-na-play {
-        opacity: 0.75 !important;
-        transform: translate(-50%, -50%) scale(0.7) !important;
-      }
-    }
-
-    .product-row {
-      grid-column: 1 / -1;
-      margin: 8px 0;
-      padding: 16px;
-      background: linear-gradient(135deg, rgba(28,15,61,0.4), rgba(20,10,45,0.3));
-      border: 1px solid rgba(192,132,252,0.2);
-      border-radius: 16px;
-      position: relative;
-      animation: atNaCardIn 0.5s ease backwards;
-    }
-    .product-row-header {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px; padding: 0 4px;
-    }
-    .product-row-title {
-      display: inline-flex; align-items: center; gap: 8px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em;
-      color: #e879f9; text-transform: uppercase;
-    }
-    .product-row-title::before {
-      content: ''; width: 3px; height: 14px;
-      background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
-      border-radius: 2px;
-      box-shadow: 0 0 8px rgba(232,121,249,0.7);
-    }
-    .product-row-hint {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.6rem;
-      color: rgba(192,132,252,0.6);
-      letter-spacing: 0.05em;
-    }
-    .product-row-scroll {
-      display: flex; gap: 10px;
-      overflow-x: auto; overflow-y: hidden;
-      scroll-behavior: smooth;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(192, 132, 252, 0.4) transparent;
-      padding: 4px 0 12px;
-      -webkit-overflow-scrolling: touch;
-      cursor: grab; user-select: none;
-    }
-    .product-row-scroll:active { cursor: grabbing; }
-    .product-row-scroll::-webkit-scrollbar { height: 6px; background: transparent; }
-    .product-row-scroll::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.4); border-radius: 3px; }
-
-    .product-row-item {
-      flex: 0 0 auto; width: 160px;
-      text-decoration: none; color: inherit;
-      display: block; cursor: pointer;
-      transition: transform 0.3s ease;
-    }
-    .product-row-item:hover { transform: translateY(-3px); }
-
-    .product-row-thumb {
-      position: relative; width: 100%;
-      padding-top: 75%;
-      border-radius: 10px; overflow: hidden;
-      background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(232,121,249,0.1));
-      border: 1px solid rgba(192,132,252,0.25);
-      margin-bottom: 6px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-      transition: all 0.3s ease;
-    }
-    .product-row-item:hover .product-row-thumb {
-      border-color: rgba(232,121,249,0.7);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.4), 0 0 15px rgba(192,132,252,0.3);
-    }
-    .product-row-img {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      transition: transform 0.4s ease;
-    }
-    .product-row-item:hover .product-row-img { transform: scale(1.06); }
-    .product-row-info { padding: 0 2px; }
-    .product-row-item-title {
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 0.72rem; font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.25;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      margin-bottom: 2px;
-    }
-    .product-row-price {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem; font-weight: 800; color: #7dd3fc;
-    }
-    @media (max-width: 768px) {
-      .product-row-item { width: 130px; }
-      .product-row { padding: 12px; }
-    }
-
-    .atbrp-main {
-      display: grid;
-      grid-template-columns: 1fr 360px;
-      gap: 24px; align-items: start;
-    }
-    .atbrp-left {
-      display: flex; flex-direction: column;
-      gap: 16px; min-width: 0;
-    }
-    .atbrp-right {
-      min-width: 0;
-      position: sticky; top: 90px;
-      max-height: calc(100vh - 100px);
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(192,132,252,0.3) transparent;
-      padding-right: 4px;
-    }
-    .atbrp-right::-webkit-scrollbar { width: 4px; }
-    .atbrp-right::-webkit-scrollbar-thumb { background: rgba(192,132,252,0.3); border-radius: 2px; }
-
+    
     .atbrp-player {
-      position: relative; width: 100%;
+      position: relative;
+      width: 100%;
       aspect-ratio: 16 / 9;
-      animation: atbrp-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border-radius: 18px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: 
+        0 0 0 1px rgba(192, 132, 252, 0.35),
+        0 20px 60px rgba(0, 0, 0, 0.6),
+        0 0 40px rgba(192, 132, 252, 0.15);
+      animation: atbrpPlayerIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      isolation: isolate;
     }
+    
     .atbrp-player[data-aspect="portrait"] {
       aspect-ratio: 9 / 16;
-      max-width: 380px; margin: 0 auto;
+      max-width: 400px;
+      margin: 0 auto;
     }
-    @keyframes atbrp-in {
-      from { opacity: 0; transform: translateY(15px) scale(0.98); }
+    
+    @keyframes atbrpPlayerIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.98); }
       to   { opacity: 1; transform: translateY(0) scale(1); }
     }
-    .atbrp-player-glow {
-      position: absolute; inset: -3px;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      border-radius: 20px; opacity: 0.4;
-      filter: blur(14px); z-index: -1;
-      animation: atbrp-glow 4s ease-in-out infinite;
+    
+    /* Subtle neon border animation */
+    .atbrp-player::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 18px;
+      padding: 1px;
+      background: linear-gradient(135deg, 
+        rgba(192, 132, 252, 0.6),
+        rgba(232, 121, 249, 0.4),
+        rgba(125, 211, 252, 0.6));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0.7;
+      animation: atbrpBorderGlow 4s ease-in-out infinite;
     }
-    @keyframes atbrp-glow {
-      0%, 100% { opacity: 0.35; }
-      50%       { opacity: 0.6; }
+    
+    @keyframes atbrpBorderGlow {
+      0%, 100% { opacity: 0.5; }
+      50%      { opacity: 0.9; }
     }
+    
     .atbrp-player-frame {
-      position: absolute; inset: 0;
-      background: #000; border-radius: 16px;
+      position: absolute;
+      inset: 0;
       overflow: hidden;
-      box-shadow: 0 15px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(192,132,252,0.3);
+      border-radius: 18px;
     }
+    
     .atbrp-player-frame iframe {
-      width: 100%; height: 100%;
-      border: 0; display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
     }
-
+    
+    /* Heart double-tap */
     .atbrp-heart {
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%) scale(0);
-      width: 100px; height: 100px;
+      width: 110px; height: 110px;
       color: #ff2d55;
-      pointer-events: none; z-index: 20;
-      filter: drop-shadow(0 0 30px rgba(255,45,85,0.9));
+      pointer-events: none;
+      z-index: 15;
+      filter: drop-shadow(0 0 40px rgba(255, 45, 85, 0.9));
     }
-    .atbrp-heart.pop { animation: atbrp-heart-pop 0.9s cubic-bezier(0.34,1.56,0.64,1); }
-    @keyframes atbrp-heart-pop {
-      0%   { transform: translate(-50%,-50%) scale(0) rotate(-15deg); opacity: 0; }
+    .atbrp-heart.pop { animation: atbrpHeartPop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes atbrpHeartPop {
+      0%   { transform: translate(-50%,-50%) scale(0) rotate(-20deg); opacity: 0; }
       30%  { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
       60%  { transform: translate(-50%,-50%) scale(1); opacity: 1; }
-      100% { transform: translate(-50%,-50%) scale(1.5); opacity: 0; }
+      100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; }
     }
-
-    .atbrp-loader {
+    
+    /* Video loader */
+    .atbrp-video-loader {
       position: absolute; inset: 0;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 20px;
-      background: radial-gradient(circle at center, #1a0f2e 0%, #000 100%);
-      z-index: 5; transition: opacity 0.5s;
+      gap: 22px;
+      background: radial-gradient(circle at center, #1a0f2e 0%, #050208 100%);
+      z-index: 12;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
     }
-    .atbrp-loader.hidden { opacity: 0; pointer-events: none; }
-    .atbrp-loader-orbit { position: relative; width: 60px; height: 60px; }
-    .atbrp-loader-dot {
-      position: absolute; width: 14px; height: 14px;
+    .atbrp-video-loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    
+    .atbrp-orbit {
+      position: relative;
+      width: 64px; height: 64px;
+    }
+    .atbrp-orbit-dot {
+      position: absolute;
+      width: 14px; height: 14px;
       border-radius: 50%;
       top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
     }
-    @keyframes atbrp-orbit {
-      0%   { transform: translate(-50%,-50%) rotate(0deg) translateX(22px) rotate(0deg); }
-      100% { transform: translate(-50%,-50%) rotate(360deg) translateX(22px) rotate(-360deg); }
+    .atbrp-orbit-1 { background: #c084fc; box-shadow: 0 0 20px #c084fc; animation: atbrpOrbit 1.5s cubic-bezier(0.4,0,0.2,1) infinite; }
+    .atbrp-orbit-2 { background: #e879f9; box-shadow: 0 0 20px #e879f9; animation: atbrpOrbit 1.5s cubic-bezier(0.4,0,0.2,1) infinite -0.5s; }
+    .atbrp-orbit-3 { background: #7dd3fc; box-shadow: 0 0 20px #7dd3fc; animation: atbrpOrbit 1.5s cubic-bezier(0.4,0,0.2,1) infinite -1s; }
+    
+    @keyframes atbrpOrbit {
+      0%   { transform: translate(-50%,-50%) rotate(0deg) translateX(24px) rotate(0deg); }
+      100% { transform: translate(-50%,-50%) rotate(360deg) translateX(24px) rotate(-360deg); }
     }
-    .atbrp-loader-text {
+    
+    .atbrp-orbit-text {
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 14px; font-weight: 700; letter-spacing: 0.08em;
+      font-size: 15px; font-weight: 700;
+      letter-spacing: 0.1em;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-
+    
+    /* ═══ TITLE ═══ */
     .atbrp-title {
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 22px; font-weight: 700;
+      font-size: 22px;
+      font-weight: 700;
       color: var(--text-primary);
-      line-height: 1.3; margin: 4px 0 0;
-      letter-spacing: -0.01em;
+      line-height: 1.3;
+      margin: 4px 0 0;
+      letter-spacing: -0.015em;
     }
-
-    .atbrp-cr-row {
-      display: flex; align-items: center;
+    
+    /* ═══ META BAR ═══ */
+    .atbrp-meta-bar {
+      display: flex;
+      align-items: center;
       justify-content: space-between;
-      gap: 16px; flex-wrap: wrap;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, rgba(28, 15, 61, 0.6), rgba(20, 10, 40, 0.4));
+      border: 1px solid rgba(192, 132, 252, 0.2);
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
     }
+    [data-theme="light"] .atbrp-meta-bar {
+      background: rgba(255, 255, 255, 0.7);
+      border-color: rgba(192, 132, 252, 0.25);
+    }
+    
     .atbrp-channel {
       display: flex; align-items: center;
       gap: 12px; min-width: 0; flex: 1;
     }
+    
     .atbrp-avatar {
-      width: 44px; height: 44px; min-width: 44px;
+      width: 46px; height: 46px; min-width: 46px;
       border-radius: 50%;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       display: flex; align-items: center; justify-content: center;
       color: white;
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-weight: 700; font-size: 17px;
-      border: 2px solid rgba(255,255,255,0.25);
-      box-shadow: 0 4px 14px rgba(192,132,252,0.5);
+      font-weight: 800; font-size: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 6px 20px rgba(192, 132, 252, 0.5);
       flex-shrink: 0;
+      position: relative;
     }
+    .atbrp-avatar::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      z-index: -1;
+      filter: blur(6px);
+      opacity: 0.6;
+    }
+    
     .atbrp-channel-info { flex: 1; min-width: 0; }
+    
     .atbrp-channel-name {
       font-family: 'Inter', 'DM Sans', sans-serif;
       font-size: 14px; font-weight: 700;
@@ -673,133 +625,250 @@ if (publishText) channelSubExtras.push(publishText);
       line-height: 1.2;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .atbrp-channel-sub {
-      display: flex; align-items: center; gap: 5px;
-      font-family: 'Inter', sans-serif;
-      font-size: 12px; color: var(--text-muted);
-      margin-top: 4px; font-weight: 500;
-      flex-wrap: wrap;
+    
+    .atbrp-channel-meta {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; color: var(--text-muted);
+      margin-top: 4px; font-weight: 600;
+      letter-spacing: 0.03em;
     }
+    
     .atbrp-live-dot {
       width: 6px; height: 6px; min-width: 6px;
       border-radius: 50%;
       background: #7dd3fc;
-      box-shadow: 0 0 6px #7dd3fc;
-      animation: atbrp-pulse 1.5s ease-in-out infinite;
+      box-shadow: 0 0 8px #7dd3fc;
+      animation: atbrpPulse 1.5s ease-in-out infinite;
     }
-    @keyframes atbrp-pulse {
+    @keyframes atbrpPulse {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: 0.6; transform: scale(0.85); }
+      50%      { opacity: 0.5; transform: scale(0.8); }
     }
-
+    
+    /* ═══ ACTION BUTTONS ═══ */
     .atbrp-actions {
       display: flex; gap: 8px; flex-wrap: wrap;
     }
+    
     .atbrp-btn {
-      display: inline-flex; align-items: center;
-      gap: 6px; padding: 8px 14px; height: 38px;
-      background: linear-gradient(135deg, rgba(28,15,61,0.85), rgba(20,10,40,0.92));
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(192,132,252,0.35);
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 16px; height: 40px;
+      background: rgba(10, 5, 23, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(192, 132, 252, 0.3);
       border-radius: 100px;
       color: var(--text-primary);
       cursor: pointer;
-      transition: all 0.25s ease;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       font-family: 'Inter', 'DM Sans', sans-serif;
-      font-size: 12px; font-weight: 600;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+      font-size: 12.5px; font-weight: 600;
       white-space: nowrap;
+      position: relative;
+      overflow: hidden;
     }
     [data-theme="light"] .atbrp-btn {
-      background: rgba(255,255,255,0.9);
-      border-color: rgba(192,132,252,0.4);
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(192, 132, 252, 0.35);
     }
+    
+    .atbrp-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(232,121,249,0.1));
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    .atbrp-btn:hover::before { opacity: 1; }
+    
     .atbrp-btn:hover {
-      border-color: rgba(232,121,249,0.7);
+      border-color: rgba(232, 121, 249, 0.7);
       transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(192, 132, 252, 0.3);
     }
     .atbrp-btn:active { transform: translateY(0) scale(0.96); }
-    .atbrp-btn svg { color: #e879f9; flex-shrink: 0; }
-    .atbrp-btn-label { line-height: 1; }
+    
+    .atbrp-btn svg { color: #e879f9; flex-shrink: 0; position: relative; z-index: 1; }
+    .atbrp-btn-label { line-height: 1; position: relative; z-index: 1; }
+    
     .atbrp-btn-next {
-      background: linear-gradient(135deg, rgba(192,132,252,0.25), rgba(232,121,249,0.15));
-      border-color: rgba(232,121,249,0.55);
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.2));
+      border-color: rgba(232, 121, 249, 0.6);
     }
     .atbrp-btn-next svg { color: #c084fc; }
-    .atbrp-btn.saved {
-      background: linear-gradient(135deg, rgba(75,55,20,0.9), rgba(50,35,10,0.95)) !important;
-      border-color: rgba(255,200,100,0.6) !important;
+    
+    /* Saved state */
+    .atbrp-btn.active[id="saveBtn"] {
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(245, 158, 11, 0.15)) !important;
+      border-color: rgba(251, 191, 36, 0.6) !important;
     }
-    .atbrp-btn.saved svg { color: #fbbf24 !important; fill: #fbbf24 !important; }
-    .atbrp-btn.saved .atbrp-btn-label { color: #fde68a !important; }
-    .atbrp-btn.sent .atbrp-btn-icon-plane { animation: atbrp-fly 0.6s ease; }
-    @keyframes atbrp-fly {
-      0%   { transform: translate(0,0) rotate(0deg); opacity: 1; }
-      50%  { transform: translate(15px,-15px) rotate(30deg); opacity: 0; }
-      51%  { transform: translate(-15px,15px) rotate(-30deg); opacity: 0; }
-      100% { transform: translate(0,0) rotate(0deg); opacity: 1; }
+    .atbrp-btn.active[id="saveBtn"] svg { color: #fbbf24 !important; fill: #fbbf24 !important; }
+    .atbrp-btn.active[id="saveBtn"] .atbrp-btn-label { color: #fde68a !important; }
+    
+    /* Liked state */
+    .atbrp-btn.active[id="likeBtn"] {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(220, 38, 38, 0.15)) !important;
+      border-color: rgba(239, 68, 68, 0.6) !important;
     }
-
+    .atbrp-btn.active[id="likeBtn"] svg { color: #ef4444 !important; fill: #ef4444 !important; }
+    .atbrp-btn.active[id="likeBtn"] .atbrp-btn-label { color: #fecaca !important; }
+    
+    /* Send animation */
+    .atbrp-btn.sent .atbrp-plane { animation: atbrpFly 0.6s ease; }
+    @keyframes atbrpFly {
+      0%   { transform: translate(0,0) rotate(0); opacity: 1; }
+      50%  { transform: translate(18px,-18px) rotate(35deg); opacity: 0; }
+      51%  { transform: translate(-18px,18px) rotate(-35deg); opacity: 0; }
+      100% { transform: translate(0,0) rotate(0); opacity: 1; }
+    }
+    
+    /* ═══ DESCRIPTION ═══ */
     .atbrp-desc {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 16px; padding: 14px 18px;
+      background: linear-gradient(135deg, rgba(28, 15, 61, 0.5), rgba(20, 10, 40, 0.3));
+      border: 1px solid rgba(192, 132, 252, 0.2);
+      border-radius: 14px;
+      padding: 14px 18px;
+      backdrop-filter: blur(10px);
     }
+    [data-theme="light"] .atbrp-desc { background: rgba(255, 255, 255, 0.8); }
+    
     .atbrp-desc-header {
       display: flex; align-items: center;
       justify-content: space-between;
       margin-bottom: 10px;
     }
-    .atbrp-desc-tag {
+    .atbrp-desc-title {
+      display: flex; align-items: center; gap: 8px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px; font-weight: 700;
-      color: #c084fc; letter-spacing: 0.05em;
-      text-transform: uppercase;
+      color: #c084fc;
+      letter-spacing: 0.08em; text-transform: uppercase;
     }
+    .atbrp-desc-title svg { color: #e879f9; }
+    
     .atbrp-desc-toggle {
-      background: transparent; border: 0;
-      color: #7dd3fc; cursor: pointer;
+      background: rgba(125, 211, 252, 0.15);
+      border: 1px solid rgba(125, 211, 252, 0.3);
+      padding: 4px 12px;
+      border-radius: 100px;
+      color: #7dd3fc;
+      cursor: pointer;
       font-family: 'Inter', sans-serif;
-      font-size: 12px; font-weight: 600;
+      font-size: 11px; font-weight: 700;
+      transition: all 0.2s ease;
     }
-    .atbrp-desc-toggle:hover { color: #22d3ee; }
-    .atbrp-desc-content {
-      max-height: 80px; overflow: hidden;
+    .atbrp-desc-toggle:hover {
+      background: rgba(125, 211, 252, 0.25);
+      color: #22d3ee;
+      transform: translateY(-1px);
+    }
+    
+    .atbrp-desc-body {
+      max-height: 70px;
+      overflow: hidden;
       transition: max-height 0.4s ease;
     }
-    .atbrp-desc-content.expanded { max-height: 800px; }
-    .atbrp-desc-text {
+    .atbrp-desc-body.expanded { max-height: 800px; }
+    .atbrp-desc-body p {
       font-family: 'DM Sans', sans-serif;
-      font-size: 14px; line-height: 1.6;
-      color: var(--text-secondary); margin: 0;
+      font-size: 13.5px; line-height: 1.6;
+      color: var(--text-secondary);
+      margin: 0;
       white-space: pre-wrap; word-wrap: break-word;
     }
-
-    .atbrp-chat {
-      background: linear-gradient(135deg, rgba(28,15,61,0.6), rgba(20,10,40,0.5));
-      border: 1px solid rgba(192,132,252,0.25);
-      border-radius: 18px; overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    
+    /* ═══ HOOK BANNER (Suggestion) ═══ */
+    .atbrp-hook {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 18px;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(249, 115, 22, 0.08));
+      border: 1px solid rgba(249, 115, 22, 0.3);
+      border-radius: 14px;
+      backdrop-filter: blur(10px);
+      animation: atbrpHookIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+      transition: all 0.3s ease;
     }
-    [data-theme="light"] .atbrp-chat { background: var(--bg-card); }
+    .atbrp-hook:hover {
+      border-color: rgba(249, 115, 22, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(249, 115, 22, 0.15);
+    }
+    @keyframes atbrpHookIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    
+    .atbrp-hook-icon {
+      font-size: 28px;
+      animation: atbrpFire 2s ease-in-out infinite;
+    }
+    @keyframes atbrpFire {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(1.1) rotate(-5deg); }
+      75% { transform: scale(1.05) rotate(5deg); }
+    }
+    
+    .atbrp-hook-text { flex: 1; min-width: 0; }
+    
+    .atbrp-hook-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 14px; font-weight: 700;
+      color: #fb923c;
+      line-height: 1.2;
+    }
+    .atbrp-hook-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px; color: var(--text-secondary);
+      margin-top: 2px;
+    }
+    
+    .atbrp-hook-btn {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #fb923c, #f97316);
+      border: 0;
+      border-radius: 100px;
+      color: white;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px; font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);
+      transition: transform 0.2s ease;
+    }
+    .atbrp-hook-btn:hover { transform: scale(1.05); }
+    
+    /* ═══ CHAT ═══ */
+    .atbrp-chat {
+      background: linear-gradient(135deg, rgba(28, 15, 61, 0.7), rgba(20, 10, 40, 0.5));
+      border: 1px solid rgba(192, 132, 252, 0.25);
+      border-radius: 18px;
+      overflow: hidden;
+      backdrop-filter: blur(15px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    }
+    [data-theme="light"] .atbrp-chat { background: rgba(255, 255, 255, 0.85); }
+    
     .atbrp-chat-header {
       display: flex; align-items: center;
       justify-content: space-between;
       padding: 14px 18px;
-      background: rgba(10,5,23,0.5);
-      border-bottom: 1px solid rgba(192,132,252,0.15);
+      background: rgba(10, 5, 23, 0.5);
+      border-bottom: 1px solid rgba(192, 132, 252, 0.15);
     }
-    [data-theme="light"] .atbrp-chat-header { background: rgba(243,232,255,0.5); }
+    [data-theme="light"] .atbrp-chat-header { background: rgba(243, 232, 255, 0.5); }
+    
     .atbrp-chat-header-left {
       display: flex; align-items: center; gap: 12px;
     }
-    .atbrp-chat-icon-wrap {
-      width: 36px; height: 36px; min-width: 36px;
+    .atbrp-chat-icon {
+      width: 38px; height: 38px; min-width: 38px;
       border-radius: 50%;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       display: flex; align-items: center; justify-content: center;
       color: white;
-      box-shadow: 0 4px 12px rgba(232,121,249,0.5);
+      box-shadow: 0 6px 18px rgba(232, 121, 249, 0.5);
     }
     .atbrp-chat-title {
       font-family: 'Bricolage Grotesque', sans-serif;
@@ -813,189 +882,752 @@ if (publishText) channelSubExtras.push(publishText);
       margin-top: 3px; font-weight: 500;
     }
     .atbrp-chat-count {
-      padding: 4px 10px;
-      background: rgba(192,132,252,0.15);
-      border: 1px solid rgba(192,132,252,0.3);
+      padding: 4px 12px;
+      background: rgba(192, 132, 252, 0.15);
+      border: 1px solid rgba(192, 132, 252, 0.3);
       border-radius: 100px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 10px; font-weight: 700; color: #c084fc;
+      letter-spacing: 0.05em;
     }
+    
     .atbrp-chat-messages {
-      max-height: 400px; min-height: 200px;
+      max-height: 380px; min-height: 200px;
       overflow-y: auto;
       padding: 16px 18px;
       scrollbar-width: thin;
-      scrollbar-color: rgba(192,132,252,0.3) transparent;
+      scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
     }
     .atbrp-chat-messages::-webkit-scrollbar { width: 5px; }
-    .atbrp-chat-messages::-webkit-scrollbar-thumb { background: rgba(192,132,252,0.3); border-radius: 3px; }
+    .atbrp-chat-messages::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.3); border-radius: 3px; }
+    
     .atbrp-chat-empty {
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 10px; padding: 30px 20px;
+      gap: 12px; padding: 40px 20px;
       color: var(--text-faint); text-align: center;
     }
     .atbrp-chat-empty p {
-      font-family: 'Inter', sans-serif; font-size: 13px;
-      margin: 0; color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px; margin: 0;
+      color: var(--text-muted);
     }
-    .atbrp-chat-msg {
+    
+    .atbrp-msg {
       display: flex; gap: 10px;
       margin-bottom: 14px;
-      animation: atbrp-msg-in 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      animation: atbrpMsgIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    @keyframes atbrp-msg-in {
+    @keyframes atbrpMsgIn {
       from { opacity: 0; transform: translateX(-10px); }
       to   { opacity: 1; transform: translateX(0); }
     }
-    .atbrp-chat-msg-av {
-      width: 32px; height: 32px; min-width: 32px;
+    
+    .atbrp-msg-av {
+      width: 34px; height: 34px; min-width: 34px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       color: white;
       font-family: 'Bricolage Grotesque', sans-serif;
       font-weight: 700; font-size: 13px;
       flex-shrink: 0;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
-    .atbrp-chat-msg-body { flex: 1; min-width: 0; }
-    .atbrp-chat-msg-head {
-      display: flex; align-items: center;
-      gap: 8px; margin-bottom: 3px;
+    .atbrp-msg-body { flex: 1; min-width: 0; }
+    .atbrp-msg-head {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 3px;
     }
-    .atbrp-chat-msg-name {
+    .atbrp-msg-name {
       font-family: 'Inter', sans-serif;
-      font-size: 13px; font-weight: 700; color: var(--text-primary);
+      font-size: 13px; font-weight: 700;
+      color: var(--text-primary);
     }
-    .atbrp-chat-msg-time {
+    .atbrp-msg-time {
       font-family: 'JetBrains Mono', monospace;
       font-size: 10px; color: var(--text-faint);
     }
-    .atbrp-chat-msg-text {
+    .atbrp-msg-text {
       font-family: 'DM Sans', sans-serif;
-      font-size: 13.5px; line-height: 1.45;
+      font-size: 13.5px; line-height: 1.5;
       color: var(--text-secondary); word-wrap: break-word;
     }
-    .atbrp-chat-input-wrap {
+    
+    .atbrp-chat-input-row {
       display: flex; align-items: center; gap: 10px;
       padding: 12px 16px;
-      background: rgba(10,5,23,0.4);
-      border-top: 1px solid rgba(192,132,252,0.15);
+      background: rgba(10, 5, 23, 0.4);
+      border-top: 1px solid rgba(192, 132, 252, 0.15);
     }
-    [data-theme="light"] .atbrp-chat-input-wrap { background: rgba(243,232,255,0.3); }
-    .atbrp-chat-avatar {
-      width: 34px; height: 34px; min-width: 34px;
+    [data-theme="light"] .atbrp-chat-input-row { background: rgba(243, 232, 255, 0.3); }
+    
+    .atbrp-my-avatar {
+      width: 36px; height: 36px; min-width: 36px;
       border-radius: 50%;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       display: flex; align-items: center; justify-content: center;
       color: white;
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-weight: 700; font-size: 13px; flex-shrink: 0;
+      font-weight: 700; font-size: 14px; flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
     }
-    .atbrp-chat-input-inner {
-      flex: 1; display: flex; align-items: center; gap: 8px;
+    
+    .atbrp-input-box {
+      flex: 1; display: flex; align-items: center; gap: 6px;
       background: var(--bg-card);
-      border: 1px solid rgba(192,132,252,0.25);
+      border: 1px solid rgba(192, 132, 252, 0.25);
       border-radius: 100px;
       padding: 4px 4px 4px 16px;
-      transition: border-color 0.2s;
+      transition: border-color 0.25s ease;
     }
-    .atbrp-chat-input-inner:focus-within { border-color: rgba(232,121,249,0.6); }
-    .atbrp-chat-input {
+    .atbrp-input-box:focus-within {
+      border-color: rgba(232, 121, 249, 0.7);
+      box-shadow: 0 0 0 3px rgba(232, 121, 249, 0.15);
+    }
+    
+    .atbrp-input {
       flex: 1; background: transparent; border: 0; outline: 0;
       color: var(--text-primary);
-      font-family: 'Inter', sans-serif; font-size: 13.5px; padding: 8px 0;
+      font-family: 'Inter', sans-serif;
+      font-size: 13.5px; padding: 8px 0;
     }
-    .atbrp-chat-input::placeholder { color: var(--text-muted); }
-    .atbrp-chat-send {
-      width: 32px; height: 32px; min-width: 32px;
+    .atbrp-input::placeholder { color: var(--text-muted); }
+    
+    .atbrp-send-btn {
+      width: 34px; height: 34px; min-width: 34px;
       border-radius: 50%;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       border: 0; color: white; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s; flex-shrink: 0;
-      box-shadow: 0 3px 10px rgba(232,121,249,0.4);
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(232, 121, 249, 0.5);
     }
-    .atbrp-chat-send:hover { transform: scale(1.1); }
-    .atbrp-chat-send:active { transform: scale(0.95); }
-
-    .atbrp-side-feed {
-      display: flex; flex-direction: column; gap: 10px;
+    .atbrp-send-btn:hover { transform: scale(1.1) rotate(-5deg); }
+    .atbrp-send-btn:active { transform: scale(0.9); }
+    
+    /* ═══ MORE VIDEOS SECTION ═══ */
+    .atbrp-more-section {
+      margin-top: 12px;
     }
-    .atbrp-si {
-      display: flex; gap: 10px; padding: 8px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      text-decoration: none; color: inherit; cursor: pointer;
-      transition: all 0.3s ease;
-      animation: atbrp-si-in 0.4s ease backwards;
+    
+    .atbrp-section-head {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding: 0 4px;
     }
-    @keyframes atbrp-si-in {
-      from { opacity: 0; transform: translateX(15px); }
-      to   { opacity: 1; transform: translateX(0); }
+    
+    .atbrp-section-title {
+      display: flex; align-items: center; gap: 12px;
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 18px; font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
     }
-    .atbrp-si:hover {
-      background: var(--bg-card-hover);
-      border-color: rgba(232,121,249,0.5);
-      transform: translateX(-3px);
+    
+    .atbrp-section-bar {
+      width: 4px; height: 22px;
+      background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
+      border-radius: 3px;
+      box-shadow: 0 0 12px rgba(232, 121, 249, 0.7);
+      animation: atbrpBarGlow 2.5s ease-in-out infinite;
     }
-    .atbrp-si-thumb {
-      position: relative; flex-shrink: 0; width: 130px;
-      aspect-ratio: 16/9;
-      border-radius: 10px; overflow: hidden;
+    @keyframes atbrpBarGlow {
+      0%, 100% { box-shadow: 0 0 12px rgba(232, 121, 249, 0.7); }
+      50%      { box-shadow: 0 0 20px rgba(232, 121, 249, 1); }
+    }
+    
+    .atbrp-section-tag {
+      padding: 5px 12px;
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.2), rgba(232, 121, 249, 0.1));
+      border: 1px solid rgba(192, 132, 252, 0.35);
+      border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 800;
+      color: #c084fc;
+      letter-spacing: 0.12em;
+    }
+    
+    /* Feed grid — home page style */
+    .atbrp-feed-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      min-height: 200px;
+    }
+    @media (max-width: 1100px) { .atbrp-feed-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; } }
+    @media (max-width: 768px)  { .atbrp-feed-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+    
+    .atbrp-more-loading {
+      display: none;
+      align-items: center; justify-content: center; gap: 12px;
+      padding: 2rem 0;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+    }
+    .atbrp-more-loading.show { display: flex; }
+    
+    .atbrp-spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(192, 132, 252, 0.2);
+      border-top-color: #c084fc;
+      border-radius: 50%;
+      animation: atbrpSpin 0.8s linear infinite;
+    }
+    @keyframes atbrpSpin { to { transform: rotate(360deg); } }
+    
+    /* ═══ CARD (SAME AS HOME PAGE) ═══ */
+    @keyframes atbrpCardIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    
+    .atbrp-card {
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      animation: atbrpCardIn 0.5s ease backwards;
+    }
+    .atbrp-card:hover { transform: translateY(-6px); }
+    
+    .atbrp-card-thumb {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border-radius: 14px;
+      overflow: hidden;
       background: #0d0520;
+      border: 1px solid rgba(232, 121, 249, 0.35);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      transition: all 0.35s ease;
     }
-    .atbrp-si-thumb img {
+    .atbrp-card:hover .atbrp-card-thumb {
+      border-color: rgba(232, 121, 249, 0.95);
+      box-shadow: 
+        0 15px 40px rgba(0, 0, 0, 0.5),
+        0 0 25px rgba(192, 132, 252, 0.6);
+    }
+    
+    .atbrp-card-img {
+      position: absolute;
+      top: 0; left: 0;
       width: 100%; height: 100%;
-      object-fit: cover; display: block;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.3s ease;
+    }
+    .atbrp-card:hover .atbrp-card-img {
+      transform: scale(1.1);
+      filter: brightness(0.65);
+    }
+    
+    .atbrp-card-shine {
+      position: absolute;
+      top: 0; left: -80%;
+      width: 60%; height: 100%;
+      background: linear-gradient(105deg, transparent, rgba(255,255,255,0.3), transparent);
+      z-index: 3;
+      transition: left 0.9s ease;
+      pointer-events: none;
+    }
+    .atbrp-card:hover .atbrp-card-shine { left: 120%; }
+    
+    .atbrp-card-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(10,5,23,0.9) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .atbrp-card:hover .atbrp-card-overlay { opacity: 1; }
+    
+    .atbrp-card-play {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.4);
+      width: 48px; height: 48px;
+      z-index: 5;
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      display: flex; align-items: center; justify-content: center;
+      color: white; padding-left: 3px;
+      box-shadow: 0 10px 30px rgba(192, 132, 252, 0.8);
+    }
+    .atbrp-card:hover .atbrp-card-play {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    
+    .atbrp-card-badge-new {
+      position: absolute;
+      top: 8px; left: 8px;
+      padding: 4px 8px;
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      color: white;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; font-weight: 800;
+      letter-spacing: 0.1em;
+      border-radius: 5px;
+      z-index: 6;
+      box-shadow: 0 3px 8px rgba(239, 68, 68, 0.5);
+    }
+    
+    .atbrp-card-badge-type {
+      position: absolute;
+      bottom: 8px; left: 8px;
+      padding: 3px 8px;
+      background: rgba(10, 5, 23, 0.9);
+      color: #fbbf24;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; font-weight: 800;
+      border-radius: 5px;
+      z-index: 6;
+      backdrop-filter: blur(6px);
+    }
+    
+    .atbrp-card-info {
+      padding: 10px 4px 4px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .atbrp-card-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 4px;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 2.2em;
+      transition: all 0.3s ease;
+    }
+    .atbrp-card:hover .atbrp-card-title {
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .atbrp-card-channel {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      opacity: 0.8;
+    }
+    
+    /* ═══ PRODUCT ROW ═══ */
+    .atbrp-product-row {
+      grid-column: 1 / -1;
+      margin: 8px 0;
+      padding: 18px;
+      background: linear-gradient(135deg, rgba(28,15,61,0.5), rgba(20,10,45,0.3));
+      border: 1px solid rgba(192,132,252,0.25);
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+      animation: atbrpCardIn 0.5s ease backwards;
+    }
+    
+    .atbrp-product-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .atbrp-product-title {
+      display: inline-flex; align-items: center; gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem; font-weight: 800;
+      letter-spacing: 0.12em;
+      color: #e879f9;
+      text-transform: uppercase;
+    }
+    .atbrp-product-title::before {
+      content: ''; width: 4px; height: 16px;
+      background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
+      border-radius: 3px;
+      box-shadow: 0 0 10px rgba(232,121,249,0.7);
+    }
+    .atbrp-product-hint {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      color: rgba(192,132,252,0.7);
+      letter-spacing: 0.05em;
+    }
+    
+    .atbrp-product-scroll {
+      display: flex; gap: 12px;
+      overflow-x: auto; overflow-y: hidden;
+      scroll-behavior: smooth;
+      padding: 4px 0 12px;
+      cursor: grab;
+      user-select: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .atbrp-product-scroll:active { cursor: grabbing; }
+    .atbrp-product-scroll::-webkit-scrollbar { height: 6px; }
+    .atbrp-product-scroll::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.4); border-radius: 3px; }
+    
+    .atbrp-product-item {
+      flex: 0 0 auto;
+      width: 165px;
+      text-decoration: none; color: inherit;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    .atbrp-product-item:hover { transform: translateY(-4px); }
+    
+    .atbrp-product-thumb {
+      position: relative; width: 100%;
+      padding-top: 75%;
+      border-radius: 12px; overflow: hidden;
+      background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(232,121,249,0.1));
+      border: 1px solid rgba(192,132,252,0.3);
+      margin-bottom: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+    }
+    .atbrp-product-item:hover .atbrp-product-thumb {
+      border-color: rgba(232,121,249,0.8);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4), 0 0 20px rgba(192,132,252,0.4);
+    }
+    .atbrp-product-img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
       transition: transform 0.4s ease;
     }
-    .atbrp-si:hover .atbrp-si-thumb img { transform: scale(1.08); }
+    .atbrp-product-item:hover .atbrp-product-img { transform: scale(1.08); }
+    
+    .atbrp-product-name {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 0.75rem; font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 2px;
+    }
+    .atbrp-product-price {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; font-weight: 800;
+      color: #7dd3fc;
+    }
+    
+    @media (max-width: 768px) {
+      .atbrp-product-item { width: 135px; }
+      .atbrp-product-row { padding: 14px; }
+    }
+    
+    /* ═══════════ SIDEBAR ═══════════ */
+    .atbrp-sidebar-head {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+    
+    .atbrp-sidebar-title {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 16px; font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .atbrp-sidebar-count {
+      padding: 4px 10px;
+      background: rgba(192, 132, 252, 0.15);
+      border: 1px solid rgba(192, 132, 252, 0.3);
+      border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 700;
+      color: #c084fc;
+    }
+    
+    /* Autoplay toggle */
+    .atbrp-autoplay {
+      margin-bottom: 14px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, rgba(28, 15, 61, 0.6), rgba(20, 10, 40, 0.4));
+      border: 1px solid rgba(192, 132, 252, 0.2);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+    }
+    [data-theme="light"] .atbrp-autoplay { background: rgba(255, 255, 255, 0.7); }
+    
+    .atbrp-autoplay-label {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 12.5px; font-weight: 600;
+      color: var(--text-secondary);
+    }
+    
+    .atbrp-autoplay-label input[type="checkbox"] {
+      position: absolute; opacity: 0; width: 0; height: 0;
+    }
+    
+    .atbrp-switch {
+      position: relative;
+      width: 36px; height: 20px;
+      background: rgba(192, 132, 252, 0.2);
+      border-radius: 100px;
+      transition: background 0.25s ease;
+    }
+    .atbrp-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.25s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    .atbrp-autoplay-label input:checked ~ .atbrp-switch {
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+    }
+    .atbrp-autoplay-label input:checked ~ .atbrp-switch::after {
+      transform: translateX(16px);
+    }
+    
+    /* Sidebar list — scrollable */
+    .atbrp-side-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      padding-right: 6px;
+      flex: 1;
+      max-height: calc(100vh - 250px);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
+    }
+    .atbrp-side-list::-webkit-scrollbar { width: 5px; }
+    .atbrp-side-list::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.35); border-radius: 3px; }
+    
+    /* Sidebar item — premium mini card */
+    .atbrp-si {
+      display: flex;
+      gap: 12px;
+      padding: 8px;
+      background: linear-gradient(135deg, rgba(28, 15, 61, 0.5), rgba(20, 10, 40, 0.3));
+      border: 1px solid rgba(192, 132, 252, 0.15);
+      border-radius: 14px;
+      text-decoration: none; color: inherit; cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      animation: atbrpSiIn 0.5s ease backwards;
+      position: relative;
+      overflow: hidden;
+    }
+    [data-theme="light"] .atbrp-si { background: rgba(255, 255, 255, 0.8); }
+    
+    @keyframes atbrpSiIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    
+    .atbrp-si:hover {
+      background: linear-gradient(135deg, rgba(36, 21, 72, 0.85), rgba(28, 15, 61, 0.7));
+      border-color: rgba(232, 121, 249, 0.6);
+      transform: translateX(-4px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(192, 132, 252, 0.2);
+    }
+    
+    .atbrp-si-thumb {
+      position: relative;
+      flex-shrink: 0;
+      width: 130px; height: 74px;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #0d0520;
+      border: 1px solid rgba(192, 132, 252, 0.2);
+    }
+    
+    .atbrp-si-thumb img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.5s ease, filter 0.3s ease;
+    }
+    
+    .atbrp-si:hover .atbrp-si-thumb img {
+      transform: scale(1.12);
+      filter: brightness(0.7);
+    }
+    
+    /* Shine effect on sidebar hover */
+    .atbrp-si-thumb::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -80%;
+      width: 60%; height: 100%;
+      background: linear-gradient(105deg, transparent, rgba(255,255,255,0.25), transparent);
+      transition: left 0.7s ease;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .atbrp-si:hover .atbrp-si-thumb::after { left: 120%; }
+    
+    /* Play button on sidebar hover */
+    .atbrp-si-play {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.5);
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+      z-index: 3;
+      box-shadow: 0 6px 18px rgba(192, 132, 252, 0.7);
+    }
+    .atbrp-si:hover .atbrp-si-play {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    
+    /* Duration badge */
+    .atbrp-si-duration {
+      position: absolute;
+      bottom: 4px; right: 4px;
+      padding: 1px 5px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fbbf24;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px; font-weight: 800;
+      border-radius: 3px;
+      z-index: 3;
+      backdrop-filter: blur(4px);
+    }
+    
+    /* NEW badge on sidebar */
+    .atbrp-si-new {
+      position: absolute;
+      top: 4px; left: 4px;
+      padding: 1px 5px;
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      color: white;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px; font-weight: 800;
+      letter-spacing: 0.05em;
+      border-radius: 3px;
+      z-index: 4;
+    }
+    
     .atbrp-si-info {
       flex: 1; min-width: 0;
       display: flex; flex-direction: column;
       justify-content: space-between;
       padding: 2px 0;
     }
+    
     .atbrp-si-title {
       font-family: 'DM Sans', sans-serif;
-      font-size: 12.5px; font-weight: 700;
+      font-size: 13px; font-weight: 700;
       color: var(--text-primary);
-      line-height: 1.35; margin: 0 0 4px;
+      line-height: 1.35;
+      margin: 0 0 4px;
       display: -webkit-box;
-      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
+      transition: color 0.3s ease;
     }
+    .atbrp-si:hover .atbrp-si-title {
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
     .atbrp-si-channel {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 10px; color: var(--text-muted);
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.03em;
     }
-
-    @media (max-width: 900px) {
-      .atbrp-main {
+    
+    .atbrp-si-meta {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 3px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--text-faint);
+    }
+    
+    .atbrp-si-meta-dot {
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: var(--text-faint);
+    }
+    
+    /* ═══════════ MOBILE ═══════════ */
+    @media (max-width: 960px) {
+      .atbrp-grid {
         grid-template-columns: 1fr;
         gap: 20px;
       }
-      .atbrp-right {
+      .atbrp-sidebar {
         position: static;
-        max-height: none; overflow: visible;
+        max-height: none;
       }
-      .atbrp-title { font-size: 17px; }
+      .atbrp-side-list {
+        max-height: none;
+        overflow-y: visible;
+      }
+      .atbrp-title { font-size: 18px; }
+      .atbrp-meta-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+      }
+      .atbrp-actions {
+        gap: 6px;
+      }
+      .atbrp-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+        height: 38px;
+        flex: 1;
+        justify-content: center;
+      }
+      .atbrp-chat-messages { max-height: 320px; }
+      .atbrp-si-thumb { width: 130px; height: 74px; }
       .atbrp-player[data-aspect="portrait"] {
         max-width: 100%;
-        max-height: calc(100dvh - 200px);
+        max-height: calc(100dvh - 220px);
       }
-      .atbrp-cr-row {
-        flex-direction: column; align-items: stretch;
+    }
+    
+    @media (max-width: 480px) {
+      .atbrp-container { padding: 0 14px; }
+      .atbrp-btn-label { display: none; }
+      .atbrp-btn { padding: 8px 10px; min-width: 40px; }
+      .atbrp-btn-next .atbrp-btn-label { display: inline; }
+    }
+    
+    /* Reduce motion accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
       }
-      .atbrp-actions { gap: 6px; }
-      .atbrp-btn {
-        padding: 7px 12px; font-size: 11.5px;
-        height: 36px; flex: 1; justify-content: center;
-      }
-      .atbrp-chat-messages { max-height: 300px; }
-      .atbrp-si-thumb { width: 120px; }
     }
   </style>
 
@@ -1010,6 +1642,7 @@ if (publishText) channelSubExtras.push(publishText);
       const nextId = (window as any).__NEXT_ID__ || '';
       const prevId = (window as any).__PREV_ID__ || '';
 
+      // ═══ SAVE RESUME ═══
       try {
         if (videoId) {
           localStorage.setItem('anitube_resume_video', videoId);
@@ -1017,6 +1650,7 @@ if (publishText) channelSubExtras.push(publishText);
         }
       } catch(e) {}
 
+      // ═══ UTILITIES ═══
       function getThumb(vid: string, existing: string = ''): string {
         if (existing && existing.trim()) return existing;
         if (vid.startsWith('yts_') || vid.startsWith('yt_')) {
@@ -1051,21 +1685,23 @@ if (publishText) channelSubExtras.push(publishText);
       function timeAgo(ts: number): string {
         const diff = Date.now() - ts;
         const s = Math.floor(diff / 1000);
-        if (s < 60) return 'just now';
+        if (s < 60) return 'now';
         const m = Math.floor(s / 60);
-        if (m < 60) return `${m}m ago`;
+        if (m < 60) return `${m}m`;
         const h = Math.floor(m / 60);
-        if (h < 24) return `${h}h ago`;
-        return `${Math.floor(h / 24)}d ago`;
+        if (h < 24) return `${h}h`;
+        return `${Math.floor(h / 24)}d`;
       }
 
+      // ═══ SAVE TO HISTORY ═══
       try {
         if (currentVideo && videoId) {
           const goodThumb = getThumb(videoId, currentVideo.thumbnail);
           const history = JSON.parse(localStorage.getItem('anitube_history') || '[]');
           const filtered = history.filter((h: any) => h.id !== videoId);
           filtered.unshift({
-            id: videoId, title: currentVideo.title,
+            id: videoId,
+            title: currentVideo.title,
             channel: currentVideo.channel,
             thumbnail: goodThumb,
             type: currentVideo.type || 'anime',
@@ -1076,6 +1712,36 @@ if (publishText) channelSubExtras.push(publishText);
         }
       } catch(e) {}
 
+      // ═══ LIKE BUTTON ═══
+      const likeBtn = document.getElementById('likeBtn');
+      const likedVideos: string[] = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
+      const isLiked = () => likedVideos.includes(videoId);
+      
+      function updateLikeUI() {
+        if (!likeBtn) return;
+        if (isLiked()) {
+          likeBtn.classList.add('active');
+          const label = likeBtn.querySelector('.atbrp-btn-label');
+          if (label) label.textContent = 'Liked';
+        } else {
+          likeBtn.classList.remove('active');
+          const label = likeBtn.querySelector('.atbrp-btn-label');
+          if (label) label.textContent = 'Like';
+        }
+      }
+      
+      function toggleLike() {
+        const idx = likedVideos.indexOf(videoId);
+        if (idx > -1) likedVideos.splice(idx, 1);
+        else likedVideos.push(videoId);
+        localStorage.setItem('anitube_liked', JSON.stringify(likedVideos));
+        updateLikeUI();
+      }
+      
+      updateLikeUI();
+      likeBtn?.addEventListener('click', toggleLike);
+
+      // ═══ SAVE BUTTON ═══
       const saveBtn = document.getElementById('saveBtn');
       const savedVideos: any[] = JSON.parse(localStorage.getItem('anitube_saved') || '[]');
       const isSaved = () => savedVideos.some((s: any) => s.id === videoId);
@@ -1084,11 +1750,11 @@ if (publishText) channelSubExtras.push(publishText);
         if (!saveBtn) return;
         const saved = isSaved();
         if (saved) {
-          saveBtn.classList.add('saved');
+          saveBtn.classList.add('active');
           const label = saveBtn.querySelector('.atbrp-btn-label');
           if (label) label.textContent = 'Saved';
         } else {
-          saveBtn.classList.remove('saved');
+          saveBtn.classList.remove('active');
           const label = saveBtn.querySelector('.atbrp-btn-label');
           if (label) label.textContent = 'Save';
         }
@@ -1116,13 +1782,14 @@ if (publishText) channelSubExtras.push(publishText);
       updateSaveUI();
       saveBtn?.addEventListener('click', toggleSave);
 
-      const card = document.getElementById('videoCard');
+      // ═══ DOUBLE TAP HEART ═══
+      const videoCard = document.getElementById('videoCard');
       const heart = document.getElementById('doubleTapHeart');
       let lastTap = 0;
-      card?.addEventListener('click', () => {
+      videoCard?.addEventListener('click', () => {
         const now = Date.now();
         if (now - lastTap < 350) {
-          if (!isSaved()) toggleSave();
+          if (!isLiked()) toggleLike();
           if (heart) {
             heart.classList.remove('pop');
             void (heart as HTMLElement).offsetWidth;
@@ -1132,10 +1799,11 @@ if (publishText) channelSubExtras.push(publishText);
         } else { lastTap = now; }
       });
 
+      // ═══ SHARE / SEND ═══
       const sendBtn = document.getElementById('sendBtn');
       async function handleSend() {
         if (!sendBtn) return;
-        const shareData = { title: currentVideo?.title || 'AniTube Video', url: window.location.href };
+        const shareData = { title: currentVideo?.title || 'AniTubeBuzz', url: window.location.href };
         const isMobile = /mobile|android|iphone|ipad/i.test(navigator.userAgent);
         sendBtn.classList.add('sent');
         setTimeout(() => sendBtn.classList.remove('sent'), 600);
@@ -1150,44 +1818,49 @@ if (publishText) channelSubExtras.push(publishText);
               label.textContent = 'Copied!';
               setTimeout(() => { label.textContent = orig; }, 1800);
             }
-          } catch { prompt('Copy this link:', window.location.href); }
+          } catch { prompt('Copy link:', window.location.href); }
         }
       }
       sendBtn?.addEventListener('click', handleSend);
 
+      // ═══ NAVIGATION — smooth transition ═══
       let navigating = false;
       function goTo(targetId: string) {
         if (navigating || !targetId) return;
         navigating = true;
         const c = document.getElementById('videoCard');
         if (c) {
-          c.style.opacity = '0';
-          c.style.transform = 'scale(0.96)';
-          c.style.transition = 'all 0.25s ease';
+          c.style.opacity = '0.4';
+          c.style.transform = 'scale(0.97)';
+          c.style.transition = 'all 0.3s ease';
         }
         setTimeout(() => { window.location.href = `/reels/${targetId}`; }, 220);
       }
       document.getElementById('nextBtn')?.addEventListener('click', () => { if (nextId) goTo(nextId); });
-      document.getElementById('prevBtn')?.addEventListener('click', () => {
-        if (prevId) goTo(prevId);
-        else if (window.history.length > 1) window.history.back();
-      });
 
+      // ═══ VIDEO LOADER HIDE — multiple fallbacks ═══
       const iframe = document.getElementById('videoFrame') as HTMLIFrameElement;
       const videoLoader = document.getElementById('videoLoader');
-      iframe?.addEventListener('load', () => {
-        setTimeout(() => videoLoader?.classList.add('hidden'), 400);
-      });
-      setTimeout(() => videoLoader?.classList.add('hidden'), 3500);
+      
+      function hideVideoLoader() {
+        videoLoader?.classList.add('hidden');
+      }
+      
+      iframe?.addEventListener('load', () => { setTimeout(hideVideoLoader, 500); });
+      setTimeout(hideVideoLoader, 3500); // Always hide after 3.5s
 
+      // ═══ SAFIYA EVENT ═══
       setTimeout(() => {
-        if (currentVideo) {
-          window.dispatchEvent(new CustomEvent('safiya:video-event', {
-            detail: { action: 'watch', video: currentVideo }
-          }));
+        if (currentVideo && (window as any).dispatchEvent) {
+          try {
+            window.dispatchEvent(new CustomEvent('safiya:video-event', {
+              detail: { action: 'watch', video: currentVideo }
+            }));
+          } catch(e) {}
         }
-      }, 500);
+      }, 800);
 
+      // ═══ DESCRIPTION TOGGLE ═══
       const descToggle = document.getElementById('descToggle');
       const descContent = document.getElementById('descContent');
       descToggle?.addEventListener('click', () => {
@@ -1196,26 +1869,38 @@ if (publishText) channelSubExtras.push(publishText);
         descToggle.textContent = expanded ? 'Show less' : 'Show more';
       });
 
-      const chatOnlineEl = document.getElementById('chatOnlineCount');
+      // ═══ FAKE ONLINE COUNT ═══
+      const chatOnlineEl = document.getElementById('chatOnline');
       if (chatOnlineEl) {
-        const base = 80 + Math.floor(Math.random() * 200);
+        const base = 90 + Math.floor(Math.random() * 250);
         chatOnlineEl.textContent = String(base);
         setInterval(() => {
-          chatOnlineEl.textContent = String(Math.max(50, base + Math.floor(Math.random() * 15) - 7));
-        }, 5000);
+          chatOnlineEl.textContent = String(Math.max(60, base + Math.floor(Math.random() * 20) - 10));
+        }, 4500);
       }
 
+      // ═══ HOOK BANNER: Scroll to More ═══
+      const scrollBtn = document.getElementById('scrollToMore');
+      const hookBanner = document.getElementById('hookBanner');
+      const moreSection = document.getElementById('moreSection');
+      function scrollToMore() {
+        moreSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      scrollBtn?.addEventListener('click', scrollToMore);
+      hookBanner?.addEventListener('click', scrollToMore);
+
+      // ═══ CHAT SYSTEM ═══
       const chatMessages = document.getElementById('chatMessages');
       const chatInput = document.getElementById('chatInput') as HTMLInputElement;
       const chatSend = document.getElementById('chatSend');
-      const commentCount = document.getElementById('commentCount');
+      const chatCount = document.getElementById('chatCount');
       const userInitial = document.getElementById('userInitial');
       const CHAT_KEY = `anitube_chat_${videoId}`;
       const USER_KEY = 'anitube_username';
 
       let username = localStorage.getItem(USER_KEY);
       if (!username) {
-        const names = ['SakuraFan','NarutoKid','OtakuHero','AnimeVibes','MangaLover','WeebLife','AnimeVIP','SenpaiChan','KawaiiUser','DemonSlayer'];
+        const names = ['SakuraFan','NarutoKid','OtakuHero','AnimeVibes','MangaLover','WeebLife','AnimeVIP','SenpaiChan','KawaiiUser','DemonSlayer','OnePieceFan','JujutsuKid','TokyoOtaku','GhibliLover','AnimeGod'];
         username = names[Math.floor(Math.random() * names.length)] + '_' + Math.floor(Math.random() * 999);
         localStorage.setItem(USER_KEY, username);
       }
@@ -1228,7 +1913,9 @@ if (publishText) channelSubExtras.push(publishText);
           'linear-gradient(135deg, #f472b6, #ec4899)',
           'linear-gradient(135deg, #fbbf24, #f97316)',
           'linear-gradient(135deg, #34d399, #10b981)',
-          'linear-gradient(135deg, #a78bfa, #8b5cf6)'
+          'linear-gradient(135deg, #a78bfa, #8b5cf6)',
+          'linear-gradient(135deg, #60a5fa, #3b82f6)',
+          'linear-gradient(135deg, #f87171, #ef4444)'
         ];
         let hash = 0;
         for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
@@ -1245,32 +1932,31 @@ if (publishText) channelSubExtras.push(publishText);
       function renderMessages() {
         if (!chatMessages) return;
         const list = loadComments();
-        if (commentCount) commentCount.textContent = `${list.length} message${list.length !== 1 ? 's' : ''}`;
+        if (chatCount) chatCount.textContent = `${list.length} msg${list.length !== 1 ? 's' : ''}`;
 
         if (list.length === 0) {
           chatMessages.innerHTML = `
             <div class="atbrp-chat-empty">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.3;">
+              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.25;">
                 <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
               </svg>
-              <p>Be the first to comment on this video!</p>
+              <p>Be the first to comment! 💬</p>
             </div>`;
           return;
         }
 
         chatMessages.innerHTML = list.map((m: any) => `
-          <div class="atbrp-chat-msg">
-            <div class="atbrp-chat-msg-av" style="background:${userColor(m.name)}">${esc(m.name.charAt(0).toUpperCase())}</div>
-            <div class="atbrp-chat-msg-body">
-              <div class="atbrp-chat-msg-head">
-                <span class="atbrp-chat-msg-name">${esc(m.name)}</span>
-                <span class="atbrp-chat-msg-time">${timeAgo(m.time)}</span>
+          <div class="atbrp-msg">
+            <div class="atbrp-msg-av" style="background:${userColor(m.name)}">${esc(m.name.charAt(0).toUpperCase())}</div>
+            <div class="atbrp-msg-body">
+              <div class="atbrp-msg-head">
+                <span class="atbrp-msg-name">${esc(m.name)}</span>
+                <span class="atbrp-msg-time">${timeAgo(m.time)}</span>
               </div>
-              <div class="atbrp-chat-msg-text">${esc(m.text)}</div>
+              <div class="atbrp-msg-text">${esc(m.text)}</div>
             </div>
           </div>
         `).join('');
-
         chatMessages.scrollTop = chatMessages.scrollHeight;
       }
 
@@ -1291,46 +1977,72 @@ if (publishText) channelSubExtras.push(publishText);
       });
       renderMessages();
 
+      // ═══════════════════════════════════════════════
+      // SIDEBAR — Premium Up Next
+      // ═══════════════════════════════════════════════
       const sidebarFeed = document.getElementById('relatedFeed');
-      const feedCountEl = document.getElementById('feedCount');
+      const sidebarCount = document.getElementById('sidebarCount');
       let sideItems: any[] = feedData.slice();
       let sideRendered = 0;
-      let sideTotal = 0;
 
-      function makeSidebarItem(v: any): HTMLElement {
+      function makeSidebarItem(v: any, i: number): HTMLElement {
         const el = document.createElement('a');
         el.href = v.isAnimeDetail ? `/anime/${v.id}` : `/reels/${v.id}`;
         el.className = 'atbrp-si';
+        el.style.animationDelay = ((i % 10) * 40) + 'ms';
 
         const thumb = getThumb(v.id, v.thumbnail || '');
-        const chan = (v.channel || 'anitube').replace(/\s+/g, '').toLowerCase().slice(0, 20);
+        const chan = (v.channel || 'anitube').slice(0, 22);
 
         const imgHtml = thumb
           ? `<img src="${esc(thumb)}" alt="" loading="lazy" onerror="this.style.display='none';" />`
-          : `<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:1.4rem;">📺</div>`;
+          : `<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:1.6rem;">📺</div>`;
 
         el.innerHTML = `
-          <div class="atbrp-si-thumb">${imgHtml}</div>
+          <div class="atbrp-si-thumb">
+            ${imgHtml}
+            ${v.isNew ? '<div class="atbrp-si-new">NEW</div>' : ''}
+            <div class="atbrp-si-play">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+          </div>
           <div class="atbrp-si-info">
             <h3 class="atbrp-si-title">${esc(trunc(v.title || 'Video', 80))}</h3>
-            <div class="atbrp-si-channel">@${esc(chan)}</div>
+            <div class="atbrp-si-channel">${esc(chan)}</div>
+            <div class="atbrp-si-meta">
+              <span>${v.type ? v.type.toUpperCase() : 'VIDEO'}</span>
+              <span class="atbrp-si-meta-dot"></span>
+              <span>${Math.floor(Math.random() * 500 + 50)}K views</span>
+            </div>
           </div>`;
         return el;
       }
 
       function renderSidebar() {
         if (!sidebarFeed) return;
-        const end = Math.min(sideRendered + 10, sideItems.length);
+        const end = Math.min(sideRendered + 12, sideItems.length);
         for (let i = sideRendered; i < end; i++) {
-          sidebarFeed.appendChild(makeSidebarItem(sideItems[i]));
-          sideTotal++;
+          sidebarFeed.appendChild(makeSidebarItem(sideItems[i], i));
         }
         sideRendered = end;
-        if (feedCountEl) feedCountEl.textContent = String(sideTotal);
+        if (sidebarCount) sidebarCount.textContent = String(sideRendered);
       }
 
       renderSidebar();
 
+      // Auto-load more when scrolling sidebar
+      sidebarFeed?.parentElement?.addEventListener('scroll', () => {
+        if (!sidebarFeed) return;
+        const parent = sidebarFeed.parentElement;
+        if (!parent) return;
+        if (parent.scrollTop + parent.clientHeight > parent.scrollHeight - 200) {
+          if (sideRendered < sideItems.length) renderSidebar();
+        }
+      });
+
+      // ═══════════════════════════════════════════════
+      // MORE VIDEOS — Home page style feed
+      // ═══════════════════════════════════════════════
       const moreEl = document.getElementById('moreFeed');
       const moreLoadingEl = document.getElementById('moreLoading');
       let moreItems: any[] = feedData.slice();
@@ -1339,75 +2051,68 @@ if (publishText) channelSubExtras.push(publishText);
       let loadingMore = false;
       let cardsSinceProduct = 0;
 
-      function socialCard(v: any, i: number): HTMLElement {
+      function makeCard(v: any, i: number): HTMLElement {
         const t = v.title || 'Video';
         const img = getThumb(v.id, v.thumbnail || '');
-        const delay = ((i % 8) * 40) + 'ms';
+        const delay = ((i % 8) * 50) + 'ms';
         const typeLabel: any = {
           movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA',
           donghua: '🐼 DONGHUA', anime: '🎌 ANIME'
-        }[v.type] || '';
+        }[v.type] || '📺 VIDEO';
 
         const imgHtml = img
-          ? `<img src="${esc(img)}" alt="${esc(t)}" loading="lazy" class="at-na-img" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))';" />`
+          ? `<img src="${esc(img)}" alt="${esc(t)}" loading="lazy" class="atbrp-card-img" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))';" />`
           : `<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>`;
 
         const el = document.createElement('a');
         el.href = v.isAnimeDetail ? `/anime/${v.id}` : `/reels/${v.id}`;
-        el.className = 'at-na-card';
+        el.className = 'atbrp-card';
         el.style.animationDelay = delay;
-        el.style.textDecoration = 'none';
 
-        el.innerHTML =
-          '<div class="at-na-thumb">' +
-            imgHtml +
-            '<div class="at-na-shine"></div>' +
-            '<div class="at-na-overlay"></div>' +
-            '<div class="at-na-play">' +
-              '<div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:2px;box-shadow:0 8px 25px rgba(192,132,252,0.7);z-index:2;">' +
-                '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
-              '</div>' +
-            '</div>' +
-            (v.isNew ? '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">NEW</div>' : '') +
-            '<div style="position:absolute;bottom:6px;left:6px;padding:2px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:4px;z-index:6;">' + typeLabel + '</div>' +
-          '</div>' +
-          '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
-            '<h3 class="at-na-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(t, 55)) + '</h3>' +
-            '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;">' + esc(v.channel || 'Channel') + '</div>' +
-          '</div>';
+        el.innerHTML = `
+          <div class="atbrp-card-thumb">
+            ${imgHtml}
+            <div class="atbrp-card-shine"></div>
+            <div class="atbrp-card-overlay"></div>
+            <div class="atbrp-card-play">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            ${v.isNew ? '<div class="atbrp-card-badge-new">NEW</div>' : ''}
+            <div class="atbrp-card-badge-type">${typeLabel}</div>
+          </div>
+          <div class="atbrp-card-info">
+            <h3 class="atbrp-card-title">${esc(trunc(t, 55))}</h3>
+            <div class="atbrp-card-channel">${esc(v.channel || 'Channel')}</div>
+          </div>`;
 
         return el;
       }
 
-      function productRow(products: any[]): HTMLElement | null {
+      function makeProductRow(products: any[]): HTMLElement | null {
         if (!products || products.length === 0) return null;
 
         const itemsHtml = products.map(p => {
           const img = p.image
-            ? `<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy" class="product-row-img" onerror="this.style.display='none';" />`
+            ? `<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy" class="atbrp-product-img" onerror="this.style.display='none';" />`
             : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🛍️</div>`;
-          const badge = p.badge
-            ? `<div style="position:absolute;top:5px;left:5px;padding:2px 6px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:'JetBrains Mono',monospace;font-size:0.5rem;font-weight:800;border-radius:3px;z-index:2;">${esc(p.badge)}</div>`
-            : '';
-          return `<a href="/product/${esc(p.id)}" class="product-row-item">
-            <div class="product-row-thumb">${img}${badge}</div>
-            <div class="product-row-info">
-              <div class="product-row-item-title">${esc(trunc(p.title, 40))}</div>
-              <div class="product-row-price">${esc(p.price)}</div>
-            </div>
+          return `<a href="/product/${esc(p.id)}" class="atbrp-product-item">
+            <div class="atbrp-product-thumb">${img}</div>
+            <div class="atbrp-product-name">${esc(trunc(p.title, 40))}</div>
+            <div class="atbrp-product-price">${esc(p.price)}</div>
           </a>`;
         }).join('');
 
         const row = document.createElement('div');
-        row.className = 'product-row';
-        row.innerHTML =
-          '<div class="product-row-header">' +
-            '<div class="product-row-title">✨ Recommended For You</div>' +
-            '<div class="product-row-hint">← Swipe →</div>' +
-          '</div>' +
-          '<div class="product-row-scroll">' + itemsHtml + '</div>';
+        row.className = 'atbrp-product-row';
+        row.innerHTML = `
+          <div class="atbrp-product-head">
+            <div class="atbrp-product-title">✨ Recommended</div>
+            <div class="atbrp-product-hint">← Swipe →</div>
+          </div>
+          <div class="atbrp-product-scroll">${itemsHtml}</div>`;
 
-        const scroll = row.querySelector('.product-row-scroll') as HTMLElement;
+        // Drag scroll
+        const scroll = row.querySelector('.atbrp-product-scroll') as HTMLElement;
         if (scroll) {
           let isDown = false, startX = 0, scrollLeft = 0;
           scroll.addEventListener('mousedown', (e) => {
@@ -1424,7 +2129,6 @@ if (publishText) channelSubExtras.push(publishText);
             if (e.deltaY !== 0) { e.preventDefault(); scroll.scrollLeft += e.deltaY; }
           }, { passive: false });
         }
-
         return row;
       }
 
@@ -1435,12 +2139,11 @@ if (publishText) channelSubExtras.push(publishText);
         const cardsPerRow = window.innerWidth <= 768 ? 2 : (window.innerWidth <= 1100 ? 3 : 4);
 
         for (let i = moreRendered; i < end; i++) {
-          moreEl.appendChild(socialCard(moreItems[i], i));
+          moreEl.appendChild(makeCard(moreItems[i], i));
           cardsSinceProduct++;
-
           if (cardsSinceProduct >= cardsPerRow * 2 && productPool.length > 0) {
             const products = shuffle(productPool).slice(0, 8);
-            const row = productRow(products);
+            const row = makeProductRow(products);
             if (row) moreEl.appendChild(row);
             cardsSinceProduct = 0;
           }
@@ -1451,13 +2154,13 @@ if (publishText) channelSubExtras.push(publishText);
       async function fetchMore() {
         if (loadingMore) return;
         loadingMore = true;
-        if (moreLoadingEl) moreLoadingEl.style.display = 'block';
+        if (moreLoadingEl) moreLoadingEl.classList.add('show');
 
         try {
           const types = ['anime', 'donghua', 'kdrama', 'movies'];
           const type = types[Math.floor(Math.random() * types.length)];
           const page = Math.floor(Math.random() * 5) + 1;
-          const res = await fetch(`/api/social-feed?type=${type}&page=${page}&limit=12`);
+          const res = await fetch(`/api/social-feed?type=${type}&page=${page}&limit=15`);
           const data = await res.json();
           if (data.success && data.videos) {
             const existingIds = new Set(moreItems.map((v: any) => v.id));
@@ -1470,7 +2173,7 @@ if (publishText) channelSubExtras.push(publishText);
           }
         } catch(e) {}
 
-        if (moreLoadingEl) moreLoadingEl.style.display = 'none';
+        if (moreLoadingEl) moreLoadingEl.classList.remove('show');
         loadingMore = false;
       }
 
@@ -1484,6 +2187,7 @@ if (publishText) channelSubExtras.push(publishText);
 
       loadProducts().then(() => { renderMoreBatch(); });
 
+      // ═══ INFINITE SCROLL (debounced) ═══
       let scrollTimer: any = null;
       window.addEventListener('scroll', () => {
         if (scrollTimer) clearTimeout(scrollTimer);
@@ -1497,6 +2201,17 @@ if (publishText) channelSubExtras.push(publishText);
           }
         }, 150);
       }, { passive: true });
+
+      // ═══ AUTOPLAY NEXT (when video ends) ═══
+      // Note: Can't detect iframe video end reliably, so this is future-ready.
+      const autoplayToggle = document.getElementById('autoplayToggle') as HTMLInputElement;
+      if (autoplayToggle) {
+        const savedAuto = localStorage.getItem('anitube_autoplay');
+        if (savedAuto === 'false') autoplayToggle.checked = false;
+        autoplayToggle.addEventListener('change', () => {
+          localStorage.setItem('anitube_autoplay', String(autoplayToggle.checked));
+        });
+      }
 
     })();
   </script>
