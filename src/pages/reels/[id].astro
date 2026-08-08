@@ -11,27 +11,19 @@ const videoId = id || '';
 function getPlatformData(vid: string) {
   if (vid.startsWith('yts_')) {
     const rawId = vid.replace('yts_', '');
-    return { source: 'youtube_shorts', embedUrl: `https://www.youtube.com/embed/${rawId}?loop=1&playlist=${rawId}&rel=0&modestbranding=1&autoplay=1`, aspect: 'portrait', isShort: true, rawId };
+    return { source: 'youtube_shorts', embedUrl: `https://www.youtube.com/embed/${rawId}?loop=1&playlist=${rawId}&rel=0&modestbranding=1&autoplay=1`, aspect: 'portrait', isShort: true };
   }
   if (vid.startsWith('yt_')) {
     const rawId = vid.replace('yt_', '');
-    return { source: 'youtube', embedUrl: `https://www.youtube.com/embed/${rawId}?rel=0&modestbranding=1&autoplay=1`, aspect: 'landscape', isShort: false, rawId };
+    return { source: 'youtube', embedUrl: `https://www.youtube.com/embed/${rawId}?rel=0&modestbranding=1&autoplay=1`, aspect: 'landscape', isShort: false };
   }
   if (vid.startsWith('dm_')) {
     const rawId = vid.replace('dm_', '');
-    return { source: 'dailymotion', embedUrl: `https://www.dailymotion.com/embed/video/${rawId}?autoplay=1&mute=0&ui-logo=0&sharing-enable=0`, aspect: 'landscape', isShort: false, rawId };
+    return { source: 'dailymotion', embedUrl: `https://www.dailymotion.com/embed/video/${rawId}?autoplay=1&mute=0&ui-logo=0&sharing-enable=0`, aspect: 'landscape', isShort: false };
   }
   if (vid.startsWith('bili_')) {
     const rawId = vid.replace('bili_', '');
-    return { source: 'bilibili', embedUrl: `https://player.bilibili.com/player.html?bvid=${rawId}&autoplay=1&high_quality=1`, aspect: 'landscape', isShort: false, rawId };
-  }
-  if (vid.startsWith('ody_')) {
-    const rawId = vid.replace('ody_', '');
-    return { source: 'odysee', embedUrl: `https://odysee.com/$/embed/${rawId}?autoplay=1`, aspect: 'landscape', isShort: false, rawId };
-  }
-  if (vid.startsWith('rmb_')) {
-    const rawId = vid.replace('rmb_', '');
-    return { source: 'rumble', embedUrl: `https://rumble.com/embed/${rawId}/?autoplay=2`, aspect: 'landscape', isShort: false, rawId };
+    return { source: 'bilibili', embedUrl: `https://player.bilibili.com/player.html?bvid=${rawId}&autoplay=1&high_quality=1`, aspect: 'landscape', isShort: false };
   }
   return null;
 }
@@ -39,12 +31,10 @@ function getPlatformData(vid: string) {
 function generateThumbnail(vid: string, apiThumbnail: string = ''): string {
   if (apiThumbnail && apiThumbnail.trim()) return apiThumbnail;
   if (vid.startsWith('yts_') || vid.startsWith('yt_')) {
-    const rawId = vid.replace(/^(yts_|yt_)/, '');
-    return `https://i.ytimg.com/vi/${rawId}/hqdefault.jpg`;
+    return `https://i.ytimg.com/vi/${vid.replace(/^(yts_|yt_)/, '')}/hqdefault.jpg`;
   }
   if (vid.startsWith('dm_')) {
-    const rawId = vid.replace('dm_', '');
-    return `https://www.dailymotion.com/thumbnail/video/${rawId}`;
+    return `https://www.dailymotion.com/thumbnail/video/${vid.replace('dm_', '')}`;
   }
   return '';
 }
@@ -110,22 +100,18 @@ function buildRelatedFeed(current: any, all: any[]): any[] {
 
 const relatedFeed = buildRelatedFeed(video, allVideos);
 const nextVideo = relatedFeed[0] || null;
-const prevVideo = relatedFeed[1] || null;
 
 const displayChannel = (video.channel || 'AniTube').trim();
 const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
 
-const typeLabels: any = {
-  anime: 'Anime', kdrama: 'K-Drama', donghua: 'Donghua', movies: 'Movie'
-};
+const typeLabels: any = { anime: 'Anime', kdrama: 'K-Drama', donghua: 'Donghua', movies: 'Movie' };
 const typeLabel = typeLabels[video.type] || 'Video';
 
 let publishText = '';
 if (video.publishedAt) {
   try {
     const d = new Date(video.publishedAt);
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+    const diff = Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
     if (diff < 1) publishText = 'Today';
     else if (diff < 7) publishText = diff + ' days ago';
     else if (diff < 30) publishText = Math.floor(diff / 7) + ' weeks ago';
@@ -139,101 +125,89 @@ const hasDescription = description.length > 0;
 
 const metaParts: string[] = ['HD', typeLabel];
 if (publishText) metaParts.push(publishText);
-const metaText = metaParts.join(' · ');
+const metaText = metaParts.join(' • ');
 ---
 
 <BaseLayout title={`${video.title} | AniTubeBuzz`}>
   <Header slot="header" />
 
-  <section class="atbrp-section">
-    <div class="atbrp-container">
+  <section class="rp-section">
+    <div class="rp-container">
       
-      <div 
-        id="reels-root" 
-        data-videoid={videoId}
-        data-next={nextVideo?.id || ''}
-        data-prev={prevVideo?.id || ''}
-        data-aspect={videoAspect}
-        data-source={video.source}
-        data-title={video.title}
-      >
+      <div id="reels-root" data-videoid={videoId} data-next={nextVideo?.id || ''} data-aspect={videoAspect}>
         
-        <div class="atbrp-grid">
+        <div class="rp-grid">
           
-          <!-- ═══════════ LEFT: MAIN CONTENT ═══════════ -->
-          <div class="atbrp-main">
+          <!-- ═══════════ LEFT COLUMN ═══════════ -->
+          <div class="rp-main">
             
-            <!-- ═══ VIDEO PLAYER (FIXED - NO GIANT GLOW) ═══ -->
-            <div class="atbrp-player-wrap">
-              <div class="atbrp-player" id="videoCard" data-aspect={videoAspect}>
-                <div class="atbrp-player-frame">
-                  <iframe 
-                    id="videoFrame"
-                    src={video.embedUrl}
-                    title={video.title}
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowfullscreen
-                    loading="eager"
-                  ></iframe>
-                  
-                  <div class="atbrp-video-loader" id="videoLoader">
-                    <div class="atbrp-orbit">
-                      <div class="atbrp-orbit-dot atbrp-orbit-1"></div>
-                      <div class="atbrp-orbit-dot atbrp-orbit-2"></div>
-                      <div class="atbrp-orbit-dot atbrp-orbit-3"></div>
-                    </div>
-                    <div class="atbrp-orbit-text">AniTubeBuzz</div>
+            <!-- VIDEO PLAYER -->
+            <div class="rp-player" id="videoCard" data-aspect={videoAspect}>
+              <div class="rp-player-frame">
+                <iframe 
+                  id="videoFrame"
+                  src={video.embedUrl}
+                  title={video.title}
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowfullscreen
+                  loading="eager"
+                ></iframe>
+                <div class="rp-vloader" id="videoLoader">
+                  <div class="rp-orbit">
+                    <div class="rp-dot rp-d1"></div>
+                    <div class="rp-dot rp-d2"></div>
+                    <div class="rp-dot rp-d3"></div>
                   </div>
-                  
-                  <div class="atbrp-heart" id="doubleTapHeart">
-                    <svg viewBox="0 0 24 24" fill="currentColor" style="width:100%;height:100%;">
-                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                    </svg>
-                  </div>
+                  <div class="rp-brand">AniTubeBuzz</div>
+                </div>
+                <div class="rp-heart" id="doubleTapHeart">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style="width:100%;height:100%;">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                  </svg>
                 </div>
               </div>
             </div>
 
-            <!-- ═══ TITLE ═══ -->
-            <h1 class="atbrp-title">{video.title}</h1>
+            <!-- TITLE -->
+            <h1 class="rp-title">{video.title}</h1>
 
-            <!-- ═══ META BAR: Channel + Actions ═══ -->
-            <div class="atbrp-meta-bar">
-              <div class="atbrp-channel">
-                <div class="atbrp-avatar">
+            <!-- META BAR -->
+            <div class="rp-meta-bar">
+              <div class="rp-channel">
+                <div class="rp-avatar">
                   <span>{displayChannel.charAt(0).toUpperCase()}</span>
                 </div>
-                <div class="atbrp-channel-info">
-                  <div class="atbrp-channel-name">{displayChannel}</div>
-                  <div class="atbrp-channel-meta">
-                    <span class="atbrp-live-dot"></span>
+                <div class="rp-channel-info">
+                  <div class="rp-channel-name">{displayChannel}</div>
+                  <div class="rp-channel-meta">
+                    <span class="rp-live"></span>
                     <span>{metaText}</span>
                   </div>
                 </div>
               </div>
               
-              <div class="atbrp-actions">
-                <button class="atbrp-btn" id="likeBtn" data-tooltip="Like">
+              <div class="rp-actions">
+                <button class="rp-btn" id="likeBtn">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                   </svg>
-                  <span class="atbrp-btn-label">Like</span>
+                  <span class="rp-btn-lbl">Like</span>
                 </button>
-                <button class="atbrp-btn" id="saveBtn" data-tooltip="Save">
+                <button class="rp-btn" id="saveBtn">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                   </svg>
-                  <span class="atbrp-btn-label">Save</span>
+                  <span class="rp-btn-lbl">Save</span>
                 </button>
-                <button class="atbrp-btn" id="sendBtn" data-tooltip="Share">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="atbrp-plane">
+                <button class="rp-btn" id="sendBtn">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="rp-plane">
                     <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
                   </svg>
-                  <span class="atbrp-btn-label">Share</span>
+                  <span class="rp-btn-lbl">Share</span>
                 </button>
-                <button class="atbrp-btn atbrp-btn-next" id="nextBtn" data-tooltip="Next Video">
-                  <span class="atbrp-btn-label">Next</span>
+                <button class="rp-btn rp-btn-next" id="nextBtn">
+                  <span class="rp-btn-lbl">Next</span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="9 18 15 12 9 6"/>
                   </svg>
@@ -241,125 +215,121 @@ const metaText = metaParts.join(' · ');
               </div>
             </div>
 
-            <!-- ═══ DESCRIPTION ═══ -->
+            <!-- DESCRIPTION -->
             {hasDescription && (
-              <div class="atbrp-desc" id="descBox">
-                <div class="atbrp-desc-header">
-                  <div class="atbrp-desc-title">
+              <div class="rp-desc">
+                <div class="rp-desc-head">
+                  <div class="rp-desc-title">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                       <polyline points="14 2 14 8 20 8"/>
-                      <line x1="16" y1="13" x2="8" y2="13"/>
-                      <line x1="16" y1="17" x2="8" y2="17"/>
                     </svg>
                     <span>Description</span>
                   </div>
-                  <button class="atbrp-desc-toggle" id="descToggle">Show more</button>
+                  <button class="rp-desc-tgl" id="descToggle">Show more</button>
                 </div>
-                <div class="atbrp-desc-body" id="descContent">
+                <div class="rp-desc-body" id="descContent">
                   <p>{description}</p>
                 </div>
               </div>
             )}
 
-            <!-- ═══ SUGGESTION BANNER (Hook!) ═══ -->
-            <div class="atbrp-hook" id="hookBanner">
-              <div class="atbrp-hook-icon">🔥</div>
-              <div class="atbrp-hook-text">
-                <div class="atbrp-hook-title">Trending Now</div>
-                <div class="atbrp-hook-sub">Fans are watching similar videos right now!</div>
+            <!-- TRENDING HOOK -->
+            <div class="rp-hook" id="hookBanner">
+              <div class="rp-hook-icon">🔥</div>
+              <div class="rp-hook-text">
+                <div class="rp-hook-title">Trending Now</div>
+                <div class="rp-hook-sub">128 fans watching similar videos!</div>
               </div>
-              <button class="atbrp-hook-btn" id="scrollToMore">Discover →</button>
+              <button class="rp-hook-btn">Discover →</button>
             </div>
 
-            <!-- ═══ LIVE CHAT ═══ -->
-            <section class="atbrp-chat" id="chatSection">
-              <div class="atbrp-chat-header">
-                <div class="atbrp-chat-header-left">
-                  <div class="atbrp-chat-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <div class="atbrp-chat-title">Live Chat</div>
-                    <div class="atbrp-chat-sub">
-                      <span class="atbrp-live-dot" style="background:#10b981;box-shadow:0 0 8px #10b981;"></span>
-                      <span id="chatOnline">128</span> fans watching now
-                    </div>
-                  </div>
-                </div>
-                <div class="atbrp-chat-count" id="chatCount">0 msgs</div>
-              </div>
-              
-              <div class="atbrp-chat-messages" id="chatMessages">
-                <div class="atbrp-chat-empty">
-                  <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.25;">
-                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+            <!-- ═══ YOUTUBE-STYLE COMMENTS ═══ -->
+            <section class="rp-comments" id="commentsSection">
+              <div class="rp-comments-head">
+                <h3 class="rp-comments-title">
+                  <span id="commentCount">0</span> Comments
+                </h3>
+                <div class="rp-comments-sort">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="15" y2="12"/>
+                    <line x1="3" y1="18" x2="9" y2="18"/>
                   </svg>
-                  <p>Be the first to comment! 💬</p>
+                  <span>Top</span>
                 </div>
               </div>
               
-              <div class="atbrp-chat-input-row">
-                <div class="atbrp-my-avatar" id="userInitial">Y</div>
-                <div class="atbrp-input-box">
+              <!-- Comment input -->
+              <div class="rp-comment-input-row">
+                <div class="rp-my-av" id="userInitial">Y</div>
+                <div class="rp-comment-input-wrap">
                   <input 
                     type="text" 
-                    id="chatInput" 
-                    class="atbrp-input" 
-                    placeholder="Say something..."
-                    maxlength="200"
+                    id="commentInput" 
+                    class="rp-comment-input" 
+                    placeholder="Add a comment..."
+                    maxlength="500"
                   />
-                  <button class="atbrp-send-btn" id="chatSend">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-                    </svg>
-                  </button>
+                  <div class="rp-comment-actions" id="commentActions" style="display:none;">
+                    <button class="rp-cancel-btn" id="cancelComment">Cancel</button>
+                    <button class="rp-submit-btn" id="submitComment">Comment</button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Comments list -->
+              <div id="commentsList" class="rp-comments-list">
+                <div class="rp-comments-empty">
+                  <p>No comments yet. Be the first! 💬</p>
                 </div>
               </div>
             </section>
 
-            <!-- ═══ MORE VIDEOS (HOME PAGE CARD STYLE) ═══ -->
-            <section class="atbrp-more-section" id="moreSection">
-              <div class="atbrp-section-head">
-                <div class="atbrp-section-title">
-                  <span class="atbrp-section-bar"></span>
+            <!-- MORE VIDEOS -->
+            <section class="rp-more-section" id="moreSection">
+              <div class="rp-section-head">
+                <div class="rp-section-title">
+                  <span class="rp-section-bar"></span>
                   <span>More Like This</span>
                 </div>
-                <div class="atbrp-section-tag">FOR YOU</div>
+                <div class="rp-section-tag">FOR YOU</div>
               </div>
-              <div id="moreFeed" class="atbrp-feed-grid"></div>
-              <div id="moreLoading" class="atbrp-more-loading">
-                <div class="atbrp-spinner"></div>
-                <span>Loading more magic...</span>
+              <div id="moreFeed" class="rp-feed-grid"></div>
+              <div id="moreLoading" class="rp-more-loading">
+                <div class="rp-spinner"></div>
+                <span>Loading more...</span>
               </div>
             </section>
             
           </div>
 
-          <!-- ═══════════ RIGHT: SIDEBAR ═══════════ -->
-          <aside class="atbrp-sidebar">
+          <!-- ═══════════ RIGHT SIDEBAR ═══════════ -->
+          <aside class="rp-sidebar">
             
-            <!-- Sidebar Header -->
-            <div class="atbrp-sidebar-head">
-              <div class="atbrp-sidebar-title">
-                <span class="atbrp-section-bar"></span>
+            <div class="rp-sidebar-head">
+              <div class="rp-sidebar-title">
+                <span class="rp-section-bar"></span>
                 <span>Up Next</span>
               </div>
-              <div class="atbrp-sidebar-count" id="sidebarCount">0</div>
+              <div class="rp-sidebar-count" id="sidebarCount">0</div>
             </div>
             
-            <!-- Autoplay toggle -->
-            <div class="atbrp-autoplay">
-              <label class="atbrp-autoplay-label">
+            <div class="rp-autoplay">
+              <label class="rp-autoplay-label">
                 <span>Autoplay</span>
                 <input type="checkbox" id="autoplayToggle" checked>
-                <span class="atbrp-switch"></span>
+                <span class="rp-switch"></span>
               </label>
             </div>
             
-            <div id="relatedFeed" class="atbrp-side-list"></div>
+            <div id="relatedFeed" class="rp-side-list"></div>
+            
+            <!-- Sidebar Ad Section -->
+            <div class="rp-sidebar-ad" id="sidebarAd" style="display:none;">
+              <div class="rp-ad-label">✨ Recommended</div>
+              <div id="sidebarAdContent"></div>
+            </div>
             
           </aside>
           
@@ -377,181 +347,121 @@ const metaText = metaParts.join(' · ');
     window.__REELS_FEED__ = ${JSON.stringify(relatedFeed.slice(0, 40))};
     window.__CURRENT_VIDEO_ID__ = ${JSON.stringify(videoId)};
     window.__NEXT_ID__ = ${JSON.stringify(nextVideo?.id || '')};
-    window.__PREV_ID__ = ${JSON.stringify(prevVideo?.id || '')};
   `}></script>
 
   <style>
     /* ═══════════════════════════════════════════════
-       ATBRP — GOD LEVEL PREMIUM REELS PAGE
-       Isolated CSS - no conflicts with global styles
+       REELS PAGE — GOD LEVEL v3
     ═══════════════════════════════════════════════ */
     
-    .atbrp-section {
+    .rp-section {
       padding: 24px 0 40px;
-      position: relative;
       contain: layout style;
     }
     
-    .atbrp-container {
-      max-width: 1440px;
+    .rp-container {
+      max-width: 1600px;
       margin: 0 auto;
       padding: 0 20px;
     }
     
-    /* ═══ GRID LAYOUT ═══ */
-    .atbrp-grid {
+    .rp-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 360px;
+      grid-template-columns: minmax(0, 1fr) 400px;
       gap: 28px;
       align-items: start;
     }
     
-    .atbrp-main {
+    .rp-main {
       display: flex;
       flex-direction: column;
       gap: 18px;
       min-width: 0;
     }
     
-    .atbrp-sidebar {
+    .rp-sidebar {
       position: sticky;
       top: 88px;
-      max-height: calc(100vh - 100px);
       display: flex;
       flex-direction: column;
+      max-height: calc(100vh - 100px);
       min-width: 0;
     }
     
-    /* ═══ VIDEO PLAYER — FIXED, NO GIANT GLOW ═══ */
-    .atbrp-player-wrap {
-      position: relative;
-      width: 100%;
-      contain: layout style;
-    }
-    
-    .atbrp-player {
+    /* ═══ VIDEO PLAYER ═══ */
+    .rp-player {
       position: relative;
       width: 100%;
       aspect-ratio: 16 / 9;
-      border-radius: 18px;
+      border-radius: 16px;
       overflow: hidden;
       background: #000;
       box-shadow: 
-        0 0 0 1px rgba(192, 132, 252, 0.35),
-        0 20px 60px rgba(0, 0, 0, 0.6),
-        0 0 40px rgba(192, 132, 252, 0.15);
-      animation: atbrpPlayerIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        0 0 0 1px rgba(192, 132, 252, 0.3),
+        0 20px 50px rgba(0, 0, 0, 0.5);
       isolation: isolate;
     }
     
-    .atbrp-player[data-aspect="portrait"] {
+    .rp-player[data-aspect="portrait"] {
       aspect-ratio: 9 / 16;
       max-width: 400px;
       margin: 0 auto;
     }
     
-    @keyframes atbrpPlayerIn {
-      from { opacity: 0; transform: translateY(20px) scale(0.98); }
-      to   { opacity: 1; transform: translateY(0) scale(1); }
-    }
-    
-    /* Subtle neon border animation */
-    .atbrp-player::before {
-      content: '';
-      position: absolute;
-      inset: -1px;
-      border-radius: 18px;
-      padding: 1px;
-      background: linear-gradient(135deg, 
-        rgba(192, 132, 252, 0.6),
-        rgba(232, 121, 249, 0.4),
-        rgba(125, 211, 252, 0.6));
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-      z-index: 10;
-      opacity: 0.7;
-      animation: atbrpBorderGlow 4s ease-in-out infinite;
-    }
-    
-    @keyframes atbrpBorderGlow {
-      0%, 100% { opacity: 0.5; }
-      50%      { opacity: 0.9; }
-    }
-    
-    .atbrp-player-frame {
+    .rp-player-frame {
       position: absolute;
       inset: 0;
       overflow: hidden;
-      border-radius: 18px;
     }
     
-    .atbrp-player-frame iframe {
+    .rp-player-frame iframe {
       width: 100%;
       height: 100%;
       border: 0;
       display: block;
     }
     
-    /* Heart double-tap */
-    .atbrp-heart {
+    .rp-heart {
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%) scale(0);
-      width: 110px; height: 110px;
+      width: 100px; height: 100px;
       color: #ff2d55;
       pointer-events: none;
       z-index: 15;
-      filter: drop-shadow(0 0 40px rgba(255, 45, 85, 0.9));
+      filter: drop-shadow(0 0 30px rgba(255, 45, 85, 0.9));
     }
-    .atbrp-heart.pop { animation: atbrpHeartPop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    @keyframes atbrpHeartPop {
-      0%   { transform: translate(-50%,-50%) scale(0) rotate(-20deg); opacity: 0; }
+    .rp-heart.pop { animation: rpHeartPop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes rpHeartPop {
+      0%   { transform: translate(-50%,-50%) scale(0) rotate(-15deg); opacity: 0; }
       30%  { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
       60%  { transform: translate(-50%,-50%) scale(1); opacity: 1; }
-      100% { transform: translate(-50%,-50%) scale(1.6); opacity: 0; }
+      100% { transform: translate(-50%,-50%) scale(1.5); opacity: 0; }
     }
     
-    /* Video loader */
-    .atbrp-video-loader {
+    .rp-vloader {
       position: absolute; inset: 0;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 22px;
+      gap: 20px;
       background: radial-gradient(circle at center, #1a0f2e 0%, #050208 100%);
       z-index: 12;
       transition: opacity 0.6s ease, visibility 0.6s ease;
     }
-    .atbrp-video-loader.hidden {
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-    }
+    .rp-vloader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
     
-    .atbrp-orbit {
-      position: relative;
-      width: 64px; height: 64px;
+    .rp-orbit { position: relative; width: 60px; height: 60px; }
+    .rp-dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; top: 50%; left: 50%; }
+    .rp-d1 { background: #c084fc; box-shadow: 0 0 20px #c084fc; animation: rpOrbit 1.5s cubic-bezier(0.4,0,0.2,1) infinite; }
+    .rp-d2 { background: #e879f9; box-shadow: 0 0 20px #e879f9; animation: rpOrbit 1.5s cubic-bezier(0.4,0,0.2,1) infinite -0.5s; }
+    .rp-d3 { background: #7dd3fc; box-shadow: 0 0 20px #7dd3fc; animation: rpOrbit 1.5s cubic-bezier(0.4,0,0.2,1) infinite -1s; }
+    @keyframes rpOrbit {
+      0%   { transform: translate(-50%,-50%) rotate(0deg) translateX(22px) rotate(0deg); }
+      100% { transform: translate(-50%,-50%) rotate(360deg) translateX(22px) rotate(-360deg); }
     }
-    .atbrp-orbit-dot {
-      position: absolute;
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      top: 50%; left: 50%;
-    }
-    .atbrp-orbit-1 { background: #c084fc; box-shadow: 0 0 20px #c084fc; animation: atbrpOrbit 1.5s cubic-bezier(0.4,0,0.2,1) infinite; }
-    .atbrp-orbit-2 { background: #e879f9; box-shadow: 0 0 20px #e879f9; animation: atbrpOrbit 1.5s cubic-bezier(0.4,0,0.2,1) infinite -0.5s; }
-    .atbrp-orbit-3 { background: #7dd3fc; box-shadow: 0 0 20px #7dd3fc; animation: atbrpOrbit 1.5s cubic-bezier(0.4,0,0.2,1) infinite -1s; }
-    
-    @keyframes atbrpOrbit {
-      0%   { transform: translate(-50%,-50%) rotate(0deg) translateX(24px) rotate(0deg); }
-      100% { transform: translate(-50%,-50%) rotate(360deg) translateX(24px) rotate(-360deg); }
-    }
-    
-    .atbrp-orbit-text {
+    .rp-brand {
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 15px; font-weight: 700;
-      letter-spacing: 0.1em;
+      font-size: 15px; font-weight: 700; letter-spacing: 0.08em;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -559,10 +469,9 @@ const metaText = metaParts.join(' · ');
     }
     
     /* ═══ TITLE ═══ */
-    .atbrp-title {
+    .rp-title {
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 22px;
-      font-weight: 700;
+      font-size: 22px; font-weight: 700;
       color: var(--text-primary);
       line-height: 1.3;
       margin: 4px 0 0;
@@ -570,7 +479,7 @@ const metaText = metaParts.join(' · ');
     }
     
     /* ═══ META BAR ═══ */
-    .atbrp-meta-bar {
+    .rp-meta-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -579,81 +488,63 @@ const metaText = metaParts.join(' · ');
       padding: 14px 16px;
       background: linear-gradient(135deg, rgba(28, 15, 61, 0.6), rgba(20, 10, 40, 0.4));
       border: 1px solid rgba(192, 132, 252, 0.2);
-      border-radius: 16px;
+      border-radius: 14px;
       backdrop-filter: blur(12px);
     }
-    [data-theme="light"] .atbrp-meta-bar {
+    [data-theme="light"] .rp-meta-bar {
       background: rgba(255, 255, 255, 0.7);
-      border-color: rgba(192, 132, 252, 0.25);
     }
     
-    .atbrp-channel {
+    .rp-channel {
       display: flex; align-items: center;
       gap: 12px; min-width: 0; flex: 1;
     }
     
-    .atbrp-avatar {
-      width: 46px; height: 46px; min-width: 46px;
+    .rp-avatar {
+      width: 44px; height: 44px; min-width: 44px;
       border-radius: 50%;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       display: flex; align-items: center; justify-content: center;
       color: white;
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-weight: 800; font-size: 18px;
+      font-weight: 800; font-size: 17px;
       border: 2px solid rgba(255, 255, 255, 0.2);
-      box-shadow: 0 6px 20px rgba(192, 132, 252, 0.5);
+      box-shadow: 0 6px 18px rgba(192, 132, 252, 0.5);
       flex-shrink: 0;
-      position: relative;
-    }
-    .atbrp-avatar::after {
-      content: '';
-      position: absolute;
-      inset: -3px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      z-index: -1;
-      filter: blur(6px);
-      opacity: 0.6;
     }
     
-    .atbrp-channel-info { flex: 1; min-width: 0; }
-    
-    .atbrp-channel-name {
+    .rp-channel-info { flex: 1; min-width: 0; }
+    .rp-channel-name {
       font-family: 'Inter', 'DM Sans', sans-serif;
       font-size: 14px; font-weight: 700;
       color: var(--text-primary);
       line-height: 1.2;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    
-    .atbrp-channel-meta {
+    .rp-channel-meta {
       display: flex; align-items: center; gap: 6px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px; color: var(--text-muted);
       margin-top: 4px; font-weight: 600;
-      letter-spacing: 0.03em;
     }
-    
-    .atbrp-live-dot {
-      width: 6px; height: 6px; min-width: 6px;
+    .rp-live {
+      width: 6px; height: 6px;
       border-radius: 50%;
       background: #7dd3fc;
       box-shadow: 0 0 8px #7dd3fc;
-      animation: atbrpPulse 1.5s ease-in-out infinite;
+      animation: rpPulse 1.5s ease-in-out infinite;
     }
-    @keyframes atbrpPulse {
+    @keyframes rpPulse {
       0%, 100% { opacity: 1; transform: scale(1); }
       50%      { opacity: 0.5; transform: scale(0.8); }
     }
     
-    /* ═══ ACTION BUTTONS ═══ */
-    .atbrp-actions {
-      display: flex; gap: 8px; flex-wrap: wrap;
-    }
+    /* ═══ BUTTONS ═══ */
+    .rp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     
-    .atbrp-btn {
+    .rp-btn {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 9px 16px; height: 40px;
+      padding: 9px 16px; height: 38px;
       background: rgba(10, 5, 23, 0.7);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(192, 132, 252, 0.3);
@@ -661,62 +552,41 @@ const metaText = metaParts.join(' · ');
       color: var(--text-primary);
       cursor: pointer;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      font-family: 'Inter', 'DM Sans', sans-serif;
+      font-family: 'Inter', sans-serif;
       font-size: 12.5px; font-weight: 600;
       white-space: nowrap;
-      position: relative;
-      overflow: hidden;
     }
-    [data-theme="light"] .atbrp-btn {
+    [data-theme="light"] .rp-btn {
       background: rgba(255, 255, 255, 0.9);
-      border-color: rgba(192, 132, 252, 0.35);
     }
-    
-    .atbrp-btn::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(232,121,249,0.1));
-      opacity: 0;
-      transition: opacity 0.25s ease;
-    }
-    .atbrp-btn:hover::before { opacity: 1; }
-    
-    .atbrp-btn:hover {
+    .rp-btn:hover {
       border-color: rgba(232, 121, 249, 0.7);
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(192, 132, 252, 0.3);
     }
-    .atbrp-btn:active { transform: translateY(0) scale(0.96); }
+    .rp-btn:active { transform: translateY(0) scale(0.96); }
+    .rp-btn svg { color: #e879f9; flex-shrink: 0; }
     
-    .atbrp-btn svg { color: #e879f9; flex-shrink: 0; position: relative; z-index: 1; }
-    .atbrp-btn-label { line-height: 1; position: relative; z-index: 1; }
-    
-    .atbrp-btn-next {
+    .rp-btn-next {
       background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.2));
       border-color: rgba(232, 121, 249, 0.6);
     }
-    .atbrp-btn-next svg { color: #c084fc; }
+    .rp-btn-next svg { color: #c084fc; }
     
-    /* Saved state */
-    .atbrp-btn.active[id="saveBtn"] {
+    .rp-btn.active[id="saveBtn"] {
       background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(245, 158, 11, 0.15)) !important;
       border-color: rgba(251, 191, 36, 0.6) !important;
     }
-    .atbrp-btn.active[id="saveBtn"] svg { color: #fbbf24 !important; fill: #fbbf24 !important; }
-    .atbrp-btn.active[id="saveBtn"] .atbrp-btn-label { color: #fde68a !important; }
+    .rp-btn.active[id="saveBtn"] svg { color: #fbbf24 !important; fill: #fbbf24 !important; }
     
-    /* Liked state */
-    .atbrp-btn.active[id="likeBtn"] {
+    .rp-btn.active[id="likeBtn"] {
       background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(220, 38, 38, 0.15)) !important;
       border-color: rgba(239, 68, 68, 0.6) !important;
     }
-    .atbrp-btn.active[id="likeBtn"] svg { color: #ef4444 !important; fill: #ef4444 !important; }
-    .atbrp-btn.active[id="likeBtn"] .atbrp-btn-label { color: #fecaca !important; }
+    .rp-btn.active[id="likeBtn"] svg { color: #ef4444 !important; fill: #ef4444 !important; }
     
-    /* Send animation */
-    .atbrp-btn.sent .atbrp-plane { animation: atbrpFly 0.6s ease; }
-    @keyframes atbrpFly {
+    .rp-btn.sent .rp-plane { animation: rpFly 0.6s ease; }
+    @keyframes rpFly {
       0%   { transform: translate(0,0) rotate(0); opacity: 1; }
       50%  { transform: translate(18px,-18px) rotate(35deg); opacity: 0; }
       51%  { transform: translate(-18px,18px) rotate(-35deg); opacity: 0; }
@@ -724,30 +594,27 @@ const metaText = metaParts.join(' · ');
     }
     
     /* ═══ DESCRIPTION ═══ */
-    .atbrp-desc {
+    .rp-desc {
       background: linear-gradient(135deg, rgba(28, 15, 61, 0.5), rgba(20, 10, 40, 0.3));
       border: 1px solid rgba(192, 132, 252, 0.2);
       border-radius: 14px;
       padding: 14px 18px;
-      backdrop-filter: blur(10px);
     }
-    [data-theme="light"] .atbrp-desc { background: rgba(255, 255, 255, 0.8); }
+    [data-theme="light"] .rp-desc { background: rgba(255, 255, 255, 0.8); }
     
-    .atbrp-desc-header {
+    .rp-desc-head {
       display: flex; align-items: center;
       justify-content: space-between;
       margin-bottom: 10px;
     }
-    .atbrp-desc-title {
+    .rp-desc-title {
       display: flex; align-items: center; gap: 8px;
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px; font-weight: 700;
       color: #c084fc;
       letter-spacing: 0.08em; text-transform: uppercase;
     }
-    .atbrp-desc-title svg { color: #e879f9; }
-    
-    .atbrp-desc-toggle {
+    .rp-desc-tgl {
       background: rgba(125, 211, 252, 0.15);
       border: 1px solid rgba(125, 211, 252, 0.3);
       padding: 4px 12px;
@@ -756,289 +623,318 @@ const metaText = metaParts.join(' · ');
       cursor: pointer;
       font-family: 'Inter', sans-serif;
       font-size: 11px; font-weight: 700;
-      transition: all 0.2s ease;
     }
-    .atbrp-desc-toggle:hover {
-      background: rgba(125, 211, 252, 0.25);
-      color: #22d3ee;
-      transform: translateY(-1px);
-    }
-    
-    .atbrp-desc-body {
-      max-height: 70px;
-      overflow: hidden;
-      transition: max-height 0.4s ease;
-    }
-    .atbrp-desc-body.expanded { max-height: 800px; }
-    .atbrp-desc-body p {
+    .rp-desc-body { max-height: 70px; overflow: hidden; transition: max-height 0.4s ease; }
+    .rp-desc-body.expanded { max-height: 800px; }
+    .rp-desc-body p {
       font-family: 'DM Sans', sans-serif;
       font-size: 13.5px; line-height: 1.6;
-      color: var(--text-secondary);
-      margin: 0;
-      white-space: pre-wrap; word-wrap: break-word;
+      color: var(--text-secondary); margin: 0;
+      white-space: pre-wrap;
     }
     
-    /* ═══ HOOK BANNER (Suggestion) ═══ */
-    .atbrp-hook {
+    /* ═══ HOOK ═══ */
+    .rp-hook {
       display: flex; align-items: center; gap: 14px;
       padding: 14px 18px;
       background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(249, 115, 22, 0.08));
       border: 1px solid rgba(249, 115, 22, 0.3);
       border-radius: 14px;
-      backdrop-filter: blur(10px);
-      animation: atbrpHookIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
       cursor: pointer;
       transition: all 0.3s ease;
     }
-    .atbrp-hook:hover {
+    .rp-hook:hover {
       border-color: rgba(249, 115, 22, 0.5);
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(249, 115, 22, 0.15);
     }
-    @keyframes atbrpHookIn {
-      from { opacity: 0; transform: translateY(15px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .rp-hook-icon { font-size: 26px; animation: rpFire 2s ease infinite; }
+    @keyframes rpFire {
+      0%, 100% { transform: scale(1) rotate(0); }
+      50% { transform: scale(1.1) rotate(5deg); }
     }
-    
-    .atbrp-hook-icon {
-      font-size: 28px;
-      animation: atbrpFire 2s ease-in-out infinite;
-    }
-    @keyframes atbrpFire {
-      0%, 100% { transform: scale(1) rotate(0deg); }
-      25% { transform: scale(1.1) rotate(-5deg); }
-      75% { transform: scale(1.05) rotate(5deg); }
-    }
-    
-    .atbrp-hook-text { flex: 1; min-width: 0; }
-    
-    .atbrp-hook-title {
+    .rp-hook-text { flex: 1; }
+    .rp-hook-title {
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 14px; font-weight: 700;
-      color: #fb923c;
-      line-height: 1.2;
+      font-size: 14px; font-weight: 700; color: #fb923c;
     }
-    .atbrp-hook-sub {
+    .rp-hook-sub {
       font-family: 'Inter', sans-serif;
-      font-size: 12px; color: var(--text-secondary);
-      margin-top: 2px;
+      font-size: 12px; color: var(--text-secondary); margin-top: 2px;
     }
-    
-    .atbrp-hook-btn {
+    .rp-hook-btn {
       padding: 8px 16px;
       background: linear-gradient(135deg, #fb923c, #f97316);
-      border: 0;
-      border-radius: 100px;
-      color: white;
-      font-family: 'Inter', sans-serif;
-      font-size: 12px; font-weight: 700;
+      border: 0; border-radius: 100px;
+      color: white; font-weight: 700; font-size: 12px;
       cursor: pointer;
-      white-space: nowrap;
       box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);
-      transition: transform 0.2s ease;
     }
-    .atbrp-hook-btn:hover { transform: scale(1.05); }
     
-    /* ═══ CHAT ═══ */
-    .atbrp-chat {
-      background: linear-gradient(135deg, rgba(28, 15, 61, 0.7), rgba(20, 10, 40, 0.5));
-      border: 1px solid rgba(192, 132, 252, 0.25);
-      border-radius: 18px;
-      overflow: hidden;
-      backdrop-filter: blur(15px);
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+    /* ═══════════ YOUTUBE-STYLE COMMENTS ═══════════ */
+    .rp-comments {
+      padding: 20px 0;
     }
-    [data-theme="light"] .atbrp-chat { background: rgba(255, 255, 255, 0.85); }
     
-    .atbrp-chat-header {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 14px 18px;
-      background: rgba(10, 5, 23, 0.5);
-      border-bottom: 1px solid rgba(192, 132, 252, 0.15);
+    .rp-comments-head {
+      display: flex; align-items: center; gap: 20px;
+      margin-bottom: 20px;
     }
-    [data-theme="light"] .atbrp-chat-header { background: rgba(243, 232, 255, 0.5); }
+    .rp-comments-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 18px; font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .rp-comments-sort {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px;
+      background: rgba(192, 132, 252, 0.08);
+      border-radius: 100px;
+      color: var(--text-secondary);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer;
+    }
+    .rp-comments-sort svg { color: #c084fc; }
     
-    .atbrp-chat-header-left {
-      display: flex; align-items: center; gap: 12px;
+    /* Comment input */
+    .rp-comment-input-row {
+      display: flex; gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(192, 132, 252, 0.1);
     }
-    .atbrp-chat-icon {
-      width: 38px; height: 38px; min-width: 38px;
+    
+    .rp-my-av {
+      width: 40px; height: 40px; min-width: 40px;
       border-radius: 50%;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       display: flex; align-items: center; justify-content: center;
       color: white;
-      box-shadow: 0 6px 18px rgba(232, 121, 249, 0.5);
-    }
-    .atbrp-chat-title {
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 15px; font-weight: 700;
-      color: var(--text-primary); line-height: 1.2;
+      font-weight: 700; font-size: 15px;
+      box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
     }
-    .atbrp-chat-sub {
-      display: flex; align-items: center; gap: 6px;
+    
+    .rp-comment-input-wrap {
+      flex: 1; min-width: 0;
+    }
+    
+    .rp-comment-input {
+      width: 100%;
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid rgba(192, 132, 252, 0.3);
+      outline: 0;
+      padding: 8px 0;
+      color: var(--text-primary);
       font-family: 'Inter', sans-serif;
-      font-size: 11px; color: var(--text-muted);
-      margin-top: 3px; font-weight: 500;
+      font-size: 14px;
+      transition: border-color 0.2s ease;
     }
-    .atbrp-chat-count {
-      padding: 4px 12px;
-      background: rgba(192, 132, 252, 0.15);
-      border: 1px solid rgba(192, 132, 252, 0.3);
+    .rp-comment-input:focus { border-bottom-color: #e879f9; }
+    .rp-comment-input::placeholder { color: var(--text-muted); }
+    
+    .rp-comment-actions {
+      display: flex; justify-content: flex-end; gap: 8px;
+      margin-top: 12px;
+    }
+    .rp-cancel-btn {
+      padding: 8px 16px;
+      background: transparent;
+      border: 0;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
       border-radius: 100px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px; font-weight: 700; color: #c084fc;
-      letter-spacing: 0.05em;
+      transition: background 0.2s ease;
     }
+    .rp-cancel-btn:hover { background: rgba(192, 132, 252, 0.1); }
     
-    .atbrp-chat-messages {
-      max-height: 380px; min-height: 200px;
-      overflow-y: auto;
-      padding: 16px 18px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
+    .rp-submit-btn {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      border: 0;
+      color: white;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 100px;
+      transition: transform 0.2s ease;
     }
-    .atbrp-chat-messages::-webkit-scrollbar { width: 5px; }
-    .atbrp-chat-messages::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.3); border-radius: 3px; }
+    .rp-submit-btn:hover { transform: scale(1.05); }
+    .rp-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     
-    .atbrp-chat-empty {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 12px; padding: 40px 20px;
-      color: var(--text-faint); text-align: center;
-    }
-    .atbrp-chat-empty p {
-      font-family: 'Inter', sans-serif;
-      font-size: 13px; margin: 0;
+    /* Comments list */
+    .rp-comments-list { display: flex; flex-direction: column; gap: 20px; }
+    
+    .rp-comments-empty {
+      padding: 40px 20px;
+      text-align: center;
       color: var(--text-muted);
+      font-size: 14px;
     }
     
-    .atbrp-msg {
-      display: flex; gap: 10px;
-      margin-bottom: 14px;
-      animation: atbrpMsgIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    .rp-comment {
+      display: flex; gap: 12px;
+      animation: rpCommentIn 0.4s ease;
     }
-    @keyframes atbrpMsgIn {
-      from { opacity: 0; transform: translateX(-10px); }
-      to   { opacity: 1; transform: translateX(0); }
+    @keyframes rpCommentIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
     
-    .atbrp-msg-av {
-      width: 34px; height: 34px; min-width: 34px;
+    .rp-c-avatar {
+      width: 40px; height: 40px; min-width: 40px;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       color: white;
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-weight: 700; font-size: 13px;
-      flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      font-weight: 700; font-size: 15px;
     }
-    .atbrp-msg-body { flex: 1; min-width: 0; }
-    .atbrp-msg-head {
-      display: flex; align-items: center; gap: 8px;
-      margin-bottom: 3px;
+    
+    .rp-c-body { flex: 1; min-width: 0; }
+    
+    .rp-c-head {
+      display: flex; align-items: baseline;
+      gap: 8px; margin-bottom: 3px;
+      flex-wrap: wrap;
     }
-    .atbrp-msg-name {
+    .rp-c-name {
       font-family: 'Inter', sans-serif;
       font-size: 13px; font-weight: 700;
       color: var(--text-primary);
     }
-    .atbrp-msg-time {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px; color: var(--text-faint);
+    .rp-c-time {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      color: var(--text-muted);
     }
-    .atbrp-msg-text {
+    .rp-c-text {
       font-family: 'DM Sans', sans-serif;
-      font-size: 13.5px; line-height: 1.5;
-      color: var(--text-secondary); word-wrap: break-word;
+      font-size: 14px; line-height: 1.5;
+      color: var(--text-primary);
+      margin: 4px 0 8px;
+      word-wrap: break-word;
     }
     
-    .atbrp-chat-input-row {
-      display: flex; align-items: center; gap: 10px;
-      padding: 12px 16px;
-      background: rgba(10, 5, 23, 0.4);
-      border-top: 1px solid rgba(192, 132, 252, 0.15);
+    .rp-c-actions {
+      display: flex; align-items: center; gap: 6px;
     }
-    [data-theme="light"] .atbrp-chat-input-row { background: rgba(243, 232, 255, 0.3); }
-    
-    .atbrp-my-avatar {
-      width: 36px; height: 36px; min-width: 36px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      display: flex; align-items: center; justify-content: center;
-      color: white;
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-weight: 700; font-size: 14px; flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
+    .rp-c-action {
+      display: inline-flex; align-items: center;
+      gap: 4px; padding: 6px 10px;
+      background: transparent;
+      border: 0; border-radius: 100px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 12px; font-weight: 500;
+      font-family: 'Inter', sans-serif;
+      transition: background 0.2s ease, color 0.2s ease;
     }
+    .rp-c-action:hover {
+      background: rgba(192, 132, 252, 0.1);
+      color: var(--text-primary);
+    }
+    .rp-c-action.active {
+      color: #e879f9;
+    }
+    .rp-c-action.active svg {
+      fill: #e879f9;
+    }
+    .rp-c-action svg { color: inherit; }
+    .rp-c-count { min-width: 12px; font-family: 'JetBrains Mono', monospace; }
     
-    .atbrp-input-box {
-      flex: 1; display: flex; align-items: center; gap: 6px;
-      background: var(--bg-card);
-      border: 1px solid rgba(192, 132, 252, 0.25);
+    .rp-c-reply-btn {
+      background: transparent;
+      border: 0;
+      color: var(--text-secondary);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px; font-weight: 600;
+      cursor: pointer;
+      padding: 6px 12px;
       border-radius: 100px;
-      padding: 4px 4px 4px 16px;
-      transition: border-color 0.25s ease;
+      margin-left: 4px;
     }
-    .atbrp-input-box:focus-within {
-      border-color: rgba(232, 121, 249, 0.7);
-      box-shadow: 0 0 0 3px rgba(232, 121, 249, 0.15);
+    .rp-c-reply-btn:hover {
+      background: rgba(192, 132, 252, 0.1);
     }
     
-    .atbrp-input {
-      flex: 1; background: transparent; border: 0; outline: 0;
+    /* Reply input */
+    .rp-reply-input-row {
+      display: flex; gap: 10px;
+      margin-top: 12px;
+      padding-left: 0;
+    }
+    .rp-reply-input-row .rp-my-av { width: 32px; height: 32px; font-size: 13px; }
+    .rp-reply-input {
+      flex: 1;
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid rgba(192, 132, 252, 0.3);
+      outline: 0;
+      padding: 6px 0;
       color: var(--text-primary);
       font-family: 'Inter', sans-serif;
-      font-size: 13.5px; padding: 8px 0;
+      font-size: 13px;
     }
-    .atbrp-input::placeholder { color: var(--text-muted); }
+    .rp-reply-input:focus { border-bottom-color: #e879f9; }
     
-    .atbrp-send-btn {
-      width: 34px; height: 34px; min-width: 34px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      border: 0; color: white; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s ease;
-      flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(232, 121, 249, 0.5);
+    /* Replies */
+    .rp-replies-toggle {
+      background: transparent;
+      border: 0;
+      color: #7dd3fc;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px; font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 100px;
+      margin-top: 6px;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: background 0.2s ease;
     }
-    .atbrp-send-btn:hover { transform: scale(1.1) rotate(-5deg); }
-    .atbrp-send-btn:active { transform: scale(0.9); }
+    .rp-replies-toggle:hover { background: rgba(125, 211, 252, 0.1); }
     
-    /* ═══ MORE VIDEOS SECTION ═══ */
-    .atbrp-more-section {
+    .rp-replies {
       margin-top: 12px;
+      display: none;
+      flex-direction: column;
+      gap: 16px;
     }
+    .rp-replies.show { display: flex; }
     
-    .atbrp-section-head {
+    .rp-reply {
+      display: flex; gap: 10px;
+      animation: rpCommentIn 0.3s ease;
+    }
+    .rp-reply .rp-c-avatar { width: 32px; height: 32px; font-size: 13px; }
+    .rp-reply .rp-c-name { font-size: 12.5px; }
+    .rp-reply .rp-c-time { font-size: 11px; }
+    .rp-reply .rp-c-text { font-size: 13px; }
+    
+    /* ═══════════ MORE VIDEOS ═══════════ */
+    .rp-more-section { margin-top: 20px; }
+    
+    .rp-section-head {
       display: flex; align-items: center;
       justify-content: space-between;
       margin-bottom: 16px;
       padding: 0 4px;
     }
-    
-    .atbrp-section-title {
+    .rp-section-title {
       display: flex; align-items: center; gap: 12px;
       font-family: 'Bricolage Grotesque', sans-serif;
       font-size: 18px; font-weight: 700;
       color: var(--text-primary);
-      letter-spacing: -0.01em;
     }
-    
-    .atbrp-section-bar {
+    .rp-section-bar {
       width: 4px; height: 22px;
       background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
       border-radius: 3px;
       box-shadow: 0 0 12px rgba(232, 121, 249, 0.7);
-      animation: atbrpBarGlow 2.5s ease-in-out infinite;
     }
-    @keyframes atbrpBarGlow {
-      0%, 100% { box-shadow: 0 0 12px rgba(232, 121, 249, 0.7); }
-      50%      { box-shadow: 0 0 20px rgba(232, 121, 249, 1); }
-    }
-    
-    .atbrp-section-tag {
+    .rp-section-tag {
       padding: 5px 12px;
       background: linear-gradient(135deg, rgba(192, 132, 252, 0.2), rgba(232, 121, 249, 0.1));
       border: 1px solid rgba(192, 132, 252, 0.35);
@@ -1049,303 +945,274 @@ const metaText = metaParts.join(' · ');
       letter-spacing: 0.12em;
     }
     
-    /* Feed grid — home page style */
-    .atbrp-feed-grid {
+    .rp-feed-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 16px;
       min-height: 200px;
     }
-    @media (max-width: 1100px) { .atbrp-feed-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; } }
-    @media (max-width: 768px)  { .atbrp-feed-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+    @media (max-width: 1200px) { .rp-feed-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 768px)  { .rp-feed-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
     
-    .atbrp-more-loading {
-      display: none;
-      align-items: center; justify-content: center; gap: 12px;
-      padding: 2rem 0;
+    .rp-more-loading {
+      display: none; align-items: center; justify-content: center;
+      gap: 12px; padding: 2rem 0;
       color: var(--text-muted);
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.85rem;
     }
-    .atbrp-more-loading.show { display: flex; }
-    
-    .atbrp-spinner {
+    .rp-more-loading.show { display: flex; }
+    .rp-spinner {
       width: 20px; height: 20px;
       border: 2px solid rgba(192, 132, 252, 0.2);
       border-top-color: #c084fc;
       border-radius: 50%;
-      animation: atbrpSpin 0.8s linear infinite;
+      animation: rpSpin 0.8s linear infinite;
     }
-    @keyframes atbrpSpin { to { transform: rotate(360deg); } }
+    @keyframes rpSpin { to { transform: rotate(360deg); } }
     
-    /* ═══ CARD (SAME AS HOME PAGE) ═══ */
-    @keyframes atbrpCardIn {
+    /* ═══════════ ANIME CARD (3:4 HOME PAGE STYLE!) ═══════════ */
+    .rp-anime-card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      transition: transform 0.3s ease;
+      animation: rpCardIn 0.5s ease backwards;
+    }
+    @keyframes rpCardIn {
       from { opacity: 0; transform: translateY(15px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+    .rp-anime-card:hover { transform: translateY(-6px); }
     
-    .atbrp-card {
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-      display: block;
-      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      animation: atbrpCardIn 0.5s ease backwards;
-    }
-    .atbrp-card:hover { transform: translateY(-6px); }
-    
-    .atbrp-card-thumb {
+    .rp-anime-thumb {
       position: relative;
-      width: 100%;
-      padding-top: 56.25%;
-      border-radius: 14px;
+      aspect-ratio: 3/4;
+      border-radius: 16px;
       overflow: hidden;
-      background: #0d0520;
-      border: 1px solid rgba(232, 121, 249, 0.35);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-      transition: all 0.35s ease;
-    }
-    .atbrp-card:hover .atbrp-card-thumb {
-      border-color: rgba(232, 121, 249, 0.95);
+      background: rgba(28, 15, 61, 0.5);
       box-shadow: 
-        0 15px 40px rgba(0, 0, 0, 0.5),
-        0 0 25px rgba(192, 132, 252, 0.6);
+        0 10px 30px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(192, 132, 252, 0.15);
+      transition: box-shadow 0.4s ease;
+    }
+    .rp-anime-card:hover .rp-anime-thumb {
+      box-shadow: 
+        0 20px 45px rgba(0, 0, 0, 0.5),
+        0 0 0 2px rgba(192, 132, 252, 0.6),
+        0 0 30px rgba(192, 132, 252, 0.25);
     }
     
-    .atbrp-card-img {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+    .rp-anime-img {
+      width: 100%;
+      height: 100%;
       object-fit: cover;
-      display: block;
-      transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 0.3s ease;
+      transition: transform 0.6s ease, filter 0.4s ease;
     }
-    .atbrp-card:hover .atbrp-card-img {
-      transform: scale(1.1);
-      filter: brightness(0.65);
+    .rp-anime-card:hover .rp-anime-img {
+      transform: scale(1.08);
+      filter: brightness(0.75);
     }
     
-    .atbrp-card-shine {
-      position: absolute;
-      top: 0; left: -80%;
-      width: 60%; height: 100%;
-      background: linear-gradient(105deg, transparent, rgba(255,255,255,0.3), transparent);
-      z-index: 3;
-      transition: left 0.9s ease;
-      pointer-events: none;
-    }
-    .atbrp-card:hover .atbrp-card-shine { left: 120%; }
-    
-    .atbrp-card-overlay {
+    .rp-anime-overlay {
       position: absolute; inset: 0;
-      background: linear-gradient(180deg, transparent 40%, rgba(10,5,23,0.9) 100%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-      z-index: 3;
-    }
-    .atbrp-card:hover .atbrp-card-overlay { opacity: 1; }
-    
-    .atbrp-card-play {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%) scale(0.4);
-      width: 48px; height: 48px;
-      z-index: 5;
-      opacity: 0;
-      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-      pointer-events: none;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      display: flex; align-items: center; justify-content: center;
-      color: white; padding-left: 3px;
-      box-shadow: 0 10px 30px rgba(192, 132, 252, 0.8);
-    }
-    .atbrp-card:hover .atbrp-card-play {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
-    
-    .atbrp-card-badge-new {
-      position: absolute;
-      top: 8px; left: 8px;
-      padding: 4px 8px;
-      background: linear-gradient(135deg, #ef4444, #f97316);
-      color: white;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.55rem; font-weight: 800;
-      letter-spacing: 0.1em;
-      border-radius: 5px;
-      z-index: 6;
-      box-shadow: 0 3px 8px rgba(239, 68, 68, 0.5);
-    }
-    
-    .atbrp-card-badge-type {
-      position: absolute;
-      bottom: 8px; left: 8px;
-      padding: 3px 8px;
-      background: rgba(10, 5, 23, 0.9);
-      color: #fbbf24;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.55rem; font-weight: 800;
-      border-radius: 5px;
-      z-index: 6;
-      backdrop-filter: blur(6px);
-    }
-    
-    .atbrp-card-info {
-      padding: 10px 4px 4px;
-      position: relative;
+      background: linear-gradient(180deg, transparent 40%, rgba(10, 5, 23, 0.5) 75%, rgba(10, 5, 23, 0.95) 100%);
       z-index: 1;
     }
     
-    .atbrp-card-title {
+    .rp-anime-corner {
+      position: absolute;
+      width: 16px; height: 16px;
+      border: 2px solid #7dd3fc;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      filter: drop-shadow(0 0 4px #7dd3fc);
+    }
+    .rp-anime-card:hover .rp-anime-corner { opacity: 0.9; }
+    .rp-corner-tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+    .rp-corner-tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+    .rp-corner-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+    .rp-corner-br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+    
+    .rp-anime-play {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 56px; height: 56px;
+      z-index: 4;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .rp-anime-card:hover .rp-anime-play { opacity: 1; }
+    
+    .rp-anime-play-btn {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      padding-left: 3px;
+      box-shadow: 0 8px 25px rgba(192, 132, 252, 0.6), 0 0 40px rgba(232, 121, 249, 0.3);
+      z-index: 2;
+    }
+    
+    .rp-anime-play-ring {
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(192, 132, 252, 0.7);
+      pointer-events: none;
+    }
+    .rp-ring1 { animation: rpPlayPulse 1.8s ease-out infinite; }
+    .rp-ring2 { animation: rpPlayPulse 1.8s ease-out infinite 0.9s; }
+    @keyframes rpPlayPulse {
+      0%   { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.7); opacity: 0; }
+    }
+    
+    .rp-anime-badges {
+      position: absolute;
+      top: 10px; left: 10px; right: 10px;
+      display: flex; justify-content: space-between;
+      gap: 6px; z-index: 3;
+    }
+    .rp-anime-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; font-weight: 800;
+      letter-spacing: 0.05em;
+      backdrop-filter: blur(8px);
+    }
+    .rp-badge-new {
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
+    }
+    .rp-new-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #fff;
+      animation: rpBlink 1.2s ease infinite;
+    }
+    @keyframes rpBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .rp-badge-score {
+      background: rgba(0, 0, 0, 0.75);
+      color: #fbbf24;
+      margin-left: auto;
+    }
+    
+    .rp-anime-hd {
+      position: absolute;
+      bottom: 90px; right: 10px;
+      background: rgba(125, 211, 252, 0.9);
+      color: #0a0517;
+      padding: 3px 7px;
+      border-radius: 5px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem; font-weight: 800;
+      letter-spacing: 0.05em;
+      z-index: 3;
+    }
+    
+    .rp-anime-info {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 14px 14px 16px;
+      z-index: 2;
+    }
+    .rp-anime-title {
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin: 0 0 4px;
-      line-height: 1.3;
+      font-size: 0.95rem; font-weight: 700;
+      color: #fff;
+      margin: 0 0 5px;
+      line-height: 1.25;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      min-height: 2.2em;
-      transition: all 0.3s ease;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     }
-    .atbrp-card:hover .atbrp-card-title {
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    .rp-anime-meta {
+      display: flex; align-items: center;
+      gap: 8px;
+      font-size: 0.7rem;
+      color: rgba(255, 255, 255, 0.65);
+      font-weight: 500;
+      flex-wrap: wrap;
     }
-    
-    .atbrp-card-channel {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.62rem;
-      color: var(--text-muted);
-      opacity: 0.8;
+    .rp-anime-meta > span + span::before {
+      content: '•';
+      margin-right: 8px;
+      color: rgba(255, 255, 255, 0.3);
     }
-    
-    /* ═══ PRODUCT ROW ═══ */
-    .atbrp-product-row {
-      grid-column: 1 / -1;
-      margin: 8px 0;
-      padding: 18px;
-      background: linear-gradient(135deg, rgba(28,15,61,0.5), rgba(20,10,45,0.3));
-      border: 1px solid rgba(192,132,252,0.25);
-      border-radius: 18px;
-      backdrop-filter: blur(10px);
-      animation: atbrpCardIn 0.5s ease backwards;
+    .rp-anime-genre {
+      color: #c084fc !important;
+      font-weight: 700;
     }
     
-    .atbrp-product-head {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .atbrp-product-title {
-      display: inline-flex; align-items: center; gap: 10px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.72rem; font-weight: 800;
-      letter-spacing: 0.12em;
-      color: #e879f9;
-      text-transform: uppercase;
-    }
-    .atbrp-product-title::before {
-      content: ''; width: 4px; height: 16px;
-      background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
-      border-radius: 3px;
-      box-shadow: 0 0 10px rgba(232,121,249,0.7);
-    }
-    .atbrp-product-hint {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.62rem;
-      color: rgba(192,132,252,0.7);
-      letter-spacing: 0.05em;
-    }
-    
-    .atbrp-product-scroll {
-      display: flex; gap: 12px;
-      overflow-x: auto; overflow-y: hidden;
-      scroll-behavior: smooth;
-      padding: 4px 0 12px;
-      cursor: grab;
-      user-select: none;
-      -webkit-overflow-scrolling: touch;
-    }
-    .atbrp-product-scroll:active { cursor: grabbing; }
-    .atbrp-product-scroll::-webkit-scrollbar { height: 6px; }
-    .atbrp-product-scroll::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.4); border-radius: 3px; }
-    
-    .atbrp-product-item {
-      flex: 0 0 auto;
-      width: 165px;
-      text-decoration: none; color: inherit;
-      cursor: pointer;
+    /* Inline product card in grid */
+    .rp-inline-product {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
       transition: transform 0.3s ease;
+      animation: rpCardIn 0.5s ease backwards;
     }
-    .atbrp-product-item:hover { transform: translateY(-4px); }
-    
-    .atbrp-product-thumb {
-      position: relative; width: 100%;
-      padding-top: 75%;
-      border-radius: 12px; overflow: hidden;
-      background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(232,121,249,0.1));
-      border: 1px solid rgba(192,132,252,0.3);
-      margin-bottom: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: all 0.3s ease;
+    .rp-inline-product:hover { transform: translateY(-6px); }
+    .rp-inline-product .rp-anime-thumb {
+      aspect-ratio: 3/4;
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(249, 115, 22, 0.1));
     }
-    .atbrp-product-item:hover .atbrp-product-thumb {
-      border-color: rgba(232,121,249,0.8);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.4), 0 0 20px rgba(192,132,252,0.4);
+    .rp-inline-product .rp-anime-info {
+      padding: 12px;
     }
-    .atbrp-product-img {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-      transition: transform 0.4s ease;
-    }
-    .atbrp-product-item:hover .atbrp-product-img { transform: scale(1.08); }
-    
-    .atbrp-product-name {
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 0.75rem; font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.25;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      margin-bottom: 2px;
-    }
-    .atbrp-product-price {
+    .rp-inline-product .rp-anime-title { color: #fff; font-size: 0.9rem; }
+    .rp-inline-product-price {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 3px 10px;
+      background: linear-gradient(135deg, #fbbf24, #f97316);
+      color: white;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.7rem; font-weight: 800;
-      color: #7dd3fc;
+      border-radius: 100px;
+    }
+    .rp-inline-product-tag {
+      position: absolute;
+      top: 10px; left: 10px;
+      padding: 4px 8px;
+      background: linear-gradient(135deg, #fbbf24, #f97316);
+      color: white;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; font-weight: 800;
+      border-radius: 6px;
+      letter-spacing: 0.05em;
+      z-index: 3;
     }
     
-    @media (max-width: 768px) {
-      .atbrp-product-item { width: 135px; }
-      .atbrp-product-row { padding: 14px; }
-    }
-    
-    /* ═══════════ SIDEBAR ═══════════ */
-    .atbrp-sidebar-head {
+    /* ═══════════ SIDEBAR (YOUTUBE STYLE HORIZONTAL) ═══════════ */
+    .rp-sidebar-head {
       display: flex; align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       padding: 0 4px;
     }
-    
-    .atbrp-sidebar-title {
-      display: flex; align-items: center; gap: 10px;
+    .rp-sidebar-title {
+      display: flex; align-items: center; gap: 12px;
       font-family: 'Bricolage Grotesque', sans-serif;
       font-size: 16px; font-weight: 700;
       color: var(--text-primary);
     }
-    
-    .atbrp-sidebar-count {
+    .rp-sidebar-count {
       padding: 4px 10px;
       background: rgba(192, 132, 252, 0.15);
       border: 1px solid rgba(192, 132, 252, 0.3);
@@ -1355,38 +1222,34 @@ const metaText = metaParts.join(' · ');
       color: #c084fc;
     }
     
-    /* Autoplay toggle */
-    .atbrp-autoplay {
+    .rp-autoplay {
       margin-bottom: 14px;
       padding: 10px 14px;
       background: linear-gradient(135deg, rgba(28, 15, 61, 0.6), rgba(20, 10, 40, 0.4));
       border: 1px solid rgba(192, 132, 252, 0.2);
       border-radius: 12px;
-      backdrop-filter: blur(10px);
     }
-    [data-theme="light"] .atbrp-autoplay { background: rgba(255, 255, 255, 0.7); }
+    [data-theme="light"] .rp-autoplay { background: rgba(255, 255, 255, 0.7); }
     
-    .atbrp-autoplay-label {
+    .rp-autoplay-label {
       display: flex; align-items: center;
       justify-content: space-between;
       cursor: pointer;
       font-family: 'Inter', sans-serif;
-      font-size: 12.5px; font-weight: 600;
+      font-size: 13px; font-weight: 600;
       color: var(--text-secondary);
     }
-    
-    .atbrp-autoplay-label input[type="checkbox"] {
+    .rp-autoplay-label input[type="checkbox"] {
       position: absolute; opacity: 0; width: 0; height: 0;
     }
-    
-    .atbrp-switch {
+    .rp-switch {
       position: relative;
       width: 36px; height: 20px;
       background: rgba(192, 132, 252, 0.2);
       border-radius: 100px;
       transition: background 0.25s ease;
     }
-    .atbrp-switch::after {
+    .rp-switch::after {
       content: '';
       position: absolute;
       top: 2px; left: 2px;
@@ -1396,150 +1259,93 @@ const metaText = metaParts.join(' · ');
       transition: transform 0.25s ease;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
-    .atbrp-autoplay-label input:checked ~ .atbrp-switch {
+    .rp-autoplay-label input:checked ~ .rp-switch {
       background: linear-gradient(135deg, #c084fc, #e879f9);
     }
-    .atbrp-autoplay-label input:checked ~ .atbrp-switch::after {
+    .rp-autoplay-label input:checked ~ .rp-switch::after {
       transform: translateX(16px);
     }
     
-    /* Sidebar list — scrollable */
-    .atbrp-side-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+    .rp-side-list {
+      display: flex; flex-direction: column;
+      gap: 8px;
       overflow-y: auto;
-      padding-right: 6px;
       flex: 1;
-      max-height: calc(100vh - 250px);
+      padding-right: 4px;
       scrollbar-width: thin;
       scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
     }
-    .atbrp-side-list::-webkit-scrollbar { width: 5px; }
-    .atbrp-side-list::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.35); border-radius: 3px; }
+    .rp-side-list::-webkit-scrollbar { width: 4px; }
+    .rp-side-list::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.3); border-radius: 2px; }
     
-    /* Sidebar item — premium mini card */
-    .atbrp-si {
-      display: flex;
-      gap: 12px;
-      padding: 8px;
-      background: linear-gradient(135deg, rgba(28, 15, 61, 0.5), rgba(20, 10, 40, 0.3));
-      border: 1px solid rgba(192, 132, 252, 0.15);
-      border-radius: 14px;
+    /* YouTube-style sidebar item */
+    .rp-si {
+      display: grid;
+      grid-template-columns: 168px 1fr;
+      gap: 8px;
+      padding: 6px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 12px;
       text-decoration: none; color: inherit; cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      animation: atbrpSiIn 0.5s ease backwards;
-      position: relative;
-      overflow: hidden;
+      transition: all 0.25s ease;
+      animation: rpSiIn 0.4s ease backwards;
     }
-    [data-theme="light"] .atbrp-si { background: rgba(255, 255, 255, 0.8); }
-    
-    @keyframes atbrpSiIn {
-      from { opacity: 0; transform: translateX(20px); }
+    @keyframes rpSiIn {
+      from { opacity: 0; transform: translateX(15px); }
       to   { opacity: 1; transform: translateX(0); }
     }
-    
-    .atbrp-si:hover {
-      background: linear-gradient(135deg, rgba(36, 21, 72, 0.85), rgba(28, 15, 61, 0.7));
-      border-color: rgba(232, 121, 249, 0.6);
-      transform: translateX(-4px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(192, 132, 252, 0.2);
+    .rp-si:hover {
+      background: rgba(192, 132, 252, 0.08);
+      border-color: rgba(232, 121, 249, 0.3);
     }
     
-    .atbrp-si-thumb {
+    .rp-si-thumb {
       position: relative;
-      flex-shrink: 0;
-      width: 130px; height: 74px;
+      width: 100%;
+      aspect-ratio: 16/9;
       border-radius: 10px;
       overflow: hidden;
       background: #0d0520;
-      border: 1px solid rgba(192, 132, 252, 0.2);
     }
-    
-    .atbrp-si-thumb img {
+    .rp-si-thumb img {
       width: 100%; height: 100%;
       object-fit: cover;
       display: block;
-      transition: transform 0.5s ease, filter 0.3s ease;
+      transition: transform 0.4s ease;
     }
+    .rp-si:hover .rp-si-thumb img { transform: scale(1.05); }
     
-    .atbrp-si:hover .atbrp-si-thumb img {
-      transform: scale(1.12);
-      filter: brightness(0.7);
-    }
-    
-    /* Shine effect on sidebar hover */
-    .atbrp-si-thumb::after {
-      content: '';
-      position: absolute;
-      top: 0; left: -80%;
-      width: 60%; height: 100%;
-      background: linear-gradient(105deg, transparent, rgba(255,255,255,0.25), transparent);
-      transition: left 0.7s ease;
-      pointer-events: none;
-      z-index: 2;
-    }
-    .atbrp-si:hover .atbrp-si-thumb::after { left: 120%; }
-    
-    /* Play button on sidebar hover */
-    .atbrp-si-play {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%) scale(0.5);
-      width: 32px; height: 32px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      display: flex; align-items: center; justify-content: center;
-      color: white;
-      opacity: 0;
-      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      pointer-events: none;
-      z-index: 3;
-      box-shadow: 0 6px 18px rgba(192, 132, 252, 0.7);
-    }
-    .atbrp-si:hover .atbrp-si-play {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
-    
-    /* Duration badge */
-    .atbrp-si-duration {
+    .rp-si-duration {
       position: absolute;
       bottom: 4px; right: 4px;
-      padding: 1px 5px;
+      padding: 2px 6px;
       background: rgba(0, 0, 0, 0.85);
-      color: #fbbf24;
+      color: white;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 8px; font-weight: 800;
-      border-radius: 3px;
-      z-index: 3;
-      backdrop-filter: blur(4px);
+      font-size: 10px; font-weight: 700;
+      border-radius: 4px;
     }
-    
-    /* NEW badge on sidebar */
-    .atbrp-si-new {
+    .rp-si-new {
       position: absolute;
       top: 4px; left: 4px;
-      padding: 1px 5px;
+      padding: 2px 6px;
       background: linear-gradient(135deg, #ef4444, #f97316);
       color: white;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 8px; font-weight: 800;
-      letter-spacing: 0.05em;
-      border-radius: 3px;
-      z-index: 4;
+      font-size: 9px; font-weight: 800;
+      border-radius: 4px;
     }
     
-    .atbrp-si-info {
-      flex: 1; min-width: 0;
-      display: flex; flex-direction: column;
-      justify-content: space-between;
-      padding: 2px 0;
+    .rp-si-info {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 2px 4px 2px 0;
     }
-    
-    .atbrp-si-title {
-      font-family: 'DM Sans', sans-serif;
-      font-size: 13px; font-weight: 700;
+    .rp-si-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px; font-weight: 600;
       color: var(--text-primary);
       line-height: 1.35;
       margin: 0 0 4px;
@@ -1547,87 +1353,97 @@ const metaText = metaParts.join(' · ');
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      transition: color 0.3s ease;
     }
-    .atbrp-si:hover .atbrp-si-title {
-      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .atbrp-si-channel {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
+    .rp-si-channel {
+      font-family: 'Inter', sans-serif;
+      font-size: 11.5px;
       color: var(--text-muted);
-      letter-spacing: 0.03em;
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .rp-si-meta {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      color: var(--text-muted);
     }
     
-    .atbrp-si-meta {
-      display: flex; align-items: center; gap: 6px;
-      margin-top: 3px;
+    /* Sidebar ads (bottom) */
+    .rp-sidebar-ad {
+      margin-top: 16px;
+      padding: 14px;
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(249, 115, 22, 0.05));
+      border: 1px solid rgba(251, 191, 36, 0.2);
+      border-radius: 12px;
+    }
+    .rp-ad-label {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 9px;
-      color: var(--text-faint);
+      font-size: 10px; font-weight: 800;
+      color: #fbbf24;
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+      text-transform: uppercase;
     }
-    
-    .atbrp-si-meta-dot {
-      width: 3px; height: 3px;
-      border-radius: 50%;
-      background: var(--text-faint);
+    .rp-ad-item {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      gap: 10px;
+      padding: 8px;
+      background: rgba(10, 5, 23, 0.4);
+      border-radius: 10px;
+      text-decoration: none;
+      color: inherit;
+      margin-bottom: 8px;
+      transition: all 0.25s ease;
+    }
+    .rp-ad-item:hover {
+      background: rgba(251, 191, 36, 0.08);
+      transform: translateX(-2px);
+    }
+    .rp-ad-thumb {
+      width: 60px; height: 60px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(251, 191, 36, 0.15);
+    }
+    .rp-ad-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .rp-ad-info { min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+    .rp-ad-title {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px; font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+    .rp-ad-price {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 800;
+      color: #fbbf24;
     }
     
     /* ═══════════ MOBILE ═══════════ */
     @media (max-width: 960px) {
-      .atbrp-grid {
-        grid-template-columns: 1fr;
-        gap: 20px;
-      }
-      .atbrp-sidebar {
-        position: static;
-        max-height: none;
-      }
-      .atbrp-side-list {
-        max-height: none;
-        overflow-y: visible;
-      }
-      .atbrp-title { font-size: 18px; }
-      .atbrp-meta-bar {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 14px;
-      }
-      .atbrp-actions {
-        gap: 6px;
-      }
-      .atbrp-btn {
-        padding: 8px 12px;
-        font-size: 12px;
-        height: 38px;
-        flex: 1;
-        justify-content: center;
-      }
-      .atbrp-chat-messages { max-height: 320px; }
-      .atbrp-si-thumb { width: 130px; height: 74px; }
-      .atbrp-player[data-aspect="portrait"] {
-        max-width: 100%;
-        max-height: calc(100dvh - 220px);
-      }
+      .rp-grid { grid-template-columns: 1fr; gap: 20px; }
+      .rp-sidebar { position: static; max-height: none; }
+      .rp-side-list { max-height: none; overflow-y: visible; }
+      .rp-title { font-size: 18px; }
+      .rp-meta-bar { flex-direction: column; align-items: stretch; gap: 14px; }
+      .rp-actions { gap: 6px; }
+      .rp-btn { padding: 8px 12px; font-size: 12px; height: 38px; flex: 1; justify-content: center; }
+      .rp-player[data-aspect="portrait"] { max-width: 100%; max-height: calc(100dvh - 220px); }
+      .rp-si { grid-template-columns: 140px 1fr; }
     }
     
     @media (max-width: 480px) {
-      .atbrp-container { padding: 0 14px; }
-      .atbrp-btn-label { display: none; }
-      .atbrp-btn { padding: 8px 10px; min-width: 40px; }
-      .atbrp-btn-next .atbrp-btn-label { display: inline; }
-    }
-    
-    /* Reduce motion accessibility */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-      }
+      .rp-btn-lbl { display: none; }
+      .rp-btn-next .rp-btn-lbl { display: inline; }
+      .rp-btn { padding: 8px 10px; min-width: 40px; }
+      .rp-si { grid-template-columns: 120px 1fr; }
     }
   </style>
 
@@ -1640,9 +1456,7 @@ const metaText = metaParts.join(' · ');
       const currentVideo: any = (window as any).__REELS_VIDEO__ || null;
       const feedData: any[] = (window as any).__REELS_FEED__ || [];
       const nextId = (window as any).__NEXT_ID__ || '';
-      const prevId = (window as any).__PREV_ID__ || '';
 
-      // ═══ SAVE RESUME ═══
       try {
         if (videoId) {
           localStorage.setItem('anitube_resume_video', videoId);
@@ -1650,14 +1464,13 @@ const metaText = metaParts.join(' · ');
         }
       } catch(e) {}
 
-      // ═══ UTILITIES ═══
       function getThumb(vid: string, existing: string = ''): string {
         if (existing && existing.trim()) return existing;
         if (vid.startsWith('yts_') || vid.startsWith('yt_')) {
-          return `https://i.ytimg.com/vi/${vid.replace(/^(yts_|yt_)/, '')}/hqdefault.jpg`;
+          return 'https://i.ytimg.com/vi/' + vid.replace(/^(yts_|yt_)/, '') + '/hqdefault.jpg';
         }
         if (vid.startsWith('dm_')) {
-          return `https://www.dailymotion.com/thumbnail/video/${vid.replace('dm_', '')}`;
+          return 'https://www.dailymotion.com/thumbnail/video/' + vid.replace('dm_', '');
         }
         return '';
       }
@@ -1685,51 +1498,48 @@ const metaText = metaParts.join(' · ');
       function timeAgo(ts: number): string {
         const diff = Date.now() - ts;
         const s = Math.floor(diff / 1000);
-        if (s < 60) return 'now';
+        if (s < 60) return 'just now';
         const m = Math.floor(s / 60);
-        if (m < 60) return `${m}m`;
+        if (m < 60) return m + ' minute' + (m !== 1 ? 's' : '') + ' ago';
         const h = Math.floor(m / 60);
-        if (h < 24) return `${h}h`;
-        return `${Math.floor(h / 24)}d`;
+        if (h < 24) return h + ' hour' + (h !== 1 ? 's' : '') + ' ago';
+        const d = Math.floor(h / 24);
+        if (d < 30) return d + ' day' + (d !== 1 ? 's' : '') + ' ago';
+        const mo = Math.floor(d / 30);
+        return mo + ' month' + (mo !== 1 ? 's' : '') + ' ago';
       }
 
-      // ═══ SAVE TO HISTORY ═══
+      // ═══ HISTORY ═══
       try {
         if (currentVideo && videoId) {
           const goodThumb = getThumb(videoId, currentVideo.thumbnail);
           const history = JSON.parse(localStorage.getItem('anitube_history') || '[]');
           const filtered = history.filter((h: any) => h.id !== videoId);
           filtered.unshift({
-            id: videoId,
-            title: currentVideo.title,
-            channel: currentVideo.channel,
-            thumbnail: goodThumb,
-            type: currentVideo.type || 'anime',
-            source: currentVideo.source || 'youtube',
-            watchedAt: Date.now()
+            id: videoId, title: currentVideo.title, channel: currentVideo.channel,
+            thumbnail: goodThumb, type: currentVideo.type || 'anime',
+            source: currentVideo.source || 'youtube', watchedAt: Date.now()
           });
           localStorage.setItem('anitube_history', JSON.stringify(filtered.slice(0, 100)));
         }
       } catch(e) {}
 
-      // ═══ LIKE BUTTON ═══
+      // ═══ LIKE ═══
       const likeBtn = document.getElementById('likeBtn');
       const likedVideos: string[] = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
       const isLiked = () => likedVideos.includes(videoId);
-      
       function updateLikeUI() {
         if (!likeBtn) return;
         if (isLiked()) {
           likeBtn.classList.add('active');
-          const label = likeBtn.querySelector('.atbrp-btn-label');
-          if (label) label.textContent = 'Liked';
+          const lbl = likeBtn.querySelector('.rp-btn-lbl');
+          if (lbl) lbl.textContent = 'Liked';
         } else {
           likeBtn.classList.remove('active');
-          const label = likeBtn.querySelector('.atbrp-btn-label');
-          if (label) label.textContent = 'Like';
+          const lbl = likeBtn.querySelector('.rp-btn-lbl');
+          if (lbl) lbl.textContent = 'Like';
         }
       }
-      
       function toggleLike() {
         const idx = likedVideos.indexOf(videoId);
         if (idx > -1) likedVideos.splice(idx, 1);
@@ -1737,52 +1547,43 @@ const metaText = metaParts.join(' · ');
         localStorage.setItem('anitube_liked', JSON.stringify(likedVideos));
         updateLikeUI();
       }
-      
       updateLikeUI();
       likeBtn?.addEventListener('click', toggleLike);
 
-      // ═══ SAVE BUTTON ═══
+      // ═══ SAVE ═══
       const saveBtn = document.getElementById('saveBtn');
       const savedVideos: any[] = JSON.parse(localStorage.getItem('anitube_saved') || '[]');
       const isSaved = () => savedVideos.some((s: any) => s.id === videoId);
-
       function updateSaveUI() {
         if (!saveBtn) return;
-        const saved = isSaved();
-        if (saved) {
+        if (isSaved()) {
           saveBtn.classList.add('active');
-          const label = saveBtn.querySelector('.atbrp-btn-label');
-          if (label) label.textContent = 'Saved';
+          const lbl = saveBtn.querySelector('.rp-btn-lbl');
+          if (lbl) lbl.textContent = 'Saved';
         } else {
           saveBtn.classList.remove('active');
-          const label = saveBtn.querySelector('.atbrp-btn-label');
-          if (label) label.textContent = 'Save';
+          const lbl = saveBtn.querySelector('.rp-btn-lbl');
+          if (lbl) lbl.textContent = 'Save';
         }
       }
-
       function toggleSave() {
         const idx = savedVideos.findIndex((s: any) => s.id === videoId);
-        if (idx > -1) {
-          savedVideos.splice(idx, 1);
-        } else {
-          savedVideos.unshift({
-            id: videoId,
-            title: currentVideo?.title || 'Video',
-            channel: currentVideo?.channel || 'AniTube',
-            thumbnail: getThumb(videoId, currentVideo?.thumbnail),
-            type: currentVideo?.type || 'anime',
-            source: currentVideo?.source || 'youtube',
-            savedAt: Date.now()
-          });
-        }
+        if (idx > -1) savedVideos.splice(idx, 1);
+        else savedVideos.unshift({
+          id: videoId, title: currentVideo?.title || 'Video',
+          channel: currentVideo?.channel || 'AniTube',
+          thumbnail: getThumb(videoId, currentVideo?.thumbnail),
+          type: currentVideo?.type || 'anime',
+          source: currentVideo?.source || 'youtube',
+          savedAt: Date.now()
+        });
         localStorage.setItem('anitube_saved', JSON.stringify(savedVideos));
         updateSaveUI();
       }
-
       updateSaveUI();
       saveBtn?.addEventListener('click', toggleSave);
 
-      // ═══ DOUBLE TAP HEART ═══
+      // Double tap
       const videoCard = document.getElementById('videoCard');
       const heart = document.getElementById('doubleTapHeart');
       let lastTap = 0;
@@ -1799,7 +1600,7 @@ const metaText = metaParts.join(' · ');
         } else { lastTap = now; }
       });
 
-      // ═══ SHARE / SEND ═══
+      // Share
       const sendBtn = document.getElementById('sendBtn');
       async function handleSend() {
         if (!sendBtn) return;
@@ -1812,18 +1613,18 @@ const metaText = metaParts.join(' · ');
         } else {
           try {
             await navigator.clipboard.writeText(window.location.href);
-            const label = sendBtn.querySelector('.atbrp-btn-label');
-            if (label) {
-              const orig = label.textContent;
-              label.textContent = 'Copied!';
-              setTimeout(() => { label.textContent = orig; }, 1800);
+            const lbl = sendBtn.querySelector('.rp-btn-lbl');
+            if (lbl) {
+              const orig = lbl.textContent;
+              lbl.textContent = 'Copied!';
+              setTimeout(() => { lbl.textContent = orig; }, 1800);
             }
-          } catch { prompt('Copy link:', window.location.href); }
+          } catch { prompt('Copy:', window.location.href); }
         }
       }
       sendBtn?.addEventListener('click', handleSend);
 
-      // ═══ NAVIGATION — smooth transition ═══
+      // Next
       let navigating = false;
       function goTo(targetId: string) {
         if (navigating || !targetId) return;
@@ -1831,27 +1632,22 @@ const metaText = metaParts.join(' · ');
         const c = document.getElementById('videoCard');
         if (c) {
           c.style.opacity = '0.4';
-          c.style.transform = 'scale(0.97)';
-          c.style.transition = 'all 0.3s ease';
+          c.style.transition = 'opacity 0.2s';
         }
-        setTimeout(() => { window.location.href = `/reels/${targetId}`; }, 220);
+        setTimeout(() => { window.location.href = '/reels/' + targetId; }, 180);
       }
       document.getElementById('nextBtn')?.addEventListener('click', () => { if (nextId) goTo(nextId); });
 
-      // ═══ VIDEO LOADER HIDE — multiple fallbacks ═══
+      // Video loader
       const iframe = document.getElementById('videoFrame') as HTMLIFrameElement;
       const videoLoader = document.getElementById('videoLoader');
-      
-      function hideVideoLoader() {
-        videoLoader?.classList.add('hidden');
-      }
-      
-      iframe?.addEventListener('load', () => { setTimeout(hideVideoLoader, 500); });
-      setTimeout(hideVideoLoader, 3500); // Always hide after 3.5s
+      function hideVideoLoader() { videoLoader?.classList.add('hidden'); }
+      iframe?.addEventListener('load', () => setTimeout(hideVideoLoader, 500));
+      setTimeout(hideVideoLoader, 3500);
 
-      // ═══ SAFIYA EVENT ═══
+      // Safiya
       setTimeout(() => {
-        if (currentVideo && (window as any).dispatchEvent) {
+        if (currentVideo) {
           try {
             window.dispatchEvent(new CustomEvent('safiya:video-event', {
               detail: { action: 'watch', video: currentVideo }
@@ -1860,7 +1656,7 @@ const metaText = metaParts.join(' · ');
         }
       }, 800);
 
-      // ═══ DESCRIPTION TOGGLE ═══
+      // Description
       const descToggle = document.getElementById('descToggle');
       const descContent = document.getElementById('descContent');
       descToggle?.addEventListener('click', () => {
@@ -1869,39 +1665,29 @@ const metaText = metaParts.join(' · ');
         descToggle.textContent = expanded ? 'Show less' : 'Show more';
       });
 
-      // ═══ FAKE ONLINE COUNT ═══
-      const chatOnlineEl = document.getElementById('chatOnline');
-      if (chatOnlineEl) {
-        const base = 90 + Math.floor(Math.random() * 250);
-        chatOnlineEl.textContent = String(base);
-        setInterval(() => {
-          chatOnlineEl.textContent = String(Math.max(60, base + Math.floor(Math.random() * 20) - 10));
-        }, 4500);
-      }
-
-      // ═══ HOOK BANNER: Scroll to More ═══
-      const scrollBtn = document.getElementById('scrollToMore');
-      const hookBanner = document.getElementById('hookBanner');
+      // Hook
       const moreSection = document.getElementById('moreSection');
-      function scrollToMore() {
+      document.getElementById('hookBanner')?.addEventListener('click', () => {
         moreSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-      scrollBtn?.addEventListener('click', scrollToMore);
-      hookBanner?.addEventListener('click', scrollToMore);
+      });
 
-      // ═══ CHAT SYSTEM ═══
-      const chatMessages = document.getElementById('chatMessages');
-      const chatInput = document.getElementById('chatInput') as HTMLInputElement;
-      const chatSend = document.getElementById('chatSend');
-      const chatCount = document.getElementById('chatCount');
+      // ═══════════════════════════════════════════════
+      // COMMENTS SYSTEM (YouTube style + Replies)
+      // ═══════════════════════════════════════════════
+      const commentsList = document.getElementById('commentsList');
+      const commentInput = document.getElementById('commentInput') as HTMLInputElement;
+      const commentActions = document.getElementById('commentActions');
+      const submitBtn = document.getElementById('submitComment');
+      const cancelBtn = document.getElementById('cancelComment');
+      const commentCount = document.getElementById('commentCount');
       const userInitial = document.getElementById('userInitial');
-      const CHAT_KEY = `anitube_chat_${videoId}`;
+      const CHAT_KEY = 'anitube_chat_' + videoId;
       const USER_KEY = 'anitube_username';
 
       let username = localStorage.getItem(USER_KEY);
       if (!username) {
         const names = ['SakuraFan','NarutoKid','OtakuHero','AnimeVibes','MangaLover','WeebLife','AnimeVIP','SenpaiChan','KawaiiUser','DemonSlayer','OnePieceFan','JujutsuKid','TokyoOtaku','GhibliLover','AnimeGod'];
-        username = names[Math.floor(Math.random() * names.length)] + '_' + Math.floor(Math.random() * 999);
+        username = names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 999);
         localStorage.setItem(USER_KEY, username);
       }
       if (userInitial) userInitial.textContent = username.charAt(0).toUpperCase();
@@ -1926,101 +1712,248 @@ const metaText = metaParts.join(' · ');
         try { return JSON.parse(localStorage.getItem(CHAT_KEY) || '[]'); } catch { return []; }
       }
       function saveComments(list: any[]) {
-        try { localStorage.setItem(CHAT_KEY, JSON.stringify(list.slice(-200))); } catch {}
+        try { localStorage.setItem(CHAT_KEY, JSON.stringify(list.slice(-100))); } catch {}
+      }
+      
+      function totalCommentCount(list: any[]): number {
+        let n = list.length;
+        list.forEach((c: any) => { if (c.replies) n += c.replies.length; });
+        return n;
       }
 
-      function renderMessages() {
-        if (!chatMessages) return;
+      // Input focus handling
+      commentInput?.addEventListener('focus', () => {
+        if (commentActions) commentActions.style.display = 'flex';
+      });
+      cancelBtn?.addEventListener('click', () => {
+        if (commentInput) commentInput.value = '';
+        if (commentActions) commentActions.style.display = 'none';
+        commentInput?.blur();
+      });
+
+      function renderComments() {
+        if (!commentsList) return;
         const list = loadComments();
-        if (chatCount) chatCount.textContent = `${list.length} msg${list.length !== 1 ? 's' : ''}`;
+        if (commentCount) commentCount.textContent = String(totalCommentCount(list));
 
         if (list.length === 0) {
-          chatMessages.innerHTML = `
-            <div class="atbrp-chat-empty">
-              <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.25;">
-                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-              </svg>
-              <p>Be the first to comment! 💬</p>
-            </div>`;
+          commentsList.innerHTML = '<div class="rp-comments-empty"><p>No comments yet. Be the first! 💬</p></div>';
           return;
         }
 
-        chatMessages.innerHTML = list.map((m: any) => `
-          <div class="atbrp-msg">
-            <div class="atbrp-msg-av" style="background:${userColor(m.name)}">${esc(m.name.charAt(0).toUpperCase())}</div>
-            <div class="atbrp-msg-body">
-              <div class="atbrp-msg-head">
-                <span class="atbrp-msg-name">${esc(m.name)}</span>
-                <span class="atbrp-msg-time">${timeAgo(m.time)}</span>
+        commentsList.innerHTML = list.map((c: any, i: number) => {
+          const liked = c.liked ? 'active' : '';
+          const disliked = c.disliked ? 'active' : '';
+          const likes = c.likes || 0;
+          const replies = c.replies || [];
+          
+          const repliesHtml = replies.length > 0 ? `
+            <button class="rp-replies-toggle" data-idx="${i}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+              <span>${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}</span>
+            </button>
+            <div class="rp-replies" data-idx="${i}">
+              ${replies.map((r: any) => `
+                <div class="rp-reply">
+                  <div class="rp-c-avatar" style="background:${userColor(r.name)}">${esc(r.name.charAt(0).toUpperCase())}</div>
+                  <div class="rp-c-body">
+                    <div class="rp-c-head">
+                      <span class="rp-c-name">@${esc(r.name)}</span>
+                      <span class="rp-c-time">${timeAgo(r.time)}</span>
+                    </div>
+                    <div class="rp-c-text">${esc(r.text)}</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>` : '';
+          
+          return `
+            <div class="rp-comment" data-idx="${i}">
+              <div class="rp-c-avatar" style="background:${userColor(c.name)}">${esc(c.name.charAt(0).toUpperCase())}</div>
+              <div class="rp-c-body">
+                <div class="rp-c-head">
+                  <span class="rp-c-name">@${esc(c.name)}</span>
+                  <span class="rp-c-time">${timeAgo(c.time)}</span>
+                </div>
+                <div class="rp-c-text">${esc(c.text)}</div>
+                <div class="rp-c-actions">
+                  <button class="rp-c-action ${liked}" data-idx="${i}" data-action="like">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                    </svg>
+                    <span class="rp-c-count">${likes > 0 ? likes : ''}</span>
+                  </button>
+                  <button class="rp-c-action ${disliked}" data-idx="${i}" data-action="dislike">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zM17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/>
+                    </svg>
+                  </button>
+                  <button class="rp-c-reply-btn" data-idx="${i}">Reply</button>
+                </div>
+                <div class="rp-reply-input-container" data-idx="${i}"></div>
+                ${repliesHtml}
               </div>
-              <div class="atbrp-msg-text">${esc(m.text)}</div>
-            </div>
-          </div>
-        `).join('');
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+            </div>`;
+        }).join('');
+
+        // Bind events
+        commentsList.querySelectorAll('.rp-c-action').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const idx = parseInt((btn as HTMLElement).dataset.idx || '0');
+            const action = (btn as HTMLElement).dataset.action;
+            const list = loadComments();
+            if (!list[idx]) return;
+            
+            if (action === 'like') {
+              if (list[idx].liked) {
+                list[idx].liked = false;
+                list[idx].likes = Math.max(0, (list[idx].likes || 0) - 1);
+              } else {
+                list[idx].liked = true;
+                list[idx].likes = (list[idx].likes || 0) + 1;
+                if (list[idx].disliked) list[idx].disliked = false;
+              }
+            } else if (action === 'dislike') {
+              if (list[idx].disliked) {
+                list[idx].disliked = false;
+              } else {
+                list[idx].disliked = true;
+                if (list[idx].liked) {
+                  list[idx].liked = false;
+                  list[idx].likes = Math.max(0, (list[idx].likes || 0) - 1);
+                }
+              }
+            }
+            saveComments(list);
+            renderComments();
+          });
+        });
+
+        commentsList.querySelectorAll('.rp-c-reply-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const idx = parseInt((btn as HTMLElement).dataset.idx || '0');
+            const container = commentsList.querySelector('.rp-reply-input-container[data-idx="' + idx + '"]') as HTMLElement;
+            if (!container) return;
+            
+            if (container.querySelector('input')) {
+              container.innerHTML = '';
+              return;
+            }
+            
+            container.innerHTML = `
+              <div class="rp-reply-input-row">
+                <div class="rp-my-av" style="background:${userColor(username || 'Y')}">${(username || 'Y').charAt(0).toUpperCase()}</div>
+                <div style="flex:1;">
+                  <input type="text" class="rp-reply-input" placeholder="Add a reply..." maxlength="300" />
+                  <div class="rp-comment-actions" style="display:flex;">
+                    <button class="rp-cancel-btn rp-cancel-reply">Cancel</button>
+                    <button class="rp-submit-btn rp-submit-reply">Reply</button>
+                  </div>
+                </div>
+              </div>`;
+            
+            const input = container.querySelector('input') as HTMLInputElement;
+            const cancelReply = container.querySelector('.rp-cancel-reply');
+            const submitReply = container.querySelector('.rp-submit-reply');
+            
+            input?.focus();
+            cancelReply?.addEventListener('click', () => { container.innerHTML = ''; });
+            
+            const doSubmit = () => {
+              const text = input?.value.trim();
+              if (!text) return;
+              const list = loadComments();
+              if (!list[idx].replies) list[idx].replies = [];
+              list[idx].replies.push({ name: username, text, time: Date.now() });
+              saveComments(list);
+              renderComments();
+            };
+            
+            submitReply?.addEventListener('click', doSubmit);
+            input?.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') { e.preventDefault(); doSubmit(); }
+            });
+          });
+        });
+
+        commentsList.querySelectorAll('.rp-replies-toggle').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const idx = (btn as HTMLElement).dataset.idx;
+            const repliesDiv = commentsList.querySelector('.rp-replies[data-idx="' + idx + '"]');
+            repliesDiv?.classList.toggle('show');
+            const arrow = btn.querySelector('svg');
+            if (arrow) {
+              arrow.style.transition = 'transform 0.3s ease';
+              arrow.style.transform = repliesDiv?.classList.contains('show') ? 'rotate(180deg)' : 'rotate(0)';
+            }
+          });
+        });
       }
 
-      function postMessage() {
-        if (!chatInput) return;
-        const text = chatInput.value.trim();
+      function submitComment() {
+        if (!commentInput) return;
+        const text = commentInput.value.trim();
         if (!text) return;
         const list = loadComments();
-        list.push({ name: username, text, time: Date.now() });
+        list.unshift({ name: username, text, time: Date.now(), likes: 0, replies: [] });
         saveComments(list);
-        chatInput.value = '';
-        renderMessages();
+        commentInput.value = '';
+        if (commentActions) commentActions.style.display = 'none';
+        commentInput.blur();
+        renderComments();
       }
 
-      chatSend?.addEventListener('click', postMessage);
-      chatInput?.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); postMessage(); }
+      submitBtn?.addEventListener('click', submitComment);
+      commentInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); submitComment(); }
       });
-      renderMessages();
+
+      renderComments();
 
       // ═══════════════════════════════════════════════
-      // SIDEBAR — Premium Up Next
+      // SIDEBAR (YouTube horizontal)
       // ═══════════════════════════════════════════════
       const sidebarFeed = document.getElementById('relatedFeed');
       const sidebarCount = document.getElementById('sidebarCount');
+      const sidebarAd = document.getElementById('sidebarAd');
+      const sidebarAdContent = document.getElementById('sidebarAdContent');
       let sideItems: any[] = feedData.slice();
       let sideRendered = 0;
 
       function makeSidebarItem(v: any, i: number): HTMLElement {
         const el = document.createElement('a');
-        el.href = v.isAnimeDetail ? `/anime/${v.id}` : `/reels/${v.id}`;
-        el.className = 'atbrp-si';
+        el.href = v.isAnimeDetail ? '/anime/' + v.id : '/reels/' + v.id;
+        el.className = 'rp-si';
         el.style.animationDelay = ((i % 10) * 40) + 'ms';
 
         const thumb = getThumb(v.id, v.thumbnail || '');
-        const chan = (v.channel || 'anitube').slice(0, 22);
+        const chan = (v.channel || 'AniTube').slice(0, 30);
+        const views = Math.floor(Math.random() * 500 + 50) + 'K views';
+        const ago = ['2 hours ago', '5 hours ago', '1 day ago', '3 days ago', '1 week ago'][Math.floor(Math.random() * 5)];
 
         const imgHtml = thumb
-          ? `<img src="${esc(thumb)}" alt="" loading="lazy" onerror="this.style.display='none';" />`
-          : `<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:1.6rem;">📺</div>`;
+          ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
+          : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:1.5rem;">📺</div>';
 
-        el.innerHTML = `
-          <div class="atbrp-si-thumb">
-            ${imgHtml}
-            ${v.isNew ? '<div class="atbrp-si-new">NEW</div>' : ''}
-            <div class="atbrp-si-play">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            </div>
-          </div>
-          <div class="atbrp-si-info">
-            <h3 class="atbrp-si-title">${esc(trunc(v.title || 'Video', 80))}</h3>
-            <div class="atbrp-si-channel">${esc(chan)}</div>
-            <div class="atbrp-si-meta">
-              <span>${v.type ? v.type.toUpperCase() : 'VIDEO'}</span>
-              <span class="atbrp-si-meta-dot"></span>
-              <span>${Math.floor(Math.random() * 500 + 50)}K views</span>
-            </div>
-          </div>`;
+        el.innerHTML = 
+          '<div class="rp-si-thumb">' +
+            imgHtml +
+            (v.isNew ? '<div class="rp-si-new">NEW</div>' : '') +
+            '<div class="rp-si-duration">' + (Math.floor(Math.random() * 20 + 5)) + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + '</div>' +
+          '</div>' +
+          '<div class="rp-si-info">' +
+            '<h3 class="rp-si-title">' + esc(trunc(v.title || 'Video', 100)) + '</h3>' +
+            '<div class="rp-si-channel">' + esc(chan) + '</div>' +
+            '<div class="rp-si-meta">' + views + ' • ' + ago + '</div>' +
+          '</div>';
         return el;
       }
 
       function renderSidebar() {
         if (!sidebarFeed) return;
-        const end = Math.min(sideRendered + 12, sideItems.length);
+        const end = Math.min(sideRendered + 15, sideItems.length);
         for (let i = sideRendered; i < end; i++) {
           sidebarFeed.appendChild(makeSidebarItem(sideItems[i], i));
         }
@@ -2030,18 +1963,8 @@ const metaText = metaParts.join(' · ');
 
       renderSidebar();
 
-      // Auto-load more when scrolling sidebar
-      sidebarFeed?.parentElement?.addEventListener('scroll', () => {
-        if (!sidebarFeed) return;
-        const parent = sidebarFeed.parentElement;
-        if (!parent) return;
-        if (parent.scrollTop + parent.clientHeight > parent.scrollHeight - 200) {
-          if (sideRendered < sideItems.length) renderSidebar();
-        }
-      });
-
       // ═══════════════════════════════════════════════
-      // MORE VIDEOS — Home page style feed
+      // MORE VIDEOS (Home page 3:4 card style)
       // ═══════════════════════════════════════════════
       const moreEl = document.getElementById('moreFeed');
       const moreLoadingEl = document.getElementById('moreLoading');
@@ -2051,104 +1974,116 @@ const metaText = metaParts.join(' · ');
       let loadingMore = false;
       let cardsSinceProduct = 0;
 
-      function makeCard(v: any, i: number): HTMLElement {
+      function makeAnimeCard(v: any, i: number): HTMLElement {
         const t = v.title || 'Video';
         const img = getThumb(v.id, v.thumbnail || '');
         const delay = ((i % 8) * 50) + 'ms';
-        const typeLabel: any = {
-          movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA',
-          donghua: '🐼 DONGHUA', anime: '🎌 ANIME'
-        }[v.type] || '📺 VIDEO';
+        const score = v.score ? Number(v.score).toFixed(1) : (v.rating ? Number(v.rating).toFixed(1) : (7 + Math.random() * 2.5).toFixed(1));
+        const year = v.year || new Date().getFullYear();
+        const genre = { anime: 'Anime', kdrama: 'K-Drama', donghua: 'Donghua', movies: 'Movie' }[v.type] || 'Video';
+        const eps = v.episodes || (12 + Math.floor(Math.random() * 12));
 
         const imgHtml = img
-          ? `<img src="${esc(img)}" alt="${esc(t)}" loading="lazy" class="atbrp-card-img" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))';" />`
-          : `<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>`;
+          ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="rp-anime-img" onerror="this.style.display=\'none\';" />'
+          : '<div style="width:100%;height:100%;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>';
 
         const el = document.createElement('a');
-        el.href = v.isAnimeDetail ? `/anime/${v.id}` : `/reels/${v.id}`;
-        el.className = 'atbrp-card';
+        el.href = v.isAnimeDetail ? '/anime/' + v.id : '/reels/' + v.id;
+        el.className = 'rp-anime-card';
         el.style.animationDelay = delay;
 
-        el.innerHTML = `
-          <div class="atbrp-card-thumb">
-            ${imgHtml}
-            <div class="atbrp-card-shine"></div>
-            <div class="atbrp-card-overlay"></div>
-            <div class="atbrp-card-play">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            </div>
-            ${v.isNew ? '<div class="atbrp-card-badge-new">NEW</div>' : ''}
-            <div class="atbrp-card-badge-type">${typeLabel}</div>
-          </div>
-          <div class="atbrp-card-info">
-            <h3 class="atbrp-card-title">${esc(trunc(t, 55))}</h3>
-            <div class="atbrp-card-channel">${esc(v.channel || 'Channel')}</div>
-          </div>`;
+        el.innerHTML = 
+          '<div class="rp-anime-thumb">' +
+            imgHtml +
+            '<div class="rp-anime-overlay"></div>' +
+            '<div class="rp-anime-corner rp-corner-tl"></div>' +
+            '<div class="rp-anime-corner rp-corner-tr"></div>' +
+            '<div class="rp-anime-corner rp-corner-bl"></div>' +
+            '<div class="rp-anime-corner rp-corner-br"></div>' +
+            '<div class="rp-anime-play">' +
+              '<div class="rp-anime-play-ring rp-ring1"></div>' +
+              '<div class="rp-anime-play-ring rp-ring2"></div>' +
+              '<div class="rp-anime-play-btn">' +
+                '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+              '</div>' +
+            '</div>' +
+            '<div class="rp-anime-badges">' +
+              (v.isNew ? '<div class="rp-anime-badge rp-badge-new"><span class="rp-new-dot"></span>NEW</div>' : '') +
+              '<div class="rp-anime-badge rp-badge-score">★ ' + score + '</div>' +
+            '</div>' +
+            '<div class="rp-anime-hd">HD</div>' +
+            '<div class="rp-anime-info">' +
+              '<h3 class="rp-anime-title">' + esc(trunc(t, 60)) + '</h3>' +
+              '<div class="rp-anime-meta">' +
+                '<span>' + year + '</span>' +
+                '<span>' + eps + ' EP</span>' +
+                '<span class="rp-anime-genre">' + genre + '</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
 
         return el;
       }
 
-      function makeProductRow(products: any[]): HTMLElement | null {
-        if (!products || products.length === 0) return null;
+      function makeInlineProduct(p: any, i: number): HTMLElement {
+        const el = document.createElement('a');
+        el.href = '/product/' + esc(p.id);
+        el.className = 'rp-inline-product';
+        el.style.animationDelay = ((i % 8) * 50) + 'ms';
+        
+        const imgHtml = p.image
+          ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="rp-anime-img" onerror="this.style.display=\'none\';" />'
+          : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;">🛍️</div>';
 
-        const itemsHtml = products.map(p => {
-          const img = p.image
-            ? `<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy" class="atbrp-product-img" onerror="this.style.display='none';" />`
-            : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🛍️</div>`;
-          return `<a href="/product/${esc(p.id)}" class="atbrp-product-item">
-            <div class="atbrp-product-thumb">${img}</div>
-            <div class="atbrp-product-name">${esc(trunc(p.title, 40))}</div>
-            <div class="atbrp-product-price">${esc(p.price)}</div>
-          </a>`;
-        }).join('');
-
-        const row = document.createElement('div');
-        row.className = 'atbrp-product-row';
-        row.innerHTML = `
-          <div class="atbrp-product-head">
-            <div class="atbrp-product-title">✨ Recommended</div>
-            <div class="atbrp-product-hint">← Swipe →</div>
-          </div>
-          <div class="atbrp-product-scroll">${itemsHtml}</div>`;
-
-        // Drag scroll
-        const scroll = row.querySelector('.atbrp-product-scroll') as HTMLElement;
-        if (scroll) {
-          let isDown = false, startX = 0, scrollLeft = 0;
-          scroll.addEventListener('mousedown', (e) => {
-            isDown = true; scroll.style.cursor = 'grabbing';
-            startX = e.pageX - scroll.offsetLeft; scrollLeft = scroll.scrollLeft;
-          });
-          scroll.addEventListener('mouseleave', () => { isDown = false; scroll.style.cursor = 'grab'; });
-          scroll.addEventListener('mouseup', () => { isDown = false; scroll.style.cursor = 'grab'; });
-          scroll.addEventListener('mousemove', (e) => {
-            if (!isDown) return; e.preventDefault();
-            scroll.scrollLeft = scrollLeft - (e.pageX - scroll.offsetLeft - startX) * 2;
-          });
-          scroll.addEventListener('wheel', (e) => {
-            if (e.deltaY !== 0) { e.preventDefault(); scroll.scrollLeft += e.deltaY; }
-          }, { passive: false });
-        }
-        return row;
+        el.innerHTML = 
+          '<div class="rp-anime-thumb">' +
+            imgHtml +
+            '<div class="rp-anime-overlay"></div>' +
+            '<div class="rp-inline-product-tag">💎 AD</div>' +
+            '<div class="rp-anime-info">' +
+              '<h3 class="rp-anime-title">' + esc(trunc(p.title, 55)) + '</h3>' +
+              '<div class="rp-inline-product-price">' + esc(p.price) + '</div>' +
+            '</div>' +
+          '</div>';
+        return el;
       }
 
       function renderMoreBatch() {
         if (!moreEl) return;
         const batchSize = 8;
         const end = Math.min(moreRendered + batchSize, moreItems.length);
-        const cardsPerRow = window.innerWidth <= 768 ? 2 : (window.innerWidth <= 1100 ? 3 : 4);
+        const cardsPerRow = window.innerWidth <= 768 ? 2 : (window.innerWidth <= 1200 ? 3 : 4);
 
         for (let i = moreRendered; i < end; i++) {
-          moreEl.appendChild(makeCard(moreItems[i], i));
+          moreEl.appendChild(makeAnimeCard(moreItems[i], i));
           cardsSinceProduct++;
-          if (cardsSinceProduct >= cardsPerRow * 2 && productPool.length > 0) {
-            const products = shuffle(productPool).slice(0, 8);
-            const row = makeProductRow(products);
-            if (row) moreEl.appendChild(row);
+          
+          // Insert single product card every 6-8 cards
+          if (cardsSinceProduct >= (cardsPerRow * 2 + Math.floor(Math.random() * 2)) && productPool.length > 0) {
+            const p = productPool[Math.floor(Math.random() * productPool.length)];
+            if (p) moreEl.appendChild(makeInlineProduct(p, i));
             cardsSinceProduct = 0;
           }
         }
         moreRendered = end;
+      }
+
+      function renderSidebarAd() {
+        if (!sidebarAd || !sidebarAdContent || productPool.length === 0) return;
+        const picks = shuffle(productPool).slice(0, 3);
+        sidebarAdContent.innerHTML = picks.map(p => {
+          const img = p.image 
+            ? '<img src="' + esc(p.image) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';" />'
+            : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🛍️</div>';
+          return '<a href="/product/' + esc(p.id) + '" class="rp-ad-item">' +
+            '<div class="rp-ad-thumb">' + img + '</div>' +
+            '<div class="rp-ad-info">' +
+              '<div class="rp-ad-title">' + esc(trunc(p.title, 50)) + '</div>' +
+              '<div class="rp-ad-price">' + esc(p.price) + '</div>' +
+            '</div>' +
+          '</a>';
+        }).join('');
+        sidebarAd.style.display = 'block';
       }
 
       async function fetchMore() {
@@ -2160,12 +2095,12 @@ const metaText = metaParts.join(' · ');
           const types = ['anime', 'donghua', 'kdrama', 'movies'];
           const type = types[Math.floor(Math.random() * types.length)];
           const page = Math.floor(Math.random() * 5) + 1;
-          const res = await fetch(`/api/social-feed?type=${type}&page=${page}&limit=15`);
+          const res = await fetch('/api/social-feed?type=' + type + '&page=' + page + '&limit=15');
           const data = await res.json();
           if (data.success && data.videos) {
-            const existingIds = new Set(moreItems.map((v: any) => v.id));
-            existingIds.add(videoId);
-            const fresh = data.videos.filter((v: any) => !existingIds.has(v.id));
+            const existing = new Set(moreItems.map((v: any) => v.id));
+            existing.add(videoId);
+            const fresh = data.videos.filter((v: any) => !existing.has(v.id));
             moreItems = moreItems.concat(fresh);
             sideItems = sideItems.concat(fresh);
             renderMoreBatch();
@@ -2181,15 +2116,22 @@ const metaText = metaParts.join(' · ');
         try {
           const res = await fetch('/api/products?limit=30');
           const data = await res.json();
-          if (data.success && data.products) productPool = data.products;
+          if (data.success && data.products) {
+            productPool = data.products;
+            renderSidebarAd();
+          }
         } catch(e) {}
       }
 
       loadProducts().then(() => { renderMoreBatch(); });
 
-      // ═══ INFINITE SCROLL (debounced) ═══
+      // Infinite scroll (throttled)
       let scrollTimer: any = null;
+      let lastScrollY = 0;
       window.addEventListener('scroll', () => {
+        const currentY = window.scrollY;
+        if (Math.abs(currentY - lastScrollY) < 50) return;
+        lastScrollY = currentY;
         if (scrollTimer) clearTimeout(scrollTimer);
         scrollTimer = setTimeout(() => {
           if (loadingMore) return;
@@ -2199,20 +2141,18 @@ const metaText = metaParts.join(' · ');
             if (moreRendered < moreItems.length) renderMoreBatch();
             else fetchMore();
           }
-        }, 150);
+        }, 100);
       }, { passive: true });
 
-      // ═══ AUTOPLAY NEXT (when video ends) ═══
-      // Note: Can't detect iframe video end reliably, so this is future-ready.
+      // Autoplay
       const autoplayToggle = document.getElementById('autoplayToggle') as HTMLInputElement;
       if (autoplayToggle) {
-        const savedAuto = localStorage.getItem('anitube_autoplay');
-        if (savedAuto === 'false') autoplayToggle.checked = false;
+        const saved = localStorage.getItem('anitube_autoplay');
+        if (saved === 'false') autoplayToggle.checked = false;
         autoplayToggle.addEventListener('change', () => {
           localStorage.setItem('anitube_autoplay', String(autoplayToggle.checked));
         });
       }
-
     })();
   </script>
 </BaseLayout>
