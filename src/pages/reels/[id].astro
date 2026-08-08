@@ -1,3 +1,4 @@
+---
 export const prerender = false;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
@@ -135,6 +136,10 @@ if (video.publishedAt) {
 
 const description = (video.description || '').trim();
 const hasDescription = description.length > 0;
+
+// Build channel sub-info string (avoids Fragment issue)
+const channelSubExtras: string[] = ['HD Quality', typeLabel];
+if (publishText) channelSubExtras.push(publishText);
 ---
 
 <BaseLayout title={`${video.title} | AniTubeBuzz`}>
@@ -152,13 +157,10 @@ const hasDescription = description.length > 0;
         class="atbrp-root"
       >
         
-        <!-- ═══ 2-COLUMN LAYOUT ═══ -->
         <div class="atbrp-main">
           
-          <!-- LEFT: VIDEO + INFO + CHAT + MORE VIDEOS -->
           <div class="atbrp-left">
             
-            <!-- VIDEO PLAYER -->
             <div class="atbrp-player" id="videoCard" data-aspect={videoAspect}>
               <div class="atbrp-player-glow"></div>
               <div class="atbrp-player-frame">
@@ -187,10 +189,8 @@ const hasDescription = description.length > 0;
               </div>
             </div>
 
-            <!-- TITLE -->
             <h1 class="atbrp-title">{video.title}</h1>
 
-            <!-- CHANNEL + ACTIONS -->
             <div class="atbrp-cr-row">
               <div class="atbrp-channel">
                 <div class="atbrp-avatar">{displayChannel.charAt(0).toUpperCase()}</div>
@@ -198,15 +198,7 @@ const hasDescription = description.length > 0;
                   <div class="atbrp-channel-name">{displayChannel}</div>
                   <div class="atbrp-channel-sub">
                     <span class="atbrp-live-dot"></span>
-                    <span>HD Quality</span>
-                    <span class="atbrp-sep">·</span>
-                    <span>{typeLabel}</span>
-                     {publishText && (
-                      <Fragment>
-                        <span class="atbrp-sep">·</span>
-                        <span>{publishText}</span>
-                      </Fragment>
-                    )}
+                    <span>{channelSubExtras.join(' · ')}</span>
                   </div>
                 </div>
               </div>
@@ -239,7 +231,6 @@ const hasDescription = description.length > 0;
               </div>
             </div>
 
-            <!-- DESCRIPTION -->
             {hasDescription && (
               <div class="atbrp-desc" id="descBox">
                 <div class="atbrp-desc-header">
@@ -252,7 +243,6 @@ const hasDescription = description.length > 0;
               </div>
             )}
 
-            <!-- CHAT SECTION -->
             <section class="atbrp-chat" id="chatSection">
               <div class="atbrp-chat-header">
                 <div class="atbrp-chat-header-left">
@@ -300,7 +290,6 @@ const hasDescription = description.length > 0;
               </div>
             </section>
 
-            <!-- MORE VIDEOS -->
             <section style="margin-top: 12px;">
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:0 4px;">
                 <span style="width:4px;height:22px;background:linear-gradient(180deg,#c084fc,#e879f9,#7dd3fc);border-radius:3px;box-shadow:0 0 10px rgba(232,121,249,0.6);"></span>
@@ -314,7 +303,6 @@ const hasDescription = description.length > 0;
             
           </div>
 
-          <!-- RIGHT: UP NEXT SIDEBAR -->
           <aside class="atbrp-right">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 4px;">
               <div style="display:flex;align-items:center;gap:10px;font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:700;color:var(--text-primary);">
@@ -344,13 +332,6 @@ const hasDescription = description.length > 0;
   `}></script>
 
   <style>
-    /* ════════════════════════════════════════════
-       HOME PAGE CARD CLASSES — COPIED EXACTLY
-       (.feed-wrap, .at-na-*, .product-row-*)
-       So "More Videos" looks identical to home!
-    ════════════════════════════════════════════ */
-    
-    /* More feed grid — same as home page .feed-wrap */
     .atbrp-more-feed {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -365,7 +346,6 @@ const hasDescription = description.length > 0;
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* Card base */
     .at-na-card {
       transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
       cursor: pointer;
@@ -376,7 +356,6 @@ const hasDescription = description.length > 0;
     }
     .at-na-card:hover { transform: translateY(-4px); }
 
-    /* Thumbnail 16:9 */
     .at-na-thumb {
       position: relative;
       width: 100%;
@@ -393,7 +372,6 @@ const hasDescription = description.length > 0;
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(192, 132, 252, 0.5);
     }
 
-    /* Thumbnail image */
     .at-na-img {
       position: absolute;
       top: 0; left: 0;
@@ -407,7 +385,6 @@ const hasDescription = description.length > 0;
       filter: brightness(0.65);
     }
 
-    /* Shine sweep */
     .at-na-shine {
       position: absolute;
       top: 0; left: -80%;
@@ -419,7 +396,6 @@ const hasDescription = description.length > 0;
     }
     .at-na-card:hover .at-na-shine { left: 120%; }
 
-    /* Dark overlay on hover */
     .at-na-overlay {
       position: absolute; inset: 0;
       background: linear-gradient(180deg, transparent 40%, rgba(10,5,23,0.85) 100%);
@@ -430,7 +406,6 @@ const hasDescription = description.length > 0;
     }
     .at-na-card:hover .at-na-overlay { opacity: 1; }
 
-    /* Play button — centered, appears on hover */
     .at-na-play {
       position: absolute;
       top: 50%; left: 50%;
@@ -446,7 +421,6 @@ const hasDescription = description.length > 0;
       transform: translate(-50%, -50%) scale(1);
     }
 
-    /* Title gradient on hover */
     .at-na-card:hover .at-na-title {
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
       -webkit-background-clip: text;
@@ -454,7 +428,6 @@ const hasDescription = description.length > 0;
       background-clip: text;
     }
 
-    /* Mobile: always show play button slightly */
     @media (max-width: 768px) {
       .at-na-card:hover { transform: translateY(-2px); }
       .at-na-play {
@@ -463,7 +436,6 @@ const hasDescription = description.length > 0;
       }
     }
 
-    /* ═══ PRODUCT ROW ═══ */
     .product-row {
       grid-column: 1 / -1;
       margin: 8px 0;
@@ -474,75 +446,55 @@ const hasDescription = description.length > 0;
       position: relative;
       animation: atNaCardIn 0.5s ease backwards;
     }
-
     .product-row-header {
-      display: flex;
-      align-items: center;
+      display: flex; align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
-      padding: 0 4px;
+      margin-bottom: 12px; padding: 0 4px;
     }
-
     .product-row-title {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+      display: inline-flex; align-items: center; gap: 8px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem;
-      font-weight: 800;
-      letter-spacing: 0.1em;
-      color: #e879f9;
-      text-transform: uppercase;
+      font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em;
+      color: #e879f9; text-transform: uppercase;
     }
     .product-row-title::before {
-      content: '';
-      width: 3px; height: 14px;
+      content: ''; width: 3px; height: 14px;
       background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
       border-radius: 2px;
       box-shadow: 0 0 8px rgba(232,121,249,0.7);
     }
-
     .product-row-hint {
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.6rem;
       color: rgba(192,132,252,0.6);
       letter-spacing: 0.05em;
     }
-
     .product-row-scroll {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      overflow-y: hidden;
+      display: flex; gap: 10px;
+      overflow-x: auto; overflow-y: hidden;
       scroll-behavior: smooth;
       scrollbar-width: thin;
       scrollbar-color: rgba(192, 132, 252, 0.4) transparent;
       padding: 4px 0 12px;
       -webkit-overflow-scrolling: touch;
-      cursor: grab;
-      user-select: none;
+      cursor: grab; user-select: none;
     }
     .product-row-scroll:active { cursor: grabbing; }
     .product-row-scroll::-webkit-scrollbar { height: 6px; background: transparent; }
     .product-row-scroll::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.4); border-radius: 3px; }
 
     .product-row-item {
-      flex: 0 0 auto;
-      width: 160px;
-      text-decoration: none;
-      color: inherit;
-      display: block;
-      cursor: pointer;
+      flex: 0 0 auto; width: 160px;
+      text-decoration: none; color: inherit;
+      display: block; cursor: pointer;
       transition: transform 0.3s ease;
     }
     .product-row-item:hover { transform: translateY(-3px); }
 
     .product-row-thumb {
-      position: relative;
-      width: 100%;
+      position: relative; width: 100%;
       padding-top: 75%;
-      border-radius: 10px;
-      overflow: hidden;
+      border-radius: 10px; overflow: hidden;
       background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(232,121,249,0.1));
       border: 1px solid rgba(192,132,252,0.25);
       margin-bottom: 6px;
@@ -553,7 +505,6 @@ const hasDescription = description.length > 0;
       border-color: rgba(232,121,249,0.7);
       box-shadow: 0 8px 20px rgba(0,0,0,0.4), 0 0 15px rgba(192,132,252,0.3);
     }
-
     .product-row-img {
       position: absolute;
       top: 0; left: 0;
@@ -562,13 +513,10 @@ const hasDescription = description.length > 0;
       transition: transform 0.4s ease;
     }
     .product-row-item:hover .product-row-img { transform: scale(1.06); }
-
     .product-row-info { padding: 0 2px; }
-
     .product-row-item-title {
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 0.72rem;
-      font-weight: 700;
+      font-size: 0.72rem; font-weight: 700;
       color: var(--text-primary);
       line-height: 1.25;
       display: -webkit-box;
@@ -577,42 +525,27 @@ const hasDescription = description.length > 0;
       overflow: hidden;
       margin-bottom: 2px;
     }
-
     .product-row-price {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem;
-      font-weight: 800;
-      color: #7dd3fc;
+      font-size: 0.7rem; font-weight: 800; color: #7dd3fc;
     }
-
     @media (max-width: 768px) {
       .product-row-item { width: 130px; }
       .product-row { padding: 12px; }
     }
 
-    /* ════════════════════════════════════════════
-       REELS PAGE LAYOUT CSS
-    ════════════════════════════════════════════ */
-
-    /* 2-col layout */
     .atbrp-main {
       display: grid;
       grid-template-columns: 1fr 360px;
-      gap: 24px;
-      align-items: start;
+      gap: 24px; align-items: start;
     }
-
     .atbrp-left {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      min-width: 0;
+      display: flex; flex-direction: column;
+      gap: 16px; min-width: 0;
     }
-
     .atbrp-right {
       min-width: 0;
-      position: sticky;
-      top: 90px;
+      position: sticky; top: 90px;
       max-height: calc(100vh - 100px);
       overflow-y: auto;
       scrollbar-width: thin;
@@ -622,44 +555,33 @@ const hasDescription = description.length > 0;
     .atbrp-right::-webkit-scrollbar { width: 4px; }
     .atbrp-right::-webkit-scrollbar-thumb { background: rgba(192,132,252,0.3); border-radius: 2px; }
 
-    /* ═══ VIDEO PLAYER ═══ */
     .atbrp-player {
-      position: relative;
-      width: 100%;
+      position: relative; width: 100%;
       aspect-ratio: 16 / 9;
       animation: atbrp-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     .atbrp-player[data-aspect="portrait"] {
       aspect-ratio: 9 / 16;
-      max-width: 380px;
-      margin: 0 auto;
+      max-width: 380px; margin: 0 auto;
     }
-
     @keyframes atbrp-in {
       from { opacity: 0; transform: translateY(15px) scale(0.98); }
       to   { opacity: 1; transform: translateY(0) scale(1); }
     }
-
     .atbrp-player-glow {
-      position: absolute;
-      inset: -3px;
+      position: absolute; inset: -3px;
       background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-      border-radius: 20px;
-      opacity: 0.4;
-      filter: blur(14px);
-      z-index: -1;
+      border-radius: 20px; opacity: 0.4;
+      filter: blur(14px); z-index: -1;
       animation: atbrp-glow 4s ease-in-out infinite;
     }
     @keyframes atbrp-glow {
       0%, 100% { opacity: 0.35; }
       50%       { opacity: 0.6; }
     }
-
     .atbrp-player-frame {
-      position: absolute;
-      inset: 0;
-      background: #000;
-      border-radius: 16px;
+      position: absolute; inset: 0;
+      background: #000; border-radius: 16px;
       overflow: hidden;
       box-shadow: 0 15px 50px rgba(0,0,0,0.6), 0 0 0 1px rgba(192,132,252,0.3);
     }
@@ -668,15 +590,13 @@ const hasDescription = description.length > 0;
       border: 0; display: block;
     }
 
-    /* Heart double-tap */
     .atbrp-heart {
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%) scale(0);
       width: 100px; height: 100px;
       color: #ff2d55;
-      pointer-events: none;
-      z-index: 20;
+      pointer-events: none; z-index: 20;
       filter: drop-shadow(0 0 30px rgba(255,45,85,0.9));
     }
     .atbrp-heart.pop { animation: atbrp-heart-pop 0.9s cubic-bezier(0.34,1.56,0.64,1); }
@@ -687,25 +607,18 @@ const hasDescription = description.length > 0;
       100% { transform: translate(-50%,-50%) scale(1.5); opacity: 0; }
     }
 
-    /* Video loader */
     .atbrp-loader {
       position: absolute; inset: 0;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       gap: 20px;
       background: radial-gradient(circle at center, #1a0f2e 0%, #000 100%);
-      z-index: 5;
-      transition: opacity 0.5s;
+      z-index: 5; transition: opacity 0.5s;
     }
     .atbrp-loader.hidden { opacity: 0; pointer-events: none; }
-
-    .atbrp-loader-orbit {
-      position: relative;
-      width: 60px; height: 60px;
-    }
+    .atbrp-loader-orbit { position: relative; width: 60px; height: 60px; }
     .atbrp-loader-dot {
-      position: absolute;
-      width: 14px; height: 14px;
+      position: absolute; width: 14px; height: 14px;
       border-radius: 50%;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
@@ -723,30 +636,23 @@ const hasDescription = description.length > 0;
       background-clip: text;
     }
 
-    /* ═══ TITLE ═══ */
     .atbrp-title {
       font-family: 'Bricolage Grotesque', sans-serif;
       font-size: 22px; font-weight: 700;
       color: var(--text-primary);
-      line-height: 1.3;
-      margin: 4px 0 0;
+      line-height: 1.3; margin: 4px 0 0;
       letter-spacing: -0.01em;
     }
 
-    /* ═══ CHANNEL + ACTIONS ROW ═══ */
     .atbrp-cr-row {
-      display: flex;
-      align-items: center;
+      display: flex; align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
+      gap: 16px; flex-wrap: wrap;
     }
-
     .atbrp-channel {
       display: flex; align-items: center;
       gap: 12px; min-width: 0; flex: 1;
     }
-
     .atbrp-avatar {
       width: 44px; height: 44px; min-width: 44px;
       border-radius: 50%;
@@ -759,9 +665,7 @@ const hasDescription = description.length > 0;
       box-shadow: 0 4px 14px rgba(192,132,252,0.5);
       flex-shrink: 0;
     }
-
     .atbrp-channel-info { flex: 1; min-width: 0; }
-
     .atbrp-channel-name {
       font-family: 'Inter', 'DM Sans', sans-serif;
       font-size: 14px; font-weight: 700;
@@ -769,18 +673,13 @@ const hasDescription = description.length > 0;
       line-height: 1.2;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-
     .atbrp-channel-sub {
-      display: flex; align-items: center;
-      gap: 5px;
+      display: flex; align-items: center; gap: 5px;
       font-family: 'Inter', sans-serif;
       font-size: 12px; color: var(--text-muted);
       margin-top: 4px; font-weight: 500;
       flex-wrap: wrap;
     }
-
-    .atbrp-sep { color: var(--text-faint); }
-
     .atbrp-live-dot {
       width: 6px; height: 6px; min-width: 6px;
       border-radius: 50%;
@@ -796,7 +695,6 @@ const hasDescription = description.length > 0;
     .atbrp-actions {
       display: flex; gap: 8px; flex-wrap: wrap;
     }
-
     .atbrp-btn {
       display: inline-flex; align-items: center;
       gap: 6px; padding: 8px 14px; height: 38px;
@@ -823,20 +721,17 @@ const hasDescription = description.length > 0;
     .atbrp-btn:active { transform: translateY(0) scale(0.96); }
     .atbrp-btn svg { color: #e879f9; flex-shrink: 0; }
     .atbrp-btn-label { line-height: 1; }
-
     .atbrp-btn-next {
       background: linear-gradient(135deg, rgba(192,132,252,0.25), rgba(232,121,249,0.15));
       border-color: rgba(232,121,249,0.55);
     }
     .atbrp-btn-next svg { color: #c084fc; }
-
     .atbrp-btn.saved {
       background: linear-gradient(135deg, rgba(75,55,20,0.9), rgba(50,35,10,0.95)) !important;
       border-color: rgba(255,200,100,0.6) !important;
     }
     .atbrp-btn.saved svg { color: #fbbf24 !important; fill: #fbbf24 !important; }
     .atbrp-btn.saved .atbrp-btn-label { color: #fde68a !important; }
-
     .atbrp-btn.sent .atbrp-btn-icon-plane { animation: atbrp-fly 0.6s ease; }
     @keyframes atbrp-fly {
       0%   { transform: translate(0,0) rotate(0deg); opacity: 1; }
@@ -845,12 +740,10 @@ const hasDescription = description.length > 0;
       100% { transform: translate(0,0) rotate(0deg); opacity: 1; }
     }
 
-    /* ═══ DESCRIPTION ═══ */
     .atbrp-desc {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 14px 18px;
+      border-radius: 16px; padding: 14px 18px;
     }
     .atbrp-desc-header {
       display: flex; align-items: center;
@@ -860,7 +753,8 @@ const hasDescription = description.length > 0;
     .atbrp-desc-tag {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px; font-weight: 700;
-      color: #c084fc; letter-spacing: 0.05em; text-transform: uppercase;
+      color: #c084fc; letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
     .atbrp-desc-toggle {
       background: transparent; border: 0;
@@ -881,7 +775,6 @@ const hasDescription = description.length > 0;
       white-space: pre-wrap; word-wrap: break-word;
     }
 
-    /* ═══ CHAT ═══ */
     .atbrp-chat {
       background: linear-gradient(135deg, rgba(28,15,61,0.6), rgba(20,10,40,0.5));
       border: 1px solid rgba(192,132,252,0.25);
@@ -889,7 +782,6 @@ const hasDescription = description.length > 0;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
     [data-theme="light"] .atbrp-chat { background: var(--bg-card); }
-
     .atbrp-chat-header {
       display: flex; align-items: center;
       justify-content: space-between;
@@ -898,7 +790,6 @@ const hasDescription = description.length > 0;
       border-bottom: 1px solid rgba(192,132,252,0.15);
     }
     [data-theme="light"] .atbrp-chat-header { background: rgba(243,232,255,0.5); }
-
     .atbrp-chat-header-left {
       display: flex; align-items: center; gap: 12px;
     }
@@ -929,7 +820,6 @@ const hasDescription = description.length > 0;
       font-family: 'JetBrains Mono', monospace;
       font-size: 10px; font-weight: 700; color: #c084fc;
     }
-
     .atbrp-chat-messages {
       max-height: 400px; min-height: 200px;
       overflow-y: auto;
@@ -939,7 +829,6 @@ const hasDescription = description.length > 0;
     }
     .atbrp-chat-messages::-webkit-scrollbar { width: 5px; }
     .atbrp-chat-messages::-webkit-scrollbar-thumb { background: rgba(192,132,252,0.3); border-radius: 3px; }
-
     .atbrp-chat-empty {
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
@@ -950,7 +839,6 @@ const hasDescription = description.length > 0;
       font-family: 'Inter', sans-serif; font-size: 13px;
       margin: 0; color: var(--text-muted);
     }
-
     .atbrp-chat-msg {
       display: flex; gap: 10px;
       margin-bottom: 14px;
@@ -960,7 +848,6 @@ const hasDescription = description.length > 0;
       from { opacity: 0; transform: translateX(-10px); }
       to   { opacity: 1; transform: translateX(0); }
     }
-
     .atbrp-chat-msg-av {
       width: 32px; height: 32px; min-width: 32px;
       border-radius: 50%;
@@ -989,7 +876,6 @@ const hasDescription = description.length > 0;
       font-size: 13.5px; line-height: 1.45;
       color: var(--text-secondary); word-wrap: break-word;
     }
-
     .atbrp-chat-input-wrap {
       display: flex; align-items: center; gap: 10px;
       padding: 12px 16px;
@@ -997,7 +883,6 @@ const hasDescription = description.length > 0;
       border-top: 1px solid rgba(192,132,252,0.15);
     }
     [data-theme="light"] .atbrp-chat-input-wrap { background: rgba(243,232,255,0.3); }
-
     .atbrp-chat-avatar {
       width: 34px; height: 34px; min-width: 34px;
       border-radius: 50%;
@@ -1007,7 +892,6 @@ const hasDescription = description.length > 0;
       font-family: 'Bricolage Grotesque', sans-serif;
       font-weight: 700; font-size: 13px; flex-shrink: 0;
     }
-
     .atbrp-chat-input-inner {
       flex: 1; display: flex; align-items: center; gap: 8px;
       background: var(--bg-card);
@@ -1017,14 +901,12 @@ const hasDescription = description.length > 0;
       transition: border-color 0.2s;
     }
     .atbrp-chat-input-inner:focus-within { border-color: rgba(232,121,249,0.6); }
-
     .atbrp-chat-input {
       flex: 1; background: transparent; border: 0; outline: 0;
       color: var(--text-primary);
       font-family: 'Inter', sans-serif; font-size: 13.5px; padding: 8px 0;
     }
     .atbrp-chat-input::placeholder { color: var(--text-muted); }
-
     .atbrp-chat-send {
       width: 32px; height: 32px; min-width: 32px;
       border-radius: 50%;
@@ -1037,11 +919,9 @@ const hasDescription = description.length > 0;
     .atbrp-chat-send:hover { transform: scale(1.1); }
     .atbrp-chat-send:active { transform: scale(0.95); }
 
-    /* ═══ SIDEBAR ═══ */
     .atbrp-side-feed {
       display: flex; flex-direction: column; gap: 10px;
     }
-
     .atbrp-si {
       display: flex; gap: 10px; padding: 8px;
       background: var(--bg-card);
@@ -1060,10 +940,8 @@ const hasDescription = description.length > 0;
       border-color: rgba(232,121,249,0.5);
       transform: translateX(-3px);
     }
-
     .atbrp-si-thumb {
-      position: relative;
-      flex-shrink: 0; width: 130px;
+      position: relative; flex-shrink: 0; width: 130px;
       aspect-ratio: 16/9;
       border-radius: 10px; overflow: hidden;
       background: #0d0520;
@@ -1074,7 +952,6 @@ const hasDescription = description.length > 0;
       transition: transform 0.4s ease;
     }
     .atbrp-si:hover .atbrp-si-thumb img { transform: scale(1.08); }
-
     .atbrp-si-info {
       flex: 1; min-width: 0;
       display: flex; flex-direction: column;
@@ -1095,7 +972,6 @@ const hasDescription = description.length > 0;
       font-size: 10px; color: var(--text-muted);
     }
 
-    /* ═══ MOBILE ═══ */
     @media (max-width: 900px) {
       .atbrp-main {
         grid-template-columns: 1fr;
@@ -1134,7 +1010,6 @@ const hasDescription = description.length > 0;
       const nextId = (window as any).__NEXT_ID__ || '';
       const prevId = (window as any).__PREV_ID__ || '';
 
-      // Save resume position
       try {
         if (videoId) {
           localStorage.setItem('anitube_resume_video', videoId);
@@ -1184,7 +1059,6 @@ const hasDescription = description.length > 0;
         return `${Math.floor(h / 24)}d ago`;
       }
 
-      // ═══ SAVE TO HISTORY ═══
       try {
         if (currentVideo && videoId) {
           const goodThumb = getThumb(videoId, currentVideo.thumbnail);
@@ -1202,7 +1076,6 @@ const hasDescription = description.length > 0;
         }
       } catch(e) {}
 
-      // ═══ SAVE BUTTON ═══
       const saveBtn = document.getElementById('saveBtn');
       const savedVideos: any[] = JSON.parse(localStorage.getItem('anitube_saved') || '[]');
       const isSaved = () => savedVideos.some((s: any) => s.id === videoId);
@@ -1243,7 +1116,6 @@ const hasDescription = description.length > 0;
       updateSaveUI();
       saveBtn?.addEventListener('click', toggleSave);
 
-      // ═══ DOUBLE TAP HEART ═══
       const card = document.getElementById('videoCard');
       const heart = document.getElementById('doubleTapHeart');
       let lastTap = 0;
@@ -1260,7 +1132,6 @@ const hasDescription = description.length > 0;
         } else { lastTap = now; }
       });
 
-      // ═══ SHARE / SEND ═══
       const sendBtn = document.getElementById('sendBtn');
       async function handleSend() {
         if (!sendBtn) return;
@@ -1284,7 +1155,6 @@ const hasDescription = description.length > 0;
       }
       sendBtn?.addEventListener('click', handleSend);
 
-      // ═══ NAVIGATION ═══
       let navigating = false;
       function goTo(targetId: string) {
         if (navigating || !targetId) return;
@@ -1303,16 +1173,13 @@ const hasDescription = description.length > 0;
         else if (window.history.length > 1) window.history.back();
       });
 
-      // ═══ VIDEO LOADER HIDE ═══
       const iframe = document.getElementById('videoFrame') as HTMLIFrameElement;
       const videoLoader = document.getElementById('videoLoader');
       iframe?.addEventListener('load', () => {
         setTimeout(() => videoLoader?.classList.add('hidden'), 400);
       });
-      // Fallback — always hide after 3.5s
       setTimeout(() => videoLoader?.classList.add('hidden'), 3500);
 
-      // ═══ SAFIYA EVENT ═══
       setTimeout(() => {
         if (currentVideo) {
           window.dispatchEvent(new CustomEvent('safiya:video-event', {
@@ -1321,7 +1188,6 @@ const hasDescription = description.length > 0;
         }
       }, 500);
 
-      // ═══ DESCRIPTION TOGGLE ═══
       const descToggle = document.getElementById('descToggle');
       const descContent = document.getElementById('descContent');
       descToggle?.addEventListener('click', () => {
@@ -1330,7 +1196,6 @@ const hasDescription = description.length > 0;
         descToggle.textContent = expanded ? 'Show less' : 'Show more';
       });
 
-      // ═══ FAKE ONLINE COUNT ═══
       const chatOnlineEl = document.getElementById('chatOnlineCount');
       if (chatOnlineEl) {
         const base = 80 + Math.floor(Math.random() * 200);
@@ -1340,7 +1205,6 @@ const hasDescription = description.length > 0;
         }, 5000);
       }
 
-      // ═══ CHAT / COMMENTS ═══
       const chatMessages = document.getElementById('chatMessages');
       const chatInput = document.getElementById('chatInput') as HTMLInputElement;
       const chatSend = document.getElementById('chatSend');
@@ -1427,7 +1291,6 @@ const hasDescription = description.length > 0;
       });
       renderMessages();
 
-      // ═══ SIDEBAR "UP NEXT" ═══
       const sidebarFeed = document.getElementById('relatedFeed');
       const feedCountEl = document.getElementById('feedCount');
       let sideItems: any[] = feedData.slice();
@@ -1436,7 +1299,6 @@ const hasDescription = description.length > 0;
 
       function makeSidebarItem(v: any): HTMLElement {
         const el = document.createElement('a');
-        // Anime detail cards → /anime/[slug], video cards → /reels/[id]
         el.href = v.isAnimeDetail ? `/anime/${v.id}` : `/reels/${v.id}`;
         el.className = 'atbrp-si';
 
@@ -1469,7 +1331,6 @@ const hasDescription = description.length > 0;
 
       renderSidebar();
 
-      // ═══ MORE VIDEOS — Home page card style ═══
       const moreEl = document.getElementById('moreFeed');
       const moreLoadingEl = document.getElementById('moreLoading');
       let moreItems: any[] = feedData.slice();
@@ -1478,7 +1339,6 @@ const hasDescription = description.length > 0;
       let loadingMore = false;
       let cardsSinceProduct = 0;
 
-      // EXACT COPY of home page socialCard()
       function socialCard(v: any, i: number): HTMLElement {
         const t = v.title || 'Video';
         const img = getThumb(v.id, v.thumbnail || '');
@@ -1493,7 +1353,6 @@ const hasDescription = description.length > 0;
           : `<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>`;
 
         const el = document.createElement('a');
-        // Anime detail → /anime/slug, video → /reels/id
         el.href = v.isAnimeDetail ? `/anime/${v.id}` : `/reels/${v.id}`;
         el.className = 'at-na-card';
         el.style.animationDelay = delay;
@@ -1520,7 +1379,6 @@ const hasDescription = description.length > 0;
         return el;
       }
 
-      // Product row (same as home page)
       function productRow(products: any[]): HTMLElement | null {
         if (!products || products.length === 0) return null;
 
@@ -1549,7 +1407,6 @@ const hasDescription = description.length > 0;
           '</div>' +
           '<div class="product-row-scroll">' + itemsHtml + '</div>';
 
-        // Enable drag scroll
         const scroll = row.querySelector('.product-row-scroll') as HTMLElement;
         if (scroll) {
           let isDown = false, startX = 0, scrollLeft = 0;
@@ -1581,7 +1438,6 @@ const hasDescription = description.length > 0;
           moreEl.appendChild(socialCard(moreItems[i], i));
           cardsSinceProduct++;
 
-          // Product row every 2 rows of cards
           if (cardsSinceProduct >= cardsPerRow * 2 && productPool.length > 0) {
             const products = shuffle(productPool).slice(0, 8);
             const row = productRow(products);
@@ -1626,10 +1482,8 @@ const hasDescription = description.length > 0;
         } catch(e) {}
       }
 
-      // Start
       loadProducts().then(() => { renderMoreBatch(); });
 
-      // Infinite scroll
       let scrollTimer: any = null;
       window.addEventListener('scroll', () => {
         if (scrollTimer) clearTimeout(scrollTimer);
