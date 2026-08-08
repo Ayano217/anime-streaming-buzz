@@ -507,10 +507,11 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
     }
 
         /* ============ EXTERNAL ANIME IFRAME (STEALTH VIDEO ONLY) ============ */
-    .rp-player-external .rp-player-frame {
+        .rp-player-external .rp-player-frame {
       padding-top: 56.25%;
       background: #000;
       overflow: hidden;
+      min-height: 500px;
     }
     .rp-external-wrap {
       position: absolute;
@@ -520,14 +521,17 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
     }
     /* IFRAME: Large size, positioned so ONLY video player rectangle visible */
     /* AnimoTV video player location: ~340px from top, ~600px tall on 1280 width */
-       .rp-ext-iframe {
+      .rp-ext-iframe {
       position: absolute;
-      top: -420px;
-      left: -20px;
-      width: calc(100% + 40px);
-      height: calc(100% + 720px);
+      top: -340px;
+      left: 0;
+      width: 100%;
+      height: 1050px;
       border: 0;
       overflow: hidden !important;
+      pointer-events: auto;
+      transform: scale(0.95);
+      transform-origin: top left;
     }
     /* FULLSCREEN */
     .rp-external-wrap:fullscreen {
@@ -537,8 +541,8 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
     }
     .rp-external-wrap:fullscreen .rp-ext-iframe,
     .rp-external-wrap:-webkit-full-screen .rp-ext-iframe {
-      top: -520px;
-      height: calc(100% + 1100px);
+      top: -400px;
+      height: 1200px;
     }
     /* MASKS — hide everything except video area */
     .rp-ext-mask-top {
