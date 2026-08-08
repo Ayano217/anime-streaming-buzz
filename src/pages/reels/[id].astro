@@ -415,6 +415,57 @@ const metaText = metaParts.join(' • ');
       .at-na-card:hover { transform: translateY(-2px); }
       .at-na-play { opacity: 0.75 !important; transform: translate(-50%,-50%) scale(0.7) !important; }
     }
+    /* ═══ NUCLEAR FIX: COMMENT AVATAR ═══ */
+    .rp-comment .rp-c-avatar,
+    .rp-reply .rp-c-avatar {
+      width: 40px !important;
+      max-width: 40px !important;
+      min-width: 40px !important;
+      height: 40px !important;
+      max-height: 40px !important;
+      min-height: 40px !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      color: white !important;
+      font-family: 'Bricolage Grotesque', sans-serif !important;
+      font-weight: 700 !important;
+      font-size: 15px !important;
+      flex-shrink: 0 !important;
+      overflow: hidden !important;
+      background-size: cover !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+      box-sizing: border-box !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    
+    .rp-reply .rp-c-avatar {
+      width: 32px !important;
+      max-width: 32px !important;
+      min-width: 32px !important;
+      height: 32px !important;
+      max-height: 32px !important;
+      min-height: 32px !important;
+      font-size: 13px !important;
+    }
+    
+    /* Force grid layout on comments */
+    .rp-comment {
+      display: grid !important;
+      grid-template-columns: 40px 1fr !important;
+      gap: 12px !important;
+      align-items: start !important;
+    }
+    
+    .rp-reply {
+      display: grid !important;
+      grid-template-columns: 32px 1fr !important;
+      gap: 10px !important;
+      align-items: start !important;
+    }
   </style>
 
   <style>
@@ -1503,7 +1554,7 @@ const metaText = metaParts.join(' • ');
             '<div class="rp-replies" data-idx="' + i + '">' +
               replies.map((r: any) => 
                 '<div class="rp-reply">' +
-                  '<div class="rp-c-avatar" style="background:' + userColor(r.name) + '">' + esc(r.name.charAt(0).toUpperCase()) + '</div>' +
+                  '<div class="rp-c-avatar" style="background-image:' + userColor(r.name) + ';">' + esc(r.name.charAt(0).toUpperCase()) + '</div>' +
                   '<div class="rp-c-body">' +
                     '<div class="rp-c-head">' +
                       '<span class="rp-c-name">@' + esc(r.name) + '</span>' +
@@ -1516,7 +1567,7 @@ const metaText = metaParts.join(' • ');
             '</div>' : '';
           
           return '<div class="rp-comment" data-idx="' + i + '">' +
-            '<div class="rp-c-avatar" style="background:' + userColor(c.name) + '">' + esc(c.name.charAt(0).toUpperCase()) + '</div>' +
+            '<div class="rp-c-avatar" style="background-image:' + userColor(c.name) + ';">' + esc(c.name.charAt(0).toUpperCase()) + '</div>' +
             '<div class="rp-c-body">' +
               '<div class="rp-c-head">' +
                 '<span class="rp-c-name">@' + esc(c.name) + '</span>' +
@@ -1626,13 +1677,27 @@ const metaText = metaParts.join(' • ');
       let seriesEpisodes: any[] = [];
       
       async function loadSeriesEpisodes() {
-        if (!seriesName || seriesName.length < 3) return;
+              async function loadSeriesEpisodes() {
+        if (!seriesName || seriesName.length < 5) return;
         try {
-          const res = await fetch('/api/social-feed?related=true&series=' + encodeURIComponent(seriesName) + '&limit=20');
+          const res = await fetch('/api/social-feed?related=true&series=' + encodeURIComponent(seriesName) + '&limit=25');
           const data = await res.json();
           if (data.success && data.videos && data.videos.length > 0) {
-            seriesEpisodes = data.videos.filter((v: any) => v.id !== videoId);
-            renderSeriesEpisodes();
+            // Better filtering: check title contains at least 2 words from series name
+            const seriesWords = seriesName.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
+            
+            seriesEpisodes = data.videos.filter((v: any) => {
+              if (v.id === videoId) return false;
+              const title = (v.title || '').toLowerCase();
+              // Check if title has at least 60% match with series words
+              const matches = seriesWords.filter((w: string) => title.includes(w)).length;
+              return matches >= Math.max(2, Math.ceil(seriesWords.length * 0.5));
+            });
+            
+            // Only show section if we have real matches
+            if (seriesEpisodes.length >= 2) {
+              renderSeriesEpisodes();
+            }
           }
         } catch(e) {}
       }
