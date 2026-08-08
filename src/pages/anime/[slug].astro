@@ -8,8 +8,10 @@ import Footer from '../../components/Footer.astro';
 const { slug } = Astro.params;
 const animeSlug = slug || '';
 
-// Fetch anime info from Kitsu
+// Fetch anime info from Kitsu (parallel with external search)
 let anime = null;
+let externalMatch = null;
+
 try {
   const url = new URL('/api/anime', Astro.url.origin);
   url.searchParams.set('action', 'detail');
@@ -20,6 +22,28 @@ try {
     if (data.success && data.anime) anime = data.anime;
   }
 } catch (e) {}
+
+// Try to find on AnimoTVSlash SERVER-SIDE for instant redirect
+if (anime) {
+  try {
+    const cleanTitle = (anime.title || '').split(':')[0].split('|')[0].trim();
+    const extUrl = new URL('/api/anime-external', Astro.url.origin);
+    extUrl.searchParams.set('action', 'find');
+    extUrl.searchParams.set('q', cleanTitle);
+    const extRes = await fetch(extUrl);
+    if (extRes.ok) {
+      const extData = await extRes.json();
+      if (extData.success && extData.found && extData.firstEpisodeId) {
+        externalMatch = extData;
+      }
+    }
+  } catch (e) {}
+}
+
+// If found on external — INSTANT REDIRECT via meta refresh + JS
+if (externalMatch && externalMatch.firstEpisodeId) {
+  return Astro.redirect(`/reels/${externalMatch.firstEpisodeId}`);
+}
 
 const animeTitle = anime?.title || animeSlug.replace(/-/g, ' ');
 const animeImage = anime?.image || anime?.coverImage || '';
@@ -61,27 +85,21 @@ const animeStatus = anime?.status || '';
             </div>
           )}
           <div class="ar-status">
-            <div class="ar-spinner">
-              <div class="ar-orbit">
-                <div class="ar-dot ar-d1"></div>
-                <div class="ar-dot ar-d2"></div>
-                <div class="ar-dot ar-d3"></div>
-              </div>
-            </div>
+            <div class="ar-status-icon">😢</div>
             <div class="ar-status-text">
-              <div class="ar-status-title" id="statusTitle">Finding first episode...</div>
-              <div class="ar-status-sub" id="statusSub">Searching multiple platforms 🔍</div>
+              <div class="ar-status-title">Not available yet</div>
+              <div class="ar-status-sub">This anime might not be added to our library yet</div>
             </div>
           </div>
-          <div class="ar-actions" id="actionsBox" style="display:none;">
-            <button class="ar-btn ar-btn-retry" id="retryBtn">
+          <div class="ar-actions">
+            <button class="ar-btn ar-btn-primary" id="retryBtn">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="23 4 23 10 17 10"></polyline>
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
               </svg>
               <span>Retry</span>
             </button>
-            <a class="ar-btn ar-btn-home" href="/">
+            <a class="ar-btn ar-btn-secondary" href="/">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>
@@ -106,7 +124,7 @@ const animeStatus = anime?.status || '';
     .ar-section {
       position: relative;
       min-height: calc(100vh - 80px);
-      padding: 60px 0;
+      padding: 60px 0 80px;
       overflow: hidden;
     }
     .ar-bg {
@@ -144,10 +162,7 @@ const animeStatus = anime?.status || '';
       padding: 32px;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
     }
-    .ar-poster-wrap {
-      position: relative;
-      width: 100%;
-    }
+    .ar-poster-wrap { position: relative; width: 100%; }
     .ar-poster {
       width: 100%;
       aspect-ratio: 3/4;
@@ -189,11 +204,7 @@ const animeStatus = anime?.status || '';
       flex-direction: column;
       gap: 16px;
     }
-    .ar-badges {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
+    .ar-badges { display: flex; flex-wrap: wrap; gap: 8px; }
     .ar-badge {
       display: inline-flex;
       align-items: center;
@@ -264,38 +275,11 @@ const animeStatus = anime?.status || '';
       border-radius: 14px;
       margin-top: 8px;
     }
-    .ar-spinner {
-      width: 40px;
-      height: 40px;
+    .ar-status-icon {
+      font-size: 32px;
       flex-shrink: 0;
     }
-    .ar-orbit {
-      position: relative;
-      width: 40px;
-      height: 40px;
-    }
-    .ar-dot {
-      position: absolute;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c084fc, #e879f9);
-      top: 50%;
-      left: 50%;
-      transform-origin: 0 0;
-      animation: arOrbit 1.3s linear infinite;
-    }
-    .ar-d1 { animation-delay: 0s; }
-    .ar-d2 { animation-delay: -0.43s; background: linear-gradient(135deg, #e879f9, #7dd3fc); }
-    .ar-d3 { animation-delay: -0.86s; background: linear-gradient(135deg, #7dd3fc, #c084fc); }
-    @keyframes arOrbit {
-      0% { transform: rotate(0deg) translateX(16px) rotate(0deg); }
-      100% { transform: rotate(360deg) translateX(16px) rotate(-360deg); }
-    }
-    .ar-status-text {
-      min-width: 0;
-      flex: 1;
-    }
+    .ar-status-text { min-width: 0; flex: 1; }
     .ar-status-title {
       font-family: 'Bricolage Grotesque', sans-serif;
       font-size: 15px;
@@ -328,20 +312,20 @@ const animeStatus = anime?.status || '';
       font-family: inherit;
       transition: all 0.2s;
     }
-    .ar-btn-retry {
+    .ar-btn-primary {
       background: linear-gradient(135deg, #c084fc, #e879f9);
       color: #fff;
     }
-    .ar-btn-retry:hover {
+    .ar-btn-primary:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(192, 132, 252, 0.5);
     }
-    .ar-btn-home {
+    .ar-btn-secondary {
       background: rgba(255, 255, 255, 0.08);
       color: #fff;
       border: 1px solid rgba(255, 255, 255, 0.15);
     }
-    .ar-btn-home:hover {
+    .ar-btn-secondary:hover {
       background: rgba(255, 255, 255, 0.15);
       transform: translateY(-2px);
     }
@@ -368,7 +352,6 @@ const animeStatus = anime?.status || '';
       margin: 0;
       white-space: pre-wrap;
     }
-
     @media (max-width: 768px) {
       .ar-card {
         grid-template-columns: 1fr;
@@ -379,158 +362,19 @@ const animeStatus = anime?.status || '';
         max-width: 220px;
         margin: 0 auto;
       }
-      .ar-container {
-        padding: 0 16px;
-      }
-      .ar-section {
-        padding: 30px 0;
-      }
+      .ar-container { padding: 0 16px; }
+      .ar-section { padding: 30px 0; }
     }
   </style>
 
-  <script is:inline define:vars={{ ANIME_TITLE: animeTitle, ANIME_SLUG: animeSlug }}>
+  <script is:inline>
     (function() {
-      var animeTitle = ANIME_TITLE;
-      var animeSlug = ANIME_SLUG;
-      var attemptCount = 0;
-      var maxAttempts = 3;
-
-      var statusTitle = document.getElementById('statusTitle');
-      var statusSub = document.getElementById('statusSub');
-      var actionsBox = document.getElementById('actionsBox');
       var retryBtn = document.getElementById('retryBtn');
-
-      function setStatus(title, sub) {
-        if (statusTitle) statusTitle.textContent = title;
-        if (statusSub) statusSub.textContent = sub;
-      }
-
-      function showActions() {
-        if (actionsBox) actionsBox.style.display = 'flex';
-        var spinner = document.querySelector('.ar-spinner');
-        if (spinner) spinner.style.display = 'none';
-      }
-
-      function goToVideo(videoId) {
-        setStatus('Loading player...', '✨ Redirecting to episode');
-        setTimeout(function() {
-          window.location.href = '/reels/' + videoId;
-        }, 300);
-      }
-
-      // Extract clean anime name (remove ":", subtitles for better search)
-      function cleanName(name) {
-        return name.split(':')[0].split('|')[0].split('-')[0].trim();
-      }
-
-      function tryEpisodesMode() {
-        setStatus('Finding episodes...', 'Searching YouTube, Dailymotion, Bilibili');
-        var cleanTitle = cleanName(animeTitle);
-        var url = '/api/social-feed?mode=episodes&anime=' + encodeURIComponent(cleanTitle);
-        return fetch(url)
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            if (data.success) {
-              // Priority: episodes first (sorted), then extras
-              var candidates = [];
-              if (data.episodes && data.episodes.length) candidates = candidates.concat(data.episodes);
-              if (data.extras && data.extras.length) candidates = candidates.concat(data.extras);
-              if (candidates.length > 0) {
-                var first = candidates[0];
-                setStatus('Found ' + candidates.length + ' videos!', 'Episode 1 loading...');
-                goToVideo(first.id);
-                return true;
-              }
-            }
-            return false;
-          })
-          .catch(function() { return false; });
-      }
-
-      function tryNormalSearch() {
-        setStatus('Trying broader search...', 'Looking for any related video');
-        var cleanTitle = cleanName(animeTitle);
-        var url = '/api/social-feed?type=anime&limit=30&nocache=1';
-        return fetch(url)
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            if (data.success && data.videos && data.videos.length) {
-              var titleWords = cleanTitle.toLowerCase().split(/\s+/).filter(function(w) { return w.length > 2; });
-              // Find best match
-              var best = null;
-              var bestScore = 0;
-              for (var i = 0; i < data.videos.length; i++) {
-                var v = data.videos[i];
-                var vTitle = (v.title || '').toLowerCase();
-                var matched = 0;
-                for (var j = 0; j < titleWords.length; j++) {
-                  if (vTitle.indexOf(titleWords[j]) !== -1) matched++;
-                }
-                var score = titleWords.length ? matched / titleWords.length : 0;
-                if (score > bestScore) {
-                  bestScore = score;
-                  best = v;
-                }
-              }
-              if (best && bestScore >= 0.4) {
-                setStatus('Match found!', 'Loading ' + (best.title || 'video').slice(0, 40) + '...');
-                goToVideo(best.id);
-                return true;
-              }
-            }
-            return false;
-          })
-          .catch(function() { return false; });
-      }
-
-      function tryYouTubeDirectSearch() {
-        setStatus('Final attempt...', 'Direct search on YouTube');
-        var cleanTitle = cleanName(animeTitle);
-        var url = '/api/social-feed?type=anime&limit=15&nocache=1&platforms=youtube';
-        return fetch(url)
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            if (data.success && data.videos && data.videos.length > 0) {
-              // Just take first anime video as absolute fallback
-              setStatus('Playing suggested video', 'Best match available');
-              goToVideo(data.videos[0].id);
-              return true;
-            }
-            return false;
-          })
-          .catch(function() { return false; });
-      }
-
-      function showNotFound() {
-        setStatus('No videos found 😢', 'This anime might not be available yet');
-        showActions();
-      }
-
-      function search() {
-        attemptCount++;
-        tryEpisodesMode().then(function(found) {
-          if (found) return;
-          tryNormalSearch().then(function(found2) {
-            if (found2) return;
-            tryYouTubeDirectSearch().then(function(found3) {
-              if (found3) return;
-              showNotFound();
-            });
-          });
-        });
-      }
-
       if (retryBtn) {
         retryBtn.addEventListener('click', function() {
-          if (actionsBox) actionsBox.style.display = 'none';
-          var spinner = document.querySelector('.ar-spinner');
-          if (spinner) spinner.style.display = 'block';
-          search();
+          window.location.reload();
         });
       }
-
-      // Start search after 500ms (let user see the loading state)
-      setTimeout(search, 500);
     })();
   </script>
 </BaseLayout>
