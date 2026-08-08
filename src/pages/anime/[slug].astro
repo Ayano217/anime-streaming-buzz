@@ -5,1418 +5,532 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 
-const { id } = Astro.params;
+const { slug } = Astro.params;
+const animeSlug = slug || '';
+
+// Fetch anime info from Kitsu
+let anime = null;
+try {
+  const url = new URL('/api/anime', Astro.url.origin);
+  url.searchParams.set('action', 'detail');
+  url.searchParams.set('slug', animeSlug);
+  const res = await fetch(url);
+  if (res.ok) {
+    const data = await res.json();
+    if (data.success && data.anime) anime = data.anime;
+  }
+} catch (e) {}
+
+const animeTitle = anime?.title || animeSlug.replace(/-/g, ' ');
+const animeImage = anime?.image || anime?.coverImage || '';
+const animeCover = anime?.coverImage || anime?.image || '';
+const animeSynopsis = anime?.synopsis || anime?.description || '';
+const animeYear = anime?.year || '';
+const animeScore = anime?.score || '';
+const animeEpisodes = anime?.episodes || '';
+const animeStatus = anime?.status || '';
 ---
 
-<BaseLayout title="Watch" description="Premium video experience on AniTube Buzz.">
-
-  <!-- Header/Footer render inside slot; JS will hide them for portrait mode -->
+<BaseLayout title={`${animeTitle} | AniTubeBuzz`}>
   <Header slot="header" />
 
-  <div class="rl-wrap" id="rlWrap">
-
-    <!-- ═══ LOADER ═══ -->
-    <div id="rlLoader" class="rl-loader">
-      <div class="lo-orb"><div class="lo-ring"></div><div class="lo-core"></div></div>
-      <p>Loading premium experience...</p>
-    </div>
-
-    <!-- ═══ NOT FOUND ═══ -->
-    <div id="rlNotFound" class="rl-nf" style="display:none;">
-      <div class="nf-ic">
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>
-        </svg>
-      </div>
-      <h1>Video Not Found</h1>
-      <p>This video doesn't exist or couldn't be loaded.</p>
-      <div class="nf-btns">
-        <a href="/" class="nf-bk">← Back to Homepage</a>
-        <button onclick="location.reload()" class="nf-rt">🔄 Try Again</button>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         🎬 LANDSCAPE MODE (Anime-Style Page)
-    ═══════════════════════════════════════════════ -->
-    <div id="rlLandscape" class="rl-landscape" style="display:none;">
-
-      <!-- Hero Section -->
-      <div class="rl-hero">
-        <div class="rl-bg" id="rlBg"></div>
-        <div class="rl-fade"></div>
-        <div class="container">
-          <div class="rl-hero-in">
-            <div class="rl-poster">
-              <img id="rlPosterImg" alt="" />
-              <div class="rl-poster-play" id="rlPosterPlay">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+  <section class="ar-section">
+    <div class="ar-bg" style={animeCover ? `background-image:url(${animeCover});` : ''}></div>
+    <div class="ar-container">
+      <div class="ar-card">
+        <div class="ar-poster-wrap">
+          {animeImage ? (
+            <img class="ar-poster" src={animeImage} alt={animeTitle} />
+          ) : (
+            <div class="ar-poster-placeholder">🎬</div>
+          )}
+          <div class="ar-poster-glow"></div>
+        </div>
+        <div class="ar-info">
+          <div class="ar-badges">
+            <span class="ar-badge ar-badge-anime">🎌 ANIME</span>
+            {animeYear && <span class="ar-badge">{animeYear}</span>}
+            {animeScore && <span class="ar-badge ar-badge-score">★ {animeScore}</span>}
+            {animeStatus && <span class="ar-badge">{animeStatus.toUpperCase()}</span>}
+          </div>
+          <h1 class="ar-title">{animeTitle}</h1>
+          {animeEpisodes && (
+            <div class="ar-eps">
+              <span class="ar-eps-num">{animeEpisodes}</span>
+              <span class="ar-eps-lbl">Episodes</span>
+            </div>
+          )}
+          <div class="ar-status">
+            <div class="ar-spinner">
+              <div class="ar-orbit">
+                <div class="ar-dot ar-d1"></div>
+                <div class="ar-dot ar-d2"></div>
+                <div class="ar-dot ar-d3"></div>
               </div>
             </div>
-            <div class="rl-info">
-              <div class="rl-badges" id="rlBadges"></div>
-              <h1 class="rl-title" id="rlTitle">Loading...</h1>
-              <div class="rl-meta" id="rlMeta"></div>
-              <p class="rl-syno" id="rlSyno"></p>
-              <div class="rl-actions">
-                <button class="rl-btn rl-btn-p" id="rlWatchBtn">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                  <span>Watch Now</span>
-                </button>
-                <button class="rl-btn rl-btn-s" id="rlSaveBtn">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-                  <span id="rlSaveLabel">Save</span>
-                </button>
-                <button class="rl-btn rl-btn-s" id="rlCopyBtn">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  <span>Copy Link</span>
-                </button>
-              </div>
+            <div class="ar-status-text">
+              <div class="ar-status-title" id="statusTitle">Finding first episode...</div>
+              <div class="ar-status-sub" id="statusSub">Searching multiple platforms 🔍</div>
             </div>
           </div>
-        </div>
-      </div>
-
-      <!-- Player Section (hidden until Watch clicked) -->
-      <section class="section-block rl-player" id="rlPlayerBlock" style="display:none;">
-        <div class="container">
-          <div class="pl-head">
-            <h2 class="section-title"><span class="grad-text">Now Playing</span></h2>
-            <button class="pl-close" id="rlClosePlayer">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          <div class="ar-actions" id="actionsBox" style="display:none;">
+            <button class="ar-btn ar-btn-retry" id="retryBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+              <span>Retry</span>
             </button>
-          </div>
-          <div class="pl-wrap-full">
-            <div id="rlPlayerFrame" class="pl-frame-full">
-              <div class="pl-load-msg">Loading player...</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Details Section -->
-      <section class="section-block rl-details">
-        <div class="container">
-          <div class="rl-grid">
-            <div class="rl-main">
-              <div class="rl-sec">
-                <h2 class="rl-sh">About this video</h2>
-                <p class="rl-desc" id="rlFullDesc">Loading...</p>
-              </div>
-
-              <div class="rl-sec">
-                <div class="rl-eps-head">
-                  <h2 class="rl-sh">More Videos</h2>
-                  <div class="rl-eps-sort" id="rlSortInfo">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 6h18M6 12h12M10 18h4"/></svg>
-                    Recommended
-                  </div>
-                </div>
-                <div class="rl-cats" id="rlCatsTabs"></div>
-                <div id="rlRelatedList" class="rl-related-grid">
-                  <div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:.85rem;">Loading videos...</div>
-                </div>
-              </div>
-            </div>
-
-            <aside class="rl-side">
-              <div class="rl-card">
-                <h3 class="rc-t">Information</h3>
-                <div class="rc-list" id="rlInfoList"></div>
-              </div>
-
-              <div class="rl-card">
-                <h3 class="rc-t">Share</h3>
-                <div class="rl-share">
-                  <button class="sh-btn" data-share="twitter"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></button>
-                  <button class="sh-btn" data-share="facebook"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg></button>
-                  <button class="sh-btn" data-share="copy"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
-                </div>
-              </div>
-            </aside>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         📱 PORTRAIT MODE (TikTok Cinema)
-    ═══════════════════════════════════════════════ -->
-    <div id="rlPortrait" class="rl-portrait" style="display:none;">
-
-      <!-- Portrait Top Bar -->
-      <div class="rp-top">
-        <button class="rp-icon-btn" id="rpBack" aria-label="Back">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        </button>
-        <div class="rp-brand">
-          <span class="rp-brand-grad">Ani</span><span class="rp-brand-w">Tube</span><span class="rp-brand-grad">Buzz</span>
-        </div>
-        <div class="rp-menu-wrap">
-          <button class="rp-icon-btn" id="rpMenuBtn" aria-label="Menu">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-          </button>
-          <div class="rp-menu" id="rpMenu">
-            <button class="rp-menu-item" data-action="save">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-              <span>Save</span>
-            </button>
-            <button class="rp-menu-item" data-action="copy">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              <span>Copy Link</span>
-            </button>
+            <a class="ar-btn ar-btn-home" href="/">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+              </svg>
+              <span>Back to Home</span>
+            </a>
           </div>
         </div>
       </div>
-
-      <!-- Portrait Scroller -->
-      <div id="rpScroller" class="rp-scroller"></div>
-
-      <!-- Portrait progress -->
-      <div id="rpProgress" class="rp-progress">
-        <div class="rp-progress-track"><div class="rp-progress-fill" id="rpProgressFill"></div></div>
-        <div class="rp-progress-count" id="rpProgressCount">1 / 1</div>
-      </div>
-
+      {animeSynopsis && (
+        <div class="ar-synopsis">
+          <div class="ar-synopsis-title">Synopsis</div>
+          <p>{animeSynopsis}</p>
+        </div>
+      )}
     </div>
-
-    <!-- ═══ TOAST ═══ -->
-    <div id="rlToast" class="rl-toast"></div>
-
-  </div>
+  </section>
 
   <Footer slot="footer" />
-</BaseLayout>
 
-<script is:inline define:vars={{ id }}>
-(async function() {
-  // ═══════════════════════════════════════════════
-  // ELEMENTS
-  // ═══════════════════════════════════════════════
-  var $ = function(id) { return document.getElementById(id); };
-  var loader = $('rlLoader'), notFound = $('rlNotFound');
-  var landscape = $('rlLandscape'), portrait = $('rlPortrait');
-  var toast = $('rlToast');
-
-  // Landscape els
-  var lBg = $('rlBg'), lPoster = $('rlPosterImg'), lPosterPlay = $('rlPosterPlay');
-  var lTitle = $('rlTitle'), lBadges = $('rlBadges'), lMeta = $('rlMeta'), lSyno = $('rlSyno');
-  var lWatchBtn = $('rlWatchBtn'), lSaveBtn = $('rlSaveBtn'), lSaveLabel = $('rlSaveLabel'), lCopyBtn = $('rlCopyBtn');
-  var lPlayerBlock = $('rlPlayerBlock'), lPlayerFrame = $('rlPlayerFrame'), lClosePlayer = $('rlClosePlayer');
-  var lFullDesc = $('rlFullDesc'), lInfoList = $('rlInfoList');
-  var lRelatedList = $('rlRelatedList'), lCatsTabs = $('rlCatsTabs');
-
-  // Portrait els
-  var pScroller = $('rpScroller'), pProgress = $('rpProgress');
-  var pProgressFill = $('rpProgressFill'), pProgressCount = $('rpProgressCount');
-  var pBack = $('rpBack'), pMenuBtn = $('rpMenuBtn'), pMenu = $('rpMenu');
-
-  // State
-  var currentVideo = null;
-  var allVideos = [];
-  var relatedByType = {};
-  var portraitCurrentIdx = 0;
-
-  // ═══════════════════════════════════════════════
-  // HELPERS
-  // ═══════════════════════════════════════════════
-  function esc(s) { return String(s || '').replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
-  function trunc(s, n) { s = String(s || ''); return s.length > n ? s.slice(0, n).trim() + '…' : s; }
-  function fmt(d) { try { if (!d) return 'N/A'; var x = new Date(d); if (isNaN(x.getTime())) return 'N/A'; return x.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }); } catch(e) { return 'N/A'; } }
-  function cap(s) { try { if (!s) return ''; var str = String(s).replace(/_/g, ' '); return str.charAt(0).toUpperCase() + str.slice(1); } catch(e) { return String(s || ''); } }
-
-  // ═══════════════════════════════════════════════
-  // 🎯 ASPECT DETECTION
-  // ═══════════════════════════════════════════════
-  function isPortrait(video) {
-    if (!video) return false;
-    var source = (video.source || '').toLowerCase();
-    var type = (video.type || '').toLowerCase();
-    var title = (video.title || '').toLowerCase();
-    var url = (video.embedUrl || '').toLowerCase();
-    var duration = video.duration || 0;
-
-    // Explicit portrait sources
-    if (source === 'tiktok' || source === 'instagram' || source === 'reels') return true;
-
-    // Type-based
-    if (type === 'shorts' || type === 'reels' || type === 'short') return true;
-
-    // Title / URL hints
-    if (/#shorts?\b|\bshorts?\b|\breels?\b|vertical\s*video/i.test(title)) return true;
-    if (/\/shorts\//.test(url)) return true;
-
-    // Duration hint (very short = likely portrait)
-    if (duration && duration > 0 && duration < 90) return true;
-
-    // Default: landscape
-    return false;
-  }
-
-  // ═══════════════════════════════════════════════
-  // 💾 SAVE / COPY / SHARE
-  // ═══════════════════════════════════════════════
-  function isVideoSaved(vid) {
-    try {
-      var saved = JSON.parse(localStorage.getItem('savedVideos') || '[]');
-      return saved.some(function(x) { return x.id === vid; });
-    } catch(e) { return false; }
-  }
-
-  function toggleSave(video) {
-    try {
-      var saved = JSON.parse(localStorage.getItem('savedVideos') || '[]');
-      var idx = saved.findIndex(function(x) { return x.id === video.id; });
-      if (idx >= 0) {
-        saved.splice(idx, 1);
-        localStorage.setItem('savedVideos', JSON.stringify(saved));
-        showToast('Removed from saved', '✕');
-        return false;
-      } else {
-        saved.push({
-          id: video.id, title: video.title, thumbnail: video.thumbnail,
-          channel: video.channel, type: video.type, savedAt: Date.now()
-        });
-        localStorage.setItem('savedVideos', JSON.stringify(saved));
-        showToast('Saved to library', '✓');
-        notifySafiya('save', video);
-        return true;
-      }
-    } catch(e) { return false; }
-  }
-
-  function copyCurrentLink() {
-    try {
-      navigator.clipboard.writeText(window.location.href);
-      showToast('Link copied', '✓');
-    } catch(e) {
-      showToast('Copy failed', '✕');
+  <style is:global>
+    .ar-section {
+      position: relative;
+      min-height: calc(100vh - 80px);
+      padding: 60px 0;
+      overflow: hidden;
     }
-  }
-
-  function showToast(msg, icon) {
-    toast.innerHTML = '<span class="rl-toast-ic">' + (icon || '✓') + '</span><span>' + esc(msg) + '</span>';
-    toast.classList.add('rl-toast-show');
-    setTimeout(function() { toast.classList.remove('rl-toast-show'); }, 2200);
-  }
-
-  // ═══════════════════════════════════════════════
-  // 💜 SAFIYA INTEGRATION
-  // ═══════════════════════════════════════════════
-  function notifySafiya(type, video) {
-    try {
-      var deviceId = '';
-      try { deviceId = localStorage.getItem('safiya_v13:device_id') || ''; } catch(e) {}
-      var memoryKey = deviceId ? 'safiya_v13:memory:' + deviceId : null;
-      var memRaw = null;
-      if (memoryKey) memRaw = localStorage.getItem(memoryKey);
-      if (!memRaw) memRaw = localStorage.getItem('safiya_memory');
-      var memory = memRaw ? JSON.parse(memRaw) : {};
-
-      if (!memory.behavior) memory.behavior = {};
-      if (!memory.behavior.watchHistory) memory.behavior.watchHistory = [];
-      if (!memory.behavior.savedVideos) memory.behavior.savedVideos = [];
-
-      var record = {
-        id: video.id, title: video.title, type: video.type || 'video',
-        channel: video.channel || '', source: video.source || '',
-        time: Date.now(), action: type
-      };
-
-      if (type === 'save') {
-        memory.behavior.savedVideos.unshift(record);
-        memory.behavior.savedVideos = memory.behavior.savedVideos.slice(0, 40);
-      } else {
-        memory.behavior.watchHistory.unshift(record);
-        memory.behavior.watchHistory = memory.behavior.watchHistory.slice(0, 40);
-      }
-      memory.behavior.currentlyWatching = record;
-
-      if (memoryKey) localStorage.setItem(memoryKey, JSON.stringify(memory));
-      localStorage.setItem('safiya_memory', JSON.stringify(memory));
-
-      window.dispatchEvent(new CustomEvent('safiya:video-event', {
-        detail: { action: type, video: video, title: video.title, type: video.type }
-      }));
-
-      if (window.Safiya && typeof window.Safiya.say === 'function') {
-        var lines = {
-          save: ['saved that? nice pick', 'good taste ✨', 'adding to your library 💜'],
-          watch: {
-            movies: ['movie mode activated 🍿', 'peak cinema', 'good taste bestie'],
-            kdrama: ['k-drama? im so here 💕', 'plot better be crazy', 'chemistry incoming'],
-            donghua: ['ooh donghua? underrated fr', 'animation slaps', 'cultivation arcs hit'],
-            anime: ['elite taste 👀', 'im invested bestie', 'the vibes ✨']
-          }
-        };
-        var msgList = type === 'save' ? lines.save : (lines.watch[video.type] || lines.watch.anime);
-        var msg = msgList[Math.floor(Math.random() * msgList.length)];
-        setTimeout(function() { window.Safiya.say(msg, 4200); }, 400);
-      }
-    } catch(err) { console.warn('Safiya notify failed:', err); }
-  }
-
-  // ═══════════════════════════════════════════════
-  // 🚀 SMART BACK NAVIGATION
-  // ═══════════════════════════════════════════════
-  function smartGoBack() {
-    var ref = document.referrer;
-    var thisOrigin = window.location.origin;
-    if (ref && ref.indexOf(thisOrigin) === 0 && ref !== window.location.href) {
-      window.history.back();
-    } else if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.location.href = '/';
+    .ar-bg {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      opacity: 0.15;
+      filter: blur(40px);
+      transform: scale(1.2);
+      z-index: 0;
     }
-  }
-
-  // ═══════════════════════════════════════════════
-  // 🎬 LANDSCAPE MODE RENDERING
-  // ═══════════════════════════════════════════════
-  function renderLandscape(video) {
-    try { document.title = (video.title || 'Watch') + ' - AniTube Buzz'; } catch(e) {}
-
-    // Background & poster
-    if (video.thumbnail) {
-      if (lBg) lBg.style.backgroundImage = 'url(' + video.thumbnail + ')';
-      if (lPoster) { lPoster.src = video.thumbnail; lPoster.alt = video.title || ''; }
+    .ar-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(10,5,23,0.6) 0%, #0a0517 100%);
     }
-
-    // Title
-    if (lTitle) lTitle.textContent = video.title || 'Untitled';
-
-    // Badges
-    var badges = [];
-    if (video.isNew) badges.push('<span class="rl-b rl-b-new"><span class="rl-dot"></span>NEW</span>');
-    if (video.isOfficial) badges.push('<span class="rl-b rl-b-off">✓ OFFICIAL</span>');
-    badges.push('<span class="rl-b rl-b-hd">HD</span>');
-    if (video.type) badges.push('<span class="rl-b rl-b-type">' + esc((video.type || '').toUpperCase()) + '</span>');
-    if (lBadges) lBadges.innerHTML = badges.join('');
-
-    // Meta
-    var meta = [];
-    if (video.channel) meta.push(esc(video.channel));
-    if (video.publishedAt) meta.push(fmt(video.publishedAt));
-    if (video.episodeNumber) meta.push('Episode ' + video.episodeNumber);
-    if (lMeta) lMeta.innerHTML = meta.map(function(x) { return '<span>' + x + '</span>'; }).join('<span class="mp-sep">·</span>');
-
-    // Synopsis
-    var syn = video.description || 'Enjoy this ' + (video.type || 'video') + ' on AniTubeBuzz.';
-    if (lSyno) lSyno.textContent = trunc(syn, 250);
-    if (lFullDesc) lFullDesc.textContent = syn;
-
-    // Info list
-    var info = [
-      ['Type', video.type ? cap(video.type) : 'Video'],
-      ['Channel', video.channel || 'Unknown'],
-      ['Published', video.publishedAt ? fmt(video.publishedAt) : 'N/A'],
-      ['Episode', video.episodeNumber || 'N/A'],
-      ['Quality', 'HD']
-    ];
-    if (lInfoList) lInfoList.innerHTML = info.map(function(r) {
-      return '<div class="ir"><span class="ir-l">' + esc(r[0]) + '</span><span class="ir-v">' + esc(String(r[1])) + '</span></div>';
-    }).join('');
-
-    // Save button state
-    updateSaveButton(video);
-  }
-
-  function updateSaveButton(video) {
-    if (!lSaveLabel) return;
-    lSaveLabel.textContent = isVideoSaved(video.id) ? 'Saved' : 'Save';
-  }
-
-  function playLandscapeVideo(video) {
-    if (!lPlayerBlock || !lPlayerFrame) return;
-    lPlayerBlock.style.display = 'block';
-    lPlayerFrame.innerHTML = '<div class="pl-load-msg"><div class="lo-orb sm"><div class="lo-ring"></div><div class="lo-core"></div></div><span style="margin-left:12px;color:#fff;">Loading video...</span></div>';
-
-    setTimeout(function() { lPlayerBlock.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
-
-    var embedUrl = video.embedUrl;
-    if (video.source === 'dailymotion') {
-      embedUrl += (embedUrl.indexOf('?') !== -1 ? '&' : '?') + 'autoplay=1&mute=0&ui-logo=0&ui-start-screen-info=0&sharing-enable=0&queue-enable=0';
-    } else if (video.source === 'youtube') {
-      embedUrl += (embedUrl.indexOf('?') !== -1 ? '&' : '?') + 'autoplay=1&modestbranding=1&rel=0&showinfo=0&playsinline=1';
+    .ar-container {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
     }
-
-    var brand = '<div class="pl-brand"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg><span>AniTube Player</span></div>';
-    lPlayerFrame.innerHTML = brand;
-
-    var iframe = document.createElement('iframe');
-    iframe.src = embedUrl;
-    iframe.setAttribute('frameborder', '0');
-    iframe.setAttribute('allow', 'accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;fullscreen');
-    iframe.setAttribute('allowfullscreen', '');
-    iframe.setAttribute('playsinline', '');
-    lPlayerFrame.appendChild(iframe);
-
-    // Notify Safiya after 3s of watching
-    setTimeout(function() { notifySafiya('watch', video); }, 3000);
-  }
-
-  // ═══════════════════════════════════════════════
-  // 🎨 RELATED VIDEO CARD (like episode card)
-  // ═══════════════════════════════════════════════
-  function buildRelatedCard(v, idx) {
-    var animDelay = ((idx % 12) * 40) + 'ms';
-    var thumb = v.thumbnail || '';
-    var imgHtml = thumb
-      ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" class="at-thumb-img" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.6s ease, filter 0.35s ease;" />'
-      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.25),rgba(232,121,249,0.15),rgba(125,211,252,0.2));"></div>';
-
-    var typeBadge = v.type ? '<div style="position:absolute;top:8px;left:8px;padding:4px 9px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.6rem;font-weight:800;letter-spacing:0.08em;border-radius:6px;z-index:6;box-shadow:0 3px 10px rgba(192,132,252,0.5);">' + esc((v.type || '').toUpperCase()) + '</div>' : '';
-    var newBadge = v.isNew ? '<div style="position:absolute;top:8px;right:8px;padding:3px 8px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:800;border-radius:5px;z-index:6;">NEW</div>' : '';
-
-    return '<a href="/reels/' + esc(v.id) + '" class="at-ep-card rl-related-card" ' +
-      'style="text-decoration:none;color:inherit;position:relative;cursor:pointer;background:transparent;animation:atCardIn 0.5s ease backwards;animation-delay:' + animDelay + ';">' +
-      '<div class="at-thumb-wrap" style="position:relative;width:100%;padding-top:56.25%;border-radius:14px;overflow:hidden;background:#0a0517;border:1px solid rgba(192,132,252,0.35);box-shadow:0 8px 20px rgba(0,0,0,0.4);transition:all 0.35s ease;">' +
-        imgHtml +
-        '<div class="at-shine" style="position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.2),transparent);z-index:3;transition:left 0.8s ease;pointer-events:none;"></div>' +
-        '<div class="at-overlay" style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(10,5,23,0.85) 100%);opacity:0;transition:opacity 0.3s ease;pointer-events:none;z-index:3;"></div>' +
-        '<div class="at-play-wrap" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.4);width:52px;height:52px;z-index:5;opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;">' +
-          '<div style="position:absolute;inset:0;border-radius:50%;border:2px solid rgba(192,132,252,0.8);animation:atPlayRing 2s ease-out infinite;"></div>' +
-          '<div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:3px;box-shadow:0 10px 30px rgba(192,132,252,0.7),0 0 40px rgba(232,121,249,0.5);z-index:2;">' +
-            '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
-          '</div>' +
-        '</div>' +
-        typeBadge +
-        newBadge +
-      '</div>' +
-      '<div style="padding:10px 4px 4px;position:relative;z-index:1;">' +
-        '<h4 class="at-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.85rem;font-weight:700;color:var(--text-primary);margin:0 0 4px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;">' + esc(v.title || 'Video') + '</h4>' +
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.66rem;color:var(--text-muted);opacity:0.75;">' + esc(v.channel || 'Channel') + '</div>' +
-      '</div>' +
-    '</a>';
-  }
-
-  function renderRelated(videos, currentType) {
-    if (!lRelatedList) return;
-    // Group by type
-    relatedByType = {};
-    videos.forEach(function(v) {
-      var t = v.type || 'other';
-      if (!relatedByType[t]) relatedByType[t] = [];
-      relatedByType[t].push(v);
-    });
-
-    var types = Object.keys(relatedByType);
-    if (!types.length) {
-      lRelatedList.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);">No related videos.</div>';
-      return;
+    .ar-card {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 40px;
+      align-items: start;
+      background: rgba(28, 15, 61, 0.4);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(192, 132, 252, 0.15);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
     }
-
-    // Move current type first
-    if (currentType && relatedByType[currentType]) {
-      types = types.filter(function(t) { return t !== currentType; });
-      types.unshift(currentType);
-    }
-
-    // Category tabs
-    if (lCatsTabs) {
-      lCatsTabs.innerHTML = types.map(function(t, i) {
-        return '<button class="rl-ct' + (i === 0 ? ' active' : '') + '" data-cat="' + esc(t) + '">' + esc(cap(t)) + ' <span class="ct-c">' + relatedByType[t].length + '</span></button>';
-      }).join('');
-
-      lCatsTabs.querySelectorAll('.rl-ct').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          lCatsTabs.querySelectorAll('.rl-ct').forEach(function(b) { b.classList.remove('active'); });
-          btn.classList.add('active');
-          showCategory(btn.dataset.cat);
-        });
-      });
-    }
-
-    showCategory(types[0]);
-  }
-
-  function showCategory(cat) {
-    var list = (relatedByType[cat] || []).filter(function(v) { return v.id !== id; });
-    if (!list.length) {
-      lRelatedList.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);">No videos in this category.</div>';
-      return;
-    }
-    lRelatedList.innerHTML = list.slice(0, 12).map(function(v, i) { return buildRelatedCard(v, i); }).join('');
-  }
-
-  // ═══════════════════════════════════════════════
-  // 📱 PORTRAIT MODE RENDERING (TikTok)
-  // ═══════════════════════════════════════════════
-  function buildPortraitSlot(video, idx) {
-    var slot = document.createElement('div');
-    slot.className = 'rp-slot';
-    slot.dataset.idx = idx;
-    slot.dataset.vid = video.id;
-
-    var thumb = video.thumbnail ? '<img src="' + esc(video.thumbnail) + '" alt="" class="rp-slot-bg" loading="lazy" />' : '';
-
-    slot.innerHTML =
-      thumb +
-      '<div class="rp-slot-tint"></div>' +
-      '<div class="rp-slot-frame">' +
-        '<div class="rp-slot-video" data-loaded="0"></div>' +
-        '<div class="rp-slot-loading"><div class="rp-slot-spinner"></div></div>' +
-      '</div>' +
-      '<div class="rp-slot-gradient"></div>' +
-      '<div class="rp-slot-info">' +
-        '<div class="rp-slot-user">' +
-          '<div class="rp-slot-avatar"><div class="rp-slot-avatar-inner">▶</div></div>' +
-          '<div class="rp-slot-user-text">' +
-            '<div class="rp-slot-username">' + esc(video.channel || 'AniTube') + '</div>' +
-            '<div class="rp-slot-type">' + esc((video.type || 'video').toUpperCase()) + '</div>' +
-          '</div>' +
-        '</div>' +
-        '<div class="rp-slot-caption">' + esc(video.title || 'Video') + '</div>' +
-      '</div>';
-
-    return slot;
-  }
-
-  function loadPortraitVideo(idx) {
-    var slot = pScroller.querySelector('[data-idx="' + idx + '"]');
-    if (!slot) return;
-    var videoDiv = slot.querySelector('.rp-slot-video');
-    var loading = slot.querySelector('.rp-slot-loading');
-    if (!videoDiv || videoDiv.dataset.loaded === '1') return;
-    videoDiv.dataset.loaded = '1';
-
-    var video = allVideos[idx];
-    if (!video || !video.embedUrl) return;
-
-    var embedUrl = video.embedUrl;
-    if (video.source === 'dailymotion') {
-      embedUrl += (embedUrl.indexOf('?') !== -1 ? '&' : '?') + 'autoplay=1&mute=1';
-    } else if (video.source === 'youtube') {
-      embedUrl += (embedUrl.indexOf('?') !== -1 ? '&' : '?') + 'autoplay=1&mute=1&modestbranding=1&rel=0&showinfo=0&playsinline=1';
-    }
-
-    var iframe = document.createElement('iframe');
-    iframe.src = embedUrl;
-    iframe.setAttribute('frameborder', '0');
-    iframe.setAttribute('allow', 'accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;fullscreen');
-    iframe.setAttribute('allowfullscreen', '');
-    iframe.setAttribute('playsinline', '');
-    iframe.onload = function() {
-      if (loading) loading.style.opacity = '0';
-      setTimeout(function() { if (loading) loading.style.display = 'none'; }, 400);
-    };
-    videoDiv.appendChild(iframe);
-  }
-
-  function unloadPortraitVideo(idx) {
-    var slot = pScroller.querySelector('[data-idx="' + idx + '"]');
-    if (!slot) return;
-    var videoDiv = slot.querySelector('.rp-slot-video');
-    var loading = slot.querySelector('.rp-slot-loading');
-    if (!videoDiv || videoDiv.dataset.loaded !== '1') return;
-    videoDiv.dataset.loaded = '0';
-    videoDiv.innerHTML = '';
-    if (loading) { loading.style.display = 'flex'; loading.style.opacity = '1'; }
-  }
-
-  var portraitNotifyTimeout = null;
-  function setPortraitCurrent(newIdx) {
-    if (newIdx < 0 || newIdx >= allVideos.length || newIdx === portraitCurrentIdx) return;
-    portraitCurrentIdx = newIdx;
-
-    try {
-      var v = allVideos[newIdx];
-      if (v) {
-        window.history.replaceState({}, '', '/reels/' + encodeURIComponent(v.id));
-        document.title = (v.title || 'Reel') + ' · AniTubeBuzz';
-        currentVideo = v;
-      }
-    } catch(e) {}
-
-    for (var i = 0; i < allVideos.length; i++) {
-      if (Math.abs(i - newIdx) <= 1) loadPortraitVideo(i);
-      else if (Math.abs(i - newIdx) > 2) unloadPortraitVideo(i);
-    }
-
-    clearTimeout(portraitNotifyTimeout);
-    portraitNotifyTimeout = setTimeout(function() {
-      if (allVideos[newIdx]) notifySafiya('watch', allVideos[newIdx]);
-    }, 2000);
-
-    updatePortraitProgress();
-  }
-
-  function updatePortraitProgress() {
-    if (!pProgress || !allVideos.length) return;
-    var pct = ((portraitCurrentIdx + 1) / allVideos.length) * 100;
-    if (pProgressFill) pProgressFill.style.height = pct + '%';
-    if (pProgressCount) pProgressCount.textContent = (portraitCurrentIdx + 1) + ' / ' + allVideos.length;
-  }
-
-  var portraitObserver = null;
-  function setupPortraitObserver() {
-    if (portraitObserver) portraitObserver.disconnect();
-    portraitObserver = new IntersectionObserver(function(entries) {
-      var mostVisible = null, maxRatio = 0;
-      entries.forEach(function(entry) {
-        if (entry.intersectionRatio > maxRatio) {
-          maxRatio = entry.intersectionRatio;
-          mostVisible = entry.target;
-        }
-      });
-      if (mostVisible && maxRatio > 0.6) {
-        var idx = parseInt(mostVisible.dataset.idx);
-        if (!isNaN(idx) && idx !== portraitCurrentIdx) setPortraitCurrent(idx);
-      }
-    }, { root: pScroller, threshold: [0.3, 0.6, 0.9] });
-
-    pScroller.querySelectorAll('.rp-slot').forEach(function(s) { portraitObserver.observe(s); });
-  }
-
-  // ═══════════════════════════════════════════════
-  // 🎯 INITIALIZE MODE
-  // ═══════════════════════════════════════════════
-  function initPortraitMode() {
-    document.body.classList.add('rl-portrait-mode');
-    portrait.style.display = 'block';
-
-    // Only keep portrait-oriented videos for scroll
-    var portraitVideos = allVideos.filter(isPortrait);
-    // If found video isn't in list, add first
-    if (!portraitVideos.find(function(v) { return v.id === currentVideo.id; })) {
-      portraitVideos.unshift(currentVideo);
-    }
-    // Move current to top
-    var idx = portraitVideos.findIndex(function(v) { return v.id === currentVideo.id; });
-    if (idx > 0) {
-      var arr = portraitVideos.splice(idx, 1);
-      portraitVideos.unshift(arr[0]);
-    }
-    allVideos = portraitVideos;
-
-    pScroller.innerHTML = '';
-    allVideos.forEach(function(v, i) { pScroller.appendChild(buildPortraitSlot(v, i)); });
-
-    portraitCurrentIdx = -1;
-    setPortraitCurrent(0);
-    setupPortraitObserver();
-
-    // Menu handlers
-    pMenuBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      pMenu.classList.toggle('rp-menu-open');
-    });
-    document.addEventListener('click', function(e) {
-      if (!pMenuBtn.contains(e.target) && !pMenu.contains(e.target)) {
-        pMenu.classList.remove('rp-menu-open');
-      }
-    });
-    pMenu.addEventListener('click', function(e) {
-      var btn = e.target.closest('.rp-menu-item');
-      if (!btn) return;
-      var action = btn.dataset.action;
-      if (action === 'save') toggleSave(currentVideo);
-      else if (action === 'copy') copyCurrentLink();
-      pMenu.classList.remove('rp-menu-open');
-    });
-
-    pBack.addEventListener('click', smartGoBack);
-
-    // Keyboard
-    document.addEventListener('keydown', function(e) {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      if (e.key === 'ArrowDown' || e.key === 'j') {
-        e.preventDefault();
-        var next = pScroller.querySelector('[data-idx="' + (portraitCurrentIdx + 1) + '"]');
-        if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else if (e.key === 'ArrowUp' || e.key === 'k') {
-        e.preventDefault();
-        var prev = pScroller.querySelector('[data-idx="' + (portraitCurrentIdx - 1) + '"]');
-        if (prev) prev.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } else if (e.key === 'Escape') {
-        smartGoBack();
-      }
-    });
-  }
-
-  function initLandscapeMode() {
-    document.body.classList.add('rl-landscape-mode');
-    landscape.style.display = 'block';
-    renderLandscape(currentVideo);
-
-    // Button handlers
-    if (lWatchBtn) lWatchBtn.addEventListener('click', function() { playLandscapeVideo(currentVideo); });
-    if (lPosterPlay) lPosterPlay.addEventListener('click', function() { playLandscapeVideo(currentVideo); });
-    if (lSaveBtn) lSaveBtn.addEventListener('click', function() {
-      toggleSave(currentVideo);
-      updateSaveButton(currentVideo);
-    });
-    if (lCopyBtn) lCopyBtn.addEventListener('click', copyCurrentLink);
-    if (lClosePlayer) lClosePlayer.addEventListener('click', function() {
-      if (lPlayerBlock) lPlayerBlock.style.display = 'none';
-      if (lPlayerFrame) lPlayerFrame.innerHTML = '';
-    });
-
-    // Share buttons
-    document.querySelectorAll('.sh-btn').forEach(function(b) {
-      b.addEventListener('click', function() {
-        var t = b.dataset.share, u = window.location.href, x = (currentVideo.title || 'Video') + ' on AniTube Buzz';
-        if (t === 'twitter') window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(x) + '&url=' + encodeURIComponent(u), '_blank');
-        else if (t === 'facebook') window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(u), '_blank');
-        else if (t === 'copy') { copyCurrentLink(); }
-      });
-    });
-
-    // Render related videos
-    renderRelated(allVideos, currentVideo.type);
-  }
-
-  // ═══════════════════════════════════════════════
-  // 🚀 INIT
-  // ═══════════════════════════════════════════════
-  async function init() {
-    try {
-      var fetched = [];
-      var found = null;
-
-      for (var i = 1; i <= 3; i++) {
-        try {
-          var res = await fetch('/api/social-feed?type=all&page=' + i + '&limit=25');
-          if (!res.ok) continue;
-          var data = await res.json();
-          if (data.success && data.videos) {
-            fetched = fetched.concat(data.videos);
-            if (!found) found = data.videos.find(function(v) { return v.id === id; });
-          }
-        } catch(e) {}
-      }
-
-      if (!found && fetched.length > 0) found = fetched[0];
-
-      if (!found) {
-        loader.style.display = 'none';
-        notFound.style.display = 'flex';
-        return;
-      }
-
-      // Dedupe
-      var seen = {};
-      allVideos = fetched.filter(function(v) {
-        if (!v || !v.id || seen[v.id]) return false;
-        seen[v.id] = true;
-        return true;
-      });
-
-      // Add current to list if missing
-      if (!allVideos.find(function(v) { return v.id === found.id; })) {
-        allVideos.unshift(found);
-      }
-
-      currentVideo = found;
-
-      loader.style.display = 'none';
-
-      // ═══ DECIDE MODE ═══
-      if (isPortrait(currentVideo)) {
-        initPortraitMode();
-      } else {
-        initLandscapeMode();
-      }
-
-    } catch(err) {
-      console.error('[Reels]', err);
-      loader.style.display = 'none';
-      notFound.style.display = 'flex';
-    }
-  }
-
-  init();
-})();
-</script>
-
-<style is:global>
-  /* ═══════════════════════════════════════════════
-     GLOBAL: Portrait mode hides site chrome
-  ═══════════════════════════════════════════════ */
-  body.rl-portrait-mode {
-    overflow: hidden !important;
-    background: #000 !important;
-  }
-  body.rl-portrait-mode .site-header,
-  body.rl-portrait-mode header:not(.rp-top),
-  body.rl-portrait-mode footer,
-  body.rl-portrait-mode #btt,
-  body.rl-portrait-mode #back-to-top,
-  body.rl-portrait-mode .back-to-top {
-    display: none !important;
-    visibility: hidden !important;
-  }
-  body.rl-portrait-mode main {
-    padding: 0 !important;
-    margin: 0 !important;
-    background: #000 !important;
-  }
-
-  /* Landscape mode: keep site chrome, just add spacing */
-  body.rl-landscape-mode main { padding: 0 !important; }
-
-  /* ═══ ANIMATIONS (matching anime page) ═══ */
-  @keyframes atPlayRing { 0%{transform:scale(1);opacity:.9} 100%{transform:scale(1.7);opacity:0} }
-  @keyframes atCardIn { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
-
-  .at-ep-card { transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1) !important; }
-  .at-ep-card:hover { transform: translateY(-6px) !important; }
-  .at-ep-card:hover .at-thumb-wrap {
-    border-color: rgba(232, 121, 249, 0.9) !important;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.5), 0 0 25px rgba(192, 132, 252, 0.5), 0 0 0 1px rgba(232, 121, 249, 0.7) !important;
-  }
-  .at-ep-card:hover .at-play-wrap { opacity: 1 !important; transform: translate(-50%,-50%) scale(1) !important; }
-  .at-ep-card:hover .at-thumb-img { transform: scale(1.08) !important; filter: brightness(0.65) !important; }
-  .at-ep-card:hover .at-shine { left: 120% !important; }
-  .at-ep-card:hover .at-overlay { opacity: 1 !important; }
-  .at-ep-card:hover .at-title {
-    background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    background-clip: text !important;
-  }
-
-  @media (max-width: 768px) {
-    .at-play-wrap { opacity: 1 !important; transform: translate(-50%,-50%) scale(0.85) !important; }
-  }
-</style>
-
-<style>
-  /* ═══════════════════════════════════════════════
-     🎬 SHARED LOADER / NOT FOUND
-  ═══════════════════════════════════════════════ */
-  .rl-wrap { min-height: 100vh; color: var(--text-primary); }
-  .rl-loader, .rl-nf {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 6rem 1rem; text-align: center; min-height: 60vh;
-  }
-  .lo-orb { position: relative; width: 50px; height: 50px; margin-bottom: 1rem; }
-  .lo-orb.sm { width: 32px; height: 32px; margin-bottom: 0; }
-  .lo-core {
-    position: absolute; inset: 15%; border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    box-shadow: 0 0 20px rgba(192, 132, 252, 0.6);
-    animation: loPu 1s ease infinite;
-  }
-  .lo-ring {
-    position: absolute; inset: 0; border-radius: 50%;
-    border: 2px solid rgba(192, 132, 252, 0.6);
-    animation: loEx 1.2s ease-out infinite;
-  }
-  @keyframes loEx { 0%{transform:scale(.5);opacity:1} 100%{transform:scale(1.5);opacity:0} }
-  @keyframes loPu { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
-  .rl-loader p { color: var(--text-muted); font-family: 'JetBrains Mono', monospace; font-size: .85rem; }
-  .nf-ic { color: #c084fc; margin-bottom: 1rem; }
-  .rl-nf h1 {
-    font-family: 'Bricolage Grotesque', sans-serif; font-size: 2rem;
-    background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    margin-bottom: .5rem;
-  }
-  .rl-nf p { color: var(--text-secondary); margin-bottom: 1.5rem; max-width: 400px; }
-  .nf-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-  .nf-bk, .nf-rt {
-    display: inline-flex; align-items: center; gap: 6px; padding: 12px 24px;
-    text-decoration: none; border: none; cursor: pointer; border-radius: 999px;
-    font-weight: 700; font-family: 'Bricolage Grotesque', sans-serif; font-size: .9rem;
-    transition: transform .2s ease;
-  }
-  .nf-bk { background: var(--grad); color: #fff; box-shadow: 0 8px 24px rgba(192, 132, 252, .4); }
-  .nf-rt { background: rgba(192, 132, 252, .1); border: 1px solid rgba(192, 132, 252, .3); color: var(--text-primary); }
-  .nf-bk:hover, .nf-rt:hover { transform: translateY(-2px); }
-
-  /* ═══════════════════════════════════════════════
-     🎬 LANDSCAPE HERO (Anime-detail-style)
-  ═══════════════════════════════════════════════ */
-  .rl-hero {
-    position: relative; padding: 3rem 0; overflow: hidden; min-height: 480px;
-  }
-  .rl-bg {
-    position: absolute; inset: 0; background-size: cover; background-position: center;
-    filter: blur(35px) brightness(.3) saturate(1.3); transform: scale(1.15);
-    opacity: .7; z-index: 0;
-  }
-  .rl-fade {
-    position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(10,5,23,.55) 0%, rgba(10,5,23,.7) 60%, var(--bg-base,#0a0517) 100%);
-    z-index: 1;
-  }
-  .rl-hero-in {
-    position: relative; z-index: 2;
-    display: grid; grid-template-columns: 280px 1fr; gap: 3rem; align-items: center;
-  }
-  .rl-poster {
-    position: relative;
-    aspect-ratio: 16/9;
-    width: 100%;
-    border-radius: 18px; overflow: hidden;
-    box-shadow: 0 25px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(192,132,252,.3);
-    cursor: pointer;
-    transition: transform 0.3s ease;
-  }
-  .rl-poster:hover { transform: scale(1.02); }
-  .rl-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .rl-poster-play {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    width: 70px; height: 70px; border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; padding-left: 4px;
-    box-shadow: 0 10px 30px rgba(192,132,252,.7), 0 0 40px rgba(232,121,249,.5);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 2;
-  }
-  .rl-poster:hover .rl-poster-play { transform: translate(-50%, -50%) scale(1.15); }
-
-  .rl-info { min-width: 0; color: #fff; }
-  .rl-badges { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
-  .rl-b {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 5px 11px; border-radius: 6px;
-    font-family: 'JetBrains Mono', monospace; font-size: .68rem;
-    font-weight: 800; letter-spacing: .08em;
-  }
-  .rl-b-new { background: linear-gradient(135deg, #ef4444, #f97316); color: #fff; box-shadow: 0 4px 15px rgba(239,68,68,.4); }
-  .rl-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px #fff; animation: apd 1.5s ease infinite; }
-  @keyframes apd { 0%,100%{opacity:1} 50%{opacity:.4} }
-  .rl-b-off { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
-  .rl-b-hd { background: rgba(125, 211, 252, .9); color: #0a0517; }
-  .rl-b-type { background: rgba(192, 132, 252, .9); color: #0a0517; }
-
-  .rl-title {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: clamp(1.6rem, 3.5vw, 2.6rem); font-weight: 800;
-    line-height: 1.15; letter-spacing: -.02em; margin: 0 0 .75rem;
-    color: #fff; text-shadow: 0 4px 20px rgba(0,0,0,.8);
-  }
-  .rl-meta {
-    display: flex; align-items: center; gap: 12px;
-    color: rgba(255,255,255,.75); font-size: .85rem;
-    font-family: 'JetBrains Mono', monospace;
-    margin-bottom: 1rem; flex-wrap: wrap;
-  }
-  .mp-sep { color: rgba(192,132,252,.5); }
-  .rl-syno {
-    color: rgba(255,255,255,.82); font-size: .95rem; line-height: 1.65;
-    margin: 0 0 1.75rem; max-width: 700px;
-    text-shadow: 0 2px 10px rgba(0,0,0,.5);
-  }
-  .rl-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-  .rl-btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 13px 26px; border-radius: 999px;
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: .92rem; font-weight: 700;
-    cursor: pointer; transition: all .25s ease; border: none;
-  }
-  .rl-btn-p {
-    background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
-    color: #fff; box-shadow: 0 10px 30px rgba(192,132,252,.5);
-  }
-  .rl-btn-p:hover { transform: translateY(-3px); box-shadow: 0 14px 40px rgba(192,132,252,.65); }
-  .rl-btn-s {
-    background: rgba(28,15,61,.7); color: #fff;
-    border: 1px solid rgba(192,132,252,.4);
-  }
-  .rl-btn-s:hover { background: rgba(192,132,252,.2); transform: translateY(-3px); }
-
-  /* ═══════════════════════════════════════════════
-     🎬 LANDSCAPE PLAYER
-  ═══════════════════════════════════════════════ */
-  .rl-player { padding: 2rem 0; }
-  .pl-head {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 1.25rem;
-  }
-  .pl-close {
-    background: rgba(192,132,252,.1); border: 1px solid rgba(192,132,252,.3);
-    color: var(--text-primary); width: 38px; height: 38px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: all .2s ease;
-  }
-  .pl-close:hover { background: rgba(239,68,68,.2); color: #ef4444; transform: rotate(90deg); }
-  .pl-wrap-full {
-    width: 100%; max-width: 100%; position: relative;
-    border-radius: 20px; overflow: hidden;
-    box-shadow: 0 20px 50px rgba(0,0,0,.5), 0 0 0 1px rgba(192,132,252,.2);
-    background: #000;
-  }
-  .pl-frame-full {
-    position: relative; width: 100%; padding-top: 56.25%;
-    background: #000; overflow: hidden;
-  }
-  .pl-frame-full iframe {
-    position: absolute !important; top: 0 !important; left: 0 !important;
-    width: 100% !important; height: 100% !important;
-    border: 0 !important; display: block !important;
-  }
-  .pl-load-msg {
-    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-    color: #fff; font-family: 'JetBrains Mono', monospace; font-size: .85rem; background: #000;
-  }
-  .pl-brand {
-    position: absolute; top: 12px; left: 12px;
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 5px 11px; background: rgba(10,5,23,.85);
-    border: 1px solid rgba(192,132,252,.3); border-radius: 999px;
-    color: #e879f9; font-family: 'JetBrains Mono', monospace;
-    font-size: .7rem; font-weight: 700; z-index: 10;
-    pointer-events: none; opacity: .9;
-  }
-  .pl-brand span { color: #fff; }
-
-  /* ═══════════════════════════════════════════════
-     🎬 LANDSCAPE DETAILS (grid + sidebar)
-  ═══════════════════════════════════════════════ */
-  .rl-details { padding: 3rem 0 4rem; }
-  .rl-grid {
-    display: grid; grid-template-columns: 1fr 320px; gap: 2.5rem;
-  }
-  .rl-sec { margin-bottom: 2.5rem; }
-  .rl-sh {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1.4rem; font-weight: 800; margin: 0 0 1rem;
-    color: var(--text-primary); padding-bottom: .6rem;
-    border-bottom: 2px solid rgba(192,132,252,.15);
-    display: inline-block; position: relative;
-  }
-  .rl-sh::after {
-    content: ''; position: absolute; left: 0; bottom: -2px;
-    width: 40px; height: 2px; background: var(--grad); border-radius: 2px;
-  }
-  .rl-desc {
-    color: var(--text-secondary); font-size: .95rem; line-height: 1.75;
-    white-space: pre-wrap;
-  }
-
-  .rl-eps-head {
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 12px; margin-bottom: 1rem;
-  }
-  .rl-eps-sort {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 12px; background: rgba(192,132,252,.1);
-    border: 1px solid rgba(192,132,252,.25); border-radius: 999px;
-    color: #c084fc; font-family: 'JetBrains Mono', monospace;
-    font-size: .7rem; font-weight: 700;
-  }
-  .rl-cats {
-    display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap;
-  }
-  .rl-ct {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 10px 18px; background: rgba(28,15,61,.5);
-    border: 1px solid rgba(192,132,252,.2); border-radius: 12px;
-    color: var(--text-secondary); font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: .85rem; font-weight: 600; cursor: pointer;
-    transition: all .25s ease;
-  }
-  .rl-ct:hover { background: rgba(192,132,252,.12); color: var(--text-primary); }
-  .rl-ct.active {
-    background: var(--grad); color: #fff; border-color: transparent;
-    box-shadow: 0 6px 20px rgba(192,132,252,.35);
-  }
-  .ct-c {
-    font-family: 'JetBrains Mono', monospace; font-size: .7rem; opacity: .8;
-    background: rgba(0,0,0,.2); padding: 2px 8px; border-radius: 6px;
-  }
-  .rl-ct.active .ct-c { background: rgba(255,255,255,.2); }
-
-  .rl-related-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-  }
-
-  .rl-side { display: flex; flex-direction: column; gap: 1.25rem; }
-  .rl-card {
-    background: rgba(28,15,61,.5); border: 1px solid rgba(192,132,252,.15);
-    border-radius: 16px; padding: 1.25rem;
-  }
-  .rc-t {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1rem; font-weight: 800; margin: 0 0 1rem;
-    color: var(--text-primary); padding-bottom: .5rem;
-    border-bottom: 1px solid rgba(192,132,252,.15);
-  }
-  .rc-list { display: flex; flex-direction: column; gap: 10px; }
-  .ir {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    gap: 12px; font-size: .82rem;
-  }
-  .ir-l {
-    color: var(--text-muted); font-weight: 600;
-    font-family: 'JetBrains Mono', monospace; font-size: .72rem;
-    letter-spacing: .05em; text-transform: uppercase; min-width: 80px;
-  }
-  .ir-v { color: var(--text-primary); text-align: right; font-weight: 500; }
-
-  .rl-share { display: flex; gap: 8px; }
-  .sh-btn {
-    flex: 1; padding: 10px;
-    background: rgba(192,132,252,.08);
-    border: 1px solid rgba(192,132,252,.2);
-    border-radius: 10px; color: var(--text-secondary);
-    cursor: pointer; transition: all .2s ease;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .sh-btn:hover {
-    background: var(--grad); color: #fff; border-color: transparent;
-  }
-
-  /* ═══════════════════════════════════════════════
-     📱 PORTRAIT MODE (TikTok Cinema)
-  ═══════════════════════════════════════════════ */
-  .rl-portrait {
-    position: fixed; inset: 0;
-    background: #000; color: #fff;
-    z-index: 500;
-    font-family: 'Inter', 'DM Sans', sans-serif;
-    overflow: hidden;
-  }
-  .rp-top {
-    position: absolute; top: 0; left: 0; right: 0;
-    z-index: 100;
-    display: grid; grid-template-columns: 40px 1fr 40px;
-    align-items: center; gap: 12px;
-    padding: 14px 18px;
-    background: linear-gradient(180deg, rgba(0,0,0,.85) 0%, rgba(0,0,0,.4) 70%, transparent);
-    pointer-events: none;
-  }
-  .rp-icon-btn {
-    pointer-events: auto;
-    width: 40px; height: 40px; border-radius: 50%;
-    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.1);
-    color: #fff; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(20px);
-    transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 0;
-  }
-  .rp-icon-btn:hover { background: rgba(255,255,255,.18); transform: scale(1.06); }
-  .rp-icon-btn:active { transform: scale(0.94); }
-  .rp-brand {
-    text-align: center;
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1.05rem; font-weight: 800; letter-spacing: -.02em;
-    text-shadow: 0 2px 12px rgba(0,0,0,.9);
-    pointer-events: none; white-space: nowrap;
-  }
-  .rp-brand-grad {
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .rp-brand-w { color: #fff; }
-
-  .rp-menu-wrap { position: relative; pointer-events: auto; justify-self: end; }
-  .rp-menu {
-    position: absolute; top: calc(100% + 10px); right: 0;
-    min-width: 190px; padding: 6px;
-    background: rgba(20,12,32,.98);
-    border: 1px solid rgba(192,132,252,.28); border-radius: 14px;
-    box-shadow: 0 20px 50px rgba(0,0,0,.7), 0 0 30px rgba(192,132,252,.18);
-    backdrop-filter: blur(24px);
-    opacity: 0; visibility: hidden;
-    transform: translateY(-8px) scale(.95);
-    transition: all .25s cubic-bezier(0.34, 1.56, 0.64, 1);
-    z-index: 200;
-  }
-  .rp-menu-open { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
-  .rp-menu-item {
-    display: flex; align-items: center; gap: 10px;
-    width: 100%; padding: 10px 12px;
-    background: transparent; border: none; color: #f5ecff;
-    font-family: 'Inter', sans-serif; font-size: .87rem; font-weight: 500;
-    cursor: pointer; border-radius: 8px;
-    transition: all .15s ease; text-align: left;
-  }
-  .rp-menu-item:hover { background: rgba(192,132,252,.15); color: #e879f9; }
-  .rp-menu-item svg { color: rgba(255,255,255,.7); flex-shrink: 0; }
-  .rp-menu-item:hover svg { color: #e879f9; }
-
-  .rp-scroller {
-    position: absolute; inset: 0;
-    overflow-y: scroll; overflow-x: hidden;
-    scroll-snap-type: y mandatory; scroll-behavior: smooth;
-    scrollbar-width: none; -ms-overflow-style: none;
-    -webkit-overflow-scrolling: touch; scroll-snap-stop: always;
-    contain: strict;
-  }
-  .rp-scroller::-webkit-scrollbar { display: none; }
-
-  .rp-slot {
-    position: relative;
-    height: 100vh; height: 100dvh;
-    width: 100%;
-    scroll-snap-align: start; scroll-snap-stop: always;
-    background: #000;
-    display: flex; align-items: center; justify-content: center;
-    overflow: hidden; contain: layout paint;
-  }
-  .rp-slot-bg {
-    position: absolute; inset: 0; width: 100%; height: 100%;
-    object-fit: cover; z-index: 1;
-    filter: blur(40px) brightness(.35) saturate(1.4);
-    transform: scale(1.15); transition: opacity .6s ease;
-  }
-  .rp-slot-tint {
-    position: absolute; inset: 0; z-index: 2; pointer-events: none;
-    background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,.7) 100%);
-  }
-  .rp-slot-frame {
-    position: relative; z-index: 5;
-    width: min(500px, calc((100dvh - 40px) * 9 / 16));
-    aspect-ratio: 9 / 16;
-    max-height: calc(100dvh - 40px);
-    background: #000; border-radius: 14px; overflow: hidden;
-    box-shadow: 0 30px 80px rgba(0,0,0,.9), 0 0 60px rgba(192,132,252,.08);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .rp-slot-video { width: 100%; height: 100%; background: #000; position: relative; }
-  .rp-slot-video iframe {
-    width: 100%; height: 100%; border: 0; background: #000; display: block;
-  }
-  .rp-slot-loading {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%); z-index: 6;
-    pointer-events: none; transition: opacity .4s ease;
-  }
-  .rp-slot-spinner {
-    width: 42px; height: 42px;
-    border: 3px solid rgba(255,255,255,.15);
-    border-top-color: #e879f9; border-right-color: #c084fc;
-    border-radius: 50%; animation: loEx 0.9s linear infinite;
-  }
-  .rp-slot-gradient {
-    position: absolute; left: 0; right: 0; bottom: 0;
-    height: 180px; z-index: 8; pointer-events: none;
-    background: linear-gradient(0deg, rgba(0,0,0,.9) 20%, rgba(0,0,0,.4) 60%, transparent);
-  }
-  .rp-slot-info {
-    position: absolute; left: 20px; right: 80px; bottom: 28px;
-    z-index: 10; max-width: 500px; pointer-events: none;
-  }
-  .rp-slot-user { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-  .rp-slot-avatar {
-    width: 38px; height: 38px; border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    padding: 2px; flex-shrink: 0;
-    box-shadow: 0 4px 14px rgba(192,132,252,.4);
-  }
-  .rp-slot-avatar-inner {
-    width: 100%; height: 100%; border-radius: 50%; background: #0a0a0a;
-    display: flex; align-items: center; justify-content: center;
-    color: #e879f9; font-size: .85rem; padding-left: 2px;
-  }
-  .rp-slot-user-text { flex: 1; min-width: 0; }
-  .rp-slot-username {
-    font-family: 'Inter', sans-serif; font-size: .92rem; font-weight: 700;
-    color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.9);
-    line-height: 1.15; letter-spacing: -.01em;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .rp-slot-type {
-    font-family: 'Inter', sans-serif; font-size: .62rem; font-weight: 700;
-    color: #e879f9; text-shadow: 0 2px 6px rgba(0,0,0,.9);
-    letter-spacing: .1em; margin-top: 3px; line-height: 1;
-  }
-  .rp-slot-caption {
-    font-family: 'Inter', sans-serif; font-size: .88rem; font-weight: 500;
-    color: #fff; line-height: 1.45;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-    overflow: hidden; text-shadow: 0 2px 8px rgba(0,0,0,.95);
-    letter-spacing: -.005em;
-  }
-
-  .rp-progress {
-    position: fixed; right: 16px; top: 50%;
-    transform: translateY(-50%);
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
-    z-index: 50; pointer-events: none;
-  }
-  .rp-progress-track {
-    width: 3px; height: 100px;
-    background: rgba(255,255,255,.15); border-radius: 3px;
-    overflow: hidden; position: relative;
-  }
-  .rp-progress-fill {
-    position: absolute; top: 0; left: 0; right: 0; height: 20%;
-    background: linear-gradient(180deg, #e879f9, #c084fc, #7dd3fc);
-    border-radius: 3px;
-    transition: height .4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 0 10px rgba(232,121,249,.6);
-  }
-  .rp-progress-count {
-    font-family: 'Inter', sans-serif; font-size: .6rem; font-weight: 700;
-    color: rgba(255,255,255,.6); letter-spacing: .05em;
-    text-shadow: 0 2px 6px rgba(0,0,0,.9);
-  }
-
-  /* ═══════════════════════════════════════════════
-     TOAST (both modes)
-  ═══════════════════════════════════════════════ */
-  .rl-toast {
-    position: fixed; top: 78px; left: 50%;
-    transform: translateX(-50%) translateY(-16px) scale(.9);
-    display: flex; align-items: center; gap: 8px;
-    padding: 10px 20px;
-    background: rgba(20,12,32,.98);
-    border: 1px solid rgba(232,121,249,.4); border-radius: 999px;
-    color: #fff; font-family: 'Inter', sans-serif;
-    font-size: .83rem; font-weight: 600;
-    box-shadow: 0 12px 30px rgba(0,0,0,.6), 0 0 24px rgba(192,132,252,.25);
-    backdrop-filter: blur(20px);
-    opacity: 0; visibility: hidden; z-index: 9999;
-    transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  .rl-toast-show {
-    opacity: 1; visibility: visible;
-    transform: translateX(-50%) translateY(0) scale(1);
-  }
-  .rl-toast-ic {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 20px; height: 20px; border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    color: #fff; font-size: .7rem; font-weight: 900;
-  }
-
-  /* ═══════════════════════════════════════════════
-     📱 RESPONSIVE
-  ═══════════════════════════════════════════════ */
-  @media (max-width: 1024px) {
-    .rl-hero-in { grid-template-columns: 240px 1fr; gap: 2rem; }
-    .rl-grid { grid-template-columns: 1fr; gap: 1.5rem; }
-    .rl-related-grid { grid-template-columns: repeat(3, 1fr); }
-  }
-
-  @media (max-width: 768px) {
-    .rl-hero { padding: 2rem 0; min-height: auto; }
-    .rl-hero-in { grid-template-columns: 1fr; gap: 1.5rem; text-align: center; }
-    .rl-poster { max-width: 100%; }
-    .rl-badges, .rl-meta, .rl-actions { justify-content: center; }
-    .rl-related-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    .rl-btn { padding: 11px 20px; font-size: .85rem; }
-  }
-
-  @media (max-width: 720px) {
-    /* Portrait mode adjustments */
-    .rp-top { padding: 12px 14px; grid-template-columns: 36px 1fr 36px; gap: 8px; }
-    .rp-icon-btn { width: 36px; height: 36px; }
-    .rp-brand { font-size: .95rem; }
-
-    .rp-slot-frame {
+    .ar-poster-wrap {
+      position: relative;
       width: 100%;
-      max-height: 100vh; max-height: 100dvh;
-      border-radius: 0; box-shadow: none;
     }
-    .rp-slot-info { left: 16px; right: 60px; bottom: 24px; }
-    .rp-progress { right: 10px; }
-    .rp-progress-track { height: 80px; }
-  }
+    .ar-poster {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      border-radius: 14px;
+      display: block;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      position: relative;
+      z-index: 2;
+    }
+    .ar-poster-placeholder {
+      width: 100%;
+      aspect-ratio: 3/4;
+      background: linear-gradient(135deg, #1a0f3d, #2d1b5e);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 80px;
+      opacity: 0.4;
+    }
+    .ar-poster-glow {
+      position: absolute;
+      inset: -20px;
+      background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+      border-radius: 20px;
+      opacity: 0.4;
+      filter: blur(30px);
+      z-index: 1;
+      animation: arGlow 3s ease-in-out infinite;
+    }
+    @keyframes arGlow {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+    }
+    .ar-info {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .ar-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .ar-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 11px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .ar-badge-anime {
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      color: #fff;
+      border: 0;
+    }
+    .ar-badge-score {
+      background: linear-gradient(135deg, #fbbf24, #f97316);
+      color: #fff;
+      border: 0;
+    }
+    .ar-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      color: #fff;
+      margin: 0;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .ar-eps {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(192, 132, 252, 0.15);
+      border: 1px solid rgba(192, 132, 252, 0.3);
+      border-radius: 20px;
+      width: fit-content;
+    }
+    .ar-eps-num {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: #c084fc;
+    }
+    .ar-eps-lbl {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.7);
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .ar-status {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 18px;
+      background: rgba(10, 5, 23, 0.5);
+      border: 1px solid rgba(192, 132, 252, 0.2);
+      border-radius: 14px;
+      margin-top: 8px;
+    }
+    .ar-spinner {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+    .ar-orbit {
+      position: relative;
+      width: 40px;
+      height: 40px;
+    }
+    .ar-dot {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      top: 50%;
+      left: 50%;
+      transform-origin: 0 0;
+      animation: arOrbit 1.3s linear infinite;
+    }
+    .ar-d1 { animation-delay: 0s; }
+    .ar-d2 { animation-delay: -0.43s; background: linear-gradient(135deg, #e879f9, #7dd3fc); }
+    .ar-d3 { animation-delay: -0.86s; background: linear-gradient(135deg, #7dd3fc, #c084fc); }
+    @keyframes arOrbit {
+      0% { transform: rotate(0deg) translateX(16px) rotate(0deg); }
+      100% { transform: rotate(360deg) translateX(16px) rotate(-360deg); }
+    }
+    .ar-status-text {
+      min-width: 0;
+      flex: 1;
+    }
+    .ar-status-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .ar-status-sub {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .ar-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .ar-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 20px;
+      border-radius: 22px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 0;
+      text-decoration: none;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .ar-btn-retry {
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      color: #fff;
+    }
+    .ar-btn-retry:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(192, 132, 252, 0.5);
+    }
+    .ar-btn-home {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+    .ar-btn-home:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+    .ar-synopsis {
+      margin-top: 30px;
+      background: rgba(28, 15, 61, 0.4);
+      border: 1px solid rgba(192, 132, 252, 0.15);
+      border-radius: 16px;
+      padding: 24px;
+    }
+    .ar-synopsis-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #c084fc;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .ar-synopsis p {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+      line-height: 1.7;
+      margin: 0;
+      white-space: pre-wrap;
+    }
 
-  @media (max-width: 640px) {
-    .rl-related-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-</style>
+    @media (max-width: 768px) {
+      .ar-card {
+        grid-template-columns: 1fr;
+        padding: 20px;
+        gap: 24px;
+      }
+      .ar-poster-wrap {
+        max-width: 220px;
+        margin: 0 auto;
+      }
+      .ar-container {
+        padding: 0 16px;
+      }
+      .ar-section {
+        padding: 30px 0;
+      }
+    }
+  </style>
+
+  <script is:inline define:vars={{ ANIME_TITLE: animeTitle, ANIME_SLUG: animeSlug }}>
+    (function() {
+      var animeTitle = ANIME_TITLE;
+      var animeSlug = ANIME_SLUG;
+      var attemptCount = 0;
+      var maxAttempts = 3;
+
+      var statusTitle = document.getElementById('statusTitle');
+      var statusSub = document.getElementById('statusSub');
+      var actionsBox = document.getElementById('actionsBox');
+      var retryBtn = document.getElementById('retryBtn');
+
+      function setStatus(title, sub) {
+        if (statusTitle) statusTitle.textContent = title;
+        if (statusSub) statusSub.textContent = sub;
+      }
+
+      function showActions() {
+        if (actionsBox) actionsBox.style.display = 'flex';
+        var spinner = document.querySelector('.ar-spinner');
+        if (spinner) spinner.style.display = 'none';
+      }
+
+      function goToVideo(videoId) {
+        setStatus('Loading player...', '✨ Redirecting to episode');
+        setTimeout(function() {
+          window.location.href = '/reels/' + videoId;
+        }, 300);
+      }
+
+      // Extract clean anime name (remove ":", subtitles for better search)
+      function cleanName(name) {
+        return name.split(':')[0].split('|')[0].split('-')[0].trim();
+      }
+
+      function tryEpisodesMode() {
+        setStatus('Finding episodes...', 'Searching YouTube, Dailymotion, Bilibili');
+        var cleanTitle = cleanName(animeTitle);
+        var url = '/api/social-feed?mode=episodes&anime=' + encodeURIComponent(cleanTitle);
+        return fetch(url)
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data.success) {
+              // Priority: episodes first (sorted), then extras
+              var candidates = [];
+              if (data.episodes && data.episodes.length) candidates = candidates.concat(data.episodes);
+              if (data.extras && data.extras.length) candidates = candidates.concat(data.extras);
+              if (candidates.length > 0) {
+                var first = candidates[0];
+                setStatus('Found ' + candidates.length + ' videos!', 'Episode 1 loading...');
+                goToVideo(first.id);
+                return true;
+              }
+            }
+            return false;
+          })
+          .catch(function() { return false; });
+      }
+
+      function tryNormalSearch() {
+        setStatus('Trying broader search...', 'Looking for any related video');
+        var cleanTitle = cleanName(animeTitle);
+        var url = '/api/social-feed?type=anime&limit=30&nocache=1';
+        return fetch(url)
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data.success && data.videos && data.videos.length) {
+              var titleWords = cleanTitle.toLowerCase().split(/\s+/).filter(function(w) { return w.length > 2; });
+              // Find best match
+              var best = null;
+              var bestScore = 0;
+              for (var i = 0; i < data.videos.length; i++) {
+                var v = data.videos[i];
+                var vTitle = (v.title || '').toLowerCase();
+                var matched = 0;
+                for (var j = 0; j < titleWords.length; j++) {
+                  if (vTitle.indexOf(titleWords[j]) !== -1) matched++;
+                }
+                var score = titleWords.length ? matched / titleWords.length : 0;
+                if (score > bestScore) {
+                  bestScore = score;
+                  best = v;
+                }
+              }
+              if (best && bestScore >= 0.4) {
+                setStatus('Match found!', 'Loading ' + (best.title || 'video').slice(0, 40) + '...');
+                goToVideo(best.id);
+                return true;
+              }
+            }
+            return false;
+          })
+          .catch(function() { return false; });
+      }
+
+      function tryYouTubeDirectSearch() {
+        setStatus('Final attempt...', 'Direct search on YouTube');
+        var cleanTitle = cleanName(animeTitle);
+        var url = '/api/social-feed?type=anime&limit=15&nocache=1&platforms=youtube';
+        return fetch(url)
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data.success && data.videos && data.videos.length > 0) {
+              // Just take first anime video as absolute fallback
+              setStatus('Playing suggested video', 'Best match available');
+              goToVideo(data.videos[0].id);
+              return true;
+            }
+            return false;
+          })
+          .catch(function() { return false; });
+      }
+
+      function showNotFound() {
+        setStatus('No videos found 😢', 'This anime might not be available yet');
+        showActions();
+      }
+
+      function search() {
+        attemptCount++;
+        tryEpisodesMode().then(function(found) {
+          if (found) return;
+          tryNormalSearch().then(function(found2) {
+            if (found2) return;
+            tryYouTubeDirectSearch().then(function(found3) {
+              if (found3) return;
+              showNotFound();
+            });
+          });
+        });
+      }
+
+      if (retryBtn) {
+        retryBtn.addEventListener('click', function() {
+          if (actionsBox) actionsBox.style.display = 'none';
+          var spinner = document.querySelector('.ar-spinner');
+          if (spinner) spinner.style.display = 'block';
+          search();
+        });
+      }
+
+      // Start search after 500ms (let user see the loading state)
+      setTimeout(search, 500);
+    })();
+  </script>
+</BaseLayout>
