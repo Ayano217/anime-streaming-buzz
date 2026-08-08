@@ -1676,23 +1676,27 @@ const metaText = metaParts.join(' • ');
       // ═══════════════════════════════════════════════
       let seriesEpisodes: any[] = [];
       
-      async function loadSeriesEpisodes() {
-              async function loadSeriesEpisodes() {
+            async function loadSeriesEpisodes() {
         if (!seriesName || seriesName.length < 5) return;
         try {
           const res = await fetch('/api/social-feed?related=true&series=' + encodeURIComponent(seriesName) + '&limit=25');
           const data = await res.json();
           if (data.success && data.videos && data.videos.length > 0) {
-            // Better filtering: check title contains at least 2 words from series name
-            const seriesWords = seriesName.toLowerCase().split(/\s+/).filter((w: string) => w.length > 3);
+            const seriesWords = seriesName.toLowerCase().split(/\s+/).filter(function(w) { return w.length > 3; });
             
-            seriesEpisodes = data.videos.filter((v: any) => {
+            seriesEpisodes = data.videos.filter(function(v: any) {
               if (v.id === videoId) return false;
               const title = (v.title || '').toLowerCase();
-              // Check if title has at least 60% match with series words
-              const matches = seriesWords.filter((w: string) => title.includes(w)).length;
+              const matches = seriesWords.filter(function(w) { return title.includes(w); }).length;
               return matches >= Math.max(2, Math.ceil(seriesWords.length * 0.5));
             });
+            
+            if (seriesEpisodes.length >= 2) {
+              renderSeriesEpisodes();
+            }
+          }
+        } catch(e) {}
+      }
             
             // Only show section if we have real matches
             if (seriesEpisodes.length >= 2) {
