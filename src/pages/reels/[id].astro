@@ -14,6 +14,12 @@ const isAnimeExternal = !!animeMatch;
 const animeSlug = animeMatch ? animeMatch[1] : '';
 const animeEpNum = animeMatch ? parseInt(animeMatch[2]) : 0;
 
+// Safety: if URL is anime_ but missing _ep1, redirect to ep1
+if (videoId.startsWith('anime_') && !isAnimeExternal) {
+  const cleanSlug = videoId.replace(/^anime_/, '').replace(/_ep\d*$/, '');
+  return Astro.redirect(`/reels/anime_${cleanSlug}_ep1`, 302);
+}
+
 // ═══ Server-side: Fetch anime data if external ═══
 let externalAnime = null;
 if (isAnimeExternal) {
