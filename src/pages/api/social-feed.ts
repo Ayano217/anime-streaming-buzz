@@ -2,13 +2,13 @@
 // AniTube Buzz — Multi-Platform Social Feed API v4
 // Path: src/pages/api/social-feed.ts
 //
-// v4 CHANGES (NEW):
-// - ✅ NEW: ?mode=episodes&anime=xxx → multi-platform episode search
-// - ✅ Episode serial order maintained (Ep 1, 2, 3... sorted)
-// - ✅ Season detection + grouping
-// - ✅ Title similarity matching (no random unrelated videos)
-// - ✅ Multi-platform: YouTube + Dailymotion + Bilibili
-// - ✅ Anime slug → redirect to first episode
+// v4 CHANGES (from v3):
+// - ✅ NEW: ?mode=episodes&anime=xxx → smart episode search (multi-platform, sorted)
+// - ✅ Strict title matching (word overlap % based)
+// - ✅ Season + Episode number extraction
+// - ✅ Sorted: Season 1 Ep 1-N → Season 2 Ep 1-N
+// - ✅ Dedupe by (season, episode) — keep best quality
+// - ✅ All v3 features preserved
 // ═══════════════════════════════════════════════════════════════
 
 export const prerender = false;
@@ -18,6 +18,7 @@ import type { APIRoute } from 'astro';
 const CACHE: Record<string, { data: any; time: number }> = {};
 const CACHE_TTL = 10 * 60 * 1000;
 
+// ═══ OFFICIAL YOUTUBE CHANNELS ═══
 const YOUTUBE_CHANNELS = {
   anime: [
     { name: 'Muse Asia', id: 'UCxxnxya_32jcKj4yN1_kD7A', priority: 100 },
@@ -120,8 +121,9 @@ function slugify(text: string): string {
     .replace(/-+/g, '-').trim().slice(0, 80);
 }
 
-function isFullContent(title: string): boolean {
+function isFullContent(title: string, allowShorts = false): boolean {
   const t = title.toLowerCase();
+  if (allowShorts && /shorts?|#shorts?/i.test(t)) return true;
   const badSignals = [
     'trailer', 'preview', 'reaction', 'review', 'analysis', 'explained',
     'top 10', 'ranked', ' amv ', ' edit ', 'compilation',
@@ -136,15 +138,14 @@ function isSpamChannel(channelName: string): boolean {
   return SPAM_CHANNEL_PATTERNS.some(p => p.test(channelName || ''));
 }
 
-// ═══ EPISODE NUMBER EXTRACT (strict) ═══
+// ═══ Extract episode number ═══
 function extractEpNumber(title: string): number | null {
   const patterns = [
-    /episode[\s#.-]*(\d{1,4})\b/i,
-    /\bep[\s#.-]*(\d{1,4})\b/i,
-    /\bE(\d{1,4})\b(?![\d])/,
-    /#(\d{1,4})\s*(?:english|sub|dub|hd|$)/i,
-    /第(\d{1,4})話/,
-    /\b(\d{1,4})\s*(?:話|화)/,
+    /episode[\s._-]*(\d+)/i,
+    /\bep[\s._-]*(\d+)\b/i,
+    /\bE(\d{1,3})\b/,
+    /\s-\s*(\d+)\s*(?:\[|\(|$)/,
+    /第\s*(\d+)\s*[话集話]/,
   ];
   for (const p of patterns) {
     const m = title.match(p);
@@ -156,55 +157,22 @@ function extractEpNumber(title: string): number | null {
   return null;
 }
 
-// ═══ SEASON NUMBER EXTRACT ═══
+// ═══ Extract season number ═══
 function extractSeasonNumber(title: string): number {
   const patterns = [
-    /season[\s#.-]*(\d+)/i,
-    /\bS(\d+)\b(?!E)/i,
-    /part[\s#.-]*(\d+)/i,
-    /cour[\s#.-]*(\d+)/i,
+    /season[\s._-]*(\d+)/i,
+    /\bS(\d+)E\d+/i,
+    /\bS(\d+)\b/i,
+    /第\s*(\d+)\s*季/,
   ];
   for (const p of patterns) {
     const m = title.match(p);
     if (m) {
       const n = parseInt(m[1]);
-      if (n > 0 && n < 50) return n;
+      if (n > 0 && n < 20) return n;
     }
   }
   return 1;
-}
-
-// ═══ TITLE SIMILARITY CHECK ═══
-function titleSimilarity(a: string, b: string): number {
-  const clean = (s: string) => s.toLowerCase()
-    .replace(/[^\w\s]/g, ' ')
-    .replace(/\b(episode|ep|season|part|english|sub|dub|hd|full|the|a|an|of|in|on)\b/g, '')
-    .replace(/\s+/g, ' ').trim();
-
-  const ca = clean(a);
-  const cb = clean(b);
-
-  if (!ca || !cb) return 0;
-
-  const wordsA = new Set(ca.split(' ').filter(w => w.length > 2));
-  const wordsB = cb.split(' ').filter(w => w.length > 2);
-
-  if (wordsA.size === 0) return 0;
-
-  let matched = 0;
-  for (const w of wordsB) {
-    if (wordsA.has(w)) matched++;
-  }
-
-  return matched / Math.max(wordsA.size, wordsB.length);
-}
-
-// ═══ CLEAN ANIME NAME from slug ═══
-function slugToAnimeName(slug: string): string {
-  return slug
-    .replace(/-/g, ' ')
-    .replace(/\b\w/g, c => c.toUpperCase())
-    .trim();
 }
 
 function extractSeriesName(title: string): string {
@@ -220,6 +188,29 @@ function extractSeriesName(title: string): string {
   return t.slice(0, 40);
 }
 
+// ═══ Normalize anime name for matching ═══
+function normalizeAnimeName(name: string): string[] {
+  return name
+    .toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .filter(w => w.length > 2 && !['the', 'and', 'season', 'episode', 'part', 'anime'].includes(w));
+}
+
+// ═══ Match score: how well does title match anime name (0-1) ═══
+function matchScore(title: string, animeWords: string[]): number {
+  if (animeWords.length === 0) return 0;
+  const titleLower = title.toLowerCase();
+  let matched = 0;
+  for (const word of animeWords) {
+    if (titleLower.includes(word)) matched++;
+  }
+  return matched / animeWords.length;
+}
+
+// ═══ Score calc ═══
 function calculateScore(video: any, channelPriority = 0): number {
   let score = 0;
   const title = (video.title || '').toLowerCase();
@@ -238,276 +229,9 @@ function calculateScore(video: any, channelPriority = 0): number {
   return score;
 }
 
-// ═══════════════════════════════════════════
-// 🆕 EPISODE MODE — Multi-platform search
-// ═══════════════════════════════════════════
-
-async function searchEpisodesYouTube(animeName: string, apiKey: string): Promise<any[]> {
-  const queries = [
-    `${animeName} episode english sub`,
-    `${animeName} ep english subbed`,
-    `${animeName} full episode english`,
-    `${animeName} english dub episode`,
-  ];
-
-  const allResults: any[] = [];
-
-  for (const q of queries.slice(0, 2)) {
-    try {
-      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&order=relevance&maxResults=25&type=video&videoEmbeddable=true&videoDuration=medium&relevanceLanguage=en&key=${apiKey}`;
-      const res = await fetch(url);
-      if (!res.ok) continue;
-      const json: any = await res.json();
-      if (!json.items) continue;
-
-      for (const item of json.items) {
-        const title = item.snippet.title || '';
-        if (!isFullContent(title)) continue;
-
-        // Strict similarity check — must match anime name
-        const sim = titleSimilarity(animeName, title);
-        if (sim < 0.3) continue;
-
-        const publishedAt = item.snippet.publishedAt || '';
-        const daysSince = publishedAt
-          ? (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24)
-          : 999;
-
-        allResults.push({
-          id: `yt_${item.id.videoId}`,
-          title,
-          channel: item.snippet.channelTitle || 'Unknown',
-          thumbnail: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || '',
-          publishedAt,
-          type: 'anime',
-          embedUrl: `https://www.youtube.com/embed/${item.id.videoId}?rel=0&modestbranding=1`,
-          source: 'youtube',
-          slug: slugify(title),
-          episodeNumber: extractEpNumber(title),
-          seasonNumber: extractSeasonNumber(title),
-          isNew: daysSince <= 7,
-          isOfficial: false,
-          aspect: 'landscape',
-          description: (item.snippet.description || '').slice(0, 300),
-          seriesName: animeName,
-          similarityScore: sim,
-        });
-      }
-    } catch (e) {
-      continue;
-    }
-  }
-
-  return allResults;
-}
-
-async function searchEpisodesDailymotion(animeName: string): Promise<any[]> {
-  const queries = [
-    `${animeName} episode`,
-    `${animeName} english sub`,
-  ];
-
-  const allResults: any[] = [];
-
-  for (const q of queries.slice(0, 2)) {
-    try {
-      const url = `https://api.dailymotion.com/videos?search=${encodeURIComponent(q)}&sort=recent&limit=20&fields=id,title,thumbnail_720_url,duration,owner.screenname,created_time,allow_embed`;
-      const res = await fetch(url);
-      if (!res.ok) continue;
-      const json: any = await res.json();
-      if (!json.list) continue;
-
-      for (const v of json.list) {
-        if (v.allow_embed === false) continue;
-        if ((v.duration || 0) < 300) continue;
-
-        const title = v.title || '';
-        if (!isFullContent(title)) continue;
-
-        const sim = titleSimilarity(animeName, title);
-        if (sim < 0.25) continue;
-
-        const publishedAt = v.created_time
-          ? new Date(v.created_time * 1000).toISOString()
-          : '';
-        const daysSince = publishedAt
-          ? (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24)
-          : 999;
-
-        allResults.push({
-          id: `dm_${v.id}`,
-          title,
-          channel: v['owner.screenname'] || 'Dailymotion',
-          thumbnail: v.thumbnail_720_url || '',
-          publishedAt,
-          type: 'anime',
-          embedUrl: `https://www.dailymotion.com/embed/video/${v.id}?queue-enable=false`,
-          source: 'dailymotion',
-          slug: slugify(title),
-          episodeNumber: extractEpNumber(title),
-          seasonNumber: extractSeasonNumber(title),
-          isNew: daysSince <= 7,
-          isOfficial: false,
-          aspect: 'landscape',
-          seriesName: animeName,
-          similarityScore: sim,
-        });
-      }
-    } catch (e) {
-      continue;
-    }
-  }
-
-  return allResults;
-}
-
-async function searchEpisodesBilibili(animeName: string): Promise<any[]> {
-  try {
-    const url = `https://api.bilibili.com/x/web-interface/search/type?search_type=video&keyword=${encodeURIComponent(animeName + ' episode')}&order=pubdate&page=1&pagesize=15`;
-    const res = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://www.bilibili.com/',
-      }
-    });
-    if (!res.ok) return [];
-    const json: any = await res.json();
-    if (!json.data?.result) return [];
-
-    const results: any[] = [];
-    for (const v of json.data.result.slice(0, 12)) {
-      const title = (v.title || '').replace(/<[^>]+>/g, '');
-      const bvid = v.bvid || '';
-      if (!bvid) continue;
-
-      const sim = titleSimilarity(animeName, title);
-      if (sim < 0.2) continue;
-
-      const publishedAt = v.pubdate
-        ? new Date(v.pubdate * 1000).toISOString()
-        : '';
-      const daysSince = publishedAt
-        ? (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24)
-        : 999;
-      const pic = v.pic
-        ? (v.pic.startsWith('//') ? 'https:' + v.pic : v.pic)
-        : '';
-
-      results.push({
-        id: `bili_${bvid}`,
-        title,
-        channel: v.author || 'Bilibili',
-        thumbnail: pic,
-        publishedAt,
-        type: 'anime',
-        embedUrl: `https://player.bilibili.com/player.html?bvid=${bvid}&high_quality=1&danmaku=0`,
-        source: 'bilibili',
-        slug: slugify(title),
-        episodeNumber: extractEpNumber(title),
-        seasonNumber: extractSeasonNumber(title),
-        isNew: daysSince <= 7,
-        isOfficial: false,
-        aspect: 'landscape',
-        seriesName: animeName,
-        similarityScore: sim,
-      });
-    }
-    return results;
-  } catch (e) {
-    return [];
-  }
-}
-
-// ═══ SORT EPISODES — Serial order ═══
-function sortEpisodes(videos: any[]): any[] {
-  // Group by season
-  const bySeasonChannel: Record<string, any[]> = {};
-
-  for (const v of videos) {
-    const season = v.seasonNumber || 1;
-    const channel = v.channel || 'Unknown';
-    // Prefer one channel per season (highest similarity)
-    const key = `s${season}`;
-    if (!bySeasonChannel[key]) bySeasonChannel[key] = [];
-    bySeasonChannel[key].push(v);
-  }
-
-  // For each season group: pick best channel, sort by ep number
-  const sorted: any[] = [];
-
-  const seasons = Object.keys(bySeasonChannel).sort((a, b) => {
-    const na = parseInt(a.replace('s', ''));
-    const nb = parseInt(b.replace('s', ''));
-    return na - nb;
-  });
-
-  for (const key of seasons) {
-    const group = bySeasonChannel[key];
-
-    // Pick dominant channel (most consistent)
-    const channelCount: Record<string, number> = {};
-    for (const v of group) {
-      const ch = v.channel || 'Unknown';
-      channelCount[ch] = (channelCount[ch] || 0) + 1;
-    }
-    const topChannel = Object.entries(channelCount)
-      .sort((a, b) => b[1] - a[1])[0]?.[0] || '';
-
-    // Filter to top channel OR keep all if spread
-    let filtered = group;
-    if (topChannel && channelCount[topChannel] >= 3) {
-      filtered = group.filter(v => v.channel === topChannel);
-    }
-
-    // Sort by episode number (nulls at end)
-    filtered.sort((a, b) => {
-      if (a.episodeNumber !== null && b.episodeNumber !== null) {
-        return a.episodeNumber - b.episodeNumber;
-      }
-      if (a.episodeNumber !== null) return -1;
-      if (b.episodeNumber !== null) return 1;
-      // Fallback: by date ascending (older = earlier ep)
-      const da = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
-      const db = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
-      return da - db;
-    });
-
-    // Add season info
-    for (const v of filtered) {
-      v.seasonLabel = seasons.length > 1
-        ? `Season ${v.seasonNumber || 1}`
-        : null;
-      sorted.push(v);
-    }
-  }
-
-  return sorted;
-}
-
-// ═══ DEDUPE videos ═══
-function dedupeVideos(videos: any[]): any[] {
-  const seen = new Set<string>();
-  const seenEps = new Set<string>();
-
-  return videos.filter(v => {
-    if (!v || !v.id) return false;
-    if (seen.has(v.id)) return false;
-    seen.add(v.id);
-
-    // Also dedupe by ep number + season combo
-    if (v.episodeNumber !== null && v.episodeNumber !== undefined) {
-      const epKey = `s${v.seasonNumber || 1}e${v.episodeNumber}`;
-      if (seenEps.has(epKey)) return false;
-      seenEps.add(epKey);
-    }
-
-    return true;
-  });
-}
-
-// ═══════════════════════════════════════════════════════
-// YouTube channel uploads
-// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// 🎬 YOUTUBE
+// ═══════════════════════════════════════════════
 async function fetchYouTubeChannelUploads(channelId: string, channelName: string, contentType: string, apiKey: string, priority = 0): Promise<any[]> {
   try {
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&order=date&maxResults=10&type=video&videoEmbeddable=true&videoDuration=long&key=${apiKey}`;
@@ -515,11 +239,10 @@ async function fetchYouTubeChannelUploads(channelId: string, channelName: string
     if (!res.ok) return [];
     const json: any = await res.json();
     if (!json.items) return [];
-
     return json.items.map((item: any) => {
       const title = item.snippet.title || '';
       const publishedAt = item.snippet.publishedAt || '';
-      const daysSince = (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24);
+      const daysSincePublish = (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24);
       const video = {
         id: `yt_${item.id.videoId}`,
         title,
@@ -532,7 +255,7 @@ async function fetchYouTubeChannelUploads(channelId: string, channelName: string
         slug: slugify(title),
         episodeNumber: extractEpNumber(title),
         seasonNumber: extractSeasonNumber(title),
-        isNew: daysSince <= 7,
+        isNew: daysSincePublish <= 7,
         videoId: item.id.videoId,
         isOfficial: true,
         aspect: 'landscape',
@@ -554,11 +277,10 @@ async function searchYouTube(query: string, contentType: string, apiKey: string)
     if (!res.ok) return [];
     const json: any = await res.json();
     if (!json.items) return [];
-
     return json.items.map((item: any) => {
       const title = item.snippet.title || '';
       const publishedAt = item.snippet.publishedAt || '';
-      const daysSince = (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24);
+      const daysSincePublish = (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24);
       const video = {
         id: `yt_${item.id.videoId}`,
         title,
@@ -571,7 +293,7 @@ async function searchYouTube(query: string, contentType: string, apiKey: string)
         slug: slugify(title),
         episodeNumber: extractEpNumber(title),
         seasonNumber: extractSeasonNumber(title),
-        isNew: daysSince <= 7,
+        isNew: daysSincePublish <= 7,
         videoId: item.id.videoId,
         isOfficial: false,
         aspect: 'landscape',
@@ -594,11 +316,10 @@ async function searchYouTubeSeries(seriesName: string, apiKey: string): Promise<
     if (!res.ok) return [];
     const json: any = await res.json();
     if (!json.items) return [];
-
     return json.items.map((item: any) => {
       const title = item.snippet.title || '';
       const publishedAt = item.snippet.publishedAt || '';
-      const daysSince = (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24);
+      const daysSincePublish = (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24);
       return {
         id: `yt_${item.id.videoId}`,
         title,
@@ -611,7 +332,8 @@ async function searchYouTubeSeries(seriesName: string, apiKey: string): Promise<
         slug: slugify(title),
         episodeNumber: extractEpNumber(title),
         seasonNumber: extractSeasonNumber(title),
-        isNew: daysSince <= 7,
+        isNew: daysSincePublish <= 7,
+        videoId: item.id.videoId,
         aspect: 'landscape',
         seriesName: extractSeriesName(title),
         isRelated: true,
@@ -622,6 +344,49 @@ async function searchYouTubeSeries(seriesName: string, apiKey: string): Promise<
   }
 }
 
+// ═══ Episode search: multi-query for max coverage ═══
+async function searchYouTubeEpisodes(animeName: string, apiKey: string): Promise<any[]> {
+  const queries = [
+    `${animeName} episode 1 english sub`,
+    `${animeName} full episode english`,
+    `${animeName} all episodes english sub`,
+    `${animeName} anime english dub`,
+  ];
+  const all: any[] = [];
+  for (const q of queries) {
+    try {
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(q)}&order=relevance&maxResults=25&type=video&videoEmbeddable=true&videoDuration=medium&relevanceLanguage=en&key=${apiKey}`;
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const json: any = await res.json();
+      if (!json.items) continue;
+      for (const item of json.items) {
+        const title = item.snippet.title || '';
+        const publishedAt = item.snippet.publishedAt || '';
+        all.push({
+          id: `yt_${item.id.videoId}`,
+          title,
+          channel: item.snippet.channelTitle || 'Unknown',
+          thumbnail: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || '',
+          publishedAt,
+          type: 'anime',
+          embedUrl: `https://www.youtube.com/embed/${item.id.videoId}?rel=0&modestbranding=1`,
+          source: 'youtube',
+          videoId: item.id.videoId,
+          episodeNumber: extractEpNumber(title),
+          seasonNumber: extractSeasonNumber(title),
+          aspect: 'landscape',
+          description: (item.snippet.description || '').slice(0, 200),
+        });
+      }
+    } catch (e) {}
+  }
+  return all;
+}
+
+// ═══════════════════════════════════════════════
+// 🎥 DAILYMOTION
+// ═══════════════════════════════════════════════
 async function searchDailymotion(query: string, contentType: string): Promise<any[]> {
   try {
     const url = `https://api.dailymotion.com/videos?search=${encodeURIComponent(query)}&sort=recent&limit=25&fields=id,title,thumbnail_720_url,thumbnail_480_url,duration,owner.screenname,created_time,allow_embed,aspect_ratio`;
@@ -629,13 +394,12 @@ async function searchDailymotion(query: string, contentType: string): Promise<an
     if (!res.ok) return [];
     const json: any = await res.json();
     if (!json.list) return [];
-
     return json.list
       .filter((v: any) => v.allow_embed !== false && v.duration > 300)
       .map((v: any) => {
         const title = v.title || '';
         const publishedAt = v.created_time ? new Date(v.created_time * 1000).toISOString() : '';
-        const daysSince = publishedAt ? (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24) : 999;
+        const daysSincePublish = publishedAt ? (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24) : 999;
         const ratio = v.aspect_ratio || 1.777;
         const aspect = ratio < 1 ? 'portrait' : 'landscape';
         const video = {
@@ -650,7 +414,7 @@ async function searchDailymotion(query: string, contentType: string): Promise<an
           slug: slugify(title),
           episodeNumber: extractEpNumber(title),
           seasonNumber: extractSeasonNumber(title),
-          isNew: daysSince <= 7,
+          isNew: daysSincePublish <= 7,
           videoId: v.id,
           duration: v.duration,
           isOfficial: false,
@@ -672,7 +436,6 @@ async function searchDailymotionSeries(seriesName: string): Promise<any[]> {
     if (!res.ok) return [];
     const json: any = await res.json();
     if (!json.list) return [];
-
     return json.list.map((v: any) => {
       const publishedAt = v.created_time ? new Date(v.created_time * 1000).toISOString() : '';
       return {
@@ -698,6 +461,46 @@ async function searchDailymotionSeries(seriesName: string): Promise<any[]> {
   }
 }
 
+async function searchDailymotionEpisodes(animeName: string): Promise<any[]> {
+  const queries = [
+    `${animeName} episode english sub`,
+    `${animeName} full english`,
+  ];
+  const all: any[] = [];
+  for (const q of queries) {
+    try {
+      const url = `https://api.dailymotion.com/videos?search=${encodeURIComponent(q)}&sort=recent&limit=30&fields=id,title,thumbnail_720_url,duration,owner.screenname,created_time,allow_embed`;
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const json: any = await res.json();
+      if (!json.list) continue;
+      for (const v of json.list) {
+        if (v.allow_embed === false || v.duration < 300) continue;
+        const publishedAt = v.created_time ? new Date(v.created_time * 1000).toISOString() : '';
+        all.push({
+          id: `dm_${v.id}`,
+          title: v.title || '',
+          channel: v['owner.screenname'] || 'Dailymotion',
+          thumbnail: v.thumbnail_720_url || '',
+          publishedAt,
+          type: 'anime',
+          embedUrl: `https://www.dailymotion.com/embed/video/${v.id}?queue-enable=false`,
+          source: 'dailymotion',
+          videoId: v.id,
+          episodeNumber: extractEpNumber(v.title || ''),
+          seasonNumber: extractSeasonNumber(v.title || ''),
+          duration: v.duration,
+          aspect: 'landscape',
+        });
+      }
+    } catch (e) {}
+  }
+  return all;
+}
+
+// ═══════════════════════════════════════════════
+// 🎭 BILIBILI
+// ═══════════════════════════════════════════════
 async function searchBilibili(query: string, contentType: string): Promise<any[]> {
   try {
     const url = `https://api.bilibili.com/x/web-interface/search/type?search_type=video&keyword=${encodeURIComponent(query)}&order=pubdate&page=1&pagesize=20`;
@@ -710,14 +513,12 @@ async function searchBilibili(query: string, contentType: string): Promise<any[]
     if (!res.ok) return [];
     const json: any = await res.json();
     if (!json.data || !json.data.result) return [];
-
     return json.data.result.slice(0, 15).map((v: any) => {
       const title = (v.title || '').replace(/<[^>]+>/g, '');
       const publishedAt = v.pubdate ? new Date(v.pubdate * 1000).toISOString() : '';
-      const daysSince = publishedAt ? (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24) : 999;
+      const daysSincePublish = publishedAt ? (Date.now() - new Date(publishedAt).getTime()) / (1000 * 60 * 60 * 24) : 999;
       const bvid = v.bvid || '';
       const pic = v.pic ? (v.pic.startsWith('//') ? 'https:' + v.pic : v.pic) : '';
-
       const video = {
         id: `bili_${bvid}`,
         title,
@@ -730,7 +531,7 @@ async function searchBilibili(query: string, contentType: string): Promise<any[]
         slug: slugify(title),
         episodeNumber: extractEpNumber(title),
         seasonNumber: extractSeasonNumber(title),
-        isNew: daysSince <= 7,
+        isNew: daysSincePublish <= 7,
         videoId: bvid,
         isOfficial: false,
         aspect: 'landscape',
@@ -745,6 +546,46 @@ async function searchBilibili(query: string, contentType: string): Promise<any[]
   }
 }
 
+async function searchBilibiliEpisodes(animeName: string): Promise<any[]> {
+  try {
+    const url = `https://api.bilibili.com/x/web-interface/search/type?search_type=video&keyword=${encodeURIComponent(animeName + ' episode')}&order=pubdate&page=1&pagesize=30`;
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://www.bilibili.com/',
+      }
+    });
+    if (!res.ok) return [];
+    const json: any = await res.json();
+    if (!json.data || !json.data.result) return [];
+    return json.data.result.map((v: any) => {
+      const title = (v.title || '').replace(/<[^>]+>/g, '');
+      const publishedAt = v.pubdate ? new Date(v.pubdate * 1000).toISOString() : '';
+      const bvid = v.bvid || '';
+      const pic = v.pic ? (v.pic.startsWith('//') ? 'https:' + v.pic : v.pic) : '';
+      return {
+        id: `bili_${bvid}`,
+        title,
+        channel: v.author || 'Bilibili',
+        thumbnail: pic,
+        publishedAt,
+        type: 'anime',
+        embedUrl: `https://player.bilibili.com/player.html?bvid=${bvid}&high_quality=1&danmaku=0&autoplay=0`,
+        source: 'bilibili',
+        videoId: bvid,
+        episodeNumber: extractEpNumber(title),
+        seasonNumber: extractSeasonNumber(title),
+        aspect: 'landscape',
+      };
+    }).filter((v: any) => v.videoId);
+  } catch (e) {
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════
+// 🎌 ANIME DATA
+// ═══════════════════════════════════════════════
 async function fetchAnimeData(page: number, siteOrigin: string): Promise<any[]> {
   try {
     const url = `${siteOrigin}/api/anime?action=list&category=popular&page=${page}`;
@@ -752,7 +593,6 @@ async function fetchAnimeData(page: number, siteOrigin: string): Promise<any[]> 
     if (!res.ok) return [];
     const data: any = await res.json();
     if (!data.success || !data.anime) return [];
-
     return data.anime.slice(0, 12).map((a: any) => {
       const video = {
         id: `anime_${a.slug || a.id}`,
@@ -814,9 +654,9 @@ function balanceTypes(videos: any[]): any[] {
   return result;
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 // 🎯 MAIN HANDLER
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════
 export const GET: APIRoute = async ({ url, locals, request }) => {
   const params = url.searchParams;
   const type = params.get('type') || 'all';
@@ -825,12 +665,8 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
   const noCache = params.get('nocache') === '1';
   const platforms = (params.get('platforms') || 'all').split(',');
   const format = params.get('format') || 'all';
-
-  // ═══ NEW: Episode mode ═══
   const mode = params.get('mode') || '';
-  const animeSlug = params.get('anime') || '';
-
-  // OLD: related/series mode (kept for backward compat)
+  const animeParam = params.get('anime') || '';
   const relatedChannel = params.get('channel') || '';
   const seriesTitle = params.get('series') || '';
   const isRelatedMode = params.get('related') === 'true' || relatedChannel || seriesTitle;
@@ -839,64 +675,117 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
   const YT_KEY = env.YOUTUBE_API_KEY || (globalThis as any).YOUTUBE_API_KEY || '';
   const siteOrigin = new URL(request.url).origin;
 
-  const cacheKey = `feed_v4:${mode}:${animeSlug}:${type}:${page}:${format}:${relatedChannel}:${seriesTitle}`;
+  // ═══ EPISODES MODE (NEW) ═══
+  if (mode === 'episodes' && animeParam) {
+    const cacheKey = `episodes_v1:${animeParam.toLowerCase()}`;
+    if (!noCache) {
+      const hit = cached(cacheKey);
+      if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
+    }
+
+    try {
+      const animeWords = normalizeAnimeName(animeParam);
+      const promises: Promise<any[]>[] = [];
+      if (YT_KEY) promises.push(searchYouTubeEpisodes(animeParam, YT_KEY));
+      promises.push(searchDailymotionEpisodes(animeParam));
+      promises.push(searchBilibiliEpisodes(animeParam));
+
+      const results = await Promise.all(promises);
+      let all: any[] = [];
+      results.forEach(vids => all.push(...vids));
+
+      // Filter: must have episode number AND good match score
+      const MATCH_THRESHOLD = 0.5;
+      all = all.filter(v => {
+        if (!isFullContent(v.title)) return false;
+        if (isSpamChannel(v.channel)) return false;
+        const score = matchScore(v.title, animeWords);
+        v.__matchScore = score;
+        return score >= MATCH_THRESHOLD;
+      });
+
+      // Dedupe by (season, episode) — keep highest match score
+      const bestByKey: Record<string, any> = {};
+      for (const v of all) {
+        const season = v.seasonNumber || 1;
+        const ep = v.episodeNumber;
+        if (!ep) continue;
+        const key = `s${season}_e${ep}`;
+        const existing = bestByKey[key];
+        if (!existing || (v.__matchScore > existing.__matchScore)) {
+          bestByKey[key] = v;
+        }
+      }
+
+      // Also include videos without episode number IF match is very high (movies, one-shot)
+      const noEpVideos = all
+        .filter(v => !v.episodeNumber && v.__matchScore >= 0.7)
+        .slice(0, 3);
+
+      let episodes = Object.values(bestByKey);
+      // Sort by season → episode
+      episodes.sort((a: any, b: any) => {
+        const sa = a.seasonNumber || 1;
+        const sb = b.seasonNumber || 1;
+        if (sa !== sb) return sa - sb;
+        return (a.episodeNumber || 0) - (b.episodeNumber || 0);
+      });
+
+      // Group by season
+      const seasonGroups: Record<number, any[]> = {};
+      for (const ep of episodes) {
+        const s = ep.seasonNumber || 1;
+        if (!seasonGroups[s]) seasonGroups[s] = [];
+        seasonGroups[s].push(ep);
+      }
+
+      // Clean output
+      const cleanEpisodes = episodes.map((v: any) => {
+        const clean = { ...v };
+        delete clean.__matchScore;
+        delete clean.__score;
+        return clean;
+      });
+
+      const seasons = Object.keys(seasonGroups).sort((a, b) => parseInt(a) - parseInt(b)).map(s => ({
+        season: parseInt(s),
+        count: seasonGroups[parseInt(s)].length,
+      }));
+
+      const result = {
+        anime: animeParam,
+        totalEpisodes: cleanEpisodes.length,
+        seasons,
+        episodes: cleanEpisodes,
+        extras: noEpVideos.map((v: any) => {
+          const c = { ...v };
+          delete c.__matchScore;
+          delete c.__score;
+          return c;
+        }),
+        mode: 'episodes',
+      };
+
+      setCache(cacheKey, result);
+      return jsonRes({ success: true, ...result });
+    } catch (err: any) {
+      console.error('[episodes-mode]', err);
+      return jsonRes({ success: false, error: err.message, episodes: [] }, 500);
+    }
+  }
+
+  // ═══ CACHE KEY ═══
+  const cacheKey = `feed_v4:${type}:${page}:${platforms.join(',')}:${format}:${relatedChannel}:${seriesTitle}`;
   if (!noCache) {
     const hit = cached(cacheKey);
     if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
   }
 
   try {
-
-    // ════════════════════════════════════════════
-    // 🎌 EPISODE MODE — ?mode=episodes&anime=slug
-    // ════════════════════════════════════════════
-    if (mode === 'episodes' && animeSlug) {
-      const animeName = slugToAnimeName(animeSlug);
-
-      // Multi-platform parallel search
-      const promises: Promise<any[]>[] = [];
-      if (YT_KEY) promises.push(searchEpisodesYouTube(animeName, YT_KEY));
-      promises.push(searchEpisodesDailymotion(animeName));
-      promises.push(searchEpisodesBilibili(animeName));
-
-      const results = await Promise.all(promises);
-      let allEpisodes: any[] = [];
-      for (const r of results) allEpisodes.push(...r);
-
-      // Dedupe
-      allEpisodes = dedupeVideos(allEpisodes);
-
-      // Sort by serial order
-      allEpisodes = sortEpisodes(allEpisodes);
-
-      // Remove internal fields
-      allEpisodes = allEpisodes.map(v => {
-        const clean = { ...v };
-        delete clean.__score;
-        delete clean.similarityScore;
-        return clean;
-      });
-
-      const result = {
-        videos: allEpisodes.slice(0, limit),
-        total: allEpisodes.length,
-        animeName,
-        animeSlug,
-        mode: 'episodes',
-        firstEpisode: allEpisodes[0] || null,
-      };
-
-      setCache(cacheKey, result);
-      return jsonRes({ success: true, ...result });
-    }
-
-    // ════════════════════════════════════════════
-    // 🔗 RELATED MODE (backward compat)
-    // ════════════════════════════════════════════
+    // ═══ RELATED MODE ═══
     if (isRelatedMode) {
       const relatedVideos: any[] = [];
       const promises: Promise<any[]>[] = [];
-
       if (seriesTitle) {
         if (YT_KEY) promises.push(searchYouTubeSeries(seriesTitle, YT_KEY));
         promises.push(searchDailymotionSeries(seriesTitle));
@@ -904,7 +793,6 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
       if (relatedChannel && YT_KEY) {
         promises.push(searchYouTube(relatedChannel + ' latest', 'anime', YT_KEY));
       }
-
       const results = await Promise.all(promises);
       results.forEach(vids => relatedVideos.push(...vids));
 
@@ -930,14 +818,11 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
         series: seriesTitle,
         channel: relatedChannel,
       };
-
       setCache(cacheKey, result);
       return jsonRes({ success: true, ...result });
     }
 
-    // ════════════════════════════════════════════
-    // 📺 NORMAL FEED MODE
-    // ════════════════════════════════════════════
+    // ═══ NORMAL MODE ═══
     const allVideos: any[] = [];
     const typesToFetch = type === 'all'
       ? ['anime', 'kdrama', 'donghua', 'movies']
@@ -945,6 +830,7 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
 
     const usePlatform = (p: string) => platforms.includes('all') || platforms.includes(p);
     const wantLandscape = format === 'all' || format === 'landscape';
+
     const promises: Promise<any[]>[] = [];
 
     if (wantLandscape && usePlatform('anitube_anime') && (type === 'all' || type === 'anime')) {
@@ -970,7 +856,7 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
       }
 
       if (usePlatform('bilibili') && wantLandscape &&
-        (contentType === 'donghua' || contentType === 'anime' || contentType === 'movies')) {
+          (contentType === 'donghua' || contentType === 'anime' || contentType === 'movies')) {
         if (query) promises.push(searchBilibili(query, contentType));
       }
     }
@@ -989,8 +875,11 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
       return true;
     });
 
-    if (format === 'landscape') unique = unique.filter(v => v.aspect === 'landscape');
-    else if (format === 'portrait') unique = unique.filter(v => v.aspect === 'portrait');
+    if (format === 'landscape') {
+      unique = unique.filter(v => v.aspect === 'landscape');
+    } else if (format === 'portrait') {
+      unique = unique.filter(v => v.aspect === 'portrait');
+    }
 
     unique = limitPerChannel(unique, 3);
     unique.sort((a: any, b: any) => (b.__score || 0) - (a.__score || 0));
