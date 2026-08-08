@@ -228,29 +228,22 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
               <div class="rp-player-frame">
                 {isAnimeExternal ? (
                   <div class="rp-external-wrap" id="externalWrap">
-                       <iframe
+                    <iframe
                       id="videoFrame"
                       src={video.embedUrl}
                       title={video.title}
                       frameborder="0"
                       scrolling="no"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
                       allowfullscreen
                       loading="eager"
                       sandbox="allow-scripts allow-same-origin allow-forms"
                       class="rp-ext-iframe"
                     ></iframe>
-                    <div class="rp-ext-mask-top"></div>
-                    <div class="rp-ext-mask-bottom"></div>
-                    <div class="rp-ext-mask-left"></div>
-                    <div class="rp-ext-mask-right"></div>
-                    <div class="rp-ext-click-blocker rp-ext-blocker-bottom"></div>
-                    <div class="rp-ext-click-blocker rp-ext-blocker-top"></div>
                     <div class="rp-ext-brand">
                       <span class="rp-ext-logo">AniTubeBuzz</span>
                       <span class="rp-ext-live">HD</span>
                     </div>
-                   undefined
                   </div>
                 ) : (
                   <iframe
@@ -506,101 +499,55 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       border: 0;
     }
 
-        /* ============ EXTERNAL ANIME IFRAME (STEALTH VIDEO ONLY) ============ */
-        .rp-player-external .rp-player-frame {
-      padding-top: 56.25%;
+           /* ============ EXTERNAL ANIME IFRAME (DYNAMIC SCALED CROP) ============ */
+    .rp-player-external {
+      overflow: visible;
+      isolation: isolate;
+    }
+    .rp-player-external .rp-player-frame {
+      position: relative;
+      width: 100%;
+      padding-top: 0 !important;
       background: #000;
-      overflow: hidden;
-      min-height: 500px;
+      overflow: visible;
+      min-height: 300px;
     }
     .rp-external-wrap {
-      position: absolute;
-      inset: 0;
-      overflow: hidden !important;
-      background: #000;
-    }
-    /* IFRAME: Large size, positioned so ONLY video player rectangle visible */
-    /* AnimoTV video player location: ~340px from top, ~600px tall on 1280 width */
-      .rp-ext-iframe {
-      position: absolute;
-      top: -340px;
-      left: 0;
+      position: relative;
       width: 100%;
-      height: 1050px;
-      border: 0;
-      overflow: hidden !important;
-      pointer-events: auto;
-      transform: scale(0.95);
-      transform-origin: top left;
+      overflow: hidden;
+      background: #000;
+      border-radius: 16px;
+      /* height set by JS to match scaled video */
     }
-    /* FULLSCREEN */
+    .rp-ext-iframe {
+      position: absolute;
+      left: 0;
+      top: 0;
+      border: 0;
+      transform-origin: 0 0;
+      -webkit-transform-origin: 0 0;
+      will-change: transform;
+      -webkit-backface-visibility: hidden;
+      background: transparent;
+      display: block;
+      scrollbar-width: none;
+      /* width/height/transform set by JS */
+    }
+    .rp-ext-iframe::-webkit-scrollbar {
+      display: none;
+    }
+    /* Fullscreen adjustments */
     .rp-external-wrap:fullscreen {
       background: #000;
       width: 100vw;
       height: 100vh;
+      border-radius: 0;
     }
-    .rp-external-wrap:fullscreen .rp-ext-iframe,
-    .rp-external-wrap:-webkit-full-screen .rp-ext-iframe {
-      top: -400px;
-      height: 1200px;
-    }
-    /* MASKS — hide everything except video area */
-    .rp-ext-mask-top {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 0;
+    .rp-external-wrap:-webkit-full-screen {
       background: #000;
-      z-index: 12;
-      pointer-events: auto;
-    }
-        .rp-ext-mask-bottom {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 0;
-      background: #000;
-      z-index: 12;
-      pointer-events: none;
-    }
-    .rp-ext-mask-left {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      width: 0;
-      background: #000;
-      z-index: 12;
-      pointer-events: auto;
-    }
-    .rp-ext-mask-right {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      right: 0;
-      width: 0;
-      background: #000;
-      z-index: 12;
-      pointer-events: auto;
-    }
-    /* CLICK BLOCKERS — user cannot click auto-play/download/etc */
-    .rp-ext-click-blocker {
-      position: absolute;
-      left: 0;
-      right: 0;
-      background: transparent;
-      z-index: 13;
-      cursor: default;
-    }
-    .rp-ext-blocker-bottom {
-      bottom: 0;
-      height: 100px;
-    }
-    .rp-ext-blocker-top {
-      top: 0;
-      height: 0;
+      width: 100vw;
+      height: 100vh;
     }
     /* BRAND WATERMARK */
     .rp-ext-brand {
@@ -2269,42 +2216,79 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         }, 150);
       }
 
-            function setupIframe() {
+             function setupIframe() {
         var iframe = document.getElementById('videoFrame');
         if (!iframe) return;
         iframe.addEventListener('load', hideVideoLoader);
         setTimeout(hideVideoLoader, 3500);
       }
 
-            function setupCustomFullscreen() {
-        // Custom fullscreen removed — using native player controls
+      // ============ DYNAMIC IFRAME SCALING (Cross-origin crop) ============
+      function setupExternalCrop() {
+        var PAGE_VIEWPORT_W = 1121;
+        var VIDEO_W = 950;
+        var VIDEO_H = 555;
+        var VIDEO_LEFT = 86;
+        var VIDEO_TOP = 340;
+        var PAGE_HEIGHT = 7277;
+
         var wrap = document.getElementById('externalWrap');
-        if (!wrap) return;
-        // Prevent right-click on iframe (hides context menu that reveals source)
+        var iframe = document.getElementById('videoFrame');
+        if (!wrap || !iframe) return;
+
+        // Set iframe intrinsic size (untransformed)
+        iframe.style.width = PAGE_VIEWPORT_W + 'px';
+        iframe.style.height = PAGE_HEIGHT + 'px';
+        iframe.style.left = '0';
+        iframe.style.top = '0';
+        iframe.setAttribute('scrolling', 'no');
+
+        function updateCrop() {
+          var containerWidth = Math.max(1, wrap.clientWidth);
+          var s = containerWidth / VIDEO_W;
+          s = Math.max(0.45, Math.min(1.6, s));
+
+          var translateX = -VIDEO_LEFT;
+          var translateY = -VIDEO_TOP;
+
+          iframe.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + s + ')';
+          iframe.style.webkitTransform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + s + ')';
+
+          var visibleHeight = Math.ceil(VIDEO_H * s + 8);
+          wrap.style.height = visibleHeight + 'px';
+        }
+
+        var rafId = null;
+        function scheduleUpdate() {
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = requestAnimationFrame(function() {
+            updateCrop();
+            rafId = null;
+          });
+        }
+
+        window.addEventListener('load', scheduleUpdate, { passive: true });
+        window.addEventListener('resize', scheduleUpdate, { passive: true });
+        scheduleUpdate();
+
+        if ('ResizeObserver' in window) {
+          try {
+            var ro = new ResizeObserver(scheduleUpdate);
+            ro.observe(wrap);
+          } catch (e) {}
+        }
+
+        // Also update after iframe loads (content may shift)
+        iframe.addEventListener('load', function() {
+          setTimeout(scheduleUpdate, 100);
+          setTimeout(scheduleUpdate, 500);
+          setTimeout(scheduleUpdate, 1500);
+        });
+
+        // Block right-click on wrapper (not iframe content — cross-origin)
         wrap.addEventListener('contextmenu', function(e) {
           e.preventDefault();
         });
-      }
-            function setupClickBlocker() {
-        var blockers = document.querySelectorAll('.rp-ext-click-blocker');
-        for (var i = 0; i < blockers.length; i++) {
-          blockers[i].addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-          });
-          blockers[i].addEventListener('mousedown', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-          });
-        }
-        // Block scroll on iframe area (prevents iframe scroll bleed)
-        var wrap = document.getElementById('externalWrap');
-        if (wrap) {
-          wrap.addEventListener('wheel', function(e) {
-            // Allow page scroll — just don't let iframe capture it
-            // But don't prevent — user can still scroll the outer page
-          }, { passive: true });
-        }
       }
       // Scroll active episode into view (external mode)
       function scrollActiveEpisode() {
@@ -2331,10 +2315,8 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         loadProducts();
         scrollActiveEpisode();
         if (isExternal) {
-          setupCustomFullscreen();
-          setupClickBlocker();
+         setupExternalCrop();
         }
-
         var likeBtn = document.getElementById('likeBtn');
         var saveBtn = document.getElementById('saveBtn');
         var sendBtn = document.getElementById('sendBtn');
