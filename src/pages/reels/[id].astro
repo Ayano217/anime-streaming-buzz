@@ -8,7 +8,40 @@ import Footer from '../../components/Footer.astro';
 const { id } = Astro.params;
 const videoId = id || '';
 
+// ═══ Detect if this is AnimoTVSlash anime iframe (anime_slug_ep{n}) ═══
+const animeMatch = videoId.match(/^anime_(.+)_ep(\d+)$/);
+const isAnimeExternal = !!animeMatch;
+const animeSlug = animeMatch ? animeMatch[1] : '';
+const animeEpNum = animeMatch ? parseInt(animeMatch[2]) : 0;
+
+// ═══ Server-side: Fetch anime data if external ═══
+let externalAnime = null;
+if (isAnimeExternal) {
+  try {
+    const url = new URL('/api/anime-external', Astro.url.origin);
+    url.searchParams.set('action', 'detail');
+    url.searchParams.set('slug', animeSlug);
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success) externalAnime = data;
+    }
+  } catch (e) {}
+}
+
 function getPlatformData(vid) {
+  // AnimoTVSlash anime
+  if (vid.startsWith('anime_')) {
+    const m = vid.match(/^anime_(.+)_ep(\d+)$/);
+    if (m) {
+      return {
+        source: 'animotv',
+        embedUrl: `https://animotvslash.org/${m[1]}-episode-${m[2]}/`,
+        aspect: 'landscape',
+        isShort: false
+      };
+    }
+  }
   if (vid.startsWith('yts_')) {
     const rawId = vid.replace('yts_', '');
     return {
@@ -75,50 +108,72 @@ function extractSeriesFromTitle(title) {
 let video = null;
 let allVideos = [];
 
-try {
-  const apiUrl = new URL('/api/social-feed', Astro.url.origin);
-  apiUrl.searchParams.set('limit', '100');
-  apiUrl.searchParams.set('format', 'all');
-  const response = await fetch(apiUrl);
-  if (response.ok) {
-    const data = await response.json();
-    allVideos = data.videos || [];
-    video = allVideos.find(v => v.id === videoId);
-  }
-} catch (e) {}
-
-if (!video) {
+// ═══ Build video object ═══
+if (isAnimeExternal && externalAnime) {
   const platformData = getPlatformData(videoId);
-  if (platformData) {
-    video = {
-      id: videoId,
-      title: 'Video',
-      channel: 'AniTube',
-      thumbnail: generateThumbnail(videoId, ''),
-      embedUrl: platformData.embedUrl,
-      source: platformData.source,
-      aspect: platformData.aspect,
-      isShort: platformData.isShort,
-      type: 'anime',
-      description: ''
-    };
-  } else {
-    video = {
-      id: videoId,
-      title: 'Video',
-      channel: 'AniTubeBuzz',
-      thumbnail: '',
-      embedUrl: `https://www.youtube.com/embed/${videoId.replace(/^(yt_|yts_|dm_|bili_|ody_|rmb_)/, '')}?rel=0&autoplay=1`,
-      source: 'youtube',
-      aspect: 'landscape',
-      isShort: false,
-      type: 'anime',
-      description: ''
-    };
-  }
+  video = {
+    id: videoId,
+    title: `${externalAnime.title} - Episode ${animeEpNum}`,
+    channel: 'AniTubeBuzz',
+    thumbnail: externalAnime.poster || '',
+    embedUrl: platformData.embedUrl,
+    source: 'animotv',
+    aspect: 'landscape',
+    isShort: false,
+    type: 'anime',
+    description: externalAnime.description || '',
+    isAnimeExternal: true,
+    animeSlug: animeSlug,
+    episodeNumber: animeEpNum,
+    totalEpisodes: externalAnime.episodes ? externalAnime.episodes.length : 26,
+  };
 } else {
-  if (!video.thumbnail || !video.thumbnail.trim()) video.thumbnail = generateThumbnail(videoId, '');
-  if (!video.description) video.description = '';
+  // Existing logic for normal videos
+  try {
+    const apiUrl = new URL('/api/social-feed', Astro.url.origin);
+    apiUrl.searchParams.set('limit', '100');
+    apiUrl.searchParams.set('format', 'all');
+    const response = await fetch(apiUrl);
+    if (response.ok) {
+      const data = await response.json();
+      allVideos = data.videos || [];
+      video = allVideos.find(v => v.id === videoId);
+    }
+  } catch (e) {}
+
+  if (!video) {
+    const platformData = getPlatformData(videoId);
+    if (platformData) {
+      video = {
+        id: videoId,
+        title: 'Video',
+        channel: 'AniTube',
+        thumbnail: generateThumbnail(videoId, ''),
+        embedUrl: platformData.embedUrl,
+        source: platformData.source,
+        aspect: platformData.aspect,
+        isShort: platformData.isShort,
+        type: 'anime',
+        description: ''
+      };
+    } else {
+      video = {
+        id: videoId,
+        title: 'Video',
+        channel: 'AniTubeBuzz',
+        thumbnail: '',
+        embedUrl: `https://www.youtube.com/embed/${videoId.replace(/^(yt_|yts_|dm_|bili_|ody_|rmb_)/, '')}?rel=0&autoplay=1`,
+        source: 'youtube',
+        aspect: 'landscape',
+        isShort: false,
+        type: 'anime',
+        description: ''
+      };
+    }
+  } else {
+    if (!video.thumbnail || !video.thumbnail.trim()) video.thumbnail = generateThumbnail(videoId, '');
+    if (!video.description) video.description = '';
+  }
 }
 
 const seriesName = extractSeriesFromTitle(video.title);
@@ -145,6 +200,9 @@ const hasDescription = description.length > 0;
 const metaParts = ['HD', typeLabel];
 if (publishText) metaParts.push(publishText);
 const metaText = metaParts.join(' • ');
+
+// External anime episodes data for sidebar
+const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.episodes : [];
 ---
 
 <BaseLayout title={`${video.title} | AniTubeBuzz`}>
@@ -152,23 +210,55 @@ const metaText = metaParts.join(' • ');
 
   <section class="rp-section">
     <div class="rp-container">
-      <div id="reels-root" data-videoid={videoId} data-aspect={videoAspect} data-channel={displayChannel} data-series={seriesName} data-type={video.type}>
+      <div id="reels-root" 
+           data-videoid={videoId} 
+           data-aspect={videoAspect} 
+           data-channel={displayChannel} 
+           data-series={seriesName} 
+           data-type={video.type}
+           data-is-external={isAnimeExternal ? 'true' : 'false'}
+           data-anime-slug={animeSlug}
+           data-ep-num={animeEpNum}>
         <div class="rp-grid">
 
           <!-- MAIN COLUMN (LEFT) -->
           <div class="rp-main">
 
-            <div class="rp-player" id="videoCard" data-aspect={videoAspect}>
+            <div class={`rp-player ${isAnimeExternal ? 'rp-player-external' : ''}`} id="videoCard" data-aspect={videoAspect}>
               <div class="rp-player-frame">
-                <iframe
-                  id="videoFrame"
-                  src={video.embedUrl}
-                  title={video.title}
-                  frameborder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowfullscreen
-                  loading="eager"
-                ></iframe>
+                {isAnimeExternal ? (
+                  <div class="rp-external-wrap">
+                    <iframe
+                      id="videoFrame"
+                      src={video.embedUrl}
+                      title={video.title}
+                      frameborder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                      allowfullscreen
+                      loading="eager"
+                      sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"
+                      class="rp-ext-iframe"
+                    ></iframe>
+                    <div class="rp-ext-mask-top"></div>
+                    <div class="rp-ext-mask-bottom"></div>
+                    <div class="rp-ext-mask-left"></div>
+                    <div class="rp-ext-mask-right"></div>
+                    <div class="rp-ext-brand">
+                      <span class="rp-ext-logo">AniTubeBuzz</span>
+                      <span class="rp-ext-live">LIVE</span>
+                    </div>
+                  </div>
+                ) : (
+                  <iframe
+                    id="videoFrame"
+                    src={video.embedUrl}
+                    title={video.title}
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                    loading="eager"
+                  ></iframe>
+                )}
                 <div class="rp-vloader" id="videoLoader">
                   <div class="rp-orbit">
                     <div class="rp-dot rp-d1"></div>
@@ -177,11 +267,13 @@ const metaText = metaParts.join(' • ');
                   </div>
                   <div class="rp-brand">AniTubeBuzz</div>
                 </div>
-                <div class="rp-heart" id="doubleTapHeart">
-                  <svg viewBox="0 0 24 24" fill="currentColor" style="width:100%;height:100%;">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                  </svg>
-                </div>
+                {!isAnimeExternal && (
+                  <div class="rp-heart" id="doubleTapHeart">
+                    <svg viewBox="0 0 24 24" fill="currentColor" style="width:100%;height:100%;">
+                      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -295,7 +387,7 @@ const metaText = metaParts.join(' • ');
             <div class="rp-sidebar-head">
               <div class="rp-sidebar-title">
                 <span class="rp-section-bar"></span>
-                <span>Up Next</span>
+                <span>{isAnimeExternal ? '📺 Episodes' : 'Up Next'}</span>
               </div>
               <label class="rp-autoplay-label">
                 <span>Autoplay</span>
@@ -304,16 +396,26 @@ const metaText = metaParts.join(' • ');
               </label>
             </div>
 
-            <div id="seriesSection" class="rp-series-wrap" style="display:none;">
-              <div class="rp-series-head">
-                <span>📺 Episodes</span>
-                <span class="rp-series-count" id="seriesCount">0</span>
+            {isAnimeExternal && externalEpisodes.length > 0 && (
+              <div id="externalEpisodes" class="rp-ext-episodes">
+                {externalEpisodes.map(ep => (
+                  <a class={`rp-ext-ep-card ${ep.number === animeEpNum ? 'active' : ''}`} 
+                     href={`/reels/${ep.embedId}`}
+                     data-ep-num={ep.number}>
+                    <div class="rp-ext-ep-num">{ep.number}</div>
+                    <div class="rp-ext-ep-info">
+                      <div class="rp-ext-ep-title">Episode {ep.number}</div>
+                      <div class="rp-ext-ep-meta">{ep.number === animeEpNum ? '▶ Playing' : 'Click to watch'}</div>
+                    </div>
+                    {ep.number === animeEpNum && <div class="rp-ext-ep-playing"><span></span><span></span><span></span></div>}
+                  </a>
+                ))}
               </div>
-              <div id="seriesList" class="rp-side-list"></div>
-              <div class="rp-divider"></div>
-            </div>
+            )}
 
-            <div id="relatedFeed" class="rp-side-list"></div>
+            {!isAnimeExternal && (
+              <div id="relatedFeed" class="rp-side-list"></div>
+            )}
           </aside>
 
         </div>
@@ -322,7 +424,6 @@ const metaText = metaParts.join(' • ');
   </section>
 
   <Footer slot="footer" />
-
   <style is:global>
     /* ============ RESET & BASE ============ */
     .rp-section {
@@ -377,13 +478,121 @@ const metaText = metaParts.join(' • ');
       max-width: 500px;
       margin: 0 auto;
     }
-    .rp-player-frame iframe {
+    .rp-player-frame > iframe {
       position: absolute;
       inset: 0;
       width: 100%;
       height: 100%;
       border: 0;
     }
+
+    /* ============ EXTERNAL ANIME IFRAME (MASKED) ============ */
+    .rp-player-external .rp-player-frame {
+      padding-top: 56.25%;
+      background: #000;
+      overflow: hidden;
+    }
+    .rp-external-wrap {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    /* Iframe scaled + positioned so ONLY video player visible */
+    .rp-ext-iframe {
+      position: absolute;
+      top: -180px;
+      left: 0;
+      width: 100%;
+      height: calc(100% + 500px);
+      border: 0;
+      transform-origin: top left;
+    }
+    /* Mask overlays to hide surrounding content */
+    .rp-ext-mask-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 0;
+      background: #000;
+      z-index: 10;
+      pointer-events: auto;
+    }
+    .rp-ext-mask-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0;
+      background: #000;
+      z-index: 10;
+      pointer-events: auto;
+    }
+    .rp-ext-mask-left {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      background: #000;
+      z-index: 10;
+      pointer-events: auto;
+    }
+    .rp-ext-mask-right {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      width: 0;
+      background: #000;
+      z-index: 10;
+      pointer-events: auto;
+    }
+    /* Brand watermark overlay */
+    .rp-ext-brand {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      z-index: 15;
+      pointer-events: none;
+      opacity: 0;
+      animation: rpBrandFade 4s ease-out 1s forwards;
+    }
+    @keyframes rpBrandFade {
+      0% { opacity: 0; transform: translateY(-8px); }
+      15% { opacity: 1; transform: translateY(0); }
+      85% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .rp-ext-logo {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-weight: 800;
+      font-size: 12px;
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .rp-ext-live {
+      display: inline-block;
+      padding: 2px 6px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 1px;
+      border-radius: 4px;
+    }
+
+    /* ============ NORMAL PLAYER LOADER ============ */
     .rp-vloader {
       position: absolute;
       inset: 0;
@@ -398,11 +607,7 @@ const metaText = metaParts.join(' • ');
       pointer-events: none;
     }
     .rp-vloader.hidden { opacity: 0; }
-    .rp-orbit {
-      position: relative;
-      width: 60px;
-      height: 60px;
-    }
+    .rp-orbit { position: relative; width: 60px; height: 60px; }
     .rp-dot {
       position: absolute;
       width: 12px;
@@ -452,7 +657,7 @@ const metaText = metaParts.join(' • ');
       100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
     }
 
-    /* ============ TITLE ============ */
+    /* ============ TITLE & META ============ */
     .rp-title {
       font-family: 'Bricolage Grotesque', sans-serif;
       font-size: 22px;
@@ -462,8 +667,6 @@ const metaText = metaParts.join(' • ');
       line-height: 1.3;
       letter-spacing: -0.3px;
     }
-
-    /* ============ META BAR ============ */
     .rp-meta-bar {
       display: flex;
       align-items: center;
@@ -610,7 +813,7 @@ const metaText = metaParts.join(' • ');
     .rp-desc-body.expanded { max-height: 1000px; }
     .rp-desc-body p { margin: 0; white-space: pre-wrap; }
 
-    /* ============ COMMENTS (PREMIUM YOUTUBE STYLE) ============ */
+    /* ============ COMMENTS ============ */
     .rp-comments {
       margin-top: 28px;
       padding-top: 24px;
@@ -645,7 +848,6 @@ const metaText = metaParts.join(' • ');
       transition: background 0.2s;
     }
     .rp-sort-btn:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
-
     .rp-comment-input-row {
       display: grid;
       grid-template-columns: 40px 1fr;
@@ -710,8 +912,6 @@ const metaText = metaParts.join(' • ');
       color: #fff;
     }
     .rp-submit-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4); }
-    .rp-submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
     .rp-comments-list { display: flex; flex-direction: column; gap: 18px; }
     .rp-comments-empty {
       padding: 30px 20px;
@@ -719,7 +919,6 @@ const metaText = metaParts.join(' • ');
       color: rgba(255, 255, 255, 0.5);
       font-size: 14px;
     }
-
     .rp-comment {
       display: grid;
       grid-template-columns: 40px 1fr;
@@ -749,11 +948,7 @@ const metaText = metaParts.join(' • ');
       margin-bottom: 4px;
       flex-wrap: wrap;
     }
-    .rp-c-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #fff;
-    }
+    .rp-c-name { font-size: 13px; font-weight: 700; color: #fff; }
     .rp-c-time {
       font-size: 12px;
       color: rgba(255, 255, 255, 0.5);
@@ -766,11 +961,7 @@ const metaText = metaParts.join(' • ');
       margin: 0 0 8px;
       word-wrap: break-word;
     }
-    .rp-c-actions {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
+    .rp-c-actions { display: flex; align-items: center; gap: 4px; }
     .rp-c-btn {
       display: inline-flex;
       align-items: center;
@@ -786,18 +977,10 @@ const metaText = metaParts.join(' • ');
       font-family: inherit;
       transition: all 0.2s;
     }
-    .rp-c-btn:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff;
-    }
-    .rp-c-btn.active {
-      color: #c084fc;
-    }
+    .rp-c-btn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+    .rp-c-btn.active { color: #c084fc; }
     .rp-c-btn.active svg { fill: #c084fc; }
-    .rp-c-reply-btn {
-      padding: 6px 12px;
-      font-weight: 700;
-    }
+    .rp-c-reply-btn { padding: 6px 12px; font-weight: 700; }
     .rp-c-reply-btn:hover { color: #c084fc; }
     .rp-c-count {
       font-size: 12px;
@@ -806,26 +989,9 @@ const metaText = metaParts.join(' • ');
       font-family: 'JetBrains Mono', monospace;
       min-width: 12px;
     }
-
-    .rp-c-replies {
-      margin-top: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .rp-c-reply {
-      display: grid;
-      grid-template-columns: 32px 1fr;
-      gap: 12px;
-      align-items: start;
-    }
-    .rp-c-reply .rp-c-avatar {
-      width: 32px !important;
-      height: 32px !important;
-      min-width: 32px !important;
-      max-width: 32px !important;
-      font-size: 13px !important;
-    }
+    .rp-c-replies { margin-top: 12px; display: flex; flex-direction: column; gap: 14px; }
+    .rp-c-reply { display: grid; grid-template-columns: 32px 1fr; gap: 12px; align-items: start; }
+    .rp-c-reply .rp-c-avatar { width: 32px !important; height: 32px !important; min-width: 32px !important; max-width: 32px !important; font-size: 13px !important; }
     .rp-c-reply-toggle {
       display: inline-flex;
       align-items: center;
@@ -843,19 +1009,8 @@ const metaText = metaParts.join(' • ');
       transition: background 0.2s;
     }
     .rp-c-reply-toggle:hover { background: rgba(192, 132, 252, 0.1); }
-    .rp-c-reply-form {
-      margin-top: 10px;
-      display: grid;
-      grid-template-columns: 32px 1fr;
-      gap: 12px;
-    }
-    .rp-c-reply-form .rp-my-av {
-      width: 32px !important;
-      height: 32px !important;
-      min-width: 32px !important;
-      max-width: 32px !important;
-      font-size: 13px !important;
-    }
+    .rp-c-reply-form { margin-top: 10px; display: grid; grid-template-columns: 32px 1fr; gap: 12px; }
+    .rp-c-reply-form .rp-my-av { width: 32px !important; height: 32px !important; min-width: 32px !important; max-width: 32px !important; font-size: 13px !important; }
     .rp-c-reply-input {
       width: 100%;
       background: transparent;
@@ -868,14 +1023,9 @@ const metaText = metaParts.join(' • ');
       outline: none;
     }
     .rp-c-reply-input:focus { border-bottom-color: #c084fc; }
-    .rp-c-reply-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 8px;
-    }
+    .rp-c-reply-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 
-    /* ============ MORE LIKE THIS GRID (home card style) ============ */
+    /* ============ MORE LIKE THIS ============ */
     .rp-more-section {
       margin-top: 40px;
       padding-top: 24px;
@@ -992,42 +1142,93 @@ const metaText = metaParts.join(' • ');
     .rp-autoplay-label input:checked + .rp-switch {
       background: linear-gradient(135deg, #c084fc, #e879f9);
     }
-    .rp-autoplay-label input:checked + .rp-switch::after {
-      transform: translateX(14px);
-    }
+    .rp-autoplay-label input:checked + .rp-switch::after { transform: translateX(14px); }
 
-    .rp-series-wrap { margin-bottom: 16px; }
-    .rp-series-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 0;
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      color: #fbbf24;
-      margin-bottom: 10px;
-    }
-    .rp-series-count {
-      padding: 2px 8px;
-      border-radius: 10px;
-      background: rgba(251, 191, 36, 0.15);
-      color: #fbbf24;
-      font-size: 11px;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .rp-divider {
-      height: 1px;
-      background: rgba(192, 132, 252, 0.12);
-      margin: 16px 0;
-    }
-    .rp-side-list {
+    /* ============ EXTERNAL EPISODES LIST ============ */
+    .rp-ext-episodes {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+    }
+    .rp-ext-ep-card {
+      display: grid;
+      grid-template-columns: 44px 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 12px;
+      background: rgba(28, 15, 61, 0.4);
+      border: 1px solid rgba(192, 132, 252, 0.1);
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.2s ease;
+    }
+    .rp-ext-ep-card:hover {
+      background: rgba(192, 132, 252, 0.12);
+      border-color: rgba(192, 132, 252, 0.4);
+      transform: translateX(2px);
+    }
+    .rp-ext-ep-card.active {
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.25), rgba(232, 121, 249, 0.2));
+      border-color: rgba(192, 132, 252, 0.6);
+      box-shadow: 0 4px 16px rgba(192, 132, 252, 0.2);
+    }
+    .rp-ext-ep-num {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 16px;
+      font-family: 'Bricolage Grotesque', sans-serif;
+      box-shadow: 0 4px 12px rgba(192, 132, 252, 0.3);
+    }
+    .rp-ext-ep-card.active .rp-ext-ep-num {
+      background: linear-gradient(135deg, #10b981, #34d399);
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+    }
+    .rp-ext-ep-info { min-width: 0; }
+    .rp-ext-ep-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+    }
+    .rp-ext-ep-meta {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.55);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 2px;
+    }
+    .rp-ext-ep-card.active .rp-ext-ep-meta { color: #10b981; }
+    .rp-ext-ep-playing {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      padding-right: 4px;
+    }
+    .rp-ext-ep-playing span {
+      display: block;
+      width: 3px;
+      background: linear-gradient(180deg, #10b981, #34d399);
+      border-radius: 2px;
+      animation: rpEpWave 1s ease-in-out infinite;
+    }
+    .rp-ext-ep-playing span:nth-child(1) { height: 10px; animation-delay: 0s; }
+    .rp-ext-ep-playing span:nth-child(2) { height: 16px; animation-delay: 0.2s; }
+    .rp-ext-ep-playing span:nth-child(3) { height: 12px; animation-delay: 0.4s; }
+    @keyframes rpEpWave {
+      0%, 100% { transform: scaleY(0.4); }
+      50% { transform: scaleY(1); }
     }
 
-    /* Sidebar card - HORIZONTAL COMPACT (168px thumb + text) */
+    /* ============ NORMAL SIDEBAR (Up Next) ============ */
+    .rp-side-list { display: flex; flex-direction: column; gap: 10px; }
     .rp-side-card {
       display: grid;
       grid-template-columns: 168px 1fr;
@@ -1086,13 +1287,7 @@ const metaText = metaParts.join(' • ');
       font-family: 'JetBrains Mono', monospace;
       z-index: 2;
     }
-    .rp-side-info {
-      min-width: 0;
-      padding: 4px 4px 4px 0;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
+    .rp-side-info { min-width: 0; padding: 4px 4px 4px 0; display: flex; flex-direction: column; gap: 4px; }
     .rp-side-title {
       font-size: 13px;
       font-weight: 700;
@@ -1117,8 +1312,6 @@ const metaText = metaParts.join(' • ');
       color: rgba(255, 255, 255, 0.4);
       font-family: 'JetBrains Mono', monospace;
     }
-
-    /* Ad card sidebar */
     .rp-side-ad {
       display: grid;
       grid-template-columns: 168px 1fr;
@@ -1136,9 +1329,7 @@ const metaText = metaParts.join(' • ');
       background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(249, 115, 22, 0.15));
       border-color: rgba(251, 191, 36, 0.6);
     }
-    .rp-side-ad .rp-side-badge {
-      background: linear-gradient(135deg, #fbbf24, #f97316);
-    }
+    .rp-side-ad .rp-side-badge { background: linear-gradient(135deg, #fbbf24, #f97316); }
     .rp-side-ad-price {
       font-size: 13px;
       font-weight: 800;
@@ -1147,7 +1338,7 @@ const metaText = metaParts.join(' • ');
       margin-top: 2px;
     }
 
-    /* ============ MAIN FEED CARDS (home style .at-na-card) ============ */
+    /* ============ FEED CARDS (home style .at-na-card) ============ */
     .at-na-card {
       display: block;
       cursor: pointer;
@@ -1292,8 +1483,6 @@ const metaText = metaParts.join(' • ');
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-
-    /* Product card in feed grid */
     .at-na-ad {
       background: linear-gradient(135deg, rgba(251, 191, 36, 0.05), rgba(249, 115, 22, 0.05));
       border-radius: 12px;
@@ -1318,10 +1507,7 @@ const metaText = metaParts.join(' • ');
     }
     @media (max-width: 960px) {
       .rp-grid { grid-template-columns: 1fr; }
-      .rp-sidebar {
-        position: static;
-        max-height: none;
-      }
+      .rp-sidebar { position: static; max-height: none; }
       .rp-container { padding: 0 16px; }
       .rp-title { font-size: 18px; }
     }
@@ -1335,21 +1521,34 @@ const metaText = metaParts.join(' • ');
       .rp-side-thumb { width: 130px; padding-top: 73px; }
     }
   </style>
-  <script is:inline define:vars={{ INITIAL_VIDEO: video, INITIAL_FEED: allVideos.slice(0, 50), CURRENT_ID: videoId, SERIES_NAME: seriesName, CHANNEL_NAME: displayChannel }}>
+
+  <script is:inline define:vars={{ 
+    INITIAL_VIDEO: video, 
+    INITIAL_FEED: allVideos.slice(0, 50), 
+    CURRENT_ID: videoId, 
+    SERIES_NAME: seriesName, 
+    CHANNEL_NAME: displayChannel,
+    IS_EXTERNAL: isAnimeExternal,
+    EXT_EPISODES: externalEpisodes,
+    EXT_CURRENT_EP: animeEpNum,
+    EXT_ANIME_SLUG: animeSlug
+  }}>
     (function() {
       var currentVideo = INITIAL_VIDEO;
       var currentId = CURRENT_ID;
       var seriesName = SERIES_NAME || '';
       var channelName = CHANNEL_NAME || '';
       var allFeed = INITIAL_FEED || [];
+      var isExternal = IS_EXTERNAL;
+      var extEpisodes = EXT_EPISODES || [];
+      var extCurrentEp = EXT_CURRENT_EP || 0;
+      var extAnimeSlug = EXT_ANIME_SLUG || '';
       var sidebarItems = [];
       var moreItems = [];
       var productPool = [];
-      var sidebarRendered = 0;
       var moreRendered = 0;
       var loadingMore = false;
 
-      // ============ UTIL ============
       function escapeHtml(s) {
         return String(s || '').replace(/[&<>"']/g, function(c) {
           return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -1386,28 +1585,22 @@ const metaText = metaParts.join(' • ');
         var secs = Math.floor(Math.random() * 60);
         return mins + ':' + (secs < 10 ? '0' : '') + secs;
       }
-
       function randomViews() {
         var n = Math.floor(Math.random() * 900) + 10;
         if (n < 100) return n + 'K views';
         return (n / 10).toFixed(1) + 'K views';
       }
-
       function typeIcon(type) {
         var icons = { anime: '🎌', kdrama: '🎭', donghua: '🐉', movies: '🎬' };
         return icons[type] || '📺';
       }
-
       function typeName(type) {
         var names = { anime: 'ANIME', kdrama: 'K-DRAMA', donghua: 'DONGHUA', movies: 'MOVIE' };
         return names[type] || 'VIDEO';
       }
+      function getInitial(name) { return (name || 'A').charAt(0).toUpperCase(); }
 
-      function getInitial(name) {
-        return (name || 'A').charAt(0).toUpperCase();
-      }
-
-      // ============ HISTORY / SAVE / LIKE ============
+      // ============ HISTORY / LIKE / SAVE ============
       function saveToHistory() {
         try {
           var hist = JSON.parse(localStorage.getItem('anitube_history') || '[]');
@@ -1424,7 +1617,6 @@ const metaText = metaParts.join(' • ');
           localStorage.setItem('anitube_history', JSON.stringify(hist));
         } catch (e) {}
       }
-
       function isLiked() {
         try {
           var liked = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
@@ -1437,7 +1629,6 @@ const metaText = metaParts.join(' • ');
           return saved.some(function(s) { return s.id === currentId; });
         } catch (e) { return false; }
       }
-
       function toggleLike() {
         try {
           var liked = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
@@ -1448,7 +1639,6 @@ const metaText = metaParts.join(' • ');
           updateLikeBtn();
         } catch (e) {}
       }
-
       function toggleSave() {
         try {
           var saved = JSON.parse(localStorage.getItem('anitube_saved') || '[]');
@@ -1468,7 +1658,6 @@ const metaText = metaParts.join(' • ');
           updateSaveBtn();
         } catch (e) {}
       }
-
       function updateLikeBtn() {
         var btn = document.getElementById('likeBtn');
         if (!btn) return;
@@ -1482,14 +1671,13 @@ const metaText = metaParts.join(' • ');
         else btn.classList.remove('active');
       }
 
-      // ============ VIDEO LOADER ============
       function hideVideoLoader() {
         var l = document.getElementById('videoLoader');
         if (l) l.classList.add('hidden');
       }
 
-      // ============ DOUBLE TAP HEART ============
       function setupDoubleTap() {
+        if (isExternal) return; // No double-tap for external
         var frame = document.querySelector('.rp-player-frame');
         var heart = document.getElementById('doubleTapHeart');
         if (!frame || !heart) return;
@@ -1506,7 +1694,6 @@ const metaText = metaParts.join(' • ');
         });
       }
 
-      // ============ SHARE ============
       function doShare() {
         var url = window.location.href;
         if (navigator.share) {
@@ -1525,7 +1712,6 @@ const metaText = metaParts.join(' • ');
         }
       }
 
-      // ============ DESCRIPTION TOGGLE ============
       function setupDescToggle() {
         var btn = document.getElementById('descToggle');
         var body = document.getElementById('descContent');
@@ -1541,7 +1727,6 @@ const metaText = metaParts.join(' • ');
         });
       }
 
-      // ============ USERNAME ============
       function getUsername() {
         var name = localStorage.getItem('anitube_username');
         if (!name) {
@@ -1554,14 +1739,12 @@ const metaText = metaParts.join(' • ');
 
       // ============ COMMENTS ============
       function getComments() {
-        try {
-          return JSON.parse(localStorage.getItem('anitube_chat_' + currentId) || '[]');
-        } catch (e) { return []; }
+        try { return JSON.parse(localStorage.getItem('anitube_chat_' + currentId) || '[]'); }
+        catch (e) { return []; }
       }
       function saveComments(list) {
         try { localStorage.setItem('anitube_chat_' + currentId, JSON.stringify(list)); } catch (e) {}
       }
-
       function renderComments() {
         var list = document.getElementById('commentsList');
         var count = document.getElementById('commentCount');
@@ -1573,13 +1756,10 @@ const metaText = metaParts.join(' • ');
           return;
         }
         var html = '';
-        for (var i = 0; i < comments.length; i++) {
-          html += renderCommentHtml(comments[i], i, false);
-        }
+        for (var i = 0; i < comments.length; i++) html += renderCommentHtml(comments[i], i, false);
         list.innerHTML = html;
         attachCommentEvents();
       }
-
       function renderCommentHtml(c, idx, isReply) {
         var initial = getInitial(c.user);
         var color = hashColor(c.user || 'A');
@@ -1587,7 +1767,6 @@ const metaText = metaParts.join(' • ');
         var dislikeActive = c.dislikedByMe ? ' active' : '';
         var likes = c.likes || 0;
         var repliesCount = (c.replies || []).length;
-
         var repliesHtml = '';
         if (!isReply && repliesCount > 0) {
           repliesHtml += '<button class="rp-c-reply-toggle" data-toggle-replies="' + idx + '">';
@@ -1607,7 +1786,6 @@ const metaText = metaParts.join(' • ');
           }
           repliesHtml += '</div>';
         }
-
         var replyFormHtml = '';
         if (!isReply) {
           replyFormHtml += '<div class="rp-c-reply-form" id="replyForm-' + idx + '" style="display:none;">';
@@ -1619,7 +1797,6 @@ const metaText = metaParts.join(' • ');
           replyFormHtml += '<button class="rp-submit-btn" data-submit-reply="' + idx + '">Reply</button>';
           replyFormHtml += '</div></div></div>';
         }
-
         var html = '<div class="rp-comment">';
         html += '<div class="rp-c-avatar" style="background:' + color + ';">' + escapeHtml(initial) + '</div>';
         html += '<div class="rp-c-body">';
@@ -1633,20 +1810,17 @@ const metaText = metaParts.join(' • ');
         html += '<button class="rp-c-btn' + dislikeActive + '" data-dislike="' + idx + '">';
         html += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 14V2"></path><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H17"></path></svg>';
         html += '</button>';
-        if (!isReply) {
-          html += '<button class="rp-c-btn rp-c-reply-btn" data-reply="' + idx + '">Reply</button>';
-        }
+        if (!isReply) html += '<button class="rp-c-btn rp-c-reply-btn" data-reply="' + idx + '">Reply</button>';
         html += '</div>';
         html += repliesHtml;
         html += replyFormHtml;
         html += '</div></div>';
         return html;
       }
-
       function attachCommentEvents() {
         var likes = document.querySelectorAll('[data-like]');
         for (var i = 0; i < likes.length; i++) {
-          likes[i].addEventListener('click', function(e) {
+          likes[i].addEventListener('click', function() {
             var idx = parseInt(this.getAttribute('data-like'));
             var comments = getComments();
             if (comments[idx].likedByMe) {
@@ -1719,7 +1893,6 @@ const metaText = metaParts.join(' • ');
           });
         }
       }
-
       function setupCommentInput() {
         var input = document.getElementById('commentInput');
         var actions = document.getElementById('commentActions');
@@ -1752,7 +1925,7 @@ const metaText = metaParts.join(' • ');
         });
       }
 
-      // ============ SIDEBAR CARDS ============
+      // ============ SIDEBAR CARDS (normal mode) ============
       function makeSidebarCard(v) {
         var badge = '';
         if (v.isNew) badge = '<div class="rp-side-badge">NEW</div>';
@@ -1772,7 +1945,6 @@ const metaText = metaParts.join(' • ');
         html += '</div></a>';
         return html;
       }
-
       function makeSidebarAd(p) {
         var html = '<a class="rp-side-ad" href="' + escapeHtml(p.affiliateUrl || '#') + '" target="_blank" rel="noopener sponsored">';
         html += '<div class="rp-side-thumb">';
@@ -1787,7 +1959,7 @@ const metaText = metaParts.join(' • ');
         return html;
       }
 
-      // ============ MAIN FEED CARDS (home style) ============
+      // ============ MORE FEED CARDS ============
       function makeFeedCard(v) {
         var badge = '';
         if (v.isNew) badge = '<div class="at-na-badge">NEW</div>';
@@ -1809,7 +1981,6 @@ const metaText = metaParts.join(' • ');
         html += '</div></a>';
         return html;
       }
-
       function makeFeedAd(p) {
         var html = '<a class="at-na-card at-na-ad" href="' + escapeHtml(p.affiliateUrl || '#') + '" target="_blank" rel="noopener sponsored">';
         html += '<div class="at-na-thumb">';
@@ -1824,7 +1995,6 @@ const metaText = metaParts.join(' • ');
         return html;
       }
 
-      // ============ RENDER SIDEBAR ============
       function renderSidebar() {
         var el = document.getElementById('relatedFeed');
         if (!el) return;
@@ -1841,8 +2011,6 @@ const metaText = metaParts.join(' • ');
         }
         el.innerHTML = html;
       }
-
-      // ============ RENDER MORE FEED (main grid) ============
       function renderMoreBatch() {
         var el = document.getElementById('moreFeed');
         if (!el) return;
@@ -1862,8 +2030,6 @@ const metaText = metaParts.join(' • ');
         el.insertAdjacentHTML('beforeend', html);
         moreRendered = end;
       }
-
-      // ============ FETCH MORE ============
       function fetchMore() {
         if (loadingMore) return;
         loadingMore = true;
@@ -1884,9 +2050,9 @@ const metaText = metaParts.join(' • ');
                 if (!existing[data.videos[j].id]) fresh.push(data.videos[j]);
               }
               moreItems = moreItems.concat(fresh);
-              sidebarItems = sidebarItems.concat(fresh.slice(0, 6));
+              if (!isExternal) sidebarItems = sidebarItems.concat(fresh.slice(0, 6));
               renderMoreBatch();
-              renderSidebar();
+              if (!isExternal) renderSidebar();
             }
           })
           .catch(function() {})
@@ -1895,15 +2061,11 @@ const metaText = metaParts.join(' • ');
             if (loader) loader.classList.remove('show');
           });
       }
-
-      // ============ INIT FEEDS ============
       function initFeeds() {
-        // Sidebar priority: same series → same channel → related
         var seen = {};
         seen[currentId] = true;
         var priority = [];
         var others = [];
-
         for (var i = 0; i < allFeed.length; i++) {
           var v = allFeed[i];
           if (seen[v.id]) continue;
@@ -1913,8 +2075,6 @@ const metaText = metaParts.join(' • ');
           if (isSameSeries || isSameChannel) priority.push(v);
           else others.push(v);
         }
-
-        // Anti-spam: max 3 per channel
         var channelCount = {};
         function limitChannel(arr) {
           var out = [];
@@ -1925,34 +2085,37 @@ const metaText = metaParts.join(' • ');
           }
           return out;
         }
-
         var combined = limitChannel(priority.concat(others));
         sidebarItems = combined.slice(0, 20);
         moreItems = combined.slice(0, 40);
-
-        renderSidebar();
+        if (!isExternal) renderSidebar();
         renderMoreBatch();
       }
-
-      // ============ LOAD PRODUCTS ============
       function loadProducts() {
         fetch('/api/products?limit=30')
           .then(function(r) { return r.json(); })
           .then(function(data) {
             if (data.success && data.products) productPool = data.products;
-            renderSidebar();
+            if (!isExternal) renderSidebar();
           })
           .catch(function() {});
       }
 
-      // ============ NEXT BUTTON ============
       function goNext() {
+        if (isExternal && extEpisodes.length > 0) {
+          // Find next episode
+          for (var i = 0; i < extEpisodes.length; i++) {
+            if (extEpisodes[i].number === extCurrentEp + 1) {
+              window.location.href = '/reels/' + extEpisodes[i].embedId;
+              return;
+            }
+          }
+        }
         if (sidebarItems.length > 0) {
           window.location.href = '/reels/' + sidebarItems[0].id;
         }
       }
 
-      // ============ AUTOPLAY ============
       function setupAutoplay() {
         var toggle = document.getElementById('autoplayToggle');
         if (!toggle) return;
@@ -1963,7 +2126,6 @@ const metaText = metaParts.join(' • ');
         });
       }
 
-      // ============ INFINITE SCROLL ============
       var scrollTimer = null;
       function onScroll() {
         if (scrollTimer) return;
@@ -1973,18 +2135,11 @@ const metaText = metaParts.join(' • ');
           if (!moreSection) return;
           var rect = moreSection.getBoundingClientRect();
           var winH = window.innerHeight;
-          // Render more from local pool first
-          if (moreRendered < moreItems.length && rect.bottom < winH + 800) {
-            renderMoreBatch();
-          }
-          // Fetch new when near bottom
-          if (moreRendered >= moreItems.length - 6 && rect.bottom < winH + 1200) {
-            fetchMore();
-          }
+          if (moreRendered < moreItems.length && rect.bottom < winH + 800) renderMoreBatch();
+          if (moreRendered >= moreItems.length - 6 && rect.bottom < winH + 1200) fetchMore();
         }, 150);
       }
 
-      // ============ IFRAME LOAD ============
       function setupIframe() {
         var iframe = document.getElementById('videoFrame');
         if (!iframe) return;
@@ -1992,7 +2147,17 @@ const metaText = metaParts.join(' • ');
         setTimeout(hideVideoLoader, 3500);
       }
 
-      // ============ INIT ============
+      // Scroll active episode into view (external mode)
+      function scrollActiveEpisode() {
+        if (!isExternal) return;
+        setTimeout(function() {
+          var active = document.querySelector('.rp-ext-ep-card.active');
+          if (active && active.scrollIntoView) {
+            active.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 800);
+      }
+
       function init() {
         saveToHistory();
         updateLikeBtn();
@@ -2005,6 +2170,7 @@ const metaText = metaParts.join(' • ');
         renderComments();
         initFeeds();
         loadProducts();
+        scrollActiveEpisode();
 
         var likeBtn = document.getElementById('likeBtn');
         var saveBtn = document.getElementById('saveBtn');
