@@ -227,25 +227,36 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
             <div class={`rp-player ${isAnimeExternal ? 'rp-player-external' : ''}`} id="videoCard" data-aspect={videoAspect}>
               <div class="rp-player-frame">
                 {isAnimeExternal ? (
-                  <div class="rp-external-wrap">
+                  <div class="rp-external-wrap" id="externalWrap">
                     <iframe
                       id="videoFrame"
                       src={video.embedUrl}
                       title={video.title}
                       frameborder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                       allowfullscreen
                       loading="eager"
-                      sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-orientation-lock"
+                      sandbox="allow-scripts allow-same-origin allow-forms"
                       class="rp-ext-iframe"
                     ></iframe>
                     <div class="rp-ext-mask-top"></div>
                     <div class="rp-ext-mask-bottom"></div>
                     <div class="rp-ext-mask-left"></div>
                     <div class="rp-ext-mask-right"></div>
+                    <div class="rp-ext-click-blocker rp-ext-blocker-bottom"></div>
+                    <div class="rp-ext-click-blocker rp-ext-blocker-top"></div>
                     <div class="rp-ext-brand">
                       <span class="rp-ext-logo">AniTubeBuzz</span>
-                      <span class="rp-ext-live">LIVE</span>
+                      <span class="rp-ext-live">HD</span>
+                    </div>
+                    <div class="rp-ext-controls" id="extControls">
+                      <div class="rp-ext-ctrl-bar">
+                        <button class="rp-ext-fs-btn" id="extFullscreen" title="Fullscreen">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -494,7 +505,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       border: 0;
     }
 
-    /* ============ EXTERNAL ANIME IFRAME (MASKED) ============ */
+        /* ============ EXTERNAL ANIME IFRAME (STEALTH MODE) ============ */
     .rp-player-external .rp-player-frame {
       padding-top: 56.25%;
       background: #000;
@@ -504,18 +515,27 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       position: absolute;
       inset: 0;
       overflow: hidden;
+      background: #000;
     }
-    /* Iframe scaled + positioned so ONLY video player visible */
+    .rp-external-wrap:fullscreen {
+      background: #000;
+    }
+    .rp-external-wrap:fullscreen .rp-ext-iframe {
+      top: -280px;
+      height: calc(100% + 700px);
+    }
+    /* Iframe: shifted + scaled to show ONLY video content */
     .rp-ext-iframe {
       position: absolute;
-      top: -220px;
-      left: 0;
-      width: 100%;
-      height: calc(100% + 600px);
+      top: -240px;
+      left: -15px;
+      width: calc(100% + 30px);
+      height: calc(100% + 620px);
       border: 0;
       transform-origin: top left;
+      pointer-events: auto;
     }
-    /* Mask overlays to hide surrounding content */
+    /* MASKS — hide everything except video area */
     .rp-ext-mask-top {
       position: absolute;
       top: 0;
@@ -523,7 +543,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       right: 0;
       height: 0;
       background: #000;
-      z-index: 10;
+      z-index: 12;
       pointer-events: auto;
     }
     .rp-ext-mask-bottom {
@@ -531,10 +551,10 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       bottom: 0;
       left: 0;
       right: 0;
-      height: 130px;
-      background: #000;
-      z-index: 10;
-      pointer-events: auto;
+      height: 90px;
+      background: linear-gradient(180deg, transparent 0%, #000 30%, #000 100%);
+      z-index: 12;
+      pointer-events: none;
     }
     .rp-ext-mask-left {
       position: absolute;
@@ -543,7 +563,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       left: 0;
       width: 0;
       background: #000;
-      z-index: 10;
+      z-index: 12;
       pointer-events: auto;
     }
     .rp-ext-mask-right {
@@ -553,31 +573,49 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       right: 0;
       width: 0;
       background: #000;
-      z-index: 10;
+      z-index: 12;
       pointer-events: auto;
     }
-    /* Brand watermark overlay */
+    /* CLICK BLOCKERS — user cannot click auto-play/download/etc */
+    .rp-ext-click-blocker {
+      position: absolute;
+      left: 0;
+      right: 0;
+      background: transparent;
+      z-index: 13;
+      cursor: default;
+    }
+    .rp-ext-blocker-bottom {
+      bottom: 0;
+      height: 100px;
+    }
+    .rp-ext-blocker-top {
+      top: 0;
+      height: 0;
+    }
+    /* BRAND WATERMARK */
     .rp-ext-brand {
       position: absolute;
-      top: 12px;
-      right: 12px;
+      top: 14px;
+      right: 14px;
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 12px;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
+      padding: 7px 14px;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(12px);
+      border-radius: 22px;
       z-index: 15;
       pointer-events: none;
       opacity: 0;
-      animation: rpBrandFade 4s ease-out 1s forwards;
+      animation: rpBrandFade 5s ease-out 1.5s forwards;
+      border: 1px solid rgba(192, 132, 252, 0.3);
     }
     @keyframes rpBrandFade {
       0% { opacity: 0; transform: translateY(-8px); }
-      15% { opacity: 1; transform: translateY(0); }
-      85% { opacity: 1; }
-      100% { opacity: 0; }
+      12% { opacity: 1; transform: translateY(0); }
+      88% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(-4px); }
     }
     .rp-ext-logo {
       font-family: 'Bricolage Grotesque', sans-serif;
@@ -587,10 +625,11 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
+      letter-spacing: 0.3px;
     }
     .rp-ext-live {
       display: inline-block;
-      padding: 2px 6px;
+      padding: 2px 7px;
       background: linear-gradient(135deg, #ef4444, #dc2626);
       color: #fff;
       font-size: 9px;
@@ -598,8 +637,49 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       font-family: 'JetBrains Mono', monospace;
       letter-spacing: 1px;
       border-radius: 4px;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
     }
-
+    /* CUSTOM CONTROLS BAR — our own fullscreen button */
+    .rp-ext-controls {
+      position: absolute;
+      bottom: 12px;
+      right: 14px;
+      z-index: 20;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    .rp-external-wrap:hover .rp-ext-controls {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .rp-ext-ctrl-bar {
+      display: flex;
+      gap: 8px;
+      padding: 6px;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(14px);
+      border-radius: 24px;
+      border: 1px solid rgba(192, 132, 252, 0.25);
+    }
+    .rp-ext-fs-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.2), rgba(232, 121, 249, 0.2));
+      border: 1px solid rgba(192, 132, 252, 0.35);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .rp-ext-fs-btn:hover {
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      transform: scale(1.08);
+      box-shadow: 0 4px 16px rgba(192, 132, 252, 0.5);
+    }
     /* ============ NORMAL PLAYER LOADER ============ */
     .rp-vloader {
       position: absolute;
@@ -2180,13 +2260,60 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         }, 150);
       }
 
-      function setupIframe() {
+            function setupIframe() {
         var iframe = document.getElementById('videoFrame');
         if (!iframe) return;
         iframe.addEventListener('load', hideVideoLoader);
         setTimeout(hideVideoLoader, 3500);
       }
 
+      function setupCustomFullscreen() {
+        var btn = document.getElementById('extFullscreen');
+        var wrap = document.getElementById('externalWrap');
+        if (!btn || !wrap) return;
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (document.fullscreenElement) {
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+          } else {
+            if (wrap.requestFullscreen) wrap.requestFullscreen();
+            else if (wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen();
+            else if (wrap.mozRequestFullScreen) wrap.mozRequestFullScreen();
+          }
+        });
+        // Double-click video area = fullscreen
+        var iframe = document.getElementById('videoFrame');
+        if (iframe) {
+          var lastClick = 0;
+          wrap.addEventListener('click', function(e) {
+            var now = Date.now();
+            if (now - lastClick < 350) {
+              btn.click();
+            }
+            lastClick = now;
+          });
+        }
+        // Prevent right-click on iframe (hides context menu that reveals source)
+        wrap.addEventListener('contextmenu', function(e) {
+          e.preventDefault();
+        });
+      }
+
+      function setupClickBlocker() {
+        var blockers = document.querySelectorAll('.rp-ext-click-blocker');
+        for (var i = 0; i < blockers.length; i++) {
+          blockers[i].addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+          });
+          blockers[i].addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+          });
+        }
+      }
       // Scroll active episode into view (external mode)
       function scrollActiveEpisode() {
         if (!isExternal) return;
@@ -2198,7 +2325,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         }, 800);
       }
 
-      function init() {
+        function init() {
         saveToHistory();
         updateLikeBtn();
         updateSaveBtn();
@@ -2211,6 +2338,10 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         initFeeds();
         loadProducts();
         scrollActiveEpisode();
+        if (isExternal) {
+          setupCustomFullscreen();
+          setupClickBlocker();
+        }
 
         var likeBtn = document.getElementById('likeBtn');
         var saveBtn = document.getElementById('saveBtn');
