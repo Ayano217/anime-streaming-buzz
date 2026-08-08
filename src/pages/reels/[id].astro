@@ -514,7 +514,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       border: 0;
     }
 
-          /* ============ EXTERNAL ANIME IFRAME (STEALTH — VIDEO ONLY) ============ */
+        /* ============ EXTERNAL ANIME IFRAME (STEALTH VIDEO ONLY) ============ */
     .rp-player-external .rp-player-frame {
       padding-top: 56.25%;
       background: #000;
@@ -525,35 +525,28 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       inset: 0;
       overflow: hidden !important;
       background: #000;
-      touch-action: none;
     }
-    /* IFRAME: SCALED UP so exact video area fills our container */
-    /* AnimoTV video player is approx at top 260px, ~720px tall, full width */
-    /* We scale iframe 1.4x and shift so ONLY video is visible */
+    /* IFRAME: Large size, positioned so ONLY video player rectangle visible */
+    /* AnimoTV video player location: ~340px from top, ~600px tall on 1280 width */
     .rp-ext-iframe {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: -420px;
+      left: -20px;
+      width: calc(100% + 40px);
+      height: calc(100% + 950px);
       border: 0;
-      transform-origin: 0 0;
-      /* Scale up + translate to show only video */
-      transform: scale(1.45) translate(-4%, -22%);
-      pointer-events: auto;
       overflow: hidden !important;
     }
-    /* FULLSCREEN mode adjustments */
+    /* FULLSCREEN */
     .rp-external-wrap:fullscreen {
       background: #000;
       width: 100vw;
       height: 100vh;
     }
-    .rp-external-wrap:fullscreen .rp-ext-iframe {
-      transform: scale(1.45) translate(-4%, -22%);
-    }
+    .rp-external-wrap:fullscreen .rp-ext-iframe,
     .rp-external-wrap:-webkit-full-screen .rp-ext-iframe {
-      transform: scale(1.45) translate(-4%, -22%);
+      top: -520px;
+      height: calc(100% + 1100px);
     }
     /* MASKS — hide everything except video area */
     .rp-ext-mask-top {
@@ -566,13 +559,13 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       z-index: 12;
       pointer-events: auto;
     }
-    .rp-ext-mask-bottom {
+        .rp-ext-mask-bottom {
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      height: 90px;
-      background: linear-gradient(180deg, transparent 0%, #000 30%, #000 100%);
+      height: 0;
+      background: #000;
       z-index: 12;
       pointer-events: none;
     }
