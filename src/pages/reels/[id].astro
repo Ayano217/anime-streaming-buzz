@@ -52,9 +52,7 @@ try {
     allVideos = data.videos || [];
     video = allVideos.find((v: any) => v.id === videoId);
   }
-} catch (e) {
-  console.error('API fetch failed:', e);
-}
+} catch (e) {}
 
 if (!video) {
   const platformData = getPlatformData(videoId);
@@ -67,16 +65,13 @@ if (!video) {
     };
   } else {
     video = {
-      id: videoId, title: 'Video', channel: 'AniTubeBuzz',
-      thumbnail: '',
+      id: videoId, title: 'Video', channel: 'AniTubeBuzz', thumbnail: '',
       embedUrl: `https://www.youtube.com/embed/${videoId.replace(/^(yt_|yts_|dm_|bili_|ody_|rmb_)/, '')}?rel=0&autoplay=1`,
       source: 'youtube', aspect: 'landscape', isShort: false, type: 'anime', description: ''
     };
   }
 } else {
-  if (!video.thumbnail || !video.thumbnail.trim()) {
-    video.thumbnail = generateThumbnail(videoId, '');
-  }
+  if (!video.thumbnail || !video.thumbnail.trim()) video.thumbnail = generateThumbnail(videoId, '');
   if (!video.description) video.description = '';
 }
 
@@ -90,7 +85,6 @@ function buildRelatedFeed(current: any, all: any[]): any[] {
     if (v.source === current.source) score += 20;
     if (v.aspect === current.aspect) score += 30;
     if (v.isNew) score += 15;
-    if (v.isOfficial) score += 10;
     score += Math.random() * 5;
     return { video: v, score };
   });
@@ -103,7 +97,6 @@ const nextVideo = relatedFeed[0] || null;
 
 const displayChannel = (video.channel || 'AniTube').trim();
 const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
-
 const typeLabels: any = { anime: 'Anime', kdrama: 'K-Drama', donghua: 'Donghua', movies: 'Movie' };
 const typeLabel = typeLabels[video.type] || 'Video';
 
@@ -169,15 +162,11 @@ const metaText = metaParts.join(' • ');
               </div>
             </div>
 
-            <!-- TITLE -->
             <h1 class="rp-title">{video.title}</h1>
 
-            <!-- META BAR -->
             <div class="rp-meta-bar">
               <div class="rp-channel">
-                <div class="rp-avatar">
-                  <span>{displayChannel.charAt(0).toUpperCase()}</span>
-                </div>
+                <div class="rp-avatar"><span>{displayChannel.charAt(0).toUpperCase()}</span></div>
                 <div class="rp-channel-info">
                   <div class="rp-channel-name">{displayChannel}</div>
                   <div class="rp-channel-meta">
@@ -186,7 +175,6 @@ const metaText = metaParts.join(' • ');
                   </div>
                 </div>
               </div>
-              
               <div class="rp-actions">
                 <button class="rp-btn" id="likeBtn">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -215,7 +203,6 @@ const metaText = metaParts.join(' • ');
               </div>
             </div>
 
-            <!-- DESCRIPTION -->
             {hasDescription && (
               <div class="rp-desc">
                 <div class="rp-desc-head">
@@ -234,43 +221,25 @@ const metaText = metaParts.join(' • ');
               </div>
             )}
 
-            <!-- TRENDING HOOK -->
             <div class="rp-hook" id="hookBanner">
               <div class="rp-hook-icon">🔥</div>
               <div class="rp-hook-text">
                 <div class="rp-hook-title">Trending Now</div>
-                <div class="rp-hook-sub">128 fans watching similar videos!</div>
+                <div class="rp-hook-sub">Fans are watching similar videos!</div>
               </div>
               <button class="rp-hook-btn">Discover →</button>
             </div>
 
-            <!-- ═══ YOUTUBE-STYLE COMMENTS ═══ -->
+            <!-- ═══ COMMENTS (YT STYLE) ═══ -->
             <section class="rp-comments" id="commentsSection">
               <div class="rp-comments-head">
-                <h3 class="rp-comments-title">
-                  <span id="commentCount">0</span> Comments
-                </h3>
-                <div class="rp-comments-sort">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="3" y1="6" x2="21" y2="6"/>
-                    <line x1="3" y1="12" x2="15" y2="12"/>
-                    <line x1="3" y1="18" x2="9" y2="18"/>
-                  </svg>
-                  <span>Top</span>
-                </div>
+                <h3 class="rp-comments-title"><span id="commentCount">0</span> Comments</h3>
               </div>
               
-              <!-- Comment input -->
               <div class="rp-comment-input-row">
                 <div class="rp-my-av" id="userInitial">Y</div>
                 <div class="rp-comment-input-wrap">
-                  <input 
-                    type="text" 
-                    id="commentInput" 
-                    class="rp-comment-input" 
-                    placeholder="Add a comment..."
-                    maxlength="500"
-                  />
+                  <input type="text" id="commentInput" class="rp-comment-input" placeholder="Add a comment..." maxlength="500" />
                   <div class="rp-comment-actions" id="commentActions" style="display:none;">
                     <button class="rp-cancel-btn" id="cancelComment">Cancel</button>
                     <button class="rp-submit-btn" id="submitComment">Comment</button>
@@ -278,15 +247,12 @@ const metaText = metaParts.join(' • ');
                 </div>
               </div>
               
-              <!-- Comments list -->
               <div id="commentsList" class="rp-comments-list">
-                <div class="rp-comments-empty">
-                  <p>No comments yet. Be the first! 💬</p>
-                </div>
+                <div class="rp-comments-empty"><p>No comments yet. Be the first! 💬</p></div>
               </div>
             </section>
 
-            <!-- MORE VIDEOS -->
+            <!-- ═══ MORE VIDEOS (HOME PAGE CARD STYLE!) ═══ -->
             <section class="rp-more-section" id="moreSection">
               <div class="rp-section-head">
                 <div class="rp-section-title">
@@ -325,12 +291,6 @@ const metaText = metaParts.join(' • ');
             
             <div id="relatedFeed" class="rp-side-list"></div>
             
-            <!-- Sidebar Ad Section -->
-            <div class="rp-sidebar-ad" id="sidebarAd" style="display:none;">
-              <div class="rp-ad-label">✨ Recommended</div>
-              <div id="sidebarAdContent"></div>
-            </div>
-            
           </aside>
           
         </div>
@@ -344,26 +304,104 @@ const metaText = metaParts.join(' • ');
 
   <script is:inline set:html={`
     window.__REELS_VIDEO__ = ${JSON.stringify(video)};
-    window.__REELS_FEED__ = ${JSON.stringify(relatedFeed.slice(0, 40))};
+    window.__REELS_FEED__ = ${JSON.stringify(relatedFeed.slice(0, 50))};
     window.__CURRENT_VIDEO_ID__ = ${JSON.stringify(videoId)};
     window.__NEXT_ID__ = ${JSON.stringify(nextVideo?.id || '')};
   `}></script>
 
+  <style is:global>
+    /* ═══ HOME PAGE CARD CLASSES — COPIED EXACTLY (globalized so they work) ═══ */
+    @keyframes atNaCardIn { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
+    
+    .at-na-card {
+      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      animation: atNaCardIn 0.4s ease backwards;
+    }
+    .at-na-card:hover { transform: translateY(-4px); }
+    
+    .at-na-thumb {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #0d0520;
+      border: 1px solid rgba(232, 121, 249, 0.35);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      transition: all 0.35s ease;
+    }
+    .at-na-card:hover .at-na-thumb {
+      border-color: rgba(232, 121, 249, 0.9);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(192, 132, 252, 0.5);
+    }
+    
+    .at-na-img {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.5s ease, filter 0.3s ease;
+    }
+    .at-na-card:hover .at-na-img { transform: scale(1.08); filter: brightness(0.65); }
+    
+    .at-na-shine {
+      position: absolute;
+      top: 0; left: -80%;
+      width: 60%; height: 100%;
+      background: linear-gradient(105deg, transparent, rgba(255,255,255,0.2), transparent);
+      z-index: 3;
+      transition: left 0.8s ease;
+      pointer-events: none;
+    }
+    .at-na-card:hover .at-na-shine { left: 120%; }
+    
+    .at-na-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(10,5,23,0.85) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .at-na-card:hover .at-na-overlay { opacity: 1; }
+    
+    .at-na-play {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%) scale(0.4);
+      width: 44px; height: 44px;
+      z-index: 5;
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+    }
+    .at-na-card:hover .at-na-play { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+    
+    .at-na-card:hover .at-na-title {
+      background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    @media (max-width: 768px) {
+      .at-na-card:hover { transform: translateY(-2px); }
+      .at-na-play { opacity: 0.75 !important; transform: translate(-50%,-50%) scale(0.7) !important; }
+    }
+  </style>
+
   <style>
     /* ═══════════════════════════════════════════════
-       REELS PAGE — GOD LEVEL v3
+       REELS PAGE v4 — FINAL PREMIUM
     ═══════════════════════════════════════════════ */
     
-    .rp-section {
-      padding: 24px 0 40px;
-      contain: layout style;
-    }
-    
-    .rp-container {
-      max-width: 1600px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
+    .rp-section { padding: 24px 0 40px; }
+    .rp-container { max-width: 1600px; margin: 0 auto; padding: 0 20px; }
     
     .rp-grid {
       display: grid;
@@ -396,30 +434,16 @@ const metaText = metaParts.join(' • ');
       border-radius: 16px;
       overflow: hidden;
       background: #000;
-      box-shadow: 
-        0 0 0 1px rgba(192, 132, 252, 0.3),
-        0 20px 50px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 0 0 1px rgba(192, 132, 252, 0.3), 0 20px 50px rgba(0, 0, 0, 0.5);
       isolation: isolate;
     }
-    
     .rp-player[data-aspect="portrait"] {
       aspect-ratio: 9 / 16;
       max-width: 400px;
       margin: 0 auto;
     }
-    
-    .rp-player-frame {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-    }
-    
-    .rp-player-frame iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      display: block;
-    }
+    .rp-player-frame { position: absolute; inset: 0; overflow: hidden; }
+    .rp-player-frame iframe { width: 100%; height: 100%; border: 0; display: block; }
     
     .rp-heart {
       position: absolute;
@@ -433,9 +457,9 @@ const metaText = metaParts.join(' • ');
     }
     .rp-heart.pop { animation: rpHeartPop 0.9s cubic-bezier(0.34, 1.56, 0.64, 1); }
     @keyframes rpHeartPop {
-      0%   { transform: translate(-50%,-50%) scale(0) rotate(-15deg); opacity: 0; }
-      30%  { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
-      60%  { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+      0% { transform: translate(-50%,-50%) scale(0) rotate(-15deg); opacity: 0; }
+      30% { transform: translate(-50%,-50%) scale(1.3); opacity: 1; }
+      60% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
       100% { transform: translate(-50%,-50%) scale(1.5); opacity: 0; }
     }
     
@@ -449,14 +473,13 @@ const metaText = metaParts.join(' • ');
       transition: opacity 0.6s ease, visibility 0.6s ease;
     }
     .rp-vloader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-    
     .rp-orbit { position: relative; width: 60px; height: 60px; }
     .rp-dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; top: 50%; left: 50%; }
     .rp-d1 { background: #c084fc; box-shadow: 0 0 20px #c084fc; animation: rpOrbit 1.5s cubic-bezier(0.4,0,0.2,1) infinite; }
     .rp-d2 { background: #e879f9; box-shadow: 0 0 20px #e879f9; animation: rpOrbit 1.5s cubic-bezier(0.4,0,0.2,1) infinite -0.5s; }
     .rp-d3 { background: #7dd3fc; box-shadow: 0 0 20px #7dd3fc; animation: rpOrbit 1.5s cubic-bezier(0.4,0,0.2,1) infinite -1s; }
     @keyframes rpOrbit {
-      0%   { transform: translate(-50%,-50%) rotate(0deg) translateX(22px) rotate(0deg); }
+      0% { transform: translate(-50%,-50%) rotate(0deg) translateX(22px) rotate(0deg); }
       100% { transform: translate(-50%,-50%) rotate(360deg) translateX(22px) rotate(-360deg); }
     }
     .rp-brand {
@@ -480,26 +503,17 @@ const metaText = metaParts.join(' • ');
     
     /* ═══ META BAR ═══ */
     .rp-meta-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
       padding: 14px 16px;
       background: linear-gradient(135deg, rgba(28, 15, 61, 0.6), rgba(20, 10, 40, 0.4));
       border: 1px solid rgba(192, 132, 252, 0.2);
       border-radius: 14px;
       backdrop-filter: blur(12px);
     }
-    [data-theme="light"] .rp-meta-bar {
-      background: rgba(255, 255, 255, 0.7);
-    }
+    [data-theme="light"] .rp-meta-bar { background: rgba(255, 255, 255, 0.7); }
     
-    .rp-channel {
-      display: flex; align-items: center;
-      gap: 12px; min-width: 0; flex: 1;
-    }
-    
+    .rp-channel { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
     .rp-avatar {
       width: 44px; height: 44px; min-width: 44px;
       border-radius: 50%;
@@ -512,13 +526,11 @@ const metaText = metaParts.join(' • ');
       box-shadow: 0 6px 18px rgba(192, 132, 252, 0.5);
       flex-shrink: 0;
     }
-    
     .rp-channel-info { flex: 1; min-width: 0; }
     .rp-channel-name {
       font-family: 'Inter', 'DM Sans', sans-serif;
       font-size: 14px; font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.2;
+      color: var(--text-primary); line-height: 1.2;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .rp-channel-meta {
@@ -528,20 +540,17 @@ const metaText = metaParts.join(' • ');
       margin-top: 4px; font-weight: 600;
     }
     .rp-live {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: #7dd3fc;
-      box-shadow: 0 0 8px #7dd3fc;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #7dd3fc; box-shadow: 0 0 8px #7dd3fc;
       animation: rpPulse 1.5s ease-in-out infinite;
     }
     @keyframes rpPulse {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50%      { opacity: 0.5; transform: scale(0.8); }
+      50% { opacity: 0.5; transform: scale(0.8); }
     }
     
     /* ═══ BUTTONS ═══ */
     .rp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    
     .rp-btn {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 9px 16px; height: 38px;
@@ -556,9 +565,7 @@ const metaText = metaParts.join(' • ');
       font-size: 12.5px; font-weight: 600;
       white-space: nowrap;
     }
-    [data-theme="light"] .rp-btn {
-      background: rgba(255, 255, 255, 0.9);
-    }
+    [data-theme="light"] .rp-btn { background: rgba(255, 255, 255, 0.9); }
     .rp-btn:hover {
       border-color: rgba(232, 121, 249, 0.7);
       transform: translateY(-2px);
@@ -566,30 +573,26 @@ const metaText = metaParts.join(' • ');
     }
     .rp-btn:active { transform: translateY(0) scale(0.96); }
     .rp-btn svg { color: #e879f9; flex-shrink: 0; }
-    
     .rp-btn-next {
       background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.2));
       border-color: rgba(232, 121, 249, 0.6);
     }
     .rp-btn-next svg { color: #c084fc; }
-    
     .rp-btn.active[id="saveBtn"] {
       background: linear-gradient(135deg, rgba(251, 191, 36, 0.25), rgba(245, 158, 11, 0.15)) !important;
       border-color: rgba(251, 191, 36, 0.6) !important;
     }
     .rp-btn.active[id="saveBtn"] svg { color: #fbbf24 !important; fill: #fbbf24 !important; }
-    
     .rp-btn.active[id="likeBtn"] {
       background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(220, 38, 38, 0.15)) !important;
       border-color: rgba(239, 68, 68, 0.6) !important;
     }
     .rp-btn.active[id="likeBtn"] svg { color: #ef4444 !important; fill: #ef4444 !important; }
-    
     .rp-btn.sent .rp-plane { animation: rpFly 0.6s ease; }
     @keyframes rpFly {
-      0%   { transform: translate(0,0) rotate(0); opacity: 1; }
-      50%  { transform: translate(18px,-18px) rotate(35deg); opacity: 0; }
-      51%  { transform: translate(-18px,18px) rotate(-35deg); opacity: 0; }
+      0% { transform: translate(0,0) rotate(0); opacity: 1; }
+      50% { transform: translate(18px,-18px) rotate(35deg); opacity: 0; }
+      51% { transform: translate(-18px,18px) rotate(-35deg); opacity: 0; }
       100% { transform: translate(0,0) rotate(0); opacity: 1; }
     }
     
@@ -601,12 +604,7 @@ const metaText = metaParts.join(' • ');
       padding: 14px 18px;
     }
     [data-theme="light"] .rp-desc { background: rgba(255, 255, 255, 0.8); }
-    
-    .rp-desc-head {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
+    .rp-desc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
     .rp-desc-title {
       display: flex; align-items: center; gap: 8px;
       font-family: 'JetBrains Mono', monospace;
@@ -617,10 +615,8 @@ const metaText = metaParts.join(' • ');
     .rp-desc-tgl {
       background: rgba(125, 211, 252, 0.15);
       border: 1px solid rgba(125, 211, 252, 0.3);
-      padding: 4px 12px;
-      border-radius: 100px;
-      color: #7dd3fc;
-      cursor: pointer;
+      padding: 4px 12px; border-radius: 100px;
+      color: #7dd3fc; cursor: pointer;
       font-family: 'Inter', sans-serif;
       font-size: 11px; font-weight: 700;
     }
@@ -643,10 +639,7 @@ const metaText = metaParts.join(' • ');
       cursor: pointer;
       transition: all 0.3s ease;
     }
-    .rp-hook:hover {
-      border-color: rgba(249, 115, 22, 0.5);
-      transform: translateY(-2px);
-    }
+    .rp-hook:hover { border-color: rgba(249, 115, 22, 0.5); transform: translateY(-2px); }
     .rp-hook-icon { font-size: 26px; animation: rpFire 2s ease infinite; }
     @keyframes rpFire {
       0%, 100% { transform: scale(1) rotate(0); }
@@ -670,33 +663,19 @@ const metaText = metaParts.join(' • ');
       box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);
     }
     
-    /* ═══════════ YOUTUBE-STYLE COMMENTS ═══════════ */
-    .rp-comments {
-      padding: 20px 0;
-    }
+    /* ═══════════ COMMENTS (YT STYLE) ═══════════ */
+    .rp-comments { padding: 20px 0; }
     
     .rp-comments-head {
-      display: flex; align-items: center; gap: 20px;
+      display: flex; align-items: center;
       margin-bottom: 20px;
     }
     .rp-comments-title {
       font-family: 'Bricolage Grotesque', sans-serif;
       font-size: 18px; font-weight: 700;
-      color: var(--text-primary);
-      margin: 0;
+      color: var(--text-primary); margin: 0;
     }
-    .rp-comments-sort {
-      display: flex; align-items: center; gap: 6px;
-      padding: 6px 12px;
-      background: rgba(192, 132, 252, 0.08);
-      border-radius: 100px;
-      color: var(--text-secondary);
-      font-size: 13px; font-weight: 500;
-      cursor: pointer;
-    }
-    .rp-comments-sort svg { color: #c084fc; }
     
-    /* Comment input */
     .rp-comment-input-row {
       display: flex; gap: 12px;
       margin-bottom: 24px;
@@ -715,9 +694,7 @@ const metaText = metaParts.join(' • ');
       box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
     }
     
-    .rp-comment-input-wrap {
-      flex: 1; min-width: 0;
-    }
+    .rp-comment-input-wrap { flex: 1; min-width: 0; }
     
     .rp-comment-input {
       width: 100%;
@@ -740,39 +717,27 @@ const metaText = metaParts.join(' • ');
     }
     .rp-cancel-btn {
       padding: 8px 16px;
-      background: transparent;
-      border: 0;
+      background: transparent; border: 0;
       color: var(--text-secondary);
-      font-weight: 600;
-      font-size: 13px;
-      cursor: pointer;
-      border-radius: 100px;
+      font-weight: 600; font-size: 13px;
+      cursor: pointer; border-radius: 100px;
       transition: background 0.2s ease;
     }
     .rp-cancel-btn:hover { background: rgba(192, 132, 252, 0.1); }
-    
     .rp-submit-btn {
       padding: 8px 16px;
       background: linear-gradient(135deg, #c084fc, #e879f9);
-      border: 0;
-      color: white;
-      font-weight: 700;
-      font-size: 13px;
-      cursor: pointer;
-      border-radius: 100px;
+      border: 0; color: white;
+      font-weight: 700; font-size: 13px;
+      cursor: pointer; border-radius: 100px;
       transition: transform 0.2s ease;
     }
     .rp-submit-btn:hover { transform: scale(1.05); }
-    .rp-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     
-    /* Comments list */
     .rp-comments-list { display: flex; flex-direction: column; gap: 20px; }
-    
     .rp-comments-empty {
-      padding: 40px 20px;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 14px;
+      padding: 40px 20px; text-align: center;
+      color: var(--text-muted); font-size: 14px;
     }
     
     .rp-comment {
@@ -781,24 +746,25 @@ const metaText = metaParts.join(' • ');
     }
     @keyframes rpCommentIn {
       from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
+      to { opacity: 1; transform: translateY(0); }
     }
     
+    /* CRITICAL FIX: c-avatar was 100% width earlier — now fixed */
     .rp-c-avatar {
-      width: 40px; height: 40px; min-width: 40px;
+      width: 40px !important; height: 40px !important;
+      min-width: 40px !important; max-width: 40px !important;
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
       color: white;
       font-family: 'Bricolage Grotesque', sans-serif;
       font-weight: 700; font-size: 15px;
+      flex-shrink: 0;
     }
     
     .rp-c-body { flex: 1; min-width: 0; }
-    
     .rp-c-head {
-      display: flex; align-items: baseline;
-      gap: 8px; margin-bottom: 3px;
-      flex-wrap: wrap;
+      display: flex; align-items: baseline; gap: 8px;
+      margin-bottom: 3px; flex-wrap: wrap;
     }
     .rp-c-name {
       font-family: 'Inter', sans-serif;
@@ -807,8 +773,7 @@ const metaText = metaParts.join(' • ');
     }
     .rp-c-time {
       font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      color: var(--text-muted);
+      font-size: 12px; color: var(--text-muted);
     }
     .rp-c-text {
       font-family: 'DM Sans', sans-serif;
@@ -818,14 +783,11 @@ const metaText = metaParts.join(' • ');
       word-wrap: break-word;
     }
     
-    .rp-c-actions {
-      display: flex; align-items: center; gap: 6px;
-    }
+    .rp-c-actions { display: flex; align-items: center; gap: 6px; }
     .rp-c-action {
-      display: inline-flex; align-items: center;
-      gap: 4px; padding: 6px 10px;
-      background: transparent;
-      border: 0; border-radius: 100px;
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 6px 10px;
+      background: transparent; border: 0; border-radius: 100px;
       color: var(--text-secondary);
       cursor: pointer;
       font-size: 12px; font-weight: 500;
@@ -836,91 +798,57 @@ const metaText = metaParts.join(' • ');
       background: rgba(192, 132, 252, 0.1);
       color: var(--text-primary);
     }
-    .rp-c-action.active {
-      color: #e879f9;
-    }
-    .rp-c-action.active svg {
-      fill: #e879f9;
-    }
-    .rp-c-action svg { color: inherit; }
+    .rp-c-action.active { color: #e879f9; }
+    .rp-c-action.active svg { fill: #e879f9; }
     .rp-c-count { min-width: 12px; font-family: 'JetBrains Mono', monospace; }
     
     .rp-c-reply-btn {
-      background: transparent;
-      border: 0;
+      background: transparent; border: 0;
       color: var(--text-secondary);
       font-family: 'Inter', sans-serif;
       font-size: 12px; font-weight: 600;
       cursor: pointer;
-      padding: 6px 12px;
-      border-radius: 100px;
+      padding: 6px 12px; border-radius: 100px;
       margin-left: 4px;
     }
-    .rp-c-reply-btn:hover {
-      background: rgba(192, 132, 252, 0.1);
-    }
+    .rp-c-reply-btn:hover { background: rgba(192, 132, 252, 0.1); }
     
-    /* Reply input */
-    .rp-reply-input-row {
-      display: flex; gap: 10px;
-      margin-top: 12px;
-      padding-left: 0;
-    }
-    .rp-reply-input-row .rp-my-av { width: 32px; height: 32px; font-size: 13px; }
+    .rp-reply-input-row { display: flex; gap: 10px; margin-top: 12px; }
+    .rp-reply-input-row .rp-my-av { width: 32px; height: 32px; min-width: 32px; font-size: 13px; }
     .rp-reply-input {
-      flex: 1;
-      background: transparent;
-      border: 0;
+      flex: 1; background: transparent; border: 0;
       border-bottom: 1px solid rgba(192, 132, 252, 0.3);
-      outline: 0;
-      padding: 6px 0;
+      outline: 0; padding: 6px 0;
       color: var(--text-primary);
       font-family: 'Inter', sans-serif;
       font-size: 13px;
     }
     .rp-reply-input:focus { border-bottom-color: #e879f9; }
     
-    /* Replies */
     .rp-replies-toggle {
-      background: transparent;
-      border: 0;
-      color: #7dd3fc;
-      cursor: pointer;
+      background: transparent; border: 0;
+      color: #7dd3fc; cursor: pointer;
       font-family: 'Inter', sans-serif;
       font-size: 13px; font-weight: 700;
-      padding: 8px 12px;
-      border-radius: 100px;
+      padding: 8px 12px; border-radius: 100px;
       margin-top: 6px;
       display: inline-flex; align-items: center; gap: 6px;
-      transition: background 0.2s ease;
     }
     .rp-replies-toggle:hover { background: rgba(125, 211, 252, 0.1); }
     
-    .rp-replies {
-      margin-top: 12px;
-      display: none;
-      flex-direction: column;
-      gap: 16px;
-    }
+    .rp-replies { margin-top: 12px; display: none; flex-direction: column; gap: 16px; }
     .rp-replies.show { display: flex; }
-    
-    .rp-reply {
-      display: flex; gap: 10px;
-      animation: rpCommentIn 0.3s ease;
-    }
-    .rp-reply .rp-c-avatar { width: 32px; height: 32px; font-size: 13px; }
+    .rp-reply { display: flex; gap: 10px; animation: rpCommentIn 0.3s ease; }
+    .rp-reply .rp-c-avatar { width: 32px !important; height: 32px !important; min-width: 32px !important; max-width: 32px !important; font-size: 13px; }
     .rp-reply .rp-c-name { font-size: 12.5px; }
     .rp-reply .rp-c-time { font-size: 11px; }
     .rp-reply .rp-c-text { font-size: 13px; }
     
     /* ═══════════ MORE VIDEOS ═══════════ */
     .rp-more-section { margin-top: 20px; }
-    
     .rp-section-head {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      padding: 0 4px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 16px; padding: 0 4px;
     }
     .rp-section-title {
       display: flex; align-items: center; gap: 12px;
@@ -952,7 +880,7 @@ const metaText = metaParts.join(' • ');
       min-height: 200px;
     }
     @media (max-width: 1200px) { .rp-feed-grid { grid-template-columns: repeat(3, 1fr); } }
-    @media (max-width: 768px)  { .rp-feed-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+    @media (max-width: 768px) { .rp-feed-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
     
     .rp-more-loading {
       display: none; align-items: center; justify-content: center;
@@ -971,240 +899,10 @@ const metaText = metaParts.join(' • ');
     }
     @keyframes rpSpin { to { transform: rotate(360deg); } }
     
-    /* ═══════════ ANIME CARD (3:4 HOME PAGE STYLE!) ═══════════ */
-    .rp-anime-card {
-      display: block;
-      text-decoration: none;
-      color: inherit;
-      position: relative;
-      transition: transform 0.3s ease;
-      animation: rpCardIn 0.5s ease backwards;
-    }
-    @keyframes rpCardIn {
-      from { opacity: 0; transform: translateY(15px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .rp-anime-card:hover { transform: translateY(-6px); }
-    
-    .rp-anime-thumb {
-      position: relative;
-      aspect-ratio: 3/4;
-      border-radius: 16px;
-      overflow: hidden;
-      background: rgba(28, 15, 61, 0.5);
-      box-shadow: 
-        0 10px 30px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(192, 132, 252, 0.15);
-      transition: box-shadow 0.4s ease;
-    }
-    .rp-anime-card:hover .rp-anime-thumb {
-      box-shadow: 
-        0 20px 45px rgba(0, 0, 0, 0.5),
-        0 0 0 2px rgba(192, 132, 252, 0.6),
-        0 0 30px rgba(192, 132, 252, 0.25);
-    }
-    
-    .rp-anime-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.6s ease, filter 0.4s ease;
-    }
-    .rp-anime-card:hover .rp-anime-img {
-      transform: scale(1.08);
-      filter: brightness(0.75);
-    }
-    
-    .rp-anime-overlay {
-      position: absolute; inset: 0;
-      background: linear-gradient(180deg, transparent 40%, rgba(10, 5, 23, 0.5) 75%, rgba(10, 5, 23, 0.95) 100%);
-      z-index: 1;
-    }
-    
-    .rp-anime-corner {
-      position: absolute;
-      width: 16px; height: 16px;
-      border: 2px solid #7dd3fc;
-      z-index: 3;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      filter: drop-shadow(0 0 4px #7dd3fc);
-    }
-    .rp-anime-card:hover .rp-anime-corner { opacity: 0.9; }
-    .rp-corner-tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
-    .rp-corner-tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
-    .rp-corner-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
-    .rp-corner-br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
-    
-    .rp-anime-play {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 56px; height: 56px;
-      z-index: 4;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    .rp-anime-card:hover .rp-anime-play { opacity: 1; }
-    
-    .rp-anime-play-btn {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
-      display: flex; align-items: center; justify-content: center;
-      color: #fff;
-      padding-left: 3px;
-      box-shadow: 0 8px 25px rgba(192, 132, 252, 0.6), 0 0 40px rgba(232, 121, 249, 0.3);
-      z-index: 2;
-    }
-    
-    .rp-anime-play-ring {
-      position: absolute; inset: 0;
-      border-radius: 50%;
-      border: 2px solid rgba(192, 132, 252, 0.7);
-      pointer-events: none;
-    }
-    .rp-ring1 { animation: rpPlayPulse 1.8s ease-out infinite; }
-    .rp-ring2 { animation: rpPlayPulse 1.8s ease-out infinite 0.9s; }
-    @keyframes rpPlayPulse {
-      0%   { transform: scale(1); opacity: 1; }
-      100% { transform: scale(1.7); opacity: 0; }
-    }
-    
-    .rp-anime-badges {
-      position: absolute;
-      top: 10px; left: 10px; right: 10px;
-      display: flex; justify-content: space-between;
-      gap: 6px; z-index: 3;
-    }
-    .rp-anime-badge {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.6rem; font-weight: 800;
-      letter-spacing: 0.05em;
-      backdrop-filter: blur(8px);
-    }
-    .rp-badge-new {
-      background: linear-gradient(135deg, #ef4444, #f97316);
-      color: #fff;
-      box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
-    }
-    .rp-new-dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: #fff;
-      animation: rpBlink 1.2s ease infinite;
-    }
-    @keyframes rpBlink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-    .rp-badge-score {
-      background: rgba(0, 0, 0, 0.75);
-      color: #fbbf24;
-      margin-left: auto;
-    }
-    
-    .rp-anime-hd {
-      position: absolute;
-      bottom: 90px; right: 10px;
-      background: rgba(125, 211, 252, 0.9);
-      color: #0a0517;
-      padding: 3px 7px;
-      border-radius: 5px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.58rem; font-weight: 800;
-      letter-spacing: 0.05em;
-      z-index: 3;
-    }
-    
-    .rp-anime-info {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      padding: 14px 14px 16px;
-      z-index: 2;
-    }
-    .rp-anime-title {
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 0.95rem; font-weight: 700;
-      color: #fff;
-      margin: 0 0 5px;
-      line-height: 1.25;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    }
-    .rp-anime-meta {
-      display: flex; align-items: center;
-      gap: 8px;
-      font-size: 0.7rem;
-      color: rgba(255, 255, 255, 0.65);
-      font-weight: 500;
-      flex-wrap: wrap;
-    }
-    .rp-anime-meta > span + span::before {
-      content: '•';
-      margin-right: 8px;
-      color: rgba(255, 255, 255, 0.3);
-    }
-    .rp-anime-genre {
-      color: #c084fc !important;
-      font-weight: 700;
-    }
-    
-    /* Inline product card in grid */
-    .rp-inline-product {
-      display: block;
-      text-decoration: none;
-      color: inherit;
-      position: relative;
-      transition: transform 0.3s ease;
-      animation: rpCardIn 0.5s ease backwards;
-    }
-    .rp-inline-product:hover { transform: translateY(-6px); }
-    .rp-inline-product .rp-anime-thumb {
-      aspect-ratio: 3/4;
-      background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(249, 115, 22, 0.1));
-    }
-    .rp-inline-product .rp-anime-info {
-      padding: 12px;
-    }
-    .rp-inline-product .rp-anime-title { color: #fff; font-size: 0.9rem; }
-    .rp-inline-product-price {
-      display: inline-block;
-      margin-top: 4px;
-      padding: 3px 10px;
-      background: linear-gradient(135deg, #fbbf24, #f97316);
-      color: white;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.7rem; font-weight: 800;
-      border-radius: 100px;
-    }
-    .rp-inline-product-tag {
-      position: absolute;
-      top: 10px; left: 10px;
-      padding: 4px 8px;
-      background: linear-gradient(135deg, #fbbf24, #f97316);
-      color: white;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.6rem; font-weight: 800;
-      border-radius: 6px;
-      letter-spacing: 0.05em;
-      z-index: 3;
-    }
-    
-    /* ═══════════ SIDEBAR (YOUTUBE STYLE HORIZONTAL) ═══════════ */
+    /* ═══════════ SIDEBAR (YT STYLE) ═══════════ */
     .rp-sidebar-head {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-      padding: 0 4px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px; padding: 0 4px;
     }
     .rp-sidebar-title {
       display: flex; align-items: center; gap: 12px;
@@ -1230,10 +928,8 @@ const metaText = metaParts.join(' • ');
       border-radius: 12px;
     }
     [data-theme="light"] .rp-autoplay { background: rgba(255, 255, 255, 0.7); }
-    
     .rp-autoplay-label {
-      display: flex; align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       cursor: pointer;
       font-family: 'Inter', sans-serif;
       font-size: 13px; font-weight: 600;
@@ -1259,18 +955,12 @@ const metaText = metaParts.join(' • ');
       transition: transform 0.25s ease;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
-    .rp-autoplay-label input:checked ~ .rp-switch {
-      background: linear-gradient(135deg, #c084fc, #e879f9);
-    }
-    .rp-autoplay-label input:checked ~ .rp-switch::after {
-      transform: translateX(16px);
-    }
+    .rp-autoplay-label input:checked ~ .rp-switch { background: linear-gradient(135deg, #c084fc, #e879f9); }
+    .rp-autoplay-label input:checked ~ .rp-switch::after { transform: translateX(16px); }
     
     .rp-side-list {
-      display: flex; flex-direction: column;
-      gap: 8px;
-      overflow-y: auto;
-      flex: 1;
+      display: flex; flex-direction: column; gap: 8px;
+      overflow-y: auto; flex: 1;
       padding-right: 4px;
       scrollbar-width: thin;
       scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
@@ -1278,11 +968,11 @@ const metaText = metaParts.join(' • ');
     .rp-side-list::-webkit-scrollbar { width: 4px; }
     .rp-side-list::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.3); border-radius: 2px; }
     
-    /* YouTube-style sidebar item */
+    /* Sidebar item — YouTube horizontal style */
     .rp-si {
       display: grid;
       grid-template-columns: 168px 1fr;
-      gap: 8px;
+      gap: 10px;
       padding: 6px;
       background: transparent;
       border: 1px solid transparent;
@@ -1293,7 +983,7 @@ const metaText = metaParts.join(' • ');
     }
     @keyframes rpSiIn {
       from { opacity: 0; transform: translateX(15px); }
-      to   { opacity: 1; transform: translateX(0); }
+      to { opacity: 1; transform: translateX(0); }
     }
     .rp-si:hover {
       background: rgba(192, 132, 252, 0.08);
@@ -1339,8 +1029,7 @@ const metaText = metaParts.join(' • ');
     
     .rp-si-info {
       min-width: 0;
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
       padding: 2px 4px 2px 0;
     }
     .rp-si-title {
@@ -1369,61 +1058,32 @@ const metaText = metaParts.join(' • ');
       color: var(--text-muted);
     }
     
-    /* Sidebar ads (bottom) */
-    .rp-sidebar-ad {
-      margin-top: 16px;
-      padding: 14px;
-      background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(249, 115, 22, 0.05));
-      border: 1px solid rgba(251, 191, 36, 0.2);
-      border-radius: 12px;
+    /* Sidebar AD (inline as video item style, subtle golden badge) */
+    .rp-si-ad {
+      position: relative;
     }
-    .rp-ad-label {
+    .rp-si-ad::before {
+      content: '💎 AD';
+      position: absolute;
+      top: 4px; right: 4px;
+      padding: 2px 6px;
+      background: linear-gradient(135deg, #fbbf24, #f97316);
+      color: white;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 10px; font-weight: 800;
-      color: #fbbf24;
-      letter-spacing: 0.1em;
-      margin-bottom: 10px;
-      text-transform: uppercase;
+      font-size: 9px; font-weight: 800;
+      border-radius: 4px;
+      z-index: 4;
+      letter-spacing: 0.05em;
     }
-    .rp-ad-item {
-      display: grid;
-      grid-template-columns: 60px 1fr;
-      gap: 10px;
-      padding: 8px;
-      background: rgba(10, 5, 23, 0.4);
-      border-radius: 10px;
-      text-decoration: none;
-      color: inherit;
-      margin-bottom: 8px;
-      transition: all 0.25s ease;
-    }
-    .rp-ad-item:hover {
-      background: rgba(251, 191, 36, 0.08);
-      transform: translateX(-2px);
-    }
-    .rp-ad-thumb {
-      width: 60px; height: 60px;
-      border-radius: 8px;
-      overflow: hidden;
-      background: rgba(251, 191, 36, 0.15);
-    }
-    .rp-ad-thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .rp-ad-info { min-width: 0; display: flex; flex-direction: column; justify-content: center; }
-    .rp-ad-title {
-      font-family: 'Inter', sans-serif;
-      font-size: 12px; font-weight: 700;
-      color: var(--text-primary);
-      line-height: 1.3;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      margin-bottom: 4px;
-    }
-    .rp-ad-price {
+    .rp-si-ad .rp-si-price {
+      display: inline-block;
+      padding: 2px 8px;
+      background: linear-gradient(135deg, #fbbf24, #f97316);
+      color: white;
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px; font-weight: 800;
-      color: #fbbf24;
+      border-radius: 100px;
+      margin-top: 4px;
     }
     
     /* ═══════════ MOBILE ═══════════ */
@@ -1438,7 +1098,6 @@ const metaText = metaParts.join(' • ');
       .rp-player[data-aspect="portrait"] { max-width: 100%; max-height: calc(100dvh - 220px); }
       .rp-si { grid-template-columns: 140px 1fr; }
     }
-    
     @media (max-width: 480px) {
       .rp-btn-lbl { display: none; }
       .rp-btn-next .rp-btn-lbl { display: inline; }
@@ -1505,8 +1164,7 @@ const metaText = metaParts.join(' • ');
         if (h < 24) return h + ' hour' + (h !== 1 ? 's' : '') + ' ago';
         const d = Math.floor(h / 24);
         if (d < 30) return d + ' day' + (d !== 1 ? 's' : '') + ' ago';
-        const mo = Math.floor(d / 30);
-        return mo + ' month' + (mo !== 1 ? 's' : '') + ' ago';
+        return Math.floor(d / 30) + ' months ago';
       }
 
       // ═══ HISTORY ═══
@@ -1583,7 +1241,6 @@ const metaText = metaParts.join(' • ');
       updateSaveUI();
       saveBtn?.addEventListener('click', toggleSave);
 
-      // Double tap
       const videoCard = document.getElementById('videoCard');
       const heart = document.getElementById('doubleTapHeart');
       let lastTap = 0;
@@ -1600,7 +1257,6 @@ const metaText = metaParts.join(' • ');
         } else { lastTap = now; }
       });
 
-      // Share
       const sendBtn = document.getElementById('sendBtn');
       async function handleSend() {
         if (!sendBtn) return;
@@ -1624,28 +1280,22 @@ const metaText = metaParts.join(' • ');
       }
       sendBtn?.addEventListener('click', handleSend);
 
-      // Next
       let navigating = false;
       function goTo(targetId: string) {
         if (navigating || !targetId) return;
         navigating = true;
         const c = document.getElementById('videoCard');
-        if (c) {
-          c.style.opacity = '0.4';
-          c.style.transition = 'opacity 0.2s';
-        }
+        if (c) { c.style.opacity = '0.4'; c.style.transition = 'opacity 0.2s'; }
         setTimeout(() => { window.location.href = '/reels/' + targetId; }, 180);
       }
       document.getElementById('nextBtn')?.addEventListener('click', () => { if (nextId) goTo(nextId); });
 
-      // Video loader
       const iframe = document.getElementById('videoFrame') as HTMLIFrameElement;
       const videoLoader = document.getElementById('videoLoader');
       function hideVideoLoader() { videoLoader?.classList.add('hidden'); }
       iframe?.addEventListener('load', () => setTimeout(hideVideoLoader, 500));
       setTimeout(hideVideoLoader, 3500);
 
-      // Safiya
       setTimeout(() => {
         if (currentVideo) {
           try {
@@ -1656,7 +1306,6 @@ const metaText = metaParts.join(' • ');
         }
       }, 800);
 
-      // Description
       const descToggle = document.getElementById('descToggle');
       const descContent = document.getElementById('descContent');
       descToggle?.addEventListener('click', () => {
@@ -1665,14 +1314,13 @@ const metaText = metaParts.join(' • ');
         descToggle.textContent = expanded ? 'Show less' : 'Show more';
       });
 
-      // Hook
       const moreSection = document.getElementById('moreSection');
       document.getElementById('hookBanner')?.addEventListener('click', () => {
         moreSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
 
       // ═══════════════════════════════════════════════
-      // COMMENTS SYSTEM (YouTube style + Replies)
+      // COMMENTS (YouTube style)
       // ═══════════════════════════════════════════════
       const commentsList = document.getElementById('commentsList');
       const commentInput = document.getElementById('commentInput') as HTMLInputElement;
@@ -1686,7 +1334,7 @@ const metaText = metaParts.join(' • ');
 
       let username = localStorage.getItem(USER_KEY);
       if (!username) {
-        const names = ['SakuraFan','NarutoKid','OtakuHero','AnimeVibes','MangaLover','WeebLife','AnimeVIP','SenpaiChan','KawaiiUser','DemonSlayer','OnePieceFan','JujutsuKid','TokyoOtaku','GhibliLover','AnimeGod'];
+        const names = ['SakuraFan','NarutoKid','OtakuHero','AnimeVibes','MangaLover','WeebLife','AnimeVIP','SenpaiChan','KawaiiUser','DemonSlayer'];
         username = names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 999);
         localStorage.setItem(USER_KEY, username);
       }
@@ -1714,14 +1362,12 @@ const metaText = metaParts.join(' • ');
       function saveComments(list: any[]) {
         try { localStorage.setItem(CHAT_KEY, JSON.stringify(list.slice(-100))); } catch {}
       }
-      
       function totalCommentCount(list: any[]): number {
         let n = list.length;
         list.forEach((c: any) => { if (c.replies) n += c.replies.length; });
         return n;
       }
 
-      // Input focus handling
       commentInput?.addEventListener('focus', () => {
         if (commentActions) commentActions.style.display = 'flex';
       });
@@ -1747,65 +1393,56 @@ const metaText = metaParts.join(' • ');
           const likes = c.likes || 0;
           const replies = c.replies || [];
           
-          const repliesHtml = replies.length > 0 ? `
-            <button class="rp-replies-toggle" data-idx="${i}">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-              <span>${replies.length} ${replies.length === 1 ? 'reply' : 'replies'}</span>
-            </button>
-            <div class="rp-replies" data-idx="${i}">
-              ${replies.map((r: any) => `
-                <div class="rp-reply">
-                  <div class="rp-c-avatar" style="background:${userColor(r.name)}">${esc(r.name.charAt(0).toUpperCase())}</div>
-                  <div class="rp-c-body">
-                    <div class="rp-c-head">
-                      <span class="rp-c-name">@${esc(r.name)}</span>
-                      <span class="rp-c-time">${timeAgo(r.time)}</span>
-                    </div>
-                    <div class="rp-c-text">${esc(r.text)}</div>
-                  </div>
-                </div>
-              `).join('')}
-            </div>` : '';
+          const repliesHtml = replies.length > 0 ? 
+            '<button class="rp-replies-toggle" data-idx="' + i + '">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>' +
+              '<span>' + replies.length + ' ' + (replies.length === 1 ? 'reply' : 'replies') + '</span>' +
+            '</button>' +
+            '<div class="rp-replies" data-idx="' + i + '">' +
+              replies.map((r: any) => 
+                '<div class="rp-reply">' +
+                  '<div class="rp-c-avatar" style="background:' + userColor(r.name) + '">' + esc(r.name.charAt(0).toUpperCase()) + '</div>' +
+                  '<div class="rp-c-body">' +
+                    '<div class="rp-c-head">' +
+                      '<span class="rp-c-name">@' + esc(r.name) + '</span>' +
+                      '<span class="rp-c-time">' + timeAgo(r.time) + '</span>' +
+                    '</div>' +
+                    '<div class="rp-c-text">' + esc(r.text) + '</div>' +
+                  '</div>' +
+                '</div>'
+              ).join('') +
+            '</div>' : '';
           
-          return `
-            <div class="rp-comment" data-idx="${i}">
-              <div class="rp-c-avatar" style="background:${userColor(c.name)}">${esc(c.name.charAt(0).toUpperCase())}</div>
-              <div class="rp-c-body">
-                <div class="rp-c-head">
-                  <span class="rp-c-name">@${esc(c.name)}</span>
-                  <span class="rp-c-time">${timeAgo(c.time)}</span>
-                </div>
-                <div class="rp-c-text">${esc(c.text)}</div>
-                <div class="rp-c-actions">
-                  <button class="rp-c-action ${liked}" data-idx="${i}" data-action="like">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
-                    </svg>
-                    <span class="rp-c-count">${likes > 0 ? likes : ''}</span>
-                  </button>
-                  <button class="rp-c-action ${disliked}" data-idx="${i}" data-action="dislike">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zM17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/>
-                    </svg>
-                  </button>
-                  <button class="rp-c-reply-btn" data-idx="${i}">Reply</button>
-                </div>
-                <div class="rp-reply-input-container" data-idx="${i}"></div>
-                ${repliesHtml}
-              </div>
-            </div>`;
+          return '<div class="rp-comment" data-idx="' + i + '">' +
+            '<div class="rp-c-avatar" style="background:' + userColor(c.name) + '">' + esc(c.name.charAt(0).toUpperCase()) + '</div>' +
+            '<div class="rp-c-body">' +
+              '<div class="rp-c-head">' +
+                '<span class="rp-c-name">@' + esc(c.name) + '</span>' +
+                '<span class="rp-c-time">' + timeAgo(c.time) + '</span>' +
+              '</div>' +
+              '<div class="rp-c-text">' + esc(c.text) + '</div>' +
+              '<div class="rp-c-actions">' +
+                '<button class="rp-c-action ' + liked + '" data-idx="' + i + '" data-action="like">' +
+                  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>' +
+                  '<span class="rp-c-count">' + (likes > 0 ? likes : '') + '</span>' +
+                '</button>' +
+                '<button class="rp-c-action ' + disliked + '" data-idx="' + i + '" data-action="dislike">' +
+                  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zM17 2h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg>' +
+                '</button>' +
+                '<button class="rp-c-reply-btn" data-idx="' + i + '">Reply</button>' +
+              '</div>' +
+              '<div class="rp-reply-input-container" data-idx="' + i + '"></div>' +
+              repliesHtml +
+            '</div>' +
+          '</div>';
         }).join('');
 
-        // Bind events
         commentsList.querySelectorAll('.rp-c-action').forEach(btn => {
           btn.addEventListener('click', () => {
             const idx = parseInt((btn as HTMLElement).dataset.idx || '0');
             const action = (btn as HTMLElement).dataset.action;
             const list = loadComments();
             if (!list[idx]) return;
-            
             if (action === 'like') {
               if (list[idx].liked) {
                 list[idx].liked = false;
@@ -1816,9 +1453,8 @@ const metaText = metaParts.join(' • ');
                 if (list[idx].disliked) list[idx].disliked = false;
               }
             } else if (action === 'dislike') {
-              if (list[idx].disliked) {
-                list[idx].disliked = false;
-              } else {
+              if (list[idx].disliked) list[idx].disliked = false;
+              else {
                 list[idx].disliked = true;
                 if (list[idx].liked) {
                   list[idx].liked = false;
@@ -1836,31 +1472,24 @@ const metaText = metaParts.join(' • ');
             const idx = parseInt((btn as HTMLElement).dataset.idx || '0');
             const container = commentsList.querySelector('.rp-reply-input-container[data-idx="' + idx + '"]') as HTMLElement;
             if (!container) return;
-            
-            if (container.querySelector('input')) {
-              container.innerHTML = '';
-              return;
-            }
-            
-            container.innerHTML = `
-              <div class="rp-reply-input-row">
-                <div class="rp-my-av" style="background:${userColor(username || 'Y')}">${(username || 'Y').charAt(0).toUpperCase()}</div>
-                <div style="flex:1;">
-                  <input type="text" class="rp-reply-input" placeholder="Add a reply..." maxlength="300" />
-                  <div class="rp-comment-actions" style="display:flex;">
-                    <button class="rp-cancel-btn rp-cancel-reply">Cancel</button>
-                    <button class="rp-submit-btn rp-submit-reply">Reply</button>
-                  </div>
-                </div>
-              </div>`;
+            if (container.querySelector('input')) { container.innerHTML = ''; return; }
+            container.innerHTML = 
+              '<div class="rp-reply-input-row">' +
+                '<div class="rp-my-av" style="background:' + userColor(username || 'Y') + '">' + (username || 'Y').charAt(0).toUpperCase() + '</div>' +
+                '<div style="flex:1;">' +
+                  '<input type="text" class="rp-reply-input" placeholder="Add a reply..." maxlength="300" />' +
+                  '<div class="rp-comment-actions" style="display:flex;">' +
+                    '<button class="rp-cancel-btn rp-cancel-reply">Cancel</button>' +
+                    '<button class="rp-submit-btn rp-submit-reply">Reply</button>' +
+                  '</div>' +
+                '</div>' +
+              '</div>';
             
             const input = container.querySelector('input') as HTMLInputElement;
             const cancelReply = container.querySelector('.rp-cancel-reply');
             const submitReply = container.querySelector('.rp-submit-reply');
-            
             input?.focus();
             cancelReply?.addEventListener('click', () => { container.innerHTML = ''; });
-            
             const doSubmit = () => {
               const text = input?.value.trim();
               if (!text) return;
@@ -1870,7 +1499,6 @@ const metaText = metaParts.join(' • ');
               saveComments(list);
               renderComments();
             };
-            
             submitReply?.addEventListener('click', doSubmit);
             input?.addEventListener('keydown', (e) => {
               if (e.key === 'Enter') { e.preventDefault(); doSubmit(); }
@@ -1883,11 +1511,6 @@ const metaText = metaParts.join(' • ');
             const idx = (btn as HTMLElement).dataset.idx;
             const repliesDiv = commentsList.querySelector('.rp-replies[data-idx="' + idx + '"]');
             repliesDiv?.classList.toggle('show');
-            const arrow = btn.querySelector('svg');
-            if (arrow) {
-              arrow.style.transition = 'transform 0.3s ease';
-              arrow.style.transform = repliesDiv?.classList.contains('show') ? 'rotate(180deg)' : 'rotate(0)';
-            }
           });
         });
       }
@@ -1904,23 +1527,20 @@ const metaText = metaParts.join(' • ');
         commentInput.blur();
         renderComments();
       }
-
       submitBtn?.addEventListener('click', submitComment);
       commentInput?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); submitComment(); }
       });
-
       renderComments();
 
       // ═══════════════════════════════════════════════
-      // SIDEBAR (YouTube horizontal)
+      // SIDEBAR — YouTube style + Ads mixed
       // ═══════════════════════════════════════════════
       const sidebarFeed = document.getElementById('relatedFeed');
       const sidebarCount = document.getElementById('sidebarCount');
-      const sidebarAd = document.getElementById('sidebarAd');
-      const sidebarAdContent = document.getElementById('sidebarAdContent');
       let sideItems: any[] = feedData.slice();
       let sideRendered = 0;
+      let productPool: any[] = [];
 
       function makeSidebarItem(v: any, i: number): HTMLElement {
         const el = document.createElement('a');
@@ -1932,16 +1552,16 @@ const metaText = metaParts.join(' • ');
         const chan = (v.channel || 'AniTube').slice(0, 30);
         const views = Math.floor(Math.random() * 500 + 50) + 'K views';
         const ago = ['2 hours ago', '5 hours ago', '1 day ago', '3 days ago', '1 week ago'][Math.floor(Math.random() * 5)];
+        const dur = Math.floor(Math.random() * 20 + 5) + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0');
 
         const imgHtml = thumb
           ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
           : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:1.5rem;">📺</div>';
 
         el.innerHTML = 
-          '<div class="rp-si-thumb">' +
-            imgHtml +
+          '<div class="rp-si-thumb">' + imgHtml +
             (v.isNew ? '<div class="rp-si-new">NEW</div>' : '') +
-            '<div class="rp-si-duration">' + (Math.floor(Math.random() * 20 + 5)) + ':' + String(Math.floor(Math.random() * 60)).padStart(2, '0') + '</div>' +
+            '<div class="rp-si-duration">' + dur + '</div>' +
           '</div>' +
           '<div class="rp-si-info">' +
             '<h3 class="rp-si-title">' + esc(trunc(v.title || 'Video', 100)) + '</h3>' +
@@ -1951,99 +1571,117 @@ const metaText = metaParts.join(' • ');
         return el;
       }
 
+      function makeSidebarAd(p: any, i: number): HTMLElement {
+        const el = document.createElement('a');
+        el.href = '/product/' + esc(p.id);
+        el.className = 'rp-si rp-si-ad';
+        el.style.animationDelay = ((i % 10) * 40) + 'ms';
+        
+        const imgHtml = p.image 
+          ? '<img src="' + esc(p.image) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';" />'
+          : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(251,191,36,0.3),rgba(249,115,22,0.2));display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🛍️</div>';
+
+        el.innerHTML = 
+          '<div class="rp-si-thumb">' + imgHtml + '</div>' +
+          '<div class="rp-si-info">' +
+            '<h3 class="rp-si-title">' + esc(trunc(p.title, 80)) + '</h3>' +
+            '<div class="rp-si-price">' + esc(p.price) + '</div>' +
+          '</div>';
+        return el;
+      }
+
       function renderSidebar() {
         if (!sidebarFeed) return;
-        const end = Math.min(sideRendered + 15, sideItems.length);
+        const batchSize = 15;
+        const end = Math.min(sideRendered + batchSize, sideItems.length);
+        let placed = 0;
         for (let i = sideRendered; i < end; i++) {
           sidebarFeed.appendChild(makeSidebarItem(sideItems[i], i));
+          placed++;
+          // Insert 1 ad every 4 videos
+          if (placed % 4 === 0 && productPool.length > 0) {
+            const p = productPool[Math.floor(Math.random() * productPool.length)];
+            if (p) sidebarFeed.appendChild(makeSidebarAd(p, i));
+          }
         }
         sideRendered = end;
         if (sidebarCount) sidebarCount.textContent = String(sideRendered);
       }
 
-      renderSidebar();
-
       // ═══════════════════════════════════════════════
-      // MORE VIDEOS (Home page 3:4 card style)
+      // MORE VIDEOS — HOME PAGE CARD STYLE (at-na-*)
       // ═══════════════════════════════════════════════
       const moreEl = document.getElementById('moreFeed');
       const moreLoadingEl = document.getElementById('moreLoading');
       let moreItems: any[] = feedData.slice();
       let moreRendered = 0;
-      let productPool: any[] = [];
       let loadingMore = false;
       let cardsSinceProduct = 0;
 
-      function makeAnimeCard(v: any, i: number): HTMLElement {
+      // EXACT COPY of home page socialCard()!
+      function makeCard(v: any, i: number): HTMLElement {
         const t = v.title || 'Video';
         const img = getThumb(v.id, v.thumbnail || '');
-        const delay = ((i % 8) * 50) + 'ms';
-        const score = v.score ? Number(v.score).toFixed(1) : (v.rating ? Number(v.rating).toFixed(1) : (7 + Math.random() * 2.5).toFixed(1));
-        const year = v.year || new Date().getFullYear();
-        const genre = { anime: 'Anime', kdrama: 'K-Drama', donghua: 'Donghua', movies: 'Movie' }[v.type] || 'Video';
-        const eps = v.episodes || (12 + Math.floor(Math.random() * 12));
-
+        const delay = ((i % 8) * 40) + 'ms';
+        
+        const typeLabel: any = { 
+          movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA', 
+          donghua: '🐼 DONGHUA', anime: '🎌 ANIME' 
+        }[v.type] || '';
+        
         const imgHtml = img
-          ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="rp-anime-img" onerror="this.style.display=\'none\';" />'
-          : '<div style="width:100%;height:100%;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>';
-
+          ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="at-na-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
+          : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>';
+        
         const el = document.createElement('a');
         el.href = v.isAnimeDetail ? '/anime/' + v.id : '/reels/' + v.id;
-        el.className = 'rp-anime-card';
+        el.className = 'at-na-card';
         el.style.animationDelay = delay;
-
-        el.innerHTML = 
-          '<div class="rp-anime-thumb">' +
+        el.style.textDecoration = 'none';
+        
+        el.innerHTML =
+          '<div class="at-na-thumb">' +
             imgHtml +
-            '<div class="rp-anime-overlay"></div>' +
-            '<div class="rp-anime-corner rp-corner-tl"></div>' +
-            '<div class="rp-anime-corner rp-corner-tr"></div>' +
-            '<div class="rp-anime-corner rp-corner-bl"></div>' +
-            '<div class="rp-anime-corner rp-corner-br"></div>' +
-            '<div class="rp-anime-play">' +
-              '<div class="rp-anime-play-ring rp-ring1"></div>' +
-              '<div class="rp-anime-play-ring rp-ring2"></div>' +
-              '<div class="rp-anime-play-btn">' +
-                '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+            '<div class="at-na-shine"></div>' +
+            '<div class="at-na-overlay"></div>' +
+            '<div class="at-na-play">' +
+              '<div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:2px;box-shadow:0 8px 25px rgba(192,132,252,0.7);z-index:2;">' +
+                '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
               '</div>' +
             '</div>' +
-            '<div class="rp-anime-badges">' +
-              (v.isNew ? '<div class="rp-anime-badge rp-badge-new"><span class="rp-new-dot"></span>NEW</div>' : '') +
-              '<div class="rp-anime-badge rp-badge-score">★ ' + score + '</div>' +
-            '</div>' +
-            '<div class="rp-anime-hd">HD</div>' +
-            '<div class="rp-anime-info">' +
-              '<h3 class="rp-anime-title">' + esc(trunc(t, 60)) + '</h3>' +
-              '<div class="rp-anime-meta">' +
-                '<span>' + year + '</span>' +
-                '<span>' + eps + ' EP</span>' +
-                '<span class="rp-anime-genre">' + genre + '</span>' +
-              '</div>' +
-            '</div>' +
+            (v.isNew ? '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">NEW</div>' : '') +
+            '<div style="position:absolute;bottom:6px;left:6px;padding:2px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:4px;z-index:6;">' + typeLabel + '</div>' +
+          '</div>' +
+          '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
+            '<h3 class="at-na-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(t, 55)) + '</h3>' +
+            '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;">' + esc(v.channel || 'Channel') + '</div>' +
           '</div>';
-
+        
         return el;
       }
 
-      function makeInlineProduct(p: any, i: number): HTMLElement {
+      function makeInlineProductCard(p: any, i: number): HTMLElement {
         const el = document.createElement('a');
         el.href = '/product/' + esc(p.id);
-        el.className = 'rp-inline-product';
-        el.style.animationDelay = ((i % 8) * 50) + 'ms';
+        el.className = 'at-na-card';
+        el.style.animationDelay = ((i % 8) * 40) + 'ms';
+        el.style.textDecoration = 'none';
         
         const imgHtml = p.image
-          ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="rp-anime-img" onerror="this.style.display=\'none\';" />'
-          : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:3rem;">🛍️</div>';
-
-        el.innerHTML = 
-          '<div class="rp-anime-thumb">' +
+          ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="at-na-img" onerror="this.style.display=\'none\';" />'
+          : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(251,191,36,0.3),rgba(249,115,22,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">🛍️</div>';
+        
+        el.innerHTML =
+          '<div class="at-na-thumb" style="border-color:rgba(251,191,36,0.5);">' +
             imgHtml +
-            '<div class="rp-anime-overlay"></div>' +
-            '<div class="rp-inline-product-tag">💎 AD</div>' +
-            '<div class="rp-anime-info">' +
-              '<h3 class="rp-anime-title">' + esc(trunc(p.title, 55)) + '</h3>' +
-              '<div class="rp-inline-product-price">' + esc(p.price) + '</div>' +
-            '</div>' +
+            '<div class="at-na-shine"></div>' +
+            '<div class="at-na-overlay"></div>' +
+            '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">💎 AD</div>' +
+            '<div style="position:absolute;bottom:6px;left:6px;padding:2px 7px;background:linear-gradient(135deg,#fbbf24,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.6rem;font-weight:800;border-radius:4px;z-index:6;">' + esc(p.price) + '</div>' +
+          '</div>' +
+          '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
+            '<h3 class="at-na-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(p.title, 55)) + '</h3>' +
+            '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:#fbbf24;opacity:0.9;">Sponsored</div>' +
           '</div>';
         return el;
       }
@@ -2052,45 +1690,24 @@ const metaText = metaParts.join(' • ');
         if (!moreEl) return;
         const batchSize = 8;
         const end = Math.min(moreRendered + batchSize, moreItems.length);
-        const cardsPerRow = window.innerWidth <= 768 ? 2 : (window.innerWidth <= 1200 ? 3 : 4);
 
         for (let i = moreRendered; i < end; i++) {
-          moreEl.appendChild(makeAnimeCard(moreItems[i], i));
+          moreEl.appendChild(makeCard(moreItems[i], i));
           cardsSinceProduct++;
-          
-          // Insert single product card every 6-8 cards
-          if (cardsSinceProduct >= (cardsPerRow * 2 + Math.floor(Math.random() * 2)) && productPool.length > 0) {
+          // Insert single product card every ~6 cards
+          if (cardsSinceProduct >= 6 && productPool.length > 0) {
             const p = productPool[Math.floor(Math.random() * productPool.length)];
-            if (p) moreEl.appendChild(makeInlineProduct(p, i));
+            if (p) moreEl.appendChild(makeInlineProductCard(p, i));
             cardsSinceProduct = 0;
           }
         }
         moreRendered = end;
       }
 
-      function renderSidebarAd() {
-        if (!sidebarAd || !sidebarAdContent || productPool.length === 0) return;
-        const picks = shuffle(productPool).slice(0, 3);
-        sidebarAdContent.innerHTML = picks.map(p => {
-          const img = p.image 
-            ? '<img src="' + esc(p.image) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';" />'
-            : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🛍️</div>';
-          return '<a href="/product/' + esc(p.id) + '" class="rp-ad-item">' +
-            '<div class="rp-ad-thumb">' + img + '</div>' +
-            '<div class="rp-ad-info">' +
-              '<div class="rp-ad-title">' + esc(trunc(p.title, 50)) + '</div>' +
-              '<div class="rp-ad-price">' + esc(p.price) + '</div>' +
-            '</div>' +
-          '</a>';
-        }).join('');
-        sidebarAd.style.display = 'block';
-      }
-
       async function fetchMore() {
         if (loadingMore) return;
         loadingMore = true;
         if (moreLoadingEl) moreLoadingEl.classList.add('show');
-
         try {
           const types = ['anime', 'donghua', 'kdrama', 'movies'];
           const type = types[Math.floor(Math.random() * types.length)];
@@ -2107,7 +1724,6 @@ const metaText = metaParts.join(' • ');
             renderSidebar();
           }
         } catch(e) {}
-
         if (moreLoadingEl) moreLoadingEl.classList.remove('show');
         loadingMore = false;
       }
@@ -2116,22 +1732,18 @@ const metaText = metaParts.join(' • ');
         try {
           const res = await fetch('/api/products?limit=30');
           const data = await res.json();
-          if (data.success && data.products) {
-            productPool = data.products;
-            renderSidebarAd();
-          }
+          if (data.success && data.products) productPool = data.products;
         } catch(e) {}
       }
 
-      loadProducts().then(() => { renderMoreBatch(); });
+      // Load products FIRST, then render sidebar + more
+      loadProducts().then(() => {
+        renderSidebar();
+        renderMoreBatch();
+      });
 
-      // Infinite scroll (throttled)
       let scrollTimer: any = null;
-      let lastScrollY = 0;
       window.addEventListener('scroll', () => {
-        const currentY = window.scrollY;
-        if (Math.abs(currentY - lastScrollY) < 50) return;
-        lastScrollY = currentY;
         if (scrollTimer) clearTimeout(scrollTimer);
         scrollTimer = setTimeout(() => {
           if (loadingMore) return;
@@ -2144,7 +1756,6 @@ const metaText = metaParts.join(' • ');
         }, 100);
       }, { passive: true });
 
-      // Autoplay
       const autoplayToggle = document.getElementById('autoplayToggle') as HTMLInputElement;
       if (autoplayToggle) {
         const saved = localStorage.getItem('anitube_autoplay');
