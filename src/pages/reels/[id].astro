@@ -250,15 +250,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
                       <span class="rp-ext-logo">AniTubeBuzz</span>
                       <span class="rp-ext-live">HD</span>
                     </div>
-                    <div class="rp-ext-controls" id="extControls">
-                      <div class="rp-ext-ctrl-bar">
-                        <button class="rp-ext-fs-btn" id="extFullscreen" title="Fullscreen">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
+                   undefined
                   </div>
                 ) : (
                   <iframe
@@ -528,12 +520,12 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
     }
     /* IFRAME: Large size, positioned so ONLY video player rectangle visible */
     /* AnimoTV video player location: ~340px from top, ~600px tall on 1280 width */
-    .rp-ext-iframe {
+       .rp-ext-iframe {
       position: absolute;
       top: -420px;
       left: -20px;
       width: calc(100% + 40px);
-      height: calc(100% + 950px);
+      height: calc(100% + 720px);
       border: 0;
       overflow: hidden !important;
     }
@@ -2280,40 +2272,15 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         setTimeout(hideVideoLoader, 3500);
       }
 
-      function setupCustomFullscreen() {
-        var btn = document.getElementById('extFullscreen');
+            function setupCustomFullscreen() {
+        // Custom fullscreen removed — using native player controls
         var wrap = document.getElementById('externalWrap');
-        if (!btn || !wrap) return;
-        btn.addEventListener('click', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          if (document.fullscreenElement) {
-            if (document.exitFullscreen) document.exitFullscreen();
-            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-          } else {
-            if (wrap.requestFullscreen) wrap.requestFullscreen();
-            else if (wrap.webkitRequestFullscreen) wrap.webkitRequestFullscreen();
-            else if (wrap.mozRequestFullScreen) wrap.mozRequestFullScreen();
-          }
-        });
-        // Double-click video area = fullscreen
-        var iframe = document.getElementById('videoFrame');
-        if (iframe) {
-          var lastClick = 0;
-          wrap.addEventListener('click', function(e) {
-            var now = Date.now();
-            if (now - lastClick < 350) {
-              btn.click();
-            }
-            lastClick = now;
-          });
-        }
+        if (!wrap) return;
         // Prevent right-click on iframe (hides context menu that reveals source)
         wrap.addEventListener('contextmenu', function(e) {
           e.preventDefault();
         });
       }
-
             function setupClickBlocker() {
         var blockers = document.querySelectorAll('.rp-ext-click-blocker');
         for (var i = 0; i < blockers.length; i++) {
