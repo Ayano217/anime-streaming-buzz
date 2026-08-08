@@ -39,6 +39,20 @@ function generateThumbnail(vid: string, apiThumbnail: string = ''): string {
   return '';
 }
 
+// Extract series name from title (used for related search)
+function extractSeriesFromTitle(title: string): string {
+  let t = (title || '').toLowerCase();
+  t = t.replace(/\bep(?:isode)?\s*\d+.*/i, '');
+  t = t.replace(/\bseason\s*\d+.*/i, '');
+  t = t.replace(/\bs\d+e\d+.*/i, '');
+  t = t.replace(/\b\d+\s*(?:sub|dub|eng|hd|full).*/i, '');
+  t = t.replace(/\[[^\]]*\]/g, '');
+  t = t.replace(/\([^)]*\)/g, '');
+  t = t.replace(/[^\w\s]/g, ' ');
+  t = t.replace(/\s+/g, ' ').trim();
+  return t.slice(0, 50);
+}
+
 let video: any = null;
 let allVideos: any[] = [];
 
@@ -75,26 +89,7 @@ if (!video) {
   if (!video.description) video.description = '';
 }
 
-function buildRelatedFeed(current: any, all: any[]): any[] {
-  if (!all || all.length === 0) return [];
-  const pool = all.filter(v => v.id !== current.id);
-  const scored = pool.map(v => {
-    let score = 0;
-    if (v.channel === current.channel) score += 100;
-    if (v.type === current.type) score += 50;
-    if (v.source === current.source) score += 20;
-    if (v.aspect === current.aspect) score += 30;
-    if (v.isNew) score += 15;
-    score += Math.random() * 5;
-    return { video: v, score };
-  });
-  scored.sort((a, b) => b.score - a.score);
-  return scored.map(s => s.video);
-}
-
-const relatedFeed = buildRelatedFeed(video, allVideos);
-const nextVideo = relatedFeed[0] || null;
-
+const seriesName = extractSeriesFromTitle(video.title);
 const displayChannel = (video.channel || 'AniTube').trim();
 const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
 const typeLabels: any = { anime: 'Anime', kdrama: 'K-Drama', donghua: 'Donghua', movies: 'Movie' };
@@ -115,7 +110,6 @@ if (video.publishedAt) {
 
 const description = (video.description || '').trim();
 const hasDescription = description.length > 0;
-
 const metaParts: string[] = ['HD', typeLabel];
 if (publishText) metaParts.push(publishText);
 const metaText = metaParts.join(' • ');
@@ -127,7 +121,12 @@ const metaText = metaParts.join(' • ');
   <section class="rp-section">
     <div class="rp-container">
       
-      <div id="reels-root" data-videoid={videoId} data-next={nextVideo?.id || ''} data-aspect={videoAspect}>
+      <div id="reels-root" 
+        data-videoid={videoId} 
+        data-aspect={videoAspect}
+        data-channel={displayChannel}
+        data-series={seriesName}
+        data-type={video.type}>
         
         <div class="rp-grid">
           
@@ -230,10 +229,18 @@ const metaText = metaParts.join(' • ');
               <button class="rp-hook-btn">Discover →</button>
             </div>
 
-            <!-- ═══ COMMENTS (YT STYLE) ═══ -->
+            <!-- ═══ COMMENTS (YT EXACT STYLE) ═══ -->
             <section class="rp-comments" id="commentsSection">
               <div class="rp-comments-head">
                 <h3 class="rp-comments-title"><span id="commentCount">0</span> Comments</h3>
+                <button class="rp-sort-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="12" x2="15" y2="12"/>
+                    <line x1="3" y1="18" x2="9" y2="18"/>
+                  </svg>
+                  <span>Sort by</span>
+                </button>
               </div>
               
               <div class="rp-comment-input-row">
@@ -252,7 +259,7 @@ const metaText = metaParts.join(' • ');
               </div>
             </section>
 
-            <!-- ═══ MORE VIDEOS (HOME PAGE CARD STYLE!) ═══ -->
+            <!-- ═══ MORE VIDEOS (HOME PAGE CARD STYLE) ═══ -->
             <section class="rp-more-section" id="moreSection">
               <div class="rp-section-head">
                 <div class="rp-section-title">
@@ -273,6 +280,20 @@ const metaText = metaParts.join(' • ');
           <!-- ═══════════ RIGHT SIDEBAR ═══════════ -->
           <aside class="rp-sidebar">
             
+            <!-- Series Episodes Section (loaded dynamically) -->
+            <div id="seriesSection" class="rp-series-section" style="display:none;">
+              <div class="rp-sidebar-head">
+                <div class="rp-sidebar-title">
+                  <span class="rp-section-bar" style="background:linear-gradient(180deg,#fbbf24,#f97316);"></span>
+                  <span>📺 Episodes</span>
+                </div>
+                <div class="rp-sidebar-count" id="seriesCount">0</div>
+              </div>
+              <div id="seriesList" class="rp-side-list"></div>
+              <div class="rp-divider"></div>
+            </div>
+            
+            <!-- Up Next Section -->
             <div class="rp-sidebar-head">
               <div class="rp-sidebar-title">
                 <span class="rp-section-bar"></span>
@@ -304,13 +325,14 @@ const metaText = metaParts.join(' • ');
 
   <script is:inline set:html={`
     window.__REELS_VIDEO__ = ${JSON.stringify(video)};
-    window.__REELS_FEED__ = ${JSON.stringify(relatedFeed.slice(0, 50))};
+    window.__REELS_FEED__ = ${JSON.stringify(allVideos.slice(0, 50))};
     window.__CURRENT_VIDEO_ID__ = ${JSON.stringify(videoId)};
-    window.__NEXT_ID__ = ${JSON.stringify(nextVideo?.id || '')};
+    window.__SERIES_NAME__ = ${JSON.stringify(seriesName)};
+    window.__CHANNEL_NAME__ = ${JSON.stringify(displayChannel)};
   `}></script>
 
   <style is:global>
-    /* ═══ HOME PAGE CARD CLASSES — COPIED EXACTLY (globalized so they work) ═══ */
+    /* ═══ HOME PAGE CARD CLASSES — GLOBALIZED ═══ */
     @keyframes atNaCardIn { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
     
     .at-na-card {
@@ -397,7 +419,7 @@ const metaText = metaParts.join(' • ');
 
   <style>
     /* ═══════════════════════════════════════════════
-       REELS PAGE v4 — FINAL PREMIUM
+       REELS PAGE v5 — FINAL FIXED
     ═══════════════════════════════════════════════ */
     
     .rp-section { padding: 24px 0 40px; }
@@ -424,6 +446,18 @@ const metaText = metaParts.join(' • ');
       flex-direction: column;
       max-height: calc(100vh - 100px);
       min-width: 0;
+      overflow-y: auto;
+      padding-right: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(192,132,252,0.3) transparent;
+    }
+    .rp-sidebar::-webkit-scrollbar { width: 4px; }
+    .rp-sidebar::-webkit-scrollbar-thumb { background: rgba(192,132,252,0.3); border-radius: 2px; }
+    
+    .rp-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(192,132,252,0.3), transparent);
+      margin: 20px 0;
     }
     
     /* ═══ VIDEO PLAYER ═══ */
@@ -663,11 +697,11 @@ const metaText = metaParts.join(' • ');
       box-shadow: 0 4px 14px rgba(249, 115, 22, 0.4);
     }
     
-    /* ═══════════ COMMENTS (YT STYLE) ═══════════ */
+    /* ═══════════ COMMENTS (YT EXACT) ═══════════ */
     .rp-comments { padding: 20px 0; }
     
     .rp-comments-head {
-      display: flex; align-items: center;
+      display: flex; align-items: center; gap: 24px;
       margin-bottom: 20px;
     }
     .rp-comments-title {
@@ -675,12 +709,24 @@ const metaText = metaParts.join(' • ');
       font-size: 18px; font-weight: 700;
       color: var(--text-primary); margin: 0;
     }
+    .rp-sort-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 12px;
+      background: transparent;
+      border: 0;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px; font-weight: 600;
+      border-radius: 100px;
+      transition: background 0.2s ease;
+    }
+    .rp-sort-btn:hover { background: rgba(192,132,252,0.08); }
+    .rp-sort-btn svg { color: var(--text-primary); }
     
     .rp-comment-input-row {
       display: flex; gap: 12px;
       margin-bottom: 24px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid rgba(192, 132, 252, 0.1);
     }
     
     .rp-my-av {
@@ -692,6 +738,7 @@ const metaText = metaParts.join(' • ');
       font-family: 'Bricolage Grotesque', sans-serif;
       font-weight: 700; font-size: 15px;
       box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
+      flex-shrink: 0;
     }
     
     .rp-comment-input-wrap { flex: 1; min-width: 0; }
@@ -708,7 +755,7 @@ const metaText = metaParts.join(' • ');
       font-size: 14px;
       transition: border-color 0.2s ease;
     }
-    .rp-comment-input:focus { border-bottom-color: #e879f9; }
+    .rp-comment-input:focus { border-bottom-color: #e879f9; border-bottom-width: 2px; }
     .rp-comment-input::placeholder { color: var(--text-muted); }
     
     .rp-comment-actions {
@@ -721,6 +768,7 @@ const metaText = metaParts.join(' • ');
       color: var(--text-secondary);
       font-weight: 600; font-size: 13px;
       cursor: pointer; border-radius: 100px;
+      font-family: 'Inter', sans-serif;
       transition: background 0.2s ease;
     }
     .rp-cancel-btn:hover { background: rgba(192, 132, 252, 0.1); }
@@ -730,6 +778,7 @@ const metaText = metaParts.join(' • ');
       border: 0; color: white;
       font-weight: 700; font-size: 13px;
       cursor: pointer; border-radius: 100px;
+      font-family: 'Inter', sans-serif;
       transition: transform 0.2s ease;
     }
     .rp-submit-btn:hover { transform: scale(1.05); }
@@ -740,8 +789,11 @@ const metaText = metaParts.join(' • ');
       color: var(--text-muted); font-size: 14px;
     }
     
+    /* ═══ COMMENT — GRID LAYOUT (no width bugs!) ═══ */
     .rp-comment {
-      display: flex; gap: 12px;
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 12px;
       animation: rpCommentIn 0.4s ease;
     }
     @keyframes rpCommentIn {
@@ -749,26 +801,33 @@ const metaText = metaParts.join(' • ');
       to { opacity: 1; transform: translateY(0); }
     }
     
-    /* CRITICAL FIX: c-avatar was 100% width earlier — now fixed */
+    /* CRITICAL FIX: c-avatar uses grid column, fixed 40px */
     .rp-c-avatar {
-      width: 40px !important; height: 40px !important;
-      min-width: 40px !important; max-width: 40px !important;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: white;
       font-family: 'Bricolage Grotesque', sans-serif;
-      font-weight: 700; font-size: 15px;
-      flex-shrink: 0;
+      font-weight: 700;
+      font-size: 15px;
+      overflow: hidden;
     }
     
-    .rp-c-body { flex: 1; min-width: 0; }
+    .rp-c-body {
+      min-width: 0;
+      overflow: hidden;
+    }
+    
     .rp-c-head {
       display: flex; align-items: baseline; gap: 8px;
-      margin-bottom: 3px; flex-wrap: wrap;
+      margin-bottom: 4px; flex-wrap: wrap;
     }
     .rp-c-name {
       font-family: 'Inter', sans-serif;
-      font-size: 13px; font-weight: 700;
+      font-size: 13px; font-weight: 600;
       color: var(--text-primary);
     }
     .rp-c-time {
@@ -777,30 +836,31 @@ const metaText = metaParts.join(' • ');
     }
     .rp-c-text {
       font-family: 'DM Sans', sans-serif;
-      font-size: 14px; line-height: 1.5;
+      font-size: 14px; line-height: 1.4;
       color: var(--text-primary);
-      margin: 4px 0 8px;
+      margin: 0 0 8px;
       word-wrap: break-word;
+      overflow-wrap: break-word;
     }
     
-    .rp-c-actions { display: flex; align-items: center; gap: 6px; }
+    .rp-c-actions {
+      display: flex; align-items: center; gap: 4px;
+    }
     .rp-c-action {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 6px 10px;
-      background: transparent; border: 0; border-radius: 100px;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 10px;
+      background: transparent; border: 0;
+      border-radius: 100px;
       color: var(--text-secondary);
       cursor: pointer;
       font-size: 12px; font-weight: 500;
       font-family: 'Inter', sans-serif;
-      transition: background 0.2s ease, color 0.2s ease;
+      transition: background 0.2s ease;
     }
-    .rp-c-action:hover {
-      background: rgba(192, 132, 252, 0.1);
-      color: var(--text-primary);
-    }
+    .rp-c-action:hover { background: rgba(192, 132, 252, 0.1); }
     .rp-c-action.active { color: #e879f9; }
     .rp-c-action.active svg { fill: #e879f9; }
-    .rp-c-count { min-width: 12px; font-family: 'JetBrains Mono', monospace; }
+    .rp-c-count { font-family: 'Inter', sans-serif; font-size: 12px; min-width: 6px; }
     
     .rp-c-reply-btn {
       background: transparent; border: 0;
@@ -808,15 +868,24 @@ const metaText = metaParts.join(' • ');
       font-family: 'Inter', sans-serif;
       font-size: 12px; font-weight: 600;
       cursor: pointer;
-      padding: 6px 12px; border-radius: 100px;
+      padding: 8px 12px; border-radius: 100px;
       margin-left: 4px;
     }
     .rp-c-reply-btn:hover { background: rgba(192, 132, 252, 0.1); }
     
-    .rp-reply-input-row { display: flex; gap: 10px; margin-top: 12px; }
+    /* Reply input */
+    .rp-reply-container {
+      margin-top: 12px;
+    }
+    .rp-reply-input-row {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 10px;
+    }
     .rp-reply-input-row .rp-my-av { width: 32px; height: 32px; min-width: 32px; font-size: 13px; }
     .rp-reply-input {
-      flex: 1; background: transparent; border: 0;
+      width: 100%;
+      background: transparent; border: 0;
       border-bottom: 1px solid rgba(192, 132, 252, 0.3);
       outline: 0; padding: 6px 0;
       color: var(--text-primary);
@@ -831,15 +900,21 @@ const metaText = metaParts.join(' • ');
       font-family: 'Inter', sans-serif;
       font-size: 13px; font-weight: 700;
       padding: 8px 12px; border-radius: 100px;
-      margin-top: 6px;
+      margin-top: 8px;
       display: inline-flex; align-items: center; gap: 6px;
     }
     .rp-replies-toggle:hover { background: rgba(125, 211, 252, 0.1); }
     
     .rp-replies { margin-top: 12px; display: none; flex-direction: column; gap: 16px; }
     .rp-replies.show { display: flex; }
-    .rp-reply { display: flex; gap: 10px; animation: rpCommentIn 0.3s ease; }
-    .rp-reply .rp-c-avatar { width: 32px !important; height: 32px !important; min-width: 32px !important; max-width: 32px !important; font-size: 13px; }
+    
+    .rp-reply {
+      display: grid;
+      grid-template-columns: 32px 1fr;
+      gap: 10px;
+      animation: rpCommentIn 0.3s ease;
+    }
+    .rp-reply .rp-c-avatar { width: 32px; height: 32px; font-size: 13px; }
     .rp-reply .rp-c-name { font-size: 12.5px; }
     .rp-reply .rp-c-time { font-size: 11px; }
     .rp-reply .rp-c-text { font-size: 13px; }
@@ -899,7 +974,7 @@ const metaText = metaParts.join(' • ');
     }
     @keyframes rpSpin { to { transform: rotate(360deg); } }
     
-    /* ═══════════ SIDEBAR (YT STYLE) ═══════════ */
+    /* ═══════════ SIDEBAR ═══════════ */
     .rp-sidebar-head {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 14px; padding: 0 4px;
@@ -935,9 +1010,7 @@ const metaText = metaParts.join(' • ');
       font-size: 13px; font-weight: 600;
       color: var(--text-secondary);
     }
-    .rp-autoplay-label input[type="checkbox"] {
-      position: absolute; opacity: 0; width: 0; height: 0;
-    }
+    .rp-autoplay-label input[type="checkbox"] { position: absolute; opacity: 0; width: 0; height: 0; }
     .rp-switch {
       position: relative;
       width: 36px; height: 20px;
@@ -960,15 +1033,9 @@ const metaText = metaParts.join(' • ');
     
     .rp-side-list {
       display: flex; flex-direction: column; gap: 8px;
-      overflow-y: auto; flex: 1;
-      padding-right: 4px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
     }
-    .rp-side-list::-webkit-scrollbar { width: 4px; }
-    .rp-side-list::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.3); border-radius: 2px; }
     
-    /* Sidebar item — YouTube horizontal style */
+    /* Sidebar item — YouTube horizontal */
     .rp-si {
       display: grid;
       grid-template-columns: 168px 1fr;
@@ -988,6 +1055,10 @@ const metaText = metaParts.join(' • ');
     .rp-si:hover {
       background: rgba(192, 132, 252, 0.08);
       border-color: rgba(232, 121, 249, 0.3);
+    }
+    .rp-si.current {
+      background: rgba(192, 132, 252, 0.12);
+      border-color: rgba(232, 121, 249, 0.5);
     }
     
     .rp-si-thumb {
@@ -1026,6 +1097,27 @@ const metaText = metaParts.join(' • ');
       font-size: 9px; font-weight: 800;
       border-radius: 4px;
     }
+    .rp-si-ep {
+      position: absolute;
+      top: 4px; left: 4px;
+      padding: 2px 8px;
+      background: linear-gradient(135deg, #fbbf24, #f97316);
+      color: white;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 800;
+      border-radius: 4px;
+      z-index: 3;
+    }
+    .rp-si-playing {
+      position: absolute; inset: 0;
+      background: rgba(192,132,252,0.4);
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; font-weight: 800;
+      z-index: 4;
+      backdrop-filter: blur(2px);
+    }
     
     .rp-si-info {
       min-width: 0;
@@ -1048,9 +1140,7 @@ const metaText = metaParts.join(' • ');
       font-size: 11.5px;
       color: var(--text-muted);
       margin-bottom: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .rp-si-meta {
       font-family: 'Inter', sans-serif;
@@ -1058,7 +1148,7 @@ const metaText = metaParts.join(' • ');
       color: var(--text-muted);
     }
     
-    /* Sidebar AD (inline as video item style, subtle golden badge) */
+    /* Sidebar AD */
     .rp-si-ad {
       position: relative;
     }
@@ -1073,9 +1163,8 @@ const metaText = metaParts.join(' • ');
       font-size: 9px; font-weight: 800;
       border-radius: 4px;
       z-index: 4;
-      letter-spacing: 0.05em;
     }
-    .rp-si-ad .rp-si-price {
+    .rp-si-price {
       display: inline-block;
       padding: 2px 8px;
       background: linear-gradient(135deg, #fbbf24, #f97316);
@@ -1089,8 +1178,7 @@ const metaText = metaParts.join(' • ');
     /* ═══════════ MOBILE ═══════════ */
     @media (max-width: 960px) {
       .rp-grid { grid-template-columns: 1fr; gap: 20px; }
-      .rp-sidebar { position: static; max-height: none; }
-      .rp-side-list { max-height: none; overflow-y: visible; }
+      .rp-sidebar { position: static; max-height: none; overflow-y: visible; }
       .rp-title { font-size: 18px; }
       .rp-meta-bar { flex-direction: column; align-items: stretch; gap: 14px; }
       .rp-actions { gap: 6px; }
@@ -1114,7 +1202,8 @@ const metaText = metaParts.join(' • ');
       const videoId = root.dataset.videoid || '';
       const currentVideo: any = (window as any).__REELS_VIDEO__ || null;
       const feedData: any[] = (window as any).__REELS_FEED__ || [];
-      const nextId = (window as any).__NEXT_ID__ || '';
+      const seriesName: string = (window as any).__SERIES_NAME__ || '';
+      const channelName: string = (window as any).__CHANNEL_NAME__ || '';
 
       try {
         if (videoId) {
@@ -1167,7 +1256,7 @@ const metaText = metaParts.join(' • ');
         return Math.floor(d / 30) + ' months ago';
       }
 
-      // ═══ HISTORY ═══
+      // History
       try {
         if (currentVideo && videoId) {
           const goodThumb = getThumb(videoId, currentVideo.thumbnail);
@@ -1182,7 +1271,7 @@ const metaText = metaParts.join(' • ');
         }
       } catch(e) {}
 
-      // ═══ LIKE ═══
+      // Like
       const likeBtn = document.getElementById('likeBtn');
       const likedVideos: string[] = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
       const isLiked = () => likedVideos.includes(videoId);
@@ -1208,7 +1297,7 @@ const metaText = metaParts.join(' • ');
       updateLikeUI();
       likeBtn?.addEventListener('click', toggleLike);
 
-      // ═══ SAVE ═══
+      // Save
       const saveBtn = document.getElementById('saveBtn');
       const savedVideos: any[] = JSON.parse(localStorage.getItem('anitube_saved') || '[]');
       const isSaved = () => savedVideos.some((s: any) => s.id === videoId);
@@ -1241,6 +1330,7 @@ const metaText = metaParts.join(' • ');
       updateSaveUI();
       saveBtn?.addEventListener('click', toggleSave);
 
+      // Double tap
       const videoCard = document.getElementById('videoCard');
       const heart = document.getElementById('doubleTapHeart');
       let lastTap = 0;
@@ -1257,6 +1347,7 @@ const metaText = metaParts.join(' • ');
         } else { lastTap = now; }
       });
 
+      // Share
       const sendBtn = document.getElementById('sendBtn');
       async function handleSend() {
         if (!sendBtn) return;
@@ -1280,6 +1371,7 @@ const metaText = metaParts.join(' • ');
       }
       sendBtn?.addEventListener('click', handleSend);
 
+      // Next
       let navigating = false;
       function goTo(targetId: string) {
         if (navigating || !targetId) return;
@@ -1288,14 +1380,23 @@ const metaText = metaParts.join(' • ');
         if (c) { c.style.opacity = '0.4'; c.style.transition = 'opacity 0.2s'; }
         setTimeout(() => { window.location.href = '/reels/' + targetId; }, 180);
       }
-      document.getElementById('nextBtn')?.addEventListener('click', () => { if (nextId) goTo(nextId); });
+      document.getElementById('nextBtn')?.addEventListener('click', () => {
+        if (seriesEpisodes.length > 0) {
+          const currentIdx = seriesEpisodes.findIndex((v: any) => v.id === videoId);
+          const next = seriesEpisodes[currentIdx + 1];
+          if (next) { goTo(next.id); return; }
+        }
+        if (sideItems[0]) goTo(sideItems[0].id);
+      });
 
+      // Video loader
       const iframe = document.getElementById('videoFrame') as HTMLIFrameElement;
       const videoLoader = document.getElementById('videoLoader');
       function hideVideoLoader() { videoLoader?.classList.add('hidden'); }
       iframe?.addEventListener('load', () => setTimeout(hideVideoLoader, 500));
       setTimeout(hideVideoLoader, 3500);
 
+      // Safiya
       setTimeout(() => {
         if (currentVideo) {
           try {
@@ -1306,6 +1407,7 @@ const metaText = metaParts.join(' • ');
         }
       }, 800);
 
+      // Description
       const descToggle = document.getElementById('descToggle');
       const descContent = document.getElementById('descContent');
       descToggle?.addEventListener('click', () => {
@@ -1320,7 +1422,7 @@ const metaText = metaParts.join(' • ');
       });
 
       // ═══════════════════════════════════════════════
-      // COMMENTS (YouTube style)
+      // COMMENTS
       // ═══════════════════════════════════════════════
       const commentsList = document.getElementById('commentsList');
       const commentInput = document.getElementById('commentInput') as HTMLInputElement;
@@ -1431,7 +1533,7 @@ const metaText = metaParts.join(' • ');
                 '</button>' +
                 '<button class="rp-c-reply-btn" data-idx="' + i + '">Reply</button>' +
               '</div>' +
-              '<div class="rp-reply-input-container" data-idx="' + i + '"></div>' +
+              '<div class="rp-reply-container" data-idx="' + i + '"></div>' +
               repliesHtml +
             '</div>' +
           '</div>';
@@ -1444,23 +1546,11 @@ const metaText = metaParts.join(' • ');
             const list = loadComments();
             if (!list[idx]) return;
             if (action === 'like') {
-              if (list[idx].liked) {
-                list[idx].liked = false;
-                list[idx].likes = Math.max(0, (list[idx].likes || 0) - 1);
-              } else {
-                list[idx].liked = true;
-                list[idx].likes = (list[idx].likes || 0) + 1;
-                if (list[idx].disliked) list[idx].disliked = false;
-              }
+              if (list[idx].liked) { list[idx].liked = false; list[idx].likes = Math.max(0, (list[idx].likes || 0) - 1); }
+              else { list[idx].liked = true; list[idx].likes = (list[idx].likes || 0) + 1; if (list[idx].disliked) list[idx].disliked = false; }
             } else if (action === 'dislike') {
               if (list[idx].disliked) list[idx].disliked = false;
-              else {
-                list[idx].disliked = true;
-                if (list[idx].liked) {
-                  list[idx].liked = false;
-                  list[idx].likes = Math.max(0, (list[idx].likes || 0) - 1);
-                }
-              }
+              else { list[idx].disliked = true; if (list[idx].liked) { list[idx].liked = false; list[idx].likes = Math.max(0, (list[idx].likes || 0) - 1); } }
             }
             saveComments(list);
             renderComments();
@@ -1470,13 +1560,13 @@ const metaText = metaParts.join(' • ');
         commentsList.querySelectorAll('.rp-c-reply-btn').forEach(btn => {
           btn.addEventListener('click', () => {
             const idx = parseInt((btn as HTMLElement).dataset.idx || '0');
-            const container = commentsList.querySelector('.rp-reply-input-container[data-idx="' + idx + '"]') as HTMLElement;
+            const container = commentsList.querySelector('.rp-reply-container[data-idx="' + idx + '"]') as HTMLElement;
             if (!container) return;
             if (container.querySelector('input')) { container.innerHTML = ''; return; }
             container.innerHTML = 
               '<div class="rp-reply-input-row">' +
                 '<div class="rp-my-av" style="background:' + userColor(username || 'Y') + '">' + (username || 'Y').charAt(0).toUpperCase() + '</div>' +
-                '<div style="flex:1;">' +
+                '<div>' +
                   '<input type="text" class="rp-reply-input" placeholder="Add a reply..." maxlength="300" />' +
                   '<div class="rp-comment-actions" style="display:flex;">' +
                     '<button class="rp-cancel-btn rp-cancel-reply">Cancel</button>' +
@@ -1484,7 +1574,6 @@ const metaText = metaParts.join(' • ');
                   '</div>' +
                 '</div>' +
               '</div>';
-            
             const input = container.querySelector('input') as HTMLInputElement;
             const cancelReply = container.querySelector('.rp-cancel-reply');
             const submitReply = container.querySelector('.rp-submit-reply');
@@ -1500,9 +1589,7 @@ const metaText = metaParts.join(' • ');
               renderComments();
             };
             submitReply?.addEventListener('click', doSubmit);
-            input?.addEventListener('keydown', (e) => {
-              if (e.key === 'Enter') { e.preventDefault(); doSubmit(); }
-            });
+            input?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); doSubmit(); } });
           });
         });
 
@@ -1534,11 +1621,58 @@ const metaText = metaParts.join(' • ');
       renderComments();
 
       // ═══════════════════════════════════════════════
-      // SIDEBAR — YouTube style + Ads mixed
+      // SERIES EPISODES (from API)
+      // ═══════════════════════════════════════════════
+      let seriesEpisodes: any[] = [];
+      
+      async function loadSeriesEpisodes() {
+        if (!seriesName || seriesName.length < 3) return;
+        try {
+          const res = await fetch('/api/social-feed?related=true&series=' + encodeURIComponent(seriesName) + '&limit=20');
+          const data = await res.json();
+          if (data.success && data.videos && data.videos.length > 0) {
+            seriesEpisodes = data.videos.filter((v: any) => v.id !== videoId);
+            renderSeriesEpisodes();
+          }
+        } catch(e) {}
+      }
+
+      function renderSeriesEpisodes() {
+        const seriesSection = document.getElementById('seriesSection');
+        const seriesList = document.getElementById('seriesList');
+        const seriesCount = document.getElementById('seriesCount');
+        if (!seriesList || !seriesSection || seriesEpisodes.length === 0) return;
+        
+        seriesSection.style.display = 'block';
+        if (seriesCount) seriesCount.textContent = String(seriesEpisodes.length);
+        
+        seriesList.innerHTML = seriesEpisodes.slice(0, 15).map((v: any, i: number) => {
+          const thumb = getThumb(v.id, v.thumbnail || '');
+          const imgHtml = thumb
+            ? '<img src="' + esc(thumb) + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
+            : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:1.5rem;">📺</div>';
+          const epLabel = v.episodeNumber ? 'EP ' + v.episodeNumber : (i + 1);
+          
+          return '<a href="/reels/' + esc(v.id) + '" class="rp-si" style="animation-delay:' + (i * 40) + 'ms;">' +
+            '<div class="rp-si-thumb">' + imgHtml +
+              '<div class="rp-si-ep">' + epLabel + '</div>' +
+            '</div>' +
+            '<div class="rp-si-info">' +
+              '<h3 class="rp-si-title">' + esc(trunc(v.title || 'Episode', 80)) + '</h3>' +
+              '<div class="rp-si-channel">' + esc((v.channel || '').slice(0, 25)) + '</div>' +
+            '</div>' +
+          '</a>';
+        }).join('');
+      }
+
+      loadSeriesEpisodes();
+
+      // ═══════════════════════════════════════════════
+      // SIDEBAR "UP NEXT" — Similar videos + ads
       // ═══════════════════════════════════════════════
       const sidebarFeed = document.getElementById('relatedFeed');
       const sidebarCount = document.getElementById('sidebarCount');
-      let sideItems: any[] = feedData.slice();
+      let sideItems: any[] = feedData.filter((v: any) => v.id !== videoId).slice();
       let sideRendered = 0;
       let productPool: any[] = [];
 
@@ -1592,14 +1726,13 @@ const metaText = metaParts.join(' • ');
 
       function renderSidebar() {
         if (!sidebarFeed) return;
-        const batchSize = 15;
+        const batchSize = 12;
         const end = Math.min(sideRendered + batchSize, sideItems.length);
         let placed = 0;
         for (let i = sideRendered; i < end; i++) {
           sidebarFeed.appendChild(makeSidebarItem(sideItems[i], i));
           placed++;
-          // Insert 1 ad every 4 videos
-          if (placed % 4 === 0 && productPool.length > 0) {
+          if (placed % 5 === 0 && productPool.length > 0) {
             const p = productPool[Math.floor(Math.random() * productPool.length)];
             if (p) sidebarFeed.appendChild(makeSidebarAd(p, i));
           }
@@ -1609,21 +1742,19 @@ const metaText = metaParts.join(' • ');
       }
 
       // ═══════════════════════════════════════════════
-      // MORE VIDEOS — HOME PAGE CARD STYLE (at-na-*)
+      // MORE VIDEOS — home page card style
       // ═══════════════════════════════════════════════
       const moreEl = document.getElementById('moreFeed');
       const moreLoadingEl = document.getElementById('moreLoading');
-      let moreItems: any[] = feedData.slice();
+      let moreItems: any[] = sideItems.slice();
       let moreRendered = 0;
       let loadingMore = false;
       let cardsSinceProduct = 0;
 
-      // EXACT COPY of home page socialCard()!
       function makeCard(v: any, i: number): HTMLElement {
         const t = v.title || 'Video';
         const img = getThumb(v.id, v.thumbnail || '');
         const delay = ((i % 8) * 40) + 'ms';
-        
         const typeLabel: any = { 
           movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA', 
           donghua: '🐼 DONGHUA', anime: '🎌 ANIME' 
@@ -1690,11 +1821,9 @@ const metaText = metaParts.join(' • ');
         if (!moreEl) return;
         const batchSize = 8;
         const end = Math.min(moreRendered + batchSize, moreItems.length);
-
         for (let i = moreRendered; i < end; i++) {
           moreEl.appendChild(makeCard(moreItems[i], i));
           cardsSinceProduct++;
-          // Insert single product card every ~6 cards
           if (cardsSinceProduct >= 6 && productPool.length > 0) {
             const p = productPool[Math.floor(Math.random() * productPool.length)];
             if (p) moreEl.appendChild(makeInlineProductCard(p, i));
@@ -1736,7 +1865,6 @@ const metaText = metaParts.join(' • ');
         } catch(e) {}
       }
 
-      // Load products FIRST, then render sidebar + more
       loadProducts().then(() => {
         renderSidebar();
         renderMoreBatch();
