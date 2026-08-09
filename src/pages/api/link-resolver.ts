@@ -170,8 +170,8 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
     }
 
     if (fbMeta.title || fbMeta.description) {
-      layerPromises.push(layerAniListSearch(fbMeta.title, fbMeta.description));
-    }
+  layerPromises.push(layerJikanSearch(fbMeta.title, fbMeta.description));
+  }
 
     const results = await Promise.race([
       Promise.allSettled(layerPromises),
@@ -366,7 +366,7 @@ async function layerGeminiVision(thumbnailUrl: string, apiKey: string): Promise<
 }`;
 
     // FIXED: gemini-1.5-flash (stable, not experimental)
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+   const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     const body = {
       contents: [
@@ -452,7 +452,7 @@ Respond ONLY in JSON:
 }`;
 
     // FIXED: gemini-1.5-flash
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
@@ -615,7 +615,7 @@ Respond ONLY in valid JSON:
         'x-title': 'AniTubeBuzz',
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.2-3b-instruct:free',
+        model: 'deepseek/deepseek-chat-v3.1:free',
         messages: [
           { role: 'system', content: 'You are an anime identifier. Respond only with JSON.' },
           { role: 'user', content: prompt },
@@ -666,9 +666,9 @@ Respond ONLY in valid JSON:
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// LAYER 7: AniList (FIXED - User-Agent added)
+// LAYER 7: Jikan (MAL API) — replacement for AniList
 // ═══════════════════════════════════════════════════════════════════
-async function layerAniListSearch(title: string, description: string): Promise<LayerResult> {
+async function layerJikanSearch(title: string, description: string): Promise<LayerResult> {
   const start = Date.now();
   try {
     const combined = `${title || ''} ${description || ''}`;
@@ -676,8 +676,8 @@ async function layerAniListSearch(title: string, description: string): Promise<L
 
     if (!cleanedQuery || cleanedQuery.length < 3) {
       return {
-        layer: 'anilist',
-        weight: 40,
+        layer: 'jikan',
+        weight: 45,
         success: false,
         confidence: 0,
         timeMs: Date.now() - start,
@@ -685,17 +685,58 @@ async function layerAniListSearch(title: string, description: string): Promise<L
       };
     }
 
-    const query = `
-      query ($search: String) {
-        Page(page: 1, perPage: 5) {
-          media(search: $search, type: ANIME) {
-            id
-            title { english romaji native }
-            popularity
-          }
-        }
-      }
-    `;
+    const apiUrl = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(cleanedQuery)}&limit=5&order_by=popularity&sort=asc`;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+
+    const res = await fetch(apiUrl, {
+      signal: controller.signal,
+      headers: {
+        accept: 'application/json',
+        'user-agent': 'Mozilla/5.0 AniTubeBuzz/1.0',
+      },
+    });
+    clearTimeout(timer);
+
+    if (!res.ok) throw new Error(`Jikan HTTP ${res.status}`);
+    const data: any = await res.json();
+
+    const items = data?.data || [];
+    if (!items.length) {
+      return {
+        layer: 'jikan',
+        weight: 45,
+        success: false,
+        confidence: 0,
+        timeMs: Date.now() - start,
+        error: 'No Jikan results',
+      };
+    }
+
+    const top = items[0];
+    const name = top.title_english || top.title || top.title_japanese;
+
+    return {
+      layer: 'jikan',
+      weight: 45,
+      success: true,
+      animeName: name,
+      confidence: 0.5,
+      raw: { malId: top.mal_id, query: cleanedQuery },
+      timeMs: Date.now() - start,
+    };
+  } catch (e: any) {
+    return {
+      layer: 'jikan',
+      weight: 45,
+      success: false,
+      confidence: 0,
+      timeMs: Date.now() - start,
+      error: e.message || 'Jikan failed',
+    };
+  }
+}
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 4000);
