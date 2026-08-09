@@ -1,8 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
-// AniTube Buzz — External Anime API v2 (AnimoTVSlash)
+// AniTube Buzz — External Anime API v3 (AnimoTVSlash + TMDB)
 // Path: src/pages/api/anime-external.ts
 //
-// v2: Added per-episode thumbnail (uses anime poster)
+// v3: Real episode thumbnails via TMDB API (Netflix-style stills)
+//     Fallback to anime poster if TMDB doesn't have it
 // ═══════════════════════════════════════════════════════════════
 
 export const prerender = false;
@@ -13,6 +14,8 @@ const CACHE: Record<string, { data: any; time: number }> = {};
 const CACHE_TTL = 30 * 60 * 1000;
 
 const BASE = 'https://animotvslash.org';
+const TMDB_BASE = 'https://api.themoviedb.org/3';
+const TMDB_IMG = 'https://image.tmdb.org/t/p/w400';
 
 function jsonRes(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -65,30 +68,152 @@ function matchScore(title: string, query: string): number {
   return matched / words.length;
 }
 
-// Build episode list with poster as thumbnail
-function buildEpisodes(slug: string, poster: string, maxEp = 26): any[] {
+// ═══════════════════════════════════════════════════════════════
+// TMDB HELPERS — Real episode thumbnails
+// ═══════════════════════════════════════════════════════════════
+
+function cleanAnimeTitle(title: string): string {
+  // Remove common suffixes that break TMDB search
+  return title
+    .replace(/\s*\(?\d{4}\)?\s*$/, '')       // (2024)
+    .replace(/\s+season\s+\d+.*/i, '')       // Season 2
+    .replace(/\s+s\d+.*/i, '')               // S2
+    .replace(/\s+part\s+\d+.*/i, '')         // Part 2
+    .replace(/\s+cour\s+\d+.*/i, '')         // Cour 2
+    .replace(/\s+\d+(?:st|nd|rd|th)\s+season.*/i, '')
+    .replace(/[:\-–—].*$/, '')               // Everything after colon/dash
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function detectSeasonNumber(title: string): number {
+  const s1 = title.match(/season\s+(\d+)/i);
+  if (s1) return parseInt(s1[1]);
+  const s2 = title.match(/\bs(\d+)\b/i);
+  if (s2) return parseInt(s2[1]);
+  const ordinals: Record<string, number> = {
+    'second': 2, '2nd': 2, 'third': 3, '3rd': 3, 'fourth': 4, '4th': 4,
+    'fifth': 5, '5th': 5, 'sixth': 6, '6th': 6
+  };
+  const t = title.toLowerCase();
+  for (const key of Object.keys(ordinals)) {
+    if (t.includes(key + ' season')) return ordinals[key];
+  }
+  return 1;
+}
+
+async function tmdbSearchTv(title: string, apiKey: string): Promise<number | null> {
+  try {
+    const clean = cleanAnimeTitle(title);
+    const url = `${TMDB_BASE}/search/tv?api_key=${apiKey}&query=${encodeURIComponent(clean)}&language=en-US&include_adult=false`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data: any = await res.json();
+    if (!data.results || data.results.length === 0) return null;
+    // Prefer results tagged as animation (genre 16)
+    const animeMatch = data.results.find((r: any) => 
+      r.genre_ids && r.genre_ids.includes(16) && r.origin_country && r.origin_country.includes('JP')
+    );
+    if (animeMatch) return animeMatch.id;
+    const animeAny = data.results.find((r: any) => r.genre_ids && r.genre_ids.includes(16));
+    if (animeAny) return animeAny.id;
+    return data.results[0].id;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function tmdbFetchSeasonEpisodes(tvId: number, seasonNum: number, apiKey: string): Promise<Record<number, string>> {
+  const map: Record<number, string> = {};
+  try {
+    const url = `${TMDB_BASE}/tv/${tvId}/season/${seasonNum}?api_key=${apiKey}&language=en-US`;
+    const res = await fetch(url);
+    if (!res.ok) return map;
+    const data: any = await res.json();
+    if (!data.episodes || !Array.isArray(data.episodes)) return map;
+    for (const ep of data.episodes) {
+      if (ep.episode_number && ep.still_path) {
+        map[ep.episode_number] = `${TMDB_IMG}${ep.still_path}`;
+      }
+    }
+  } catch (e) {}
+  return map;
+}
+
+async function tmdbFetchTvDetails(tvId: number, apiKey: string): Promise<any> {
+  try {
+    const url = `${TMDB_BASE}/tv/${tvId}?api_key=${apiKey}&language=en-US`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    return null;
+  }
+}
+
+// Build episode list — TMDB thumbnails with poster fallback
+async function buildEpisodes(
+  slug: string,
+  poster: string,
+  title: string,
+  apiKey: string,
+  maxEp = 26
+): Promise<any[]> {
+  let tmdbThumbnails: Record<number, string> = {};
+  let realEpisodeCount = maxEp;
+
+  if (apiKey) {
+    try {
+      const tvId = await tmdbSearchTv(title, apiKey);
+      if (tvId) {
+        const seasonNum = detectSeasonNumber(title);
+        tmdbThumbnails = await tmdbFetchSeasonEpisodes(tvId, seasonNum, apiKey);
+        // Try to get actual episode count
+        const details = await tmdbFetchTvDetails(tvId, apiKey);
+        if (details && details.seasons) {
+          const seasonInfo = details.seasons.find((s: any) => s.season_number === seasonNum);
+          if (seasonInfo && seasonInfo.episode_count > 0) {
+            realEpisodeCount = Math.max(seasonInfo.episode_count, Object.keys(tmdbThumbnails).length);
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  // Use max of: TMDB count, thumbnails found, or default
+  const totalEps = Math.min(Math.max(realEpisodeCount, Object.keys(tmdbThumbnails).length, 12), 50);
+
   const episodes = [];
-  for (let i = 1; i <= maxEp; i++) {
+  for (let i = 1; i <= totalEps; i++) {
     episodes.push({
       number: i,
       url: `${BASE}/${slug}-episode-${i}/`,
       embedId: `anime_${slug}_ep${i}`,
-      thumbnail: poster,
+      thumbnail: tmdbThumbnails[i] || poster,
+      hasRealThumb: !!tmdbThumbnails[i],
       title: `Episode ${i}`,
     });
   }
   return episodes;
 }
 
-export const GET: APIRoute = async ({ url }) => {
+// ═══════════════════════════════════════════════════════════════
+// MAIN HANDLER
+// ═══════════════════════════════════════════════════════════════
+
+export const GET: APIRoute = async ({ url, locals }) => {
   const params = url.searchParams;
   const action = params.get('action') || 'search';
   const query = params.get('q') || '';
   const slug = params.get('slug') || '';
   const noCache = params.get('nocache') === '1';
 
+  // Get TMDB key from Cloudflare env
+  const env: any = (locals as any)?.runtime?.env || {};
+  const tmdbKey = env.TMDB_API_KEY || '';
+
   if (action === 'search' && query) {
-    const cacheKey = `ext_search_v2:${query.toLowerCase()}`;
+    const cacheKey = `ext_search_v3:${query.toLowerCase()}`;
     if (!noCache) {
       const hit = cached(cacheKey);
       if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
@@ -124,7 +249,7 @@ export const GET: APIRoute = async ({ url }) => {
   }
 
   if (action === 'detail' && slug) {
-    const cacheKey = `ext_detail_v2:${slug}`;
+    const cacheKey = `ext_detail_v3:${slug}`;
     if (!noCache) {
       const hit = cached(cacheKey);
       if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
@@ -140,12 +265,13 @@ export const GET: APIRoute = async ({ url }) => {
       let poster = '';
       if (anime.featured_media) poster = await fetchMediaUrl(anime.featured_media);
 
-      const episodes = buildEpisodes(anime.slug, poster, 26);
+      const title = (anime.title?.rendered || '').replace(/&#\d+;/g, '');
+      const episodes = await buildEpisodes(anime.slug, poster, title, tmdbKey, 26);
 
       const result = {
         id: anime.id,
         slug: anime.slug,
-        title: (anime.title?.rendered || '').replace(/&#\d+;/g, ''),
+        title,
         link: anime.link,
         poster,
         description: (anime.content?.rendered || '').replace(/<[^>]+>/g, '').trim(),
@@ -153,6 +279,7 @@ export const GET: APIRoute = async ({ url }) => {
         episodes,
         episodeUrlPattern: `${BASE}/{slug}-episode-{n}/`,
         baseSlug: anime.slug,
+        hasTmdbThumbs: episodes.some((e: any) => e.hasRealThumb),
       };
       setCache(cacheKey, result);
       return jsonRes({ success: true, ...result });
@@ -162,7 +289,7 @@ export const GET: APIRoute = async ({ url }) => {
   }
 
   if (action === 'find' && query) {
-    const cacheKey = `ext_find_v2:${query.toLowerCase()}`;
+    const cacheKey = `ext_find_v3:${query.toLowerCase()}`;
     if (!noCache) {
       const hit = cached(cacheKey);
       if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
@@ -192,7 +319,7 @@ export const GET: APIRoute = async ({ url }) => {
       let poster = '';
       if (best.featured_media) poster = await fetchMediaUrl(best.featured_media);
 
-      const episodes = buildEpisodes(best.slug, poster, 26);
+      const episodes = await buildEpisodes(best.slug, poster, best.title, tmdbKey, 26);
 
       const result = {
         found: true,
