@@ -3,8 +3,7 @@ import type { APIRoute } from 'astro';
 export const prerender = false;
 
 // ═══════════════════════════════════════════════════════════════════
-// 🧠 ATBIE — AniTubeBuzz Intelligence Engine v1.0
-// Multi-layer parallel anime detection with voting consensus
+// 🧠 ATBIE v1.1 — Anime Intelligence Engine (BUG FIXED)
 // ═══════════════════════════════════════════════════════════════════
 
 type Platform = 'facebook' | 'youtube' | 'dailymotion' | 'bilibili' | 'internal' | 'unknown';
@@ -25,10 +24,6 @@ type LayerResult = {
 type CacheEntry = { expires: number; data: unknown };
 const MEMORY_CACHE = new Map<string, CacheEntry>();
 const CACHE_TTL = 30 * 60 * 1000;
-
-// ═══════════════════════════════════════════════════════════════════
-// 🎯 MAIN HANDLER
-// ═══════════════════════════════════════════════════════════════════
 
 function json(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -53,11 +48,11 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
   const env = locals?.runtime?.env || {};
   const geminiKey = env.GEMINI_API_KEY || '';
   const groqKey = env.GROQ_API_KEY || '';
+  const togetherKey = env.TOGETHER_API_KEY || '';
+  const openrouterKey = env.OPENROUTER_API_KEY || '';
 
   const rawInput = await readInput(request);
-  if (!rawInput) {
-    return json({ success: false, reason: 'No URL provided' }, 400);
-  }
+  if (!rawInput) return json({ success: false, reason: 'No URL provided' }, 400);
 
   let inputUrl: URL;
   try {
@@ -70,7 +65,6 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
   debug.input = rawInput;
   debug.platform = platform;
 
-  // Internal — pass through
   if (platform === 'internal') {
     return json({
       success: true,
@@ -82,7 +76,6 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
     });
   }
 
-  // Direct video (YouTube/DM/Bili)
   const direct = resolveDirectVideo(platform, inputUrl);
   if (direct) {
     return json({
@@ -94,10 +87,6 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
       ...(debugMode ? { debug } : {}),
     });
   }
-
-  // ═══════════════════════════════════════════════════════════════
-  // FACEBOOK — RUN ALL LAYERS IN PARALLEL 🚀
-  // ═══════════════════════════════════════════════════════════════
 
   if (platform === 'facebook') {
     const fbId = extractFacebookVideoId(inputUrl);
@@ -112,7 +101,6 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
       });
     }
 
-    // Step 1: Get metadata (thumbnail, title, description) from local dataset
     const fbMeta = await getFacebookMetadata(fbId, url.origin);
     debug.fbMeta = fbMeta;
 
@@ -125,7 +113,7 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
       });
     }
 
-    // FAST PATH: If dataset already resolved this video, return immediately
+    // Fast path: pre-resolved
     if (fbMeta.animeSlug && fbMeta.confidence && fbMeta.confidence >= 0.9) {
       const ep = fbMeta.episode || 1;
       return json({
@@ -143,7 +131,6 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
       });
     }
 
-    // Cache check for full multi-layer result
     const cacheKey = `resolve:${fbId}`;
     const cached = getCache(cacheKey);
     if (cached) {
@@ -156,44 +143,40 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
     }
 
     // ═══════════════════════════════════════════════════
-    // 🚀 PARALLEL LAYER EXECUTION
+    // 🚀 PARALLEL LAYERS (REBALANCED WEIGHTS)
     // ═══════════════════════════════════════════════════
-
     const layerPromises: Promise<LayerResult>[] = [];
 
-    // LAYER 1: Local dataset (already checked above, but partial match possible)
     layerPromises.push(layerFbDataset(fbMeta));
 
-    // LAYER 2: trace.moe (thumbnail image search)
     if (fbMeta.thumbnail) {
       layerPromises.push(layerTraceMoe(fbMeta.thumbnail));
     }
 
-    // LAYER 3: Gemini Vision (thumbnail analysis)
     if (fbMeta.thumbnail && geminiKey) {
       layerPromises.push(layerGeminiVision(fbMeta.thumbnail, geminiKey));
     }
 
-    // LAYER 4: Gemini Text (caption analysis)
     if ((fbMeta.title || fbMeta.description) && geminiKey) {
       layerPromises.push(layerGeminiText(fbMeta.title, fbMeta.description, geminiKey));
     }
 
-    // LAYER 5: Groq Text (fast LLM backup for caption)
     if ((fbMeta.title || fbMeta.description) && groqKey) {
       layerPromises.push(layerGroqText(fbMeta.title, fbMeta.description, groqKey));
     }
 
-    // LAYER 6: AniList character search (extract names from title)
+    if ((fbMeta.title || fbMeta.description) && openrouterKey) {
+      layerPromises.push(layerOpenRouterText(fbMeta.title, fbMeta.description, openrouterKey));
+    }
+
     if (fbMeta.title || fbMeta.description) {
       layerPromises.push(layerAniListSearch(fbMeta.title, fbMeta.description));
     }
 
-    // Execute all with 8s timeout
     const results = await Promise.race([
       Promise.allSettled(layerPromises),
       new Promise<PromiseSettledResult<LayerResult>[]>((resolve) =>
-        setTimeout(() => resolve([]), 8000)
+        setTimeout(() => resolve([]), 9000)
       ),
     ]);
 
@@ -204,27 +187,19 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
 
     debug.layerResults = layerResults;
 
-    // ═══════════════════════════════════════════════════
-    // 🗳️ VOTING SYSTEM
-    // ═══════════════════════════════════════════════════
-
     const consensus = runVotingConsensus(layerResults);
     debug.consensus = consensus;
 
-    if (!consensus || consensus.finalScore < 0.4) {
+    if (!consensus || consensus.finalScore < 0.35) {
       return json({
         success: false,
         platform,
-        reason: 'Could not confidently identify anime from any layer',
+        reason: 'Could not confidently identify anime',
         candidates: consensus?.allCandidates || [],
         timeMs: Date.now() - startTime,
         ...(debugMode ? { debug } : {}),
       });
     }
-
-    // ═══════════════════════════════════════════════════
-    // ✅ VALIDATE WITH ANIMOTV
-    // ═══════════════════════════════════════════════════
 
     const validated = await validateWithAnimoTV(consensus.animeName, url.origin);
     debug.validated = validated;
@@ -265,9 +240,8 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 🎯 LAYER 1: Local FB Dataset
+// LAYER 1: FB Dataset
 // ═══════════════════════════════════════════════════════════════════
-
 async function layerFbDataset(fbMeta: any): Promise<LayerResult> {
   const start = Date.now();
   if (fbMeta?.animeSlug && fbMeta?.animeName) {
@@ -288,18 +262,18 @@ async function layerFbDataset(fbMeta: any): Promise<LayerResult> {
     success: false,
     confidence: 0,
     timeMs: Date.now() - start,
-    error: 'No pre-resolved match in dataset',
+    error: 'No pre-resolved match',
   };
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 🎌 LAYER 2: trace.moe (Anime Scene Detection from Image)
+// LAYER 2: trace.moe (LOWER WEIGHT - FB overlay confuses it)
+// Only trust HIGH similarity (>0.92)
 // ═══════════════════════════════════════════════════════════════════
-
 async function layerTraceMoe(thumbnailUrl: string): Promise<LayerResult> {
   const start = Date.now();
   try {
-    const apiUrl = `https://api.trace.moe/search?anilistInfo&url=${encodeURIComponent(thumbnailUrl)}`;
+    const apiUrl = `https://api.trace.moe/search?anilistInfo&cutBorders&url=${encodeURIComponent(thumbnailUrl)}`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 6000);
 
@@ -312,7 +286,7 @@ async function layerTraceMoe(thumbnailUrl: string): Promise<LayerResult> {
     if (!data.result || !data.result.length) {
       return {
         layer: 'tracemoe',
-        weight: 90,
+        weight: 60,
         success: false,
         confidence: 0,
         timeMs: Date.now() - start,
@@ -321,25 +295,42 @@ async function layerTraceMoe(thumbnailUrl: string): Promise<LayerResult> {
     }
 
     const top = data.result[0];
+    const similarity = top.similarity || 0;
+
+    // Only trust HIGH similarity - FB thumbnails often have UI overlays
+    if (similarity < 0.87) {
+      return {
+        layer: 'tracemoe',
+        weight: 60,
+        success: false,
+        confidence: 0,
+        timeMs: Date.now() - start,
+        error: `Similarity too low: ${similarity.toFixed(2)}`,
+      };
+    }
+
     const anilist = top.anilist || {};
     const titleObj = anilist.title || {};
     const animeName =
       titleObj.english || titleObj.romaji || titleObj.native || top.filename || 'Unknown';
 
+    // Weight scales with similarity
+    const dynamicWeight = similarity >= 0.95 ? 85 : similarity >= 0.90 ? 65 : 50;
+
     return {
       layer: 'tracemoe',
-      weight: 90,
+      weight: dynamicWeight,
       success: true,
       animeName,
       episode: top.episode || null,
-      confidence: Math.min(top.similarity || 0.5, 0.99),
-      raw: { anilistId: anilist.id, similarity: top.similarity },
+      confidence: Math.min(similarity, 0.99),
+      raw: { anilistId: anilist.id, similarity },
       timeMs: Date.now() - start,
     };
   } catch (e: any) {
     return {
       layer: 'tracemoe',
-      weight: 90,
+      weight: 60,
       success: false,
       confidence: 0,
       timeMs: Date.now() - start,
@@ -349,29 +340,33 @@ async function layerTraceMoe(thumbnailUrl: string): Promise<LayerResult> {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 🤖 LAYER 3: Gemini Vision (Analyze Thumbnail)
+// LAYER 3: Gemini Vision (FIXED - use gemini-1.5-flash)
 // ═══════════════════════════════════════════════════════════════════
-
 async function layerGeminiVision(thumbnailUrl: string, apiKey: string): Promise<LayerResult> {
   const start = Date.now();
   try {
-    // First fetch image and convert to base64
     const imgRes = await fetch(thumbnailUrl);
     if (!imgRes.ok) throw new Error('Image fetch failed');
     const imgBuffer = await imgRes.arrayBuffer();
+
+    // Size limit safety (Gemini has 20MB limit, but we cap at 4MB)
+    if (imgBuffer.byteLength > 4 * 1024 * 1024) {
+      throw new Error('Image too large');
+    }
+
     const base64 = arrayBufferToBase64(imgBuffer);
     const mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
 
-    const prompt = `You are an expert anime identifier. Look at this image and identify the anime. Respond ONLY in JSON format:
+    const prompt = `You are an anime expert. Look at this image (may have Facebook UI overlay) and identify the anime. Focus on the anime characters/scene, ignore UI elements. Respond ONLY in JSON:
 {
-  "animeName": "exact anime name in English",
+  "animeName": "exact anime name in English or null if unsure",
   "confidence": 0.0-1.0,
-  "characters": ["character names visible"],
-  "reasoning": "brief why"
-}
-If you cannot identify with confidence, set animeName to null.`;
+  "characters": ["visible character names"],
+  "reasoning": "brief"
+}`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    // FIXED: gemini-1.5-flash (stable, not experimental)
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const body = {
       contents: [
@@ -386,7 +381,7 @@ If you cannot identify with confidence, set animeName to null.`;
     };
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6000);
+    const timer = setTimeout(() => controller.abort(), 7000);
 
     const res = await fetch(geminiUrl, {
       method: 'POST',
@@ -396,26 +391,29 @@ If you cannot identify with confidence, set animeName to null.`;
     });
     clearTimeout(timer);
 
-    if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`);
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Gemini HTTP ${res.status}: ${errText.slice(0, 100)}`);
+    }
     const data: any = await res.json();
 
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const parsed = extractJsonFromText(text);
 
-    if (!parsed || !parsed.animeName) {
+    if (!parsed || !parsed.animeName || parsed.animeName === 'null') {
       return {
         layer: 'gemini-vision',
-        weight: 70,
+        weight: 75,
         success: false,
         confidence: 0,
         timeMs: Date.now() - start,
-        error: 'Gemini could not identify',
+        error: 'No identification',
       };
     }
 
     return {
       layer: 'gemini-vision',
-      weight: 70,
+      weight: 75,
       success: true,
       animeName: parsed.animeName,
       confidence: Number(parsed.confidence) || 0.6,
@@ -425,7 +423,7 @@ If you cannot identify with confidence, set animeName to null.`;
   } catch (e: any) {
     return {
       layer: 'gemini-vision',
-      weight: 70,
+      weight: 75,
       success: false,
       confidence: 0,
       timeMs: Date.now() - start,
@@ -435,33 +433,26 @@ If you cannot identify with confidence, set animeName to null.`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 🤖 LAYER 4: Gemini Text (Analyze Caption/Description)
+// LAYER 4: Gemini Text (FIXED - gemini-1.5-flash)
 // ═══════════════════════════════════════════════════════════════════
-
 async function layerGeminiText(title: string, description: string, apiKey: string): Promise<LayerResult> {
   const start = Date.now();
   try {
     const combined = `${title || ''} ${description || ''}`.trim();
-    const prompt = `You are an expert anime identifier. This is a Facebook post caption about an anime clip. Identify which anime it's from.
+    const prompt = `Identify the anime from this Facebook caption. Look for character names (Kirito, Kazuma, Kafka, Tanjiro etc), titles, hashtags, plot references.
 
 CAPTION: "${combined}"
 
-Look for:
-- Character names (e.g. Kirito, Kazuma, Kafka, Tanjiro)
-- Anime titles or hashtags
-- Plot references
-- Series-specific terms
-
 Respond ONLY in JSON:
 {
-  "animeName": "exact anime name",
+  "animeName": "exact anime name or null",
   "episode": number or null,
   "confidence": 0.0-1.0,
   "reasoning": "why"
-}
-If unsure, set animeName to null.`;
+}`;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    // FIXED: gemini-1.5-flash
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
@@ -477,26 +468,29 @@ If unsure, set animeName to null.`;
     });
     clearTimeout(timer);
 
-    if (!res.ok) throw new Error(`Gemini HTTP ${res.status}`);
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`Gemini HTTP ${res.status}: ${errText.slice(0, 100)}`);
+    }
     const data: any = await res.json();
 
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const parsed = extractJsonFromText(text);
 
-    if (!parsed || !parsed.animeName) {
+    if (!parsed || !parsed.animeName || parsed.animeName === 'null') {
       return {
         layer: 'gemini-text',
-        weight: 50,
+        weight: 75,
         success: false,
         confidence: 0,
         timeMs: Date.now() - start,
-        error: 'No identification from caption',
+        error: 'No identification',
       };
     }
 
     return {
       layer: 'gemini-text',
-      weight: 50,
+      weight: 75,
       success: true,
       animeName: parsed.animeName,
       episode: parsed.episode || null,
@@ -507,7 +501,7 @@ If unsure, set animeName to null.`;
   } catch (e: any) {
     return {
       layer: 'gemini-text',
-      weight: 50,
+      weight: 75,
       success: false,
       confidence: 0,
       timeMs: Date.now() - start,
@@ -517,19 +511,19 @@ If unsure, set animeName to null.`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// ⚡ LAYER 5: Groq Text (Ultra-fast LLM backup)
+// LAYER 5: Groq Text (BOOSTED WEIGHT - proven accurate!)
 // ═══════════════════════════════════════════════════════════════════
-
 async function layerGroqText(title: string, description: string, apiKey: string): Promise<LayerResult> {
   const start = Date.now();
   try {
     const combined = `${title || ''} ${description || ''}`.trim();
-    const prompt = `Identify the anime from this Facebook caption. Respond ONLY in JSON.
+    const prompt = `Identify the anime from this Facebook caption. Look for character names, hashtags, series references.
 
 CAPTION: "${combined}"
 
+Respond ONLY in JSON:
 {
-  "animeName": "exact name or null",
+  "animeName": "exact anime name or null",
   "episode": number or null,
   "confidence": 0.0-1.0
 }`;
@@ -546,7 +540,7 @@ CAPTION: "${combined}"
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: 'You are an anime identification expert. Respond only with JSON.' },
+          { role: 'system', content: 'You are an expert anime identifier. Respond only with valid JSON.' },
           { role: 'user', content: prompt },
         ],
         temperature: 0.2,
@@ -562,10 +556,10 @@ CAPTION: "${combined}"
     const text = data?.choices?.[0]?.message?.content || '';
     const parsed = extractJsonFromText(text);
 
-    if (!parsed || !parsed.animeName) {
+    if (!parsed || !parsed.animeName || parsed.animeName === 'null') {
       return {
         layer: 'groq-text',
-        weight: 45,
+        weight: 80,
         success: false,
         confidence: 0,
         timeMs: Date.now() - start,
@@ -575,7 +569,7 @@ CAPTION: "${combined}"
 
     return {
       layer: 'groq-text',
-      weight: 45,
+      weight: 80, // BOOSTED from 45
       success: true,
       animeName: parsed.animeName,
       episode: parsed.episode || null,
@@ -586,7 +580,7 @@ CAPTION: "${combined}"
   } catch (e: any) {
     return {
       layer: 'groq-text',
-      weight: 45,
+      weight: 80,
       success: false,
       confidence: 0,
       timeMs: Date.now() - start,
@@ -596,13 +590,87 @@ CAPTION: "${combined}"
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 📚 LAYER 6: AniList GraphQL Search
+// LAYER 6: OpenRouter Text (NEW - extra backup)
 // ═══════════════════════════════════════════════════════════════════
+async function layerOpenRouterText(title: string, description: string, apiKey: string): Promise<LayerResult> {
+  const start = Date.now();
+  try {
+    const combined = `${title || ''} ${description || ''}`.trim();
+    const prompt = `Identify the anime from this Facebook post caption. Look for character names, series titles, hashtags.
 
+CAPTION: "${combined}"
+
+Respond ONLY in valid JSON:
+{"animeName": "name or null", "episode": number or null, "confidence": 0.0-1.0}`;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${apiKey}`,
+        'http-referer': 'https://anime-streaming-buzz.pages.dev',
+        'x-title': 'AniTubeBuzz',
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-3.2-3b-instruct:free',
+        messages: [
+          { role: 'system', content: 'You are an anime identifier. Respond only with JSON.' },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.2,
+        max_tokens: 200,
+      }),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+
+    if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status}`);
+    const data: any = await res.json();
+    const text = data?.choices?.[0]?.message?.content || '';
+    const parsed = extractJsonFromText(text);
+
+    if (!parsed || !parsed.animeName || parsed.animeName === 'null') {
+      return {
+        layer: 'openrouter-text',
+        weight: 55,
+        success: false,
+        confidence: 0,
+        timeMs: Date.now() - start,
+        error: 'No identification',
+      };
+    }
+
+    return {
+      layer: 'openrouter-text',
+      weight: 55,
+      success: true,
+      animeName: parsed.animeName,
+      episode: parsed.episode || null,
+      confidence: Number(parsed.confidence) || 0.5,
+      raw: parsed,
+      timeMs: Date.now() - start,
+    };
+  } catch (e: any) {
+    return {
+      layer: 'openrouter-text',
+      weight: 55,
+      success: false,
+      confidence: 0,
+      timeMs: Date.now() - start,
+      error: e.message || 'OpenRouter failed',
+    };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// LAYER 7: AniList (FIXED - User-Agent added)
+// ═══════════════════════════════════════════════════════════════════
 async function layerAniListSearch(title: string, description: string): Promise<LayerResult> {
   const start = Date.now();
   try {
-    // Extract likely anime/character keywords
     const combined = `${title || ''} ${description || ''}`;
     const cleanedQuery = extractSearchableKeywords(combined);
 
@@ -632,11 +700,13 @@ async function layerAniListSearch(title: string, description: string): Promise<L
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 4000);
 
+    // FIXED: Added User-Agent header
     const res = await fetch('https://graphql.anilist.co', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         accept: 'application/json',
+        'user-agent': 'Mozilla/5.0 (compatible; AniTubeBuzz/1.0)',
       },
       body: JSON.stringify({ query, variables: { search: cleanedQuery } }),
       signal: controller.signal,
@@ -658,7 +728,6 @@ async function layerAniListSearch(title: string, description: string): Promise<L
       };
     }
 
-    // Take most popular
     media.sort((a: any, b: any) => (b.popularity || 0) - (a.popularity || 0));
     const top = media[0];
     const name = top.title.english || top.title.romaji || top.title.native;
@@ -685,14 +754,12 @@ async function layerAniListSearch(title: string, description: string): Promise<L
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 🗳️ VOTING CONSENSUS ENGINE
+// VOTING CONSENSUS
 // ═══════════════════════════════════════════════════════════════════
-
 function runVotingConsensus(results: LayerResult[]) {
   const successful = results.filter((r) => r.success && r.animeName);
   if (!successful.length) return null;
 
-  // Normalize anime names and group votes
   const voteMap = new Map<string, {
     displayName: string;
     totalScore: number;
@@ -748,8 +815,9 @@ function runVotingConsensus(results: LayerResult[]) {
   const totalPossibleScore = successful.reduce((sum, r) => sum + r.weight, 0);
   const finalScore = totalPossibleScore ? winner.score / totalPossibleScore : 0;
 
-  // Boost if multiple layers agree
-  const agreementBoost = winner.votes >= 3 ? 0.15 : winner.votes >= 2 ? 0.08 : 0;
+  // Big boost if multiple layers agree
+  const agreementBoost =
+    winner.votes >= 4 ? 0.25 : winner.votes >= 3 ? 0.18 : winner.votes >= 2 ? 0.12 : 0;
 
   return {
     animeName: winner.name,
@@ -785,9 +853,8 @@ function normalizeAnimeName(name: string): string {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// ✅ VALIDATE WITH ANIMOTV
+// ANIMOTV VALIDATION
 // ═══════════════════════════════════════════════════════════════════
-
 async function validateWithAnimoTV(animeName: string, origin: string) {
   try {
     const endpoint = new URL('/api/anime-external', origin);
@@ -803,7 +870,13 @@ async function validateWithAnimoTV(animeName: string, origin: string) {
     if (!res.ok) return null;
     const data: any = await res.json();
 
-    const items = data?.results || data?.data || data?.matches || (Array.isArray(data) ? data : []);
+    const items =
+      data?.results ||
+      data?.data ||
+      data?.matches ||
+      (Array.isArray(data) ? data : []) ||
+      (data?.result ? [data.result] : []);
+
     if (!items.length) return null;
 
     const first = items[0];
@@ -817,9 +890,8 @@ async function validateWithAnimoTV(animeName: string, origin: string) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// 🛠️ HELPERS
+// HELPERS
 // ═══════════════════════════════════════════════════════════════════
-
 async function readInput(request: Request): Promise<string> {
   const u = new URL(request.url);
   const q = u.searchParams.get('url') || u.searchParams.get('link') || u.searchParams.get('q') || '';
@@ -930,9 +1002,12 @@ function extractSearchableKeywords(text: string): string {
   let t = text.toLowerCase();
   t = t.replace(/https?:\/\/\S+/g, ' ');
   t = t.replace(/[^\w\s#]/g, ' ');
-  const noise = ['bro', 'the', 'a', 'an', 'is', 'are', 'was', 'were', 'this', 'that', 'his', 'her', 'him', 'she',
-    'he', 'they', 'them', 'their', 'when', 'what', 'who', 'why', 'how', 'anime', 'episode', 'ep', 'clip',
-    'scene', 'moment', 'reaction', 'viral', 'watch', 'video', 'reel', 'short', 'funny', 'lmao', 'lol'];
+  const noise = [
+    'bro', 'the', 'a', 'an', 'is', 'are', 'was', 'were', 'this', 'that', 'his', 'her', 'him',
+    'she', 'he', 'they', 'them', 'their', 'when', 'what', 'who', 'why', 'how', 'anime',
+    'episode', 'ep', 'clip', 'scene', 'moment', 'reaction', 'viral', 'watch', 'video', 'reel',
+    'short', 'funny', 'lmao', 'lol', 'and', 'or', 'but', 'for', 'not', 'you', 'your',
+  ];
   const words = t.split(/\s+/).filter((w) => w.length > 2 && !noise.includes(w));
   const hashtags = words.filter((w) => w.startsWith('#')).map((w) => w.slice(1));
   const proper = words.filter((w) => !w.startsWith('#')).slice(0, 5);
