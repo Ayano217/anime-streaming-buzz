@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 export const prerender = false;
 
 // ═══════════════════════════════════════════════════════════════════
-// 🧠 ATBIE v1.2 — All bugs fixed
+// 🧠 ATBIE v1.3 — Confidence fix + Multi-provider fallback
 // ═══════════════════════════════════════════════════════════════════
 
 type Platform = 'facebook' | 'youtube' | 'dailymotion' | 'bilibili' | 'internal' | 'unknown';
@@ -43,12 +43,14 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
   const startTime = Date.now();
   const url = new URL(request.url);
   const debugMode = url.searchParams.get('debug') === '1';
+  const forceRefresh = url.searchParams.get('refresh') === '1';
   const debug: Record<string, unknown> = {};
 
   const env = locals?.runtime?.env || {};
   const geminiKey = env.GEMINI_API_KEY || '';
   const groqKey = env.GROQ_API_KEY || '';
   const openrouterKey = env.OPENROUTER_API_KEY || '';
+  const togetherKey = env.TOGETHER_API_KEY || '';
 
   const rawInput = await readInput(request);
   if (!rawInput) return json({ success: false, reason: 'No URL provided' }, 400);
@@ -107,7 +109,7 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
       return json({
         success: false,
         platform,
-        reason: 'Facebook video not found in dataset. Run the FB fetcher script first.',
+        reason: 'Facebook video not found in dataset.',
         ...(debugMode ? { debug } : {}),
       });
     }
@@ -130,14 +132,16 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
     }
 
     const cacheKey = `resolve:${fbId}`;
-    const cached = getCache(cacheKey);
-    if (cached) {
-      debug.fromCache = true;
-      return json({
-        ...(cached as any),
-        timeMs: Date.now() - startTime,
-        ...(debugMode ? { debug } : {}),
-      });
+    if (!forceRefresh) {
+      const cached = getCache(cacheKey);
+      if (cached) {
+        debug.fromCache = true;
+        return json({
+          ...(cached as any),
+          timeMs: Date.now() - startTime,
+          ...(debugMode ? { debug } : {}),
+        });
+      }
     }
 
     const layerPromises: Promise<LayerResult>[] = [];
@@ -148,10 +152,7 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
       layerPromises.push(layerTraceMoe(fbMeta.thumbnail));
     }
 
-    if (fbMeta.thumbnail && geminiKey) {
-      layerPromises.push(layerGeminiVision(fbMeta.thumbnail, geminiKey));
-    }
-
+    // Gemini Text ONLY (removed Vision — waste of quota)
     if ((fbMeta.title || fbMeta.description) && geminiKey) {
       layerPromises.push(layerGeminiText(fbMeta.title, fbMeta.description, geminiKey));
     }
@@ -162,6 +163,10 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
 
     if ((fbMeta.title || fbMeta.description) && openrouterKey) {
       layerPromises.push(layerOpenRouterText(fbMeta.title, fbMeta.description, openrouterKey));
+    }
+
+    if ((fbMeta.title || fbMeta.description) && togetherKey) {
+      layerPromises.push(layerTogetherText(fbMeta.title, fbMeta.description, togetherKey));
     }
 
     if (fbMeta.title || fbMeta.description) {
@@ -284,7 +289,7 @@ async function layerTraceMoe(thumbnailUrl: string): Promise<LayerResult> {
         success: false,
         confidence: 0,
         timeMs: Date.now() - start,
-        error: 'No trace.moe matches',
+        error: 'No matches',
       };
     }
 
@@ -332,98 +337,7 @@ async function layerTraceMoe(thumbnailUrl: string): Promise<LayerResult> {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// LAYER 3: Gemini Vision (FIXED MODEL)
-// ═══════════════════════════════════════════════════════════════════
-async function layerGeminiVision(thumbnailUrl: string, apiKey: string): Promise<LayerResult> {
-  const start = Date.now();
-  try {
-    const imgRes = await fetch(thumbnailUrl);
-    if (!imgRes.ok) throw new Error('Image fetch failed');
-    const imgBuffer = await imgRes.arrayBuffer();
-
-    if (imgBuffer.byteLength > 4 * 1024 * 1024) {
-      throw new Error('Image too large');
-    }
-
-    const base64 = arrayBufferToBase64(imgBuffer);
-    const mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
-
-    const prompt = `You are an anime expert. Look at this image (may have Facebook UI overlay) and identify the anime. Focus on the anime characters/scene, ignore UI elements. Respond ONLY in JSON:
-{
-  "animeName": "exact anime name in English or null if unsure",
-  "confidence": 0.0-1.0,
-  "characters": ["visible character names"],
-  "reasoning": "brief"
-}`;
-
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-    const body = {
-      contents: [
-        {
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: mimeType, data: base64 } },
-          ],
-        },
-      ],
-      generationConfig: { temperature: 0.2, maxOutputTokens: 300 },
-    };
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 7000);
-
-    const res = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(`Gemini HTTP ${res.status}: ${errText.slice(0, 100)}`);
-    }
-    const data: any = await res.json();
-
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const parsed = extractJsonFromText(text);
-
-    if (!parsed || !parsed.animeName || parsed.animeName === 'null') {
-      return {
-        layer: 'gemini-vision',
-        weight: 75,
-        success: false,
-        confidence: 0,
-        timeMs: Date.now() - start,
-        error: 'No identification',
-      };
-    }
-
-    return {
-      layer: 'gemini-vision',
-      weight: 75,
-      success: true,
-      animeName: parsed.animeName,
-      confidence: Number(parsed.confidence) || 0.6,
-      raw: parsed,
-      timeMs: Date.now() - start,
-    };
-  } catch (e: any) {
-    return {
-      layer: 'gemini-vision',
-      weight: 75,
-      success: false,
-      confidence: 0,
-      timeMs: Date.now() - start,
-      error: e.message || 'Gemini vision failed',
-    };
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// LAYER 4: Gemini Text (FIXED MODEL)
+// LAYER 3: Gemini Text (Text only — Vision removed for quota)
 // ═══════════════════════════════════════════════════════════════════
 async function layerGeminiText(title: string, description: string, apiKey: string): Promise<LayerResult> {
   const start = Date.now();
@@ -437,8 +351,7 @@ Respond ONLY in JSON:
 {
   "animeName": "exact anime name or null",
   "episode": number or null,
-  "confidence": 0.0-1.0,
-  "reasoning": "why"
+  "confidence": 0.0-1.0
 }`;
 
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
@@ -451,7 +364,7 @@ Respond ONLY in JSON:
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 250 },
+        generationConfig: { temperature: 0.3, maxOutputTokens: 200 },
       }),
       signal: controller.signal,
     });
@@ -459,7 +372,7 @@ Respond ONLY in JSON:
 
     if (!res.ok) {
       const errText = await res.text();
-      throw new Error(`Gemini HTTP ${res.status}: ${errText.slice(0, 100)}`);
+      throw new Error(`Gemini HTTP ${res.status}: ${errText.slice(0, 80)}`);
     }
     const data: any = await res.json();
 
@@ -494,13 +407,13 @@ Respond ONLY in JSON:
       success: false,
       confidence: 0,
       timeMs: Date.now() - start,
-      error: e.message || 'Gemini text failed',
+      error: e.message || 'Gemini failed',
     };
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// LAYER 5: Groq Text
+// LAYER 4: Groq (BEST performer)
 // ═══════════════════════════════════════════════════════════════════
 async function layerGroqText(title: string, description: string, apiKey: string): Promise<LayerResult> {
   const start = Date.now();
@@ -548,7 +461,7 @@ Respond ONLY in JSON:
     if (!parsed || !parsed.animeName || parsed.animeName === 'null') {
       return {
         layer: 'groq-text',
-        weight: 80,
+        weight: 90,
         success: false,
         confidence: 0,
         timeMs: Date.now() - start,
@@ -558,7 +471,7 @@ Respond ONLY in JSON:
 
     return {
       layer: 'groq-text',
-      weight: 80,
+      weight: 90,
       success: true,
       animeName: parsed.animeName,
       episode: parsed.episode || null,
@@ -569,7 +482,7 @@ Respond ONLY in JSON:
   } catch (e: any) {
     return {
       layer: 'groq-text',
-      weight: 80,
+      weight: 90,
       success: false,
       confidence: 0,
       timeMs: Date.now() - start,
@@ -579,13 +492,92 @@ Respond ONLY in JSON:
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// LAYER 6: OpenRouter (FIXED MODEL)
+// LAYER 5: OpenRouter (tries multiple free models)
 // ═══════════════════════════════════════════════════════════════════
 async function layerOpenRouterText(title: string, description: string, apiKey: string): Promise<LayerResult> {
   const start = Date.now();
+
+  const models = [
+    'google/gemini-2.0-flash-exp:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'qwen/qwen-2.5-72b-instruct:free',
+    'mistralai/mistral-7b-instruct:free',
+  ];
+
+  const combined = `${title || ''} ${description || ''}`.trim();
+  const prompt = `Identify the anime from this Facebook caption. Look for character names, series titles, hashtags.
+
+CAPTION: "${combined}"
+
+Respond ONLY in valid JSON:
+{"animeName": "name or null", "episode": number or null, "confidence": 0.0-1.0}`;
+
+  for (const model of models) {
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4000);
+
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${apiKey}`,
+          'http-referer': 'https://anime-streaming-buzz.pages.dev',
+          'x-title': 'AniTubeBuzz',
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: 'You are an anime identifier. Respond only with JSON.' },
+            { role: 'user', content: prompt },
+          ],
+          temperature: 0.2,
+          max_tokens: 200,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+
+      if (!res.ok) continue;
+      const data: any = await res.json();
+      const text = data?.choices?.[0]?.message?.content || '';
+      const parsed = extractJsonFromText(text);
+
+      if (parsed && parsed.animeName && parsed.animeName !== 'null') {
+        return {
+          layer: 'openrouter-text',
+          weight: 60,
+          success: true,
+          animeName: parsed.animeName,
+          episode: parsed.episode || null,
+          confidence: Number(parsed.confidence) || 0.5,
+          raw: { model, ...parsed },
+          timeMs: Date.now() - start,
+        };
+      }
+    } catch (e) {
+      continue;
+    }
+  }
+
+  return {
+    layer: 'openrouter-text',
+    weight: 60,
+    success: false,
+    confidence: 0,
+    timeMs: Date.now() - start,
+    error: 'All models failed',
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// LAYER 6: Together AI (NEW)
+// ═══════════════════════════════════════════════════════════════════
+async function layerTogetherText(title: string, description: string, apiKey: string): Promise<LayerResult> {
+  const start = Date.now();
   try {
     const combined = `${title || ''} ${description || ''}`.trim();
-    const prompt = `Identify the anime from this Facebook post caption. Look for character names, series titles, hashtags.
+    const prompt = `Identify the anime from this Facebook caption. Look for character names, series titles, hashtags.
 
 CAPTION: "${combined}"
 
@@ -595,16 +587,14 @@ Respond ONLY in valid JSON:
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
 
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const res = await fetch('https://api.together.xyz/v1/chat/completions', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
         authorization: `Bearer ${apiKey}`,
-        'http-referer': 'https://anime-streaming-buzz.pages.dev',
-        'x-title': 'AniTubeBuzz',
       },
       body: JSON.stringify({
-        model: 'deepseek/deepseek-chat-v3.1:free',
+        model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo-Free',
         messages: [
           { role: 'system', content: 'You are an anime identifier. Respond only with JSON.' },
           { role: 'user', content: prompt },
@@ -616,15 +606,15 @@ Respond ONLY in valid JSON:
     });
     clearTimeout(timer);
 
-    if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`Together HTTP ${res.status}`);
     const data: any = await res.json();
     const text = data?.choices?.[0]?.message?.content || '';
     const parsed = extractJsonFromText(text);
 
     if (!parsed || !parsed.animeName || parsed.animeName === 'null') {
       return {
-        layer: 'openrouter-text',
-        weight: 55,
+        layer: 'together-text',
+        weight: 65,
         success: false,
         confidence: 0,
         timeMs: Date.now() - start,
@@ -633,8 +623,8 @@ Respond ONLY in valid JSON:
     }
 
     return {
-      layer: 'openrouter-text',
-      weight: 55,
+      layer: 'together-text',
+      weight: 65,
       success: true,
       animeName: parsed.animeName,
       episode: parsed.episode || null,
@@ -644,18 +634,18 @@ Respond ONLY in valid JSON:
     };
   } catch (e: any) {
     return {
-      layer: 'openrouter-text',
-      weight: 55,
+      layer: 'together-text',
+      weight: 65,
       success: false,
       confidence: 0,
       timeMs: Date.now() - start,
-      error: e.message || 'OpenRouter failed',
+      error: e.message || 'Together failed',
     };
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// LAYER 7: Jikan (MAL API)
+// LAYER 7: Jikan
 // ═══════════════════════════════════════════════════════════════════
 async function layerJikanSearch(title: string, description: string): Promise<LayerResult> {
   const start = Date.now();
@@ -674,17 +664,14 @@ async function layerJikanSearch(title: string, description: string): Promise<Lay
       };
     }
 
-    const apiUrl = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(cleanedQuery)}&limit=5&order_by=popularity&sort=asc`;
+    const apiUrl = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(cleanedQuery)}&limit=3`;
 
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
+    const timer = setTimeout(() => controller.abort(), 6000);
 
     const res = await fetch(apiUrl, {
       signal: controller.signal,
-      headers: {
-        accept: 'application/json',
-        'user-agent': 'Mozilla/5.0 AniTubeBuzz/1.0',
-      },
+      headers: { accept: 'application/json' },
     });
     clearTimeout(timer);
 
@@ -699,7 +686,7 @@ async function layerJikanSearch(title: string, description: string): Promise<Lay
         success: false,
         confidence: 0,
         timeMs: Date.now() - start,
-        error: 'No Jikan results',
+        error: 'No results',
       };
     }
 
@@ -728,7 +715,7 @@ async function layerJikanSearch(title: string, description: string): Promise<Lay
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// VOTING CONSENSUS
+// FIXED VOTING — Only count actual attempts
 // ═══════════════════════════════════════════════════════════════════
 function runVotingConsensus(results: LayerResult[]) {
   const successful = results.filter((r) => r.success && r.animeName);
@@ -786,8 +773,17 @@ function runVotingConsensus(results: LayerResult[]) {
   if (!candidates.length) return null;
 
   const winner = candidates[0];
-  const totalPossibleScore = successful.reduce((sum, r) => sum + r.weight, 0);
-  const finalScore = totalPossibleScore ? winner.score / totalPossibleScore : 0;
+
+  // ✅ FIXED: Only count SUCCESSFUL layers for max score (not failed ones)
+  const successfulWeightTotal = successful.reduce((sum, r) => sum + r.weight, 0);
+
+  // Winner's score / max possible from successful layers
+  let baseScore = successfulWeightTotal ? winner.score / successfulWeightTotal : 0;
+
+  // If single high-confidence source, still trust it
+  if (winner.votes === 1 && winner.confidence >= 0.85) {
+    baseScore = Math.max(baseScore, winner.confidence * 0.9);
+  }
 
   const agreementBoost =
     winner.votes >= 4 ? 0.25 : winner.votes >= 3 ? 0.18 : winner.votes >= 2 ? 0.12 : 0;
@@ -795,7 +791,7 @@ function runVotingConsensus(results: LayerResult[]) {
   return {
     animeName: winner.name,
     episode: winner.episode,
-    finalScore: Math.min(finalScore + agreementBoost, 0.99),
+    finalScore: Math.min(baseScore + agreementBoost, 0.99),
     voteCount: winner.votes,
     supportingLayers: winner.layers,
     allCandidates: candidates.slice(0, 5),
@@ -999,16 +995,6 @@ function extractJsonFromText(text: string): any {
     } catch {}
   }
   return null;
-}
-
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  const chunkSize = 8192;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode.apply(null, Array.from(bytes.slice(i, i + chunkSize)));
-  }
-  return btoa(binary);
 }
 
 function slugify(text: string): string {
