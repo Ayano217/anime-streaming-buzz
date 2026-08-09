@@ -96,7 +96,6 @@ if (isAnimeExternal && externalAnime) {
     thumbnail: heroImage,
     poster: externalAnime.poster || '',
     embedUrl: platformData.embedUrl,
-    watchUrl: platformData.embedUrl,
     source: 'animotv',
     aspect: 'landscape',
     isShort: false,
@@ -106,7 +105,6 @@ if (isAnimeExternal && externalAnime) {
     animeSlug: animeSlug,
     episodeNumber: animeEpNum,
     totalEpisodes: externalAnime.episodes ? externalAnime.episodes.length : 26,
-    hasRealThumb: currentEp ? !!currentEp.hasRealThumb : false,
   };
 } else {
   try {
@@ -161,7 +159,6 @@ const metaText = metaParts.join(' • ');
 
 const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.episodes : [];
 const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
-const watchUrl = isAnimeExternal ? video.watchUrl : '';
 ---
 
 <BaseLayout title={`${video.title} | AniTubeBuzz`}>
@@ -178,43 +175,41 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
            data-is-external={isAnimeExternal ? 'true' : 'false'}
            data-anime-slug={animeSlug}
            data-ep-num={animeEpNum}
-           data-watch-url={watchUrl}>
+           data-embed-url={video.embedUrl}
+           data-poster={video.thumbnail}>
         <div class="rp-grid">
 
           <div class="rp-main">
 
-            <!-- VIDEO / HERO POSTER PLAYER -->
+            <!-- VIDEO PLAYER -->
             {isAnimeExternal ? (
-              <div class="rp-hero-player" id="heroPlayer">
-                <div class="rp-hero-bg">
-                  <img src={video.thumbnail} alt={video.title} class="rp-hero-img" loading="eager" referrerpolicy="no-referrer" />
-                  <div class="rp-hero-blur-bg" style={`background-image: url(${video.thumbnail});`}></div>
-                </div>
-                <div class="rp-hero-overlay"></div>
-                <div class="rp-hero-content">
-                  <div class="rp-hero-top">
-                    <span class="rp-hero-badge rp-hero-badge-ep">EP {animeEpNum}</span>
-                    {video.hasRealThumb && <span class="rp-hero-badge rp-hero-badge-hd">HD</span>}
-                    <span class="rp-hero-badge rp-hero-badge-type">🎌 ANIME</span>
+              <div class="rp-player rp-player-external" id="videoCard">
+                <div class="rp-player-frame">
+                  <div class="rp-external-wrap" id="externalWrap">
+                    <!-- Poster placeholder while iframe loads -->
+                    <div class="rp-ext-placeholder" id="extPlaceholder">
+                      <img src={video.thumbnail} alt={video.title} class="rp-ext-placeholder-img" loading="eager" referrerpolicy="no-referrer" />
+                      <div class="rp-ext-placeholder-overlay"></div>
+                      <div class="rp-ext-placeholder-content">
+                        <div class="rp-orbit">
+                          <div class="rp-dot rp-d1"></div>
+                          <div class="rp-dot rp-d2"></div>
+                          <div class="rp-dot rp-d3"></div>
+                        </div>
+                        <div class="rp-brand">AniTubeBuzz</div>
+                        <div class="rp-ext-placeholder-text">Loading player...</div>
+                      </div>
+                    </div>
+                    <!-- Iframe will be injected here by JS after 500ms -->
+                    <div class="rp-ext-brand">
+                      <span class="rp-ext-logo">AniTubeBuzz</span>
+                      <span class="rp-ext-live">HD</span>
+                    </div>
                   </div>
-                  <a href={video.watchUrl} target="_blank" rel="noopener noreferrer" class="rp-play-btn" id="playBtn">
-                    <span class="rp-play-ring"></span>
-                    <span class="rp-play-ring rp-play-ring-2"></span>
-                    <span class="rp-play-icon">
-                      <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    </span>
-                  </a>
-                  <div class="rp-hero-title">Watch Episode {animeEpNum}</div>
-                  <div class="rp-hero-sub">Opens in external player</div>
-                </div>
-                <div class="rp-hero-brand">
-                  <span>AniTubeBuzz</span>
                 </div>
               </div>
             ) : (
-              <div class={`rp-player`} id="videoCard" data-aspect={videoAspect}>
+              <div class="rp-player" id="videoCard" data-aspect={videoAspect}>
                 <div class="rp-player-frame">
                   <iframe
                     id="videoFrame"
@@ -558,179 +553,7 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
     .rp-ep-mobile { display: none; }
     .rp-ep-desktop { display: flex; flex-direction: column; }
 
-    /* ============ HERO PLAYER (POSTER) ============ */
-    .rp-hero-player {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      border-radius: 16px;
-      overflow: hidden;
-      background: #000;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-      border: 1px solid rgba(192, 132, 252, 0.25);
-      cursor: pointer;
-      isolation: isolate;
-    }
-    .rp-hero-bg {
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-    }
-    .rp-hero-img {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 8s ease-out;
-      z-index: 1;
-    }
-    .rp-hero-player:hover .rp-hero-img {
-      transform: scale(1.06);
-    }
-    .rp-hero-blur-bg {
-      position: absolute;
-      inset: -20px;
-      background-size: cover;
-      background-position: center;
-      filter: blur(30px) brightness(0.5);
-      opacity: 0.7;
-      z-index: 0;
-    }
-    .rp-hero-overlay {
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(ellipse at center, rgba(10, 5, 23, 0.3) 0%, rgba(10, 5, 23, 0.85) 100%),
-        linear-gradient(180deg, rgba(10, 5, 23, 0.2) 0%, rgba(10, 5, 23, 0.7) 100%);
-      z-index: 2;
-    }
-    .rp-hero-content {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      padding: 24px;
-      z-index: 3;
-      text-align: center;
-    }
-    .rp-hero-top {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-bottom: 6px;
-    }
-    .rp-hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 5px 10px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 800;
-      font-family: 'JetBrains Mono', monospace;
-      letter-spacing: 0.5px;
-      color: #fff;
-    }
-    .rp-hero-badge-ep {
-      background: rgba(0, 0, 0, 0.65);
-      border: 1px solid rgba(192, 132, 252, 0.4);
-    }
-    .rp-hero-badge-hd {
-      background: linear-gradient(135deg, #10b981, #34d399);
-      box-shadow: 0 0 12px rgba(16, 185, 129, 0.5);
-    }
-    .rp-hero-badge-type {
-      background: linear-gradient(135deg, #c084fc, #e879f9);
-      box-shadow: 0 0 12px rgba(192, 132, 252, 0.5);
-    }
-    .rp-play-btn {
-      position: relative;
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #c084fc, #e879f9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      text-decoration: none;
-      color: #fff;
-      box-shadow: 0 10px 40px rgba(192, 132, 252, 0.6), 0 0 60px rgba(232, 121, 249, 0.3);
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-      z-index: 5;
-    }
-    .rp-play-btn:hover {
-      transform: scale(1.08);
-      box-shadow: 0 12px 50px rgba(192, 132, 252, 0.8), 0 0 80px rgba(232, 121, 249, 0.5);
-    }
-    .rp-play-btn:active { transform: scale(0.98); }
-    .rp-play-ring {
-      position: absolute;
-      inset: -8px;
-      border-radius: 50%;
-      border: 2px solid rgba(232, 121, 249, 0.5);
-      animation: rpRingPulse 2.4s ease-out infinite;
-    }
-    .rp-play-ring-2 {
-      inset: -14px;
-      animation-delay: 0.8s;
-      border-color: rgba(192, 132, 252, 0.35);
-    }
-    @keyframes rpRingPulse {
-      0% { transform: scale(0.85); opacity: 1; }
-      100% { transform: scale(1.5); opacity: 0; }
-    }
-    .rp-play-icon {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      margin-left: 4px;
-    }
-    .rp-play-icon svg { width: 100%; height: 100%; }
-    .rp-hero-title {
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      color: #fff;
-      margin-top: 4px;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
-      letter-spacing: -0.2px;
-    }
-    .rp-hero-sub {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.75);
-      font-family: 'JetBrains Mono', monospace;
-      letter-spacing: 0.4px;
-    }
-    .rp-hero-brand {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      padding: 6px 12px;
-      background: rgba(0, 0, 0, 0.7);
-      border-radius: 20px;
-      z-index: 4;
-      border: 1px solid rgba(192, 132, 252, 0.3);
-    }
-    .rp-hero-brand span {
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-weight: 800;
-      font-size: 12px;
-      background: linear-gradient(135deg, #c084fc, #e879f9);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-
-    /* ============ NORMAL PLAYER (yt/dm/bili) ============ */
+    /* ============ NORMAL PLAYER ============ */
     .rp-player {
       width: 100%;
       background: #000;
@@ -758,6 +581,125 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
       height: 100%;
       border: 0;
     }
+
+    /* ============ EXTERNAL IFRAME ============ */
+    .rp-player-external {
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      border-radius: 0;
+      overflow: visible;
+    }
+    .rp-player-external .rp-player-frame {
+      padding-top: 0 !important;
+      background: transparent;
+      overflow: visible;
+      min-height: 200px;
+    }
+    .rp-external-wrap {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      background: #000;
+      border-radius: 16px;
+      border: 1px solid rgba(192, 132, 252, 0.2);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      aspect-ratio: 16 / 9;
+    }
+    .rp-ext-iframe {
+      position: absolute;
+      left: 0;
+      top: 0;
+      border: 0;
+      transform-origin: 0 0;
+      background: #000;
+      display: block;
+    }
+    .rp-external-wrap:fullscreen { background: #000; width: 100vw; height: 100vh; border-radius: 0; }
+
+    /* Placeholder while iframe loads */
+    .rp-ext-placeholder {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.5s ease;
+    }
+    .rp-ext-placeholder.hidden { opacity: 0; pointer-events: none; }
+    .rp-ext-placeholder-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.5;
+    }
+    .rp-ext-placeholder-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 5, 23, 0.6);
+    }
+    .rp-ext-placeholder-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .rp-ext-placeholder-text {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 1px;
+    }
+    .rp-ext-brand {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: rgba(0, 0, 0, 0.75);
+      border-radius: 20px;
+      z-index: 15;
+      pointer-events: none;
+      opacity: 0;
+      animation: rpBrandFade 5s ease-out 2s forwards;
+      border: 1px solid rgba(192, 132, 252, 0.3);
+    }
+    @keyframes rpBrandFade {
+      0% { opacity: 0; transform: translateY(-8px); }
+      12% { opacity: 1; transform: translateY(0); }
+      88% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .rp-ext-logo {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-weight: 800;
+      font-size: 12px;
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .rp-ext-live {
+      display: inline-block;
+      padding: 2px 6px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 1px;
+      border-radius: 4px;
+    }
+
+    /* ============ VIDEO LOADER ============ */
     .rp-vloader {
       position: absolute;
       inset: 0;
@@ -869,7 +811,6 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
       height: 6px;
       border-radius: 50%;
       background: #10b981;
-      box-shadow: 0 0 6px #10b981;
       animation: rpPulse 2s ease-in-out infinite;
     }
     @keyframes rpPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
@@ -888,7 +829,7 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
       font-family: inherit;
     }
     .rp-btn:hover {
@@ -907,9 +848,7 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
       color: #fff;
       border-color: transparent;
     }
-    .rp-btn-next:hover {
-      background: linear-gradient(135deg, #d8b4fe, #f0abfc);
-    }
+    .rp-btn-next:hover { background: linear-gradient(135deg, #d8b4fe, #f0abfc); }
 
     /* ============ EPISODE BOX ============ */
     .rp-ep-box {
@@ -946,8 +885,6 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
       text-align: left;
     }
     .rp-ep-header-static { cursor: default; }
-    .rp-ep-header:hover { background: linear-gradient(135deg, rgba(192, 132, 252, 0.2), rgba(232, 121, 249, 0.13)); }
-    .rp-ep-header-static:hover { background: linear-gradient(135deg, rgba(192, 132, 252, 0.15), rgba(232, 121, 249, 0.1)); }
     .rp-ep-mobile.collapsed .rp-ep-header { border-bottom-color: transparent; }
     .rp-ep-head-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
     .rp-ep-icon {
@@ -1175,9 +1112,7 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
       0%, 100% { transform: scaleY(0.4); }
       50% { transform: scaleY(1); }
     }
-    .rp-ext-ep-card.active .rp-ext-ep-thumb {
-      border-color: rgba(16, 185, 129, 0.7);
-    }
+    .rp-ext-ep-card.active .rp-ext-ep-thumb { border-color: rgba(16, 185, 129, 0.7); }
     .rp-ext-ep-info { min-width: 0; padding: 2px 4px 2px 0; }
     .rp-ext-ep-title {
       font-size: 14px;
@@ -1525,9 +1460,6 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
       .rp-ep-mobile { display: flex; }
       .rp-container { padding: 0 16px; }
       .rp-title { font-size: 18px; }
-      .rp-hero-title { font-size: 18px; }
-      .rp-play-btn { width: 78px; height: 78px; }
-      .rp-play-icon { width: 34px; height: 34px; }
     }
     @media (max-width: 640px) {
       .rp-section { padding: 12px 0 40px; }
@@ -1544,11 +1476,6 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
       .rp-ep-mobile { max-height: 500px; }
       .rp-ep-mobile.collapsed { max-height: 76px; }
       .rp-title { font-size: 17px; margin: 12px 0 10px; }
-      .rp-hero-title { font-size: 17px; }
-      .rp-hero-sub { font-size: 11px; }
-      .rp-play-btn { width: 70px; height: 70px; }
-      .rp-play-icon { width: 30px; height: 30px; }
-      .rp-hero-badge { padding: 4px 8px; font-size: 10px; }
     }
     @media (max-width: 380px) {
       .rp-ext-ep-card { grid-template-columns: 100px 1fr; }
@@ -1556,12 +1483,9 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
       .rp-ext-ep-title { font-size: 12px; }
       .rp-ext-ep-meta { font-size: 10px; }
     }
-
-    /* Reduce animations for performance on low-end devices */
     @media (prefers-reduced-motion: reduce) {
-      .rp-play-ring, .rp-play-ring-2 { animation: none; }
-      .rp-hero-img { transition: none; }
       .rp-ext-ep-playing-wave span { animation: none; }
+      .rp-dot { animation: none; }
     }
   </style>
 
@@ -1573,8 +1497,7 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
     CHANNEL_NAME: displayChannel,
     IS_EXTERNAL: isAnimeExternal,
     EXT_EPISODES: externalEpisodes,
-    EXT_CURRENT_EP: animeEpNum,
-    WATCH_URL: watchUrl
+    EXT_CURRENT_EP: animeEpNum
   }}>
     (function() {
       var currentVideo = INITIAL_VIDEO;
@@ -1585,7 +1508,6 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
       var isExternal = IS_EXTERNAL;
       var extEpisodes = EXT_EPISODES || [];
       var extCurrentEp = EXT_CURRENT_EP || 0;
-      var watchUrl = WATCH_URL || '';
       var sidebarItems = [];
       var moreItems = [];
       var productPool = [];
@@ -2114,6 +2036,99 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
         setTimeout(hideVideoLoader, 3500);
       }
 
+      // ============ OPTIMIZED EXTERNAL IFRAME (500ms delay + smart crop) ============
+      function setupExternalIframe() {
+        var root = document.getElementById('reels-root');
+        var wrap = document.getElementById('externalWrap');
+        var placeholder = document.getElementById('extPlaceholder');
+        if (!root || !wrap) return;
+
+        var embedUrl = root.getAttribute('data-embed-url');
+        if (!embedUrl) return;
+
+        var PAGE_VIEWPORT_W = 1121;
+        var VIDEO_W = 950;
+        var VIDEO_H = 555;
+        var VIDEO_LEFT = 86;
+        var VIDEO_TOP = 340;
+        var PAGE_HEIGHT = 3200;
+
+        var iframe = null;
+        var lastCropWidth = 0;
+
+        function applyCrop() {
+          if (!iframe) return;
+          var containerWidth = wrap.clientWidth;
+          if (containerWidth < 10) return;
+          if (Math.abs(containerWidth - lastCropWidth) < 5) return;
+          lastCropWidth = containerWidth;
+          var s = containerWidth / VIDEO_W;
+          if (s < 0.25) s = 0.25;
+          if (s > 2.0) s = 2.0;
+          var tx = -VIDEO_LEFT * s;
+          var ty = -VIDEO_TOP * s;
+          iframe.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + s + ')';
+          var h = Math.ceil(VIDEO_H * s);
+          wrap.style.aspectRatio = 'auto';
+          wrap.style.height = h + 'px';
+        }
+
+        function loadIframe() {
+          iframe = document.createElement('iframe');
+          iframe.className = 'rp-ext-iframe';
+          iframe.setAttribute('src', embedUrl);
+          iframe.setAttribute('frameborder', '0');
+          iframe.setAttribute('scrolling', 'no');
+          iframe.setAttribute('allow', 'accelerometer; autoplay; encrypted-media; picture-in-picture');
+          iframe.setAttribute('allowfullscreen', '');
+          iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
+          iframe.style.width = PAGE_VIEWPORT_W + 'px';
+          iframe.style.height = PAGE_HEIGHT + 'px';
+          wrap.appendChild(iframe);
+
+          // Apply crop after iframe DOM inserted
+          requestAnimationFrame(function() {
+            applyCrop();
+            // Hide placeholder after iframe attempts to load
+            iframe.addEventListener('load', function() {
+              setTimeout(function() {
+                if (placeholder) placeholder.classList.add('hidden');
+              }, 300);
+              applyCrop();
+            });
+            // Safety fallback
+            setTimeout(function() {
+              if (placeholder) placeholder.classList.add('hidden');
+            }, 4000);
+          });
+        }
+
+        // Debounced resize handler (300ms - not per pixel)
+        var resizeTimer = null;
+        function onResize() {
+          if (resizeTimer) clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(function() {
+            applyCrop();
+          }, 300);
+        }
+        window.addEventListener('resize', onResize, { passive: true });
+        window.addEventListener('orientationchange', onResize, { passive: true });
+
+        // Block right-click
+        wrap.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+        // MAIN: Load iframe after 500ms delay (let page paint first)
+        // Use requestIdleCallback if available for even better perceived perf
+        var startLoad = function() {
+          setTimeout(loadIframe, 500);
+        };
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(startLoad, { timeout: 800 });
+        } else {
+          startLoad();
+        }
+      }
+
       function setupMobileAccordion() {
         var box = document.getElementById('epBoxMobile');
         var header = document.getElementById('epHeaderMobile');
@@ -2144,7 +2159,7 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
               scroller.scrollTop = Math.max(0, activeTop - (scrollerHeight / 2) + (activeHeight / 2));
             }
           }
-        }, 400);
+        }, 600);
       }
 
       function init() {
@@ -2160,6 +2175,7 @@ const watchUrl = isAnimeExternal ? video.watchUrl : '';
         initFeeds();
         loadProducts();
         if (isExternal) {
+          setupExternalIframe();
           setupMobileAccordion();
           scrollActiveEpisode();
         }
