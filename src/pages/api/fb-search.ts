@@ -1,30 +1,132 @@
 import type { APIRoute } from 'astro';
 
 /* ═══════════════════════════════════════════════════════
-   🔍 FB ANIME SEARCH — Searches fb-anime.json
+   🔍 FB ANIME SEARCH — Reads from Google Sheets
    
-   Handles:
-   - FB video link (any format)
-   - Caption/keyword search (fuzzy)
-   - Anime title search
-   
-   Returns matched anime + episode info
+   Sheet URL (CSV format):
+   Automatically syncs when you edit the Google Sheet
 ═══════════════════════════════════════════════════════ */
 
-// Cache the JSON in memory (30 min)
-let cachedData: any = null;
+const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR9WiDOa87KY6w5nV5557ikjd8i-dqXhpZpMFRjnZjPJZMEsDfJzQasfyYKqJ7XxtHwIQYAUpuhAuLo/pub?gid=0&single=true&output=csv';
+
+// Memory cache (5 minutes — sheet updates reflect fast)
+let cachedVideos: any[] | null = null;
 let cacheExpiry = 0;
-const CACHE_TTL = 30 * 60 * 1000;
+const CACHE_TTL = 5 * 60 * 1000;
 
 function json(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=300',
+      'Cache-Control': 'public, max-age=60',
       'Access-Control-Allow-Origin': '*'
     }
   });
+}
+
+/* Parse CSV to array of objects */
+function parseCSV(text: string): any[] {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return [];
+  
+  // Parse header row
+  const headers = parseCSVLine(lines[0]).map(h => h.trim());
+  
+  const results: any[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseCSVLine(lines[i]);
+    if (values.length === 0) continue;
+    
+    const row: any = {};
+    headers.forEach((header, idx) => {
+      row[header] = (values[idx] || '').trim();
+    });
+    
+    // Skip empty rows
+    if (!row.FB_ID && !row.Anime_Slug) continue;
+    
+    results.push(row);
+  }
+  
+  return results;
+}
+
+/* Parse a single CSV line (handles quoted values, commas inside quotes) */
+function parseCSVLine(line: string): string[] {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  
+  result.push(current);
+  return result;
+}
+
+/* Convert Google Sheets row to normalized video object */
+function normalizeRow(row: any): any {
+  const keywords = row.Keywords 
+    ? String(row.Keywords).split(',').map((k: string) => k.trim()).filter(Boolean)
+    : [];
+  
+  const fbLinks = row.FB_ID 
+    ? String(row.FB_ID).split(',').map((k: string) => k.trim()).filter(Boolean)
+    : [];
+  
+  return {
+    anime: row.Anime_Slug || '',
+    title: row.Anime_Title || row.Anime_Slug || '',
+    season: parseInt(row.Season || '1', 10) || 1,
+    episode: parseInt(row.Episode || '1', 10) || 1,
+    caption: row.Caption || '',
+    keywords: keywords,
+    fbLinks: fbLinks,
+    thumbnail: row.Thumbnail || ''
+  };
+}
+
+/* Fetch and parse Google Sheets */
+async function loadVideos(): Promise<any[]> {
+  if (cachedVideos && cacheExpiry > Date.now()) return cachedVideos;
+  
+  try {
+    const res = await fetch(SHEET_CSV_URL, {
+      headers: { 'User-Agent': 'AniTubeBuzz/1.0' }
+    });
+    
+    if (!res.ok) {
+      console.error('Sheet fetch failed:', res.status);
+      return cachedVideos || [];
+    }
+    
+    const csv = await res.text();
+    const rows = parseCSV(csv);
+    const videos = rows.map(normalizeRow).filter(v => v.anime);
+    
+    cachedVideos = videos;
+    cacheExpiry = Date.now() + CACHE_TTL;
+    return videos;
+  } catch (e) {
+    console.error('Sheet load error:', e);
+    return cachedVideos || [];
+  }
 }
 
 /* Extract FB video ID from any FB URL format */
@@ -34,10 +136,9 @@ function extractFbId(input: string): string | null {
   // Direct numeric ID
   if (/^\d{10,20}$/.test(s)) return s;
   
-  // Direct alphanumeric code (share links)
+  // Direct alphanumeric code
   if (/^[a-zA-Z0-9_-]{6,20}$/.test(s) && !s.includes(' ')) return s;
   
-  // Various FB URL patterns
   const patterns = [
     /(?:facebook|fb)\.com\/(?:reel|watch|video|videos)\/(\d{10,20})/i,
     /facebook\.com\/share\/[a-z]+\/([a-zA-Z0-9_-]+)/i,
@@ -65,7 +166,7 @@ function normalize(s: string): string {
     .trim();
 }
 
-/* Fuzzy score — how well does query match text? */
+/* Fuzzy score */
 function fuzzyScore(text: string, query: string): number {
   const t = normalize(text);
   const q = normalize(query);
@@ -74,12 +175,11 @@ function fuzzyScore(text: string, query: string): number {
   if (t === q) return 100;
   if (t.includes(q)) return 90;
   
-  // Word-level matching
   const qWords = q.split(' ').filter(w => w.length >= 2);
   const tWords = t.split(' ');
   
   let matchCount = 0;
-  let totalWords = qWords.length;
+  const totalWords = qWords.length;
   
   for (const qw of qWords) {
     for (const tw of tWords) {
@@ -94,23 +194,7 @@ function fuzzyScore(text: string, query: string): number {
   return Math.round(ratio * 80);
 }
 
-/* Load JSON data with cache */
-async function loadData(origin: string): Promise<any> {
-  if (cachedData && cacheExpiry > Date.now()) return cachedData;
-  
-  try {
-    const res = await fetch(`${origin}/fb-anime.json`);
-    if (!res.ok) return { videos: [] };
-    const data = await res.json();
-    cachedData = data;
-    cacheExpiry = Date.now() + CACHE_TTL;
-    return data;
-  } catch (e) {
-    return { videos: [] };
-  }
-}
-
-/* Search videos by query (link or text) */
+/* Search videos */
 function searchVideos(videos: any[], query: string): any[] {
   const q = query.trim();
   if (!q) return [];
@@ -128,7 +212,7 @@ function searchVideos(videos: any[], query: string): any[] {
     }
   }
   
-  // Text search — score every video
+  // Text search
   const scored = videos.map(v => {
     const captionScore = fuzzyScore(v.caption || '', q);
     const titleScore = fuzzyScore(v.title || '', q) * 1.2;
@@ -141,7 +225,6 @@ function searchVideos(videos: any[], query: string): any[] {
     return { ...v, _score: score, _matchType: 'text' };
   });
   
-  // Filter and sort
   return scored
     .filter(v => v._score >= 40)
     .sort((a, b) => b._score - a._score);
@@ -149,38 +232,57 @@ function searchVideos(videos: any[], query: string): any[] {
 
 /* ═══ MAIN HANDLER ═══ */
 
-export const GET: APIRoute = async ({ request, url }) => {
+export const GET: APIRoute = async ({ url }) => {
   const params = url.searchParams;
   const query = params.get('q')?.trim() || '';
   const limit = parseInt(params.get('limit') || '10', 10);
+  const debug = params.get('debug') === '1';
+  const refresh = params.get('refresh') === '1';
+  
+  if (refresh) {
+    cachedVideos = null;
+    cacheExpiry = 0;
+  }
   
   if (!query) {
-    return json({ success: false, error: 'Missing q parameter', results: [] });
+    return json({ 
+      success: false, 
+      error: 'Missing q parameter', 
+      results: [],
+      hint: 'Use ?q=your-search-query'
+    });
   }
   
-  const origin = new URL(request.url).origin;
-  const data = await loadData(origin);
+  const videos = await loadVideos();
   
-  if (!data.videos || data.videos.length === 0) {
-    return json({ success: false, error: 'No videos in database', results: [] });
+  if (videos.length === 0) {
+    return json({ 
+      success: false, 
+      error: 'No videos found in Google Sheet', 
+      results: [],
+      hint: 'Check your sheet has data and is published to web as CSV'
+    });
   }
   
-  const results = searchVideos(data.videos, query).slice(0, limit);
+  const results = searchVideos(videos, query).slice(0, limit);
   
   return json({
     success: results.length > 0,
     query: query,
     count: results.length,
+    totalInDb: videos.length,
     results: results.map(v => ({
       anime: v.anime,
       title: v.title,
+      season: v.season,
       episode: v.episode,
       caption: v.caption,
       thumbnail: v.thumbnail || '',
       matchType: v._matchType,
       confidence: v._score,
       watchUrl: `/reels/anime_${v.anime}_ep${v.episode}`
-    }))
+    })),
+    debug: debug ? { videos: videos.slice(0, 3) } : undefined
   });
 };
 
