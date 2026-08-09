@@ -3,7 +3,6 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import HeroSection from '../components/HeroSection.astro';
 
 const allPosts = await getCollection('posts', ({ data }) => !data.draft);
 const sortedPosts = allPosts.sort((a, b) =>
@@ -16,7 +15,6 @@ const news = sortedPosts.slice(4, 8);
 
 <BaseLayout>
   <Header slot="header" />
-  <HeroSection />
 
   <section class="section-block arrivals-block">
     <div class="container">
@@ -66,17 +64,14 @@ const news = sortedPosts.slice(4, 8);
     <div class="reels-backdrop" id="reelsBackdrop"></div>
     
     <div class="reels-container">
-      <!-- Close button -->
       <button class="reels-close" id="reelsClose" aria-label="Close">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
       
-      <!-- Video area (16:9 fills nicely) -->
       <div class="reels-video-wrap">
         <div id="reelsVideoFrame" class="reels-video-frame"></div>
       </div>
       
-      <!-- Info bar (title, no source mentioned) -->
       <div class="reels-info">
         <div class="reels-avatar">
           <div class="reels-avatar-icon">▶</div>
@@ -90,7 +85,6 @@ const news = sortedPosts.slice(4, 8);
         </button>
       </div>
       
-      <!-- Related product ads below (not intrusive) -->
       <div class="reels-ads" id="reelsAds"></div>
     </div>
   </div>
@@ -229,8 +223,6 @@ const news = sortedPosts.slice(4, 8);
     background-clip: text;
   }
   
-  /* PRODUCT CARD 4:3 SMALLER */
-    /* PRODUCT CARD 4:3 SMALLER */
   .at-ip-thumb {
     position: relative;
     width: 100%;
@@ -243,7 +235,6 @@ const news = sortedPosts.slice(4, 8);
     transition: all 0.35s ease;
   }
   
-  /* PRODUCT ROW — full width, horizontal scroll */
   .product-row {
     grid-column: 1 / -1;
     margin: 8px 0;
@@ -291,7 +282,7 @@ const news = sortedPosts.slice(4, 8);
     letter-spacing: 0.05em;
   }
   
-    .product-row-scroll {
+  .product-row-scroll {
     display: flex;
     gap: 10px;
     overflow-x: auto;
@@ -581,7 +572,6 @@ const news = sortedPosts.slice(4, 8);
     stroke: #ef4444;
   }
   
-  /* Reels product ads (below video, minimal) */
   .reels-ads {
     padding: 8px 12px 12px;
     background: rgba(10, 5, 23, 0.6);
@@ -669,7 +659,6 @@ const news = sortedPosts.slice(4, 8);
     .reels-container { max-width: 100%; max-height: 100vh; border-radius: 0; }
   }
   
-  /* Skeleton */
   .skel-card { border-radius: 12px; }
   .skel-thumb { 
     width: 100%; padding-top: 56.25%; border-radius: 12px; 
@@ -688,23 +677,20 @@ const news = sortedPosts.slice(4, 8);
   var loading=false;
   var total=0;
   var ids={};
-  var videoRowsInBlock = 0; // Track video rows for product placement
+  var videoRowsInBlock = 0;
   var productPool = [];
 
   var lastAnimePage = 0;
   var loopCount = 0;
   var socialTypeIdx = 0;
-  var SOCIAL_TYPES = ['donghua', 'movies', 'kdrama', 'anime']; // Bilibili priority (donghua first)
-  var lastKeyword = ''; // Track for related products
+  var SOCIAL_TYPES = ['donghua', 'movies', 'kdrama', 'anime'];
+  var lastKeyword = '';
   
   var feed = document.getElementById('arrivalsFeed');
   var loadingEl = document.getElementById('loadingMore');
   var errMsg = document.getElementById('errorMsg');
   var countEl = document.getElementById('arrivalsCount');
   var tabs = document.querySelectorAll('.cat-tab');
-  var searchIn = document.getElementById('quickSearch');
-  var sdd = document.getElementById('searchDD');
-  var siClear = document.getElementById('siClear');
   
   var reelsPlayer = document.getElementById('reelsPlayer');
   var reelsFrame = document.getElementById('reelsVideoFrame');
@@ -738,7 +724,6 @@ const news = sortedPosts.slice(4, 8);
     return a;
   }
 
-  // ═══ REELS PLAYER (Instagram style, NO source mention) ═══
   function openReelsPlayer(video) {
     if (!reelsPlayer) return;
     
@@ -746,13 +731,10 @@ const news = sortedPosts.slice(4, 8);
     reelsChannel.textContent = video.channel || 'Channel';
     reelsFrame.innerHTML = '';
     
-    // Modify embed URL to hide platform branding as much as possible
     var embedUrl = video.embedUrl;
-    // For Dailymotion, add params to hide UI
     if (video.source === 'dailymotion') {
       embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'ui-logo=0&ui-start-screen-info=0&sharing-enable=0';
     }
-    // For YouTube, hide branding
     if (video.source === 'youtube' && !embedUrl.includes('modestbranding')) {
       embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'modestbranding=1&showinfo=0&controls=1';
     }
@@ -765,7 +747,6 @@ const news = sortedPosts.slice(4, 8);
     iframe.style.cssText = 'width:100%;height:100%;border:0;position:absolute;top:0;left:0;';
     reelsFrame.appendChild(iframe);
     
-    // Load related products (based on video type)
     loadRelatedAds(video);
     
     reelsPlayer.style.display = 'flex';
@@ -786,7 +767,6 @@ const news = sortedPosts.slice(4, 8);
       return;
     }
     
-    // Pick 3 relevant products (shuffled from pool)
     var relevant = shuffle(productPool).slice(0, 3);
     
     var html = '<div class="reels-ads-label">✨ You Might Like</div>' +
@@ -815,7 +795,6 @@ const news = sortedPosts.slice(4, 8);
     if (e.key === 'Escape' && reelsPlayer && reelsPlayer.style.display !== 'none') closeReelsPlayer();
   });
 
-  // ═══ ANIME CARD ═══
   function animeCard(a, i) {
     var t = a.title || 'Unknown';
     var img = a.image || '';
@@ -863,13 +842,11 @@ const news = sortedPosts.slice(4, 8);
     return el;
   }
 
-  // ═══ VIDEO CARD (NO SOURCE MENTIONED - SECRET!) ═══
   function socialCard(v, i) {
     var t = v.title || 'Video';
     var img = v.thumbnail || '';
     var delay = ((i % 8) * 40) + 'ms';
     
-    // ONLY show content type badge — NO platform (YT, DM, etc.)
     var typeLabel = { movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA', donghua: '🐼 DONGHUA', anime: '🎌 ANIME' }[v.type] || '';
     
     var imgHtml = img
@@ -899,7 +876,6 @@ const news = sortedPosts.slice(4, 8);
         '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;">' + esc(v.channel || 'Channel') + '</div>' +
       '</div>';
     
-        // Click opens Reels page (Instagram-style)
     el.addEventListener('click', function(e) {
       e.preventDefault();
       window.location.href = '/reels/' + encodeURIComponent(v.id);
@@ -908,7 +884,6 @@ const news = sortedPosts.slice(4, 8);
     return el;
   }
 
-    // ═══ PRODUCT ROW (Full-width, horizontal scroll, 8 items) ═══
   function productRow(products) {
     if (!products || products.length === 0) return null;
     
@@ -940,13 +915,12 @@ const news = sortedPosts.slice(4, 8);
     return row;
   }
   
-  // Get random 8 products (shuffled each time - never same order)
   function getRandomProducts() {
     if (productPool.length < 4) return productPool;
     var shuffled = shuffle(productPool);
     return shuffled.slice(0, 8);
   }
-    // Enable mouse-drag scroll for product rows
+
   function enableDragScroll() {
     document.querySelectorAll('.product-row-scroll').forEach(function(el) {
       if (el.dataset.dragEnabled) return;
@@ -978,7 +952,6 @@ const news = sortedPosts.slice(4, 8);
         el.scrollLeft = scrollLeft - walk;
       });
       
-      // Mouse wheel horizontal scroll
       el.addEventListener('wheel', function(e) {
         if (e.deltaY !== 0) {
           e.preventDefault();
@@ -988,8 +961,8 @@ const news = sortedPosts.slice(4, 8);
     });
   }
   
-  // Run after each product row is added
   var enableInterval = setInterval(enableDragScroll, 1000);
+
   async function loadProducts() {
     try {
       var res = await fetch('/api/products?limit=50');
@@ -999,7 +972,6 @@ const news = sortedPosts.slice(4, 8);
       }
     } catch(e) { console.warn('[products]', e.message); }
   }
-  
   
   function updateCount(){
     if(!countEl)return;
@@ -1030,7 +1002,6 @@ const news = sortedPosts.slice(4, 8);
         });
       }
       
-      // Infinite loop
       if (animeItems.length === 0) {
         loopCount++;
         lastAnimePage = 1;
@@ -1042,7 +1013,6 @@ const news = sortedPosts.slice(4, 8);
         }
       }
       
-      // Fetch social videos - Bilibili priority for USA users
       var socialType = SOCIAL_TYPES[socialTypeIdx % SOCIAL_TYPES.length];
       socialTypeIdx++;
       var socialItems = [];
@@ -1065,19 +1035,16 @@ const news = sortedPosts.slice(4, 8);
       if(total === 0) feed.innerHTML='';
       if(errMsg)errMsg.style.display='none';
       
-            // ═══ MIX PATTERN: 2 anime + 1 video repeats. Every 4 video ROWS = 1 full product ROW ═══
       var socialIdx = 0;
       var cardCount = 0;
       var videosPlaced = 0;
       var cardsPerRow = window.innerWidth <= 768 ? 2 : (window.innerWidth <= 1100 ? 3 : (window.innerWidth <= 1400 ? 4 : 5));
-      var videoRowsSinceLastProduct = 0;
       
       animeItems.forEach(function(a){
         total++;
         feed.appendChild(animeCard(a, total-1));
         cardCount++;
         
-        // Every 2 anime = 1 video card
         if (cardCount % 2 === 0 && socialIdx < socialItems.length) {
           var vid = socialItems[socialIdx++];
           feed.appendChild(socialCard(vid, total));
@@ -1086,7 +1053,6 @@ const news = sortedPosts.slice(4, 8);
           videosPlaced++;
         }
         
-        // After every 4 rows of feed (rows = cards / cardsPerRow), insert product row
         if (cardCount >= (cardsPerRow * 4) && productPool.length > 0) {
           var products = getRandomProducts();
           if (products.length > 0) {
@@ -1096,18 +1062,10 @@ const news = sortedPosts.slice(4, 8);
               total += products.length;
             }
           }
-          cardCount = 0; // Reset counter
+          cardCount = 0;
         }
       });
       
-      // Add remaining social videos
-      while (socialIdx < socialItems.length) {
-        var vid = socialItems[socialIdx++];
-        feed.appendChild(socialCard(vid, total));
-        total++;
-      }
-      
-      // Add remaining social videos
       while (socialIdx < socialItems.length) {
         var vid = socialItems[socialIdx++];
         feed.appendChild(socialCard(vid, total));
@@ -1153,49 +1111,6 @@ const news = sortedPosts.slice(4, 8);
     }, 150);
   },{passive:true});
 
-  // Search
-  var sT;
-  function showClear() { if (siClear) siClear.style.display = 'flex'; }
-  function hideClear() { if (siClear) siClear.style.display = 'none'; }
-  if (siClear) {
-    siClear.addEventListener('click', function() {
-      searchIn.value = ''; hideClear();
-      if (sdd) { sdd.innerHTML = ''; sdd.classList.remove('open'); }
-      searchIn.focus();
-    });
-  }
-  async function performSearch(q) {
-    if (!q || q.length < 1) { if (sdd) { sdd.innerHTML = ''; sdd.classList.remove('open'); } return; }
-    if (sdd) { sdd.innerHTML = '<div class="sdd-loading"><div class="ld-spinner"></div><span>Searching...</span></div>'; sdd.classList.add('open'); }
-    var apiResults = [];
-    try { var r = await fetch('/api/anime?action=search&q=' + encodeURIComponent(q)); var j = await r.json(); if (j.success && j.anime) apiResults = j.anime; } catch(e) {}
-    if (sdd) {
-      if (apiResults.length === 0) {
-        sdd.innerHTML = '<div style="padding:20px;color:var(--text-muted);text-align:center;">No results for "' + esc(q) + '"</div>';
-      } else {
-        var html = apiResults.slice(0, 8).map(function(a) {
-          var im = a.image ? '<img src="' + esc(a.image) + '" alt="" loading="lazy" />' : '<div class="sd-no"></div>';
-          var badge = a.status === 'current' ? '<span class="sd-badge">AIRING</span>' : '';
-          return '<a href="/anime/' + esc(a.slug) + '" class="sd-i"><div class="sd-th">' + im + '</div><div class="sd-inf"><div class="sd-t">' + esc(a.title) + '</div><div class="sd-m">' + esc(a.year || 'Unknown') + (a.score ? ' · ⭐ ' + a.score : '') + '</div></div>' + badge + '</a>';
-        }).join('');
-        sdd.innerHTML = html;
-      }
-      sdd.classList.add('open');
-    }
-  }
-  if (searchIn) {
-    searchIn.addEventListener('input', function() {
-      clearTimeout(sT); var q = searchIn.value.trim();
-      if (q) showClear(); else hideClear();
-      if (!q) { if (sdd) { sdd.innerHTML = ''; sdd.classList.remove('open'); } return; }
-      sT = setTimeout(function() { performSearch(q); }, 200);
-    });
-    searchIn.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape' && sdd) { sdd.classList.remove('open'); searchIn.blur(); }
-    });
-    document.addEventListener('click', function(e) { if (sdd && !e.target.closest('.search-inline')) sdd.classList.remove('open'); });
-  }
-
   loadProducts().then(load);
 })();
 </script>
@@ -1211,9 +1126,6 @@ const news = sortedPosts.slice(4, 8);
   @keyframes lb{0%,100%{opacity:1}50%{opacity:.4}}
   .arrivals-title{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(1.5rem,2.8vw,2.2rem);font-weight:800;margin:0;letter-spacing:-.03em;line-height:1}
   .arrivals-actions{display:flex;align-items:center;gap:12px}
-  .sdd{position:absolute;top:calc(100% + 10px);left:0;right:0;background:rgba(15,8,35,.98);border:1px solid rgba(192,132,252,.3);border-radius:16px;padding:8px;max-height:500px;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.6);backdrop-filter:blur(20px);z-index:100;opacity:0;visibility:hidden;transform:translateY(-8px);transition:all .25s ease}
-  .sdd.open{opacity:1;visibility:visible;transform:translateY(0)}
-  .sdd-loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:2rem;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:.75rem}
   .arrivals-count{display:flex;align-items:baseline;gap:6px;padding:7px 14px;background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.25);border-radius:999px;backdrop-filter:blur(10px)}
   .arrivals-count-num{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;min-width:22px;display:inline-block;text-align:center}
   .arrivals-count-lbl{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
@@ -1250,14 +1162,6 @@ const news = sortedPosts.slice(4, 8);
   .nw-cat{font-family:'Bricolage Grotesque',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.4rem}
   .nw-t{font-family:'Bricolage Grotesque',sans-serif;font-size:.95rem;font-weight:700;color:var(--text-primary);margin:0 0 .4rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .nw-e{font-size:.78rem;color:var(--text-muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .sd-i{display:grid !important;grid-template-columns:40px 1fr auto !important;align-items:center !important;gap:10px !important;padding:8px 10px !important;border-radius:10px !important;text-decoration:none !important;color:var(--text-primary) !important;transition:all 0.2s ease !important;margin-bottom:2px !important}
-  .sd-i:hover{background:rgba(192,132,252,0.12) !important;transform:translateX(4px) !important}
-  .sd-th{width:40px !important;height:52px !important;min-width:40px !important;border-radius:5px !important;overflow:hidden !important;background:rgba(192,132,252,0.15) !important;position:relative !important}
-  .sd-th img{width:100% !important;height:100% !important;object-fit:cover !important}
-  .sd-inf{min-width:0;overflow:hidden}
-  .sd-t{font-family:'Bricolage Grotesque',sans-serif !important;font-size:0.82rem !important;font-weight:700 !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important;margin:0 0 2px 0 !important;color:var(--text-primary) !important}
-  .sd-m{font-size:0.65rem !important;color:var(--text-muted) !important;font-family:'JetBrains Mono',monospace !important;white-space:nowrap !important;overflow:hidden !important;text-overflow:ellipsis !important}
-  .sd-badge{padding:2px 6px !important;background:linear-gradient(135deg,#ef4444,#f97316) !important;color:#fff !important;font-family:'JetBrains Mono',monospace !important;font-size:0.5rem !important;font-weight:800 !important;border-radius:3px !important;align-self:center !important;flex-shrink:0 !important}
   @media(max-width:1024px){.novelty-grid{grid-template-columns:repeat(2,1fr)}.news-grid{grid-template-columns:1fr}}
   @media(max-width:640px){.arrivals-header{flex-direction:column;align-items:flex-start}.arrivals-actions{width:100%}.novelty-grid{grid-template-columns:repeat(2,1fr);gap:.75rem}.news-card{padding:.75rem}.nw-img{width:90px;min-width:90px}}
 </style>
