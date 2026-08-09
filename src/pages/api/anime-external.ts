@@ -105,8 +105,13 @@ function detectSeasonNumber(title: string): number {
 async function tmdbSearchTv(title: string, apiKey: string): Promise<number | null> {
   try {
     const clean = cleanAnimeTitle(title);
-    const url = `${TMDB_BASE}/search/tv?api_key=${apiKey}&query=${encodeURIComponent(clean)}&language=en-US&include_adult=false`;
-    const res = await fetch(url);
+    const isBearer = apiKey.length > 40; // JWT tokens are long
+    const url = isBearer
+      ? `${TMDB_BASE}/search/tv?query=${encodeURIComponent(clean)}&language=en-US&include_adult=false`
+      : `${TMDB_BASE}/search/tv?api_key=${apiKey}&query=${encodeURIComponent(clean)}&language=en-US&include_adult=false`;
+    const headers: Record<string, string> = { 'Accept': 'application/json' };
+    if (isBearer) headers['Authorization'] = `Bearer ${apiKey}`;
+    const res = await fetch(url, { headers });
     if (!res.ok) return null;
     const data: any = await res.json();
     if (!data.results || data.results.length === 0) return null;
@@ -126,8 +131,13 @@ async function tmdbSearchTv(title: string, apiKey: string): Promise<number | nul
 async function tmdbFetchSeasonEpisodes(tvId: number, seasonNum: number, apiKey: string): Promise<Record<number, string>> {
   const map: Record<number, string> = {};
   try {
-    const url = `${TMDB_BASE}/tv/${tvId}/season/${seasonNum}?api_key=${apiKey}&language=en-US`;
-    const res = await fetch(url);
+    const isBearer = apiKey.length > 40;
+    const url = isBearer
+      ? `${TMDB_BASE}/tv/${tvId}/season/${seasonNum}?language=en-US`
+      : `${TMDB_BASE}/tv/${tvId}/season/${seasonNum}?api_key=${apiKey}&language=en-US`;
+    const headers: Record<string, string> = { 'Accept': 'application/json' };
+    if (isBearer) headers['Authorization'] = `Bearer ${apiKey}`;
+    const res = await fetch(url, { headers });
     if (!res.ok) return map;
     const data: any = await res.json();
     if (!data.episodes || !Array.isArray(data.episodes)) return map;
@@ -142,8 +152,13 @@ async function tmdbFetchSeasonEpisodes(tvId: number, seasonNum: number, apiKey: 
 
 async function tmdbFetchTvDetails(tvId: number, apiKey: string): Promise<any> {
   try {
-    const url = `${TMDB_BASE}/tv/${tvId}?api_key=${apiKey}&language=en-US`;
-    const res = await fetch(url);
+    const isBearer = apiKey.length > 40;
+    const url = isBearer
+      ? `${TMDB_BASE}/tv/${tvId}?language=en-US`
+      : `${TMDB_BASE}/tv/${tvId}?api_key=${apiKey}&language=en-US`;
+    const headers: Record<string, string> = { 'Accept': 'application/json' };
+    if (isBearer) headers['Authorization'] = `Bearer ${apiKey}`;
+    const res = await fetch(url, { headers });
     if (!res.ok) return null;
     return await res.json();
   } catch (e) {
