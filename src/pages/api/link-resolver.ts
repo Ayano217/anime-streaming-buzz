@@ -3,7 +3,7 @@ import type { APIRoute } from 'astro';
 export const prerender = false;
 
 // ═══════════════════════════════════════════════════════════════════
-// 🧠 ATBIE v1.1 — Anime Intelligence Engine (BUG FIXED)
+// 🧠 ATBIE v1.2 — All bugs fixed
 // ═══════════════════════════════════════════════════════════════════
 
 type Platform = 'facebook' | 'youtube' | 'dailymotion' | 'bilibili' | 'internal' | 'unknown';
@@ -48,7 +48,6 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
   const env = locals?.runtime?.env || {};
   const geminiKey = env.GEMINI_API_KEY || '';
   const groqKey = env.GROQ_API_KEY || '';
-  const togetherKey = env.TOGETHER_API_KEY || '';
   const openrouterKey = env.OPENROUTER_API_KEY || '';
 
   const rawInput = await readInput(request);
@@ -113,7 +112,6 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
       });
     }
 
-    // Fast path: pre-resolved
     if (fbMeta.animeSlug && fbMeta.confidence && fbMeta.confidence >= 0.9) {
       const ep = fbMeta.episode || 1;
       return json({
@@ -142,9 +140,6 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
       });
     }
 
-    // ═══════════════════════════════════════════════════
-    // 🚀 PARALLEL LAYERS (REBALANCED WEIGHTS)
-    // ═══════════════════════════════════════════════════
     const layerPromises: Promise<LayerResult>[] = [];
 
     layerPromises.push(layerFbDataset(fbMeta));
@@ -170,8 +165,8 @@ async function handleResolver(request: Request, locals: any): Promise<Response> 
     }
 
     if (fbMeta.title || fbMeta.description) {
-  layerPromises.push(layerJikanSearch(fbMeta.title, fbMeta.description));
-  }
+      layerPromises.push(layerJikanSearch(fbMeta.title, fbMeta.description));
+    }
 
     const results = await Promise.race([
       Promise.allSettled(layerPromises),
@@ -267,8 +262,7 @@ async function layerFbDataset(fbMeta: any): Promise<LayerResult> {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// LAYER 2: trace.moe (LOWER WEIGHT - FB overlay confuses it)
-// Only trust HIGH similarity (>0.92)
+// LAYER 2: trace.moe
 // ═══════════════════════════════════════════════════════════════════
 async function layerTraceMoe(thumbnailUrl: string): Promise<LayerResult> {
   const start = Date.now();
@@ -297,7 +291,6 @@ async function layerTraceMoe(thumbnailUrl: string): Promise<LayerResult> {
     const top = data.result[0];
     const similarity = top.similarity || 0;
 
-    // Only trust HIGH similarity - FB thumbnails often have UI overlays
     if (similarity < 0.87) {
       return {
         layer: 'tracemoe',
@@ -314,7 +307,6 @@ async function layerTraceMoe(thumbnailUrl: string): Promise<LayerResult> {
     const animeName =
       titleObj.english || titleObj.romaji || titleObj.native || top.filename || 'Unknown';
 
-    // Weight scales with similarity
     const dynamicWeight = similarity >= 0.95 ? 85 : similarity >= 0.90 ? 65 : 50;
 
     return {
@@ -340,7 +332,7 @@ async function layerTraceMoe(thumbnailUrl: string): Promise<LayerResult> {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// LAYER 3: Gemini Vision (FIXED - use gemini-1.5-flash)
+// LAYER 3: Gemini Vision (FIXED MODEL)
 // ═══════════════════════════════════════════════════════════════════
 async function layerGeminiVision(thumbnailUrl: string, apiKey: string): Promise<LayerResult> {
   const start = Date.now();
@@ -349,7 +341,6 @@ async function layerGeminiVision(thumbnailUrl: string, apiKey: string): Promise<
     if (!imgRes.ok) throw new Error('Image fetch failed');
     const imgBuffer = await imgRes.arrayBuffer();
 
-    // Size limit safety (Gemini has 20MB limit, but we cap at 4MB)
     if (imgBuffer.byteLength > 4 * 1024 * 1024) {
       throw new Error('Image too large');
     }
@@ -365,8 +356,7 @@ async function layerGeminiVision(thumbnailUrl: string, apiKey: string): Promise<
   "reasoning": "brief"
 }`;
 
-    // FIXED: gemini-1.5-flash (stable, not experimental)
-   const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     const body = {
       contents: [
@@ -433,7 +423,7 @@ async function layerGeminiVision(thumbnailUrl: string, apiKey: string): Promise<
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// LAYER 4: Gemini Text (FIXED - gemini-1.5-flash)
+// LAYER 4: Gemini Text (FIXED MODEL)
 // ═══════════════════════════════════════════════════════════════════
 async function layerGeminiText(title: string, description: string, apiKey: string): Promise<LayerResult> {
   const start = Date.now();
@@ -451,7 +441,6 @@ Respond ONLY in JSON:
   "reasoning": "why"
 }`;
 
-    // FIXED: gemini-1.5-flash
     const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
     const controller = new AbortController();
@@ -511,7 +500,7 @@ Respond ONLY in JSON:
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// LAYER 5: Groq Text (BOOSTED WEIGHT - proven accurate!)
+// LAYER 5: Groq Text
 // ═══════════════════════════════════════════════════════════════════
 async function layerGroqText(title: string, description: string, apiKey: string): Promise<LayerResult> {
   const start = Date.now();
@@ -569,7 +558,7 @@ Respond ONLY in JSON:
 
     return {
       layer: 'groq-text',
-      weight: 80, // BOOSTED from 45
+      weight: 80,
       success: true,
       animeName: parsed.animeName,
       episode: parsed.episode || null,
@@ -590,7 +579,7 @@ Respond ONLY in JSON:
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// LAYER 6: OpenRouter Text (NEW - extra backup)
+// LAYER 6: OpenRouter (FIXED MODEL)
 // ═══════════════════════════════════════════════════════════════════
 async function layerOpenRouterText(title: string, description: string, apiKey: string): Promise<LayerResult> {
   const start = Date.now();
@@ -666,7 +655,7 @@ Respond ONLY in valid JSON:
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// LAYER 7: Jikan (MAL API) — replacement for AniList
+// LAYER 7: Jikan (MAL API)
 // ═══════════════════════════════════════════════════════════════════
 async function layerJikanSearch(title: string, description: string): Promise<LayerResult> {
   const start = Date.now();
@@ -738,62 +727,6 @@ async function layerJikanSearch(title: string, description: string): Promise<Lay
   }
 }
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 4000);
-
-    // FIXED: Added User-Agent header
-    const res = await fetch('https://graphql.anilist.co', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        accept: 'application/json',
-        'user-agent': 'Mozilla/5.0 (compatible; AniTubeBuzz/1.0)',
-      },
-      body: JSON.stringify({ query, variables: { search: cleanedQuery } }),
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-
-    if (!res.ok) throw new Error(`AniList HTTP ${res.status}`);
-    const data: any = await res.json();
-
-    const media = data?.data?.Page?.media || [];
-    if (!media.length) {
-      return {
-        layer: 'anilist',
-        weight: 40,
-        success: false,
-        confidence: 0,
-        timeMs: Date.now() - start,
-        error: 'No AniList results',
-      };
-    }
-
-    media.sort((a: any, b: any) => (b.popularity || 0) - (a.popularity || 0));
-    const top = media[0];
-    const name = top.title.english || top.title.romaji || top.title.native;
-
-    return {
-      layer: 'anilist',
-      weight: 40,
-      success: true,
-      animeName: name,
-      confidence: 0.5,
-      raw: { anilistId: top.id, query: cleanedQuery },
-      timeMs: Date.now() - start,
-    };
-  } catch (e: any) {
-    return {
-      layer: 'anilist',
-      weight: 40,
-      success: false,
-      confidence: 0,
-      timeMs: Date.now() - start,
-      error: e.message || 'AniList failed',
-    };
-  }
-}
-
 // ═══════════════════════════════════════════════════════════════════
 // VOTING CONSENSUS
 // ═══════════════════════════════════════════════════════════════════
@@ -856,7 +789,6 @@ function runVotingConsensus(results: LayerResult[]) {
   const totalPossibleScore = successful.reduce((sum, r) => sum + r.weight, 0);
   const finalScore = totalPossibleScore ? winner.score / totalPossibleScore : 0;
 
-  // Big boost if multiple layers agree
   const agreementBoost =
     winner.votes >= 4 ? 0.25 : winner.votes >= 3 ? 0.18 : winner.votes >= 2 ? 0.12 : 0;
 
