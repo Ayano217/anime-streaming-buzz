@@ -325,7 +325,44 @@ const navItems = [
     </div>
   </div>
 </div>
-
+<style>
+/* NUCLEAR FIX — force small thumbs */
+#searchDD .sd-thumb,
+.sdd .sd-thumb {
+  width: 60px !important;
+  height: 84px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  min-height: 84px !important;
+  max-height: 84px !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+  border-radius: 8px !important;
+  display: block !important;
+  position: relative !important;
+}
+#searchDD .sd-thumb img,
+.sdd .sd-thumb img {
+  width: 60px !important;
+  height: 84px !important;
+  min-width: 60px !important;
+  max-width: 60px !important;
+  min-height: 84px !important;
+  max-height: 84px !important;
+  object-fit: cover !important;
+  display: block !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  aspect-ratio: 60/84 !important;
+}
+#searchDD .sd-card,
+.sdd .sd-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+</style>
 <script is:inline>
 (function() {
 
