@@ -1,455 +1,481 @@
 import type { APIRoute } from 'astro';
 
-export const prerender = false;
+/* ═══════════════════════════════════════════════════════
+   🎯 ANIME LINK RESOLVER v4.0
+   
+   Goal: User pastes ANY video link → identify anime name + episode
+        → redirect to /reels/anime_{slug}_ep{n} for FULL episode play
+   
+   Supports: Facebook (direct + share links), YouTube, Dailymotion,
+             Bilibili — all identify anime from title/caption
+═══════════════════════════════════════════════════════ */
 
-// ═══════════════════════════════════════════════════════════════════
-// 🧠 ATBIE v2.0 — Simplified & Reliable
-// Only working layers: Groq (95% accuracy) + FB Dataset
-// ═══════════════════════════════════════════════════════════════════
-
-type Platform = 'facebook' | 'youtube' | 'dailymotion' | 'bilibili' | 'internal' | 'unknown';
-
-type CacheEntry = { expires: number; data: unknown };
-const MEMORY_CACHE = new Map<string, CacheEntry>();
+const cache = new Map<string, { data: any; expires: number }>();
 const CACHE_TTL = 30 * 60 * 1000;
 
-function json(data: unknown, status = 200) {
+function json(data: any, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'no-store',
-      'access-control-allow-origin': '*',
-    },
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=1800',
+      'Access-Control-Allow-Origin': '*'
+    }
   });
 }
 
-export const GET: APIRoute = async ({ request, locals }) => handleResolver(request, locals);
-export const POST: APIRoute = async ({ request, locals }) => handleResolver(request, locals);
+function detectPlatform(url: string): string {
+  const u = url.toLowerCase();
+  if (u.includes('youtube.com') || u.includes('youtu.be')) return 'youtube';
+  if (u.includes('dailymotion.com') || u.includes('dai.ly')) return 'dailymotion';
+  if (u.includes('bilibili.com') || u.includes('b23.tv')) return 'bilibili';
+  if (u.includes('facebook.com') || u.includes('fb.watch') || u.includes('fb.com')) return 'facebook';
+  return 'unknown';
+}
 
-async function handleResolver(request: Request, locals: any): Promise<Response> {
-  const startTime = Date.now();
-  const url = new URL(request.url);
-  const debugMode = url.searchParams.get('debug') === '1';
-  const forceRefresh = url.searchParams.get('refresh') === '1';
-  const debug: Record<string, unknown> = {};
+function slugify(s: string): string {
+  return String(s || '').toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .substring(0, 80);
+}
 
-  const env = locals?.runtime?.env || {};
-  const groqKey = env.GROQ_API_KEY || '';
+/* ═══ FACEBOOK: SCRAPE PAGE for title/description ═══ */
 
-  const rawInput = await readInput(request);
-  if (!rawInput) return json({ success: false, reason: 'No URL provided' }, 400);
-
-  let inputUrl: URL;
+async function scrapeFacebookPage(url: string): Promise<{ title: string; description: string; ogUrl?: string }> {
+  const result = { title: '', description: '', ogUrl: '' };
+  
   try {
-    inputUrl = new URL(rawInput.startsWith('http') ? rawInput : 'https://' + rawInput);
-  } catch {
-    return json({ success: false, reason: 'Invalid URL format' }, 400);
-  }
-
-  const platform = detectPlatform(inputUrl);
-  debug.input = rawInput;
-  debug.platform = platform;
-
-  // Internal link — pass through
-  if (platform === 'internal') {
-    return json({
-      success: true,
-      platform,
-      resolvedType: 'internal',
-      redirectUrl: inputUrl.pathname + inputUrl.search,
-      confidence: 1,
-      ...(debugMode ? { debug } : {}),
-    });
-  }
-
-  // Direct video platforms
-  const direct = resolveDirectVideo(platform, inputUrl);
-  if (direct) {
-    return json({
-      success: true,
-      platform,
-      resolvedType: 'video',
-      ...direct,
-      confidence: 1,
-      ...(debugMode ? { debug } : {}),
-    });
-  }
-
-  // ═══════════════════════════════════════════════════
-  // FACEBOOK RESOLUTION
-  // ═══════════════════════════════════════════════════
-  if (platform === 'facebook') {
-    const fbId = extractFacebookVideoId(inputUrl);
-    debug.facebookId = fbId;
-
-    if (!fbId) {
-      return json({
-        success: false,
-        platform,
-        reason: 'Could not extract Facebook video ID',
-        ...(debugMode ? { debug } : {}),
-      });
+    // Use mobile Facebook — returns simpler HTML, less blocking
+    let scrapeUrl = url;
+    if (url.includes('www.facebook.com')) {
+      scrapeUrl = url.replace('www.facebook.com', 'mbasic.facebook.com');
+    } else if (url.includes('facebook.com')) {
+      scrapeUrl = url.replace('facebook.com', 'mbasic.facebook.com');
     }
-
-    // Step 1: Get FB metadata (title, description, thumbnail)
-    const fbMeta = await getFacebookMetadata(fbId, url.origin);
-    debug.fbMeta = fbMeta;
-
-    if (!fbMeta) {
-      return json({
-        success: false,
-        platform,
-        reason: 'Facebook video not found in local dataset.',
-        ...(debugMode ? { debug } : {}),
-      });
-    }
-
-    // Step 2: FAST PATH — pre-resolved in dataset
-    if (fbMeta.animeSlug && fbMeta.confidence && fbMeta.confidence >= 0.85) {
-      const ep = fbMeta.episode || 1;
-      return json({
-        success: true,
-        platform,
-        resolvedType: 'anime',
-        source: 'dataset-cache',
-        title: fbMeta.animeName,
-        slug: fbMeta.animeSlug,
-        episode: ep,
-        redirectUrl: `/reels/anime_${fbMeta.animeSlug}_ep${ep}`,
-        confidence: fbMeta.confidence,
-        timeMs: Date.now() - startTime,
-        ...(debugMode ? { debug } : {}),
-      });
-    }
-
-    // Step 3: Check memory cache
-    const cacheKey = `resolve:${fbId}`;
-    if (!forceRefresh) {
-      const cached = getCache(cacheKey);
-      if (cached) {
-        debug.fromCache = true;
-        return json({
-          ...(cached as any),
-          timeMs: Date.now() - startTime,
-          ...(debugMode ? { debug } : {}),
-        });
+    
+    const res = await fetch(scrapeUrl, {
+      redirect: 'follow',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; Bot/1.0; +http://example.com)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9'
       }
-    }
-
-    // Step 4: Groq AI analysis
-    if (!groqKey) {
-      return json({
-        success: false,
-        platform,
-        reason: 'Groq API key missing',
-        ...(debugMode ? { debug } : {}),
-      });
-    }
-
-    const groqResult = await identifyWithGroq(fbMeta.title, fbMeta.description, groqKey);
-    debug.groqResult = groqResult;
-
-    if (!groqResult || !groqResult.animeName || groqResult.confidence < 0.5) {
-      return json({
-        success: false,
-        platform,
-        reason: 'Could not identify anime from caption',
-        extractedTitle: fbMeta.title,
-        ...(debugMode ? { debug } : {}),
-      });
-    }
-
-    // Step 5: Validate slug with AnimoTV
-    const validated = await validateWithAnimoTV(groqResult.animeName, url.origin);
-    debug.validated = validated;
-
-    const finalSlug = validated?.slug || slugify(groqResult.animeName);
-    const finalEpisode =
-      groqResult.episode ||
-      extractEpisodeFromText(`${fbMeta.title} ${fbMeta.description}`) ||
-      1;
-    const finalName = validated?.title || groqResult.animeName;
-
-    const response = {
-      success: true,
-      platform,
-      resolvedType: 'anime' as const,
-      source: 'groq-ai',
-      title: finalName,
-      slug: finalSlug,
-      episode: finalEpisode,
-      redirectUrl: `/reels/anime_${finalSlug}_ep${finalEpisode}`,
-      confidence: groqResult.confidence,
-      timeMs: Date.now() - startTime,
-    };
-
-    setCache(cacheKey, response, CACHE_TTL);
-
-    return json({
-      ...response,
-      ...(debugMode ? { debug } : {}),
     });
+    
+    if (!res.ok) return result;
+    
+    const html = await res.text();
+    
+    // Extract og:title
+    let m = html.match(/<meta\s+property=["']og:title["']\s+content=["']([^"']+)["']/i);
+    if (m) result.title = m[1].trim();
+    
+    // Extract og:description
+    m = html.match(/<meta\s+property=["']og:description["']\s+content=["']([^"']+)["']/i);
+    if (m) result.description = m[1].trim();
+    
+    // Extract og:url (real permalink)
+    m = html.match(/<meta\s+property=["']og:url["']\s+content=["']([^"']+)["']/i);
+    if (m) result.ogUrl = m[1].trim();
+    
+    // Fallback: <title> tag
+    if (!result.title) {
+      m = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+      if (m) result.title = m[1].replace(/\s*[\|\-]\s*Facebook\s*$/i, '').trim();
+    }
+    
+    // Fallback: extract from mbasic HTML directly
+    if (!result.description) {
+      // mbasic FB shows description in various divs
+      m = html.match(/<div[^>]*data-ft="[^"]*"[^>]*>([^<]{20,500})<\/div>/i);
+      if (m) result.description = m[1].trim();
+    }
+    
+    // Decode HTML entities
+    const decode = (s: string) => s
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#039;/g, "'")
+      .replace(/&#x27;/g, "'")
+      .replace(/&nbsp;/g, ' ');
+    
+    result.title = decode(result.title);
+    result.description = decode(result.description);
+    
+  } catch (e) {
+    // ignore
   }
-
-  return json({
-    success: false,
-    platform,
-    reason: 'Unsupported platform',
-    ...(debugMode ? { debug } : {}),
-  });
+  
+  return result;
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// GROQ AI — The workhorse
-// ═══════════════════════════════════════════════════════════════════
-async function identifyWithGroq(title: string, description: string, apiKey: string) {
+/* ═══ FALLBACK: Try public FB oEmbed proxy ═══ */
+
+async function tryFacebookOEmbed(url: string): Promise<{ title: string; description: string }> {
   try {
-    const combined = `${title || ''} ${description || ''}`.trim();
+    // Try FB's public oEmbed endpoint (works without auth for public videos)
+    const oembedUrl = `https://www.facebook.com/plugins/video/oembed.json/?url=${encodeURIComponent(url)}`;
+    const res = await fetch(oembedUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0'
+      }
+    });
+    if (res.ok) {
+      const data = await res.json() as any;
+      return {
+        title: data.title || data.author_name || '',
+        description: data.title || ''
+      };
+    }
+  } catch (e) {}
+  return { title: '', description: '' };
+}
 
-    const prompt = `You are an expert anime identifier. Analyze this Facebook post caption about an anime clip.
+/* ═══ GROQ AI ANIME IDENTIFICATION ═══ */
 
-CAPTION: "${combined}"
+async function identifyAnimeWithGroq(
+  title: string, 
+  description: string, 
+  apiKey: string
+): Promise<{ anime: string; episode: number; confidence: number } | null> {
+  if (!apiKey) return null;
+  
+  const combined = `${title}\n\n${description}`.trim();
+  if (!combined || combined.length < 5) return null;
+  
+  const prompt = `You are an expert anime identifier. Analyze this social media post about an anime and identify it.
 
-Look for:
-- Character names (Kirito → Sword Art Online, Kazuma → KonoSuba, Kafka → Kaiju No. 8, etc.)
-- Anime titles directly mentioned
-- Hashtags (#grandblue, #yanineko, etc.)
-- Season/episode numbers
-- Plot references specific to certain series
+Post Content:
+"""
+${combined.substring(0, 800)}
+"""
 
-Respond ONLY with valid JSON:
-{
-  "animeName": "exact anime name in English or null if unsure",
-  "episode": episode number or null,
-  "confidence": 0.0-1.0
-}`;
+Instructions:
+1. Identify the anime/show name (use English or Romaji, NOT Japanese characters)
+2. Identify the episode number if mentioned (0 if none)
+3. Give confidence 0.0 to 1.0
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 6000);
+Return ONLY valid JSON in this exact format (no markdown, no explanation):
+{"anime": "Name Here", "episode": 0, "confidence": 0.9}
 
+Rules:
+- If clearly identifiable (character names, series name mentioned): confidence 0.8-1.0
+- If educated guess: confidence 0.5-0.7
+- If unknown or not anime: {"anime": "Unknown", "episode": 0, "confidence": 0.0}
+- Common examples: Kirito → Sword Art Online, Tanjiro → Demon Slayer, Naruto → Naruto`;
+
+  try {
     const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'content-type': 'application/json',
-        authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert anime identifier with deep knowledge of all anime series. Respond only with valid JSON.',
-          },
-          { role: 'user', content: prompt },
-        ],
-        temperature: 0.2,
-        max_tokens: 200,
-        response_format: { type: 'json_object' },
-      }),
-      signal: controller.signal,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.1,
+        max_tokens: 150,
+        response_format: { type: 'json_object' }
+      })
     });
-    clearTimeout(timer);
-
-    if (!res.ok) throw new Error(`Groq HTTP ${res.status}`);
-    const data: any = await res.json();
-    const text = data?.choices?.[0]?.message?.content || '';
-    const parsed = extractJsonFromText(text);
-
-    if (!parsed || !parsed.animeName || parsed.animeName === 'null') {
-      return null;
+    
+    if (!res.ok) return null;
+    const data = await res.json() as any;
+    const content = data?.choices?.[0]?.message?.content;
+    if (!content) return null;
+    
+    try {
+      const parsed = JSON.parse(content);
+      return {
+        anime: String(parsed.anime || 'Unknown'),
+        episode: Number(parsed.episode || 0),
+        confidence: Number(parsed.confidence || 0)
+      };
+    } catch (e) {
+      const m = content.match(/\{[^}]+\}/);
+      if (m) {
+        const parsed = JSON.parse(m[0]);
+        return {
+          anime: String(parsed.anime || 'Unknown'),
+          episode: Number(parsed.episode || 0),
+          confidence: Number(parsed.confidence || 0)
+        };
+      }
     }
-
-    return {
-      animeName: String(parsed.animeName),
-      episode: parsed.episode ? Number(parsed.episode) : null,
-      confidence: Math.min(Number(parsed.confidence) || 0.7, 0.99),
-    };
+    return null;
   } catch (e) {
     return null;
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// ANIMOTV VALIDATION
-// ═══════════════════════════════════════════════════════════════════
-async function validateWithAnimoTV(animeName: string, origin: string) {
+/* ═══ LOOKUP IN OUR DATASET ═══ */
+
+async function lookupInDataset(videoId: string, origin: string): Promise<any | null> {
   try {
-    const endpoint = new URL('/api/anime-external', origin);
-    endpoint.searchParams.set('action', 'find');
-    endpoint.searchParams.set('q', animeName);
-
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 4000);
-
-    const res = await fetch(endpoint.toString(), { signal: controller.signal });
-    clearTimeout(timer);
-
+    const res = await fetch(`${origin}/facebook-videos.json`);
     if (!res.ok) return null;
-    const data: any = await res.json();
-
-    const items =
-      data?.results ||
-      data?.data ||
-      data?.matches ||
-      (Array.isArray(data) ? data : []) ||
-      (data?.result ? [data.result] : []);
-
-    if (!items.length) return null;
-
-    const first = items[0];
-    return {
-      slug: first.slug || first.animeSlug || slugify(first.title || animeName),
-      title: first.title || first.name || animeName,
-    };
-  } catch {
+    const data = await res.json() as any;
+    if (!data.videos) return null;
+    return data.videos.find((v: any) => String(v.id) === String(videoId)) || null;
+  } catch (e) {
     return null;
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════════════════
-async function readInput(request: Request): Promise<string> {
-  const u = new URL(request.url);
-  const q = u.searchParams.get('url') || u.searchParams.get('link') || u.searchParams.get('q') || '';
-  if (q) return q.trim();
+/* ═══ ID EXTRACTORS ═══ */
 
-  if (request.method === 'POST') {
-    const ct = request.headers.get('content-type') || '';
-    if (ct.includes('application/json')) {
-      try {
-        const body = await request.json();
-        return (body.url || body.link || body.q || '').trim();
-      } catch {}
+function extractYouTubeId(url: string): string | null {
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function extractDailymotionId(url: string): string | null {
+  const m = url.match(/(?:dailymotion\.com\/(?:video|embed\/video)|dai\.ly)\/([a-zA-Z0-9]+)/);
+  return m ? m[1] : null;
+}
+
+function extractBilibiliId(url: string): string | null {
+  const m = url.match(/bilibili\.com\/video\/(BV[a-zA-Z0-9]+)/);
+  return m ? m[1] : null;
+}
+
+function extractFacebookDirectId(url: string): string | null {
+  // Try to find 15-20 digit numeric ID
+  let m = url.match(/\/(?:reel|watch|video|videos)\/(\d{10,20})/);
+  if (m) return m[1];
+  m = url.match(/[?&]v=(\d{10,20})/);
+  if (m) return m[1];
+  m = url.match(/\/(\d{15,20})\/?(?:\?|$)/);
+  if (m) return m[1];
+  return null;
+}
+
+/* ═══ MAIN HANDLER ═══ */
+
+export const GET: APIRoute = async ({ request, url, locals }) => {
+  const env = (locals as any)?.runtime?.env || {};
+  const params = url.searchParams;
+  const targetUrl = params.get('url')?.trim();
+  const debug = params.get('debug') === '1';
+  const refresh = params.get('refresh') === '1';
+  
+  if (!targetUrl) {
+    return json({ success: false, error: 'Missing url parameter' }, 400);
+  }
+  
+  const cacheKey = targetUrl;
+  if (!refresh) {
+    const cached = cache.get(cacheKey);
+    if (cached && cached.expires > Date.now()) {
+      return json({ ...cached.data, cached: true });
     }
   }
-  return '';
-}
-
-function detectPlatform(url: URL): Platform {
-  const host = url.hostname.toLowerCase().replace(/^(www|m|mbasic)\./, '');
-  const path = url.pathname.toLowerCase();
-
-  if (host.includes('facebook.com') || host === 'fb.watch') return 'facebook';
-  if (host === 'youtu.be' || host.includes('youtube.com')) return 'youtube';
-  if (host.includes('dailymotion.com') || host === 'dai.ly') return 'dailymotion';
-  if (host.includes('bilibili.com') || host === 'b23.tv') return 'bilibili';
-  if (path.startsWith('/reels/') || path.startsWith('/watch/') || path.startsWith('/anime/')) return 'internal';
-  return 'unknown';
-}
-
-function resolveDirectVideo(platform: Platform, url: URL) {
+  
+  const debugLog: any[] = [];
+  const log = (msg: string, data?: any) => {
+    if (debug) debugLog.push({ msg, data });
+  };
+  
+  const platform = detectPlatform(targetUrl);
+  log('Platform', platform);
+  
+  const origin = new URL(request.url).origin;
+  const groqKey = env.GROQ_API_KEY;
+  
+  // ═══ INTERNAL ═══
+  if (targetUrl.startsWith(origin) || targetUrl.startsWith('/')) {
+    const result = {
+      success: true,
+      platform: 'internal',
+      redirectUrl: targetUrl.replace(origin, ''),
+      title: 'Internal link'
+    };
+    return json(debug ? { ...result, debug: debugLog } : result);
+  }
+  
+  // ═══ YOUTUBE (direct embed) ═══
   if (platform === 'youtube') {
-    if (url.pathname.startsWith('/shorts/')) {
-      const id = url.pathname.split('/')[2] || '';
-      const clean = id.replace(/[^\w-]/g, '');
-      if (clean) return { videoId: `yts_${clean}`, redirectUrl: `/reels/yts_${clean}` };
+    const id = extractYouTubeId(targetUrl);
+    if (id) {
+      const result = {
+        success: true,
+        platform: 'youtube',
+        title: 'YouTube Video',
+        redirectUrl: `/reels/yt_${id}`
+      };
+      cache.set(cacheKey, { data: result, expires: Date.now() + CACHE_TTL });
+      return json(debug ? { ...result, debug: debugLog } : result);
     }
-    let id = '';
-    if (url.hostname.includes('youtu.be')) id = url.pathname.slice(1).split('/')[0];
-    else id = url.searchParams.get('v') || '';
-    const clean = id.replace(/[^\w-]/g, '');
-    if (clean) return { videoId: `yt_${clean}`, redirectUrl: `/reels/yt_${clean}` };
   }
+  
+  // ═══ DAILYMOTION ═══
   if (platform === 'dailymotion') {
-    const parts = url.pathname.split('/').filter(Boolean);
-    const id = (parts[parts.length - 1] || '').replace(/[^\w-]/g, '');
-    if (id) return { videoId: `dm_${id}`, redirectUrl: `/reels/dm_${id}` };
-  }
-  if (platform === 'bilibili') {
-    const parts = url.pathname.split('/').filter(Boolean);
-    const id = (parts[parts.length - 1] || '').replace(/[^\w-]/g, '');
-    if (id) return { videoId: `bili_${id}`, redirectUrl: `/reels/bili_${id}` };
-  }
-  return null;
-}
-
-function extractFacebookVideoId(url: URL): string {
-  const q = url.searchParams.get('v') || url.searchParams.get('video_id') || url.searchParams.get('story_fbid') || '';
-  if (q) return q.replace(/[^0-9]/g, '');
-  const path = url.pathname;
-  const patterns = [/\/reel\/(\d+)/i, /\/videos\/(\d+)/i, /\/watch\/?\?v=(\d+)/i, /\/(\d{10,})/];
-  for (const p of patterns) {
-    const m = path.match(p);
-    if (m && m[1]) return m[1];
-  }
-  return '';
-}
-
-async function getFacebookMetadata(fbId: string, origin: string): Promise<any> {
-  try {
-    const res = await fetch(new URL('/facebook-videos.json', origin).toString());
-    if (!res.ok) return null;
-    const data: any = await res.json();
-    const video = (data.videos || []).find((v: any) => String(v.id) === String(fbId));
-    if (!video) return null;
-    return {
-      title: video.title || '',
-      description: video.description || '',
-      thumbnail: video.full_picture || video.picture || '',
-      permalink: video.permalink_url || '',
-      animeSlug: video.animeSlug || null,
-      animeName: video.animeName || null,
-      episode: video.episode || null,
-      confidence: video.confidence || 0,
-    };
-  } catch {
-    return null;
-  }
-}
-
-function extractEpisodeFromText(text: string): number | null {
-  const patterns = [
-    /\bepisode\s*[:#-]?\s*(\d{1,4})\b/i,
-    /\bep\s*[:#.-]?\s*(\d{1,4})\b/i,
-    /\bpart\s*[:#-]?\s*(\d{1,4})\b/i,
-    /\bs\d+\s*e\s*(\d{1,4})\b/i,
-  ];
-  for (const p of patterns) {
-    const m = text.match(p);
-    if (m && m[1]) {
-      const n = parseInt(m[1]);
-      if (n >= 1 && n <= 9999) return n;
+    const id = extractDailymotionId(targetUrl);
+    if (id) {
+      const result = {
+        success: true,
+        platform: 'dailymotion',
+        title: 'Dailymotion Video',
+        redirectUrl: `/reels/dm_${id}`
+      };
+      cache.set(cacheKey, { data: result, expires: Date.now() + CACHE_TTL });
+      return json(debug ? { ...result, debug: debugLog } : result);
     }
   }
-  return null;
-}
-
-function extractJsonFromText(text: string): any {
-  if (!text) return null;
-  try {
-    return JSON.parse(text);
-  } catch {}
-  const m = text.match(/\{[\s\S]*\}/);
-  if (m) {
-    try {
-      return JSON.parse(m[0]);
-    } catch {}
+  
+  // ═══ BILIBILI ═══
+  if (platform === 'bilibili') {
+    const id = extractBilibiliId(targetUrl);
+    if (id) {
+      const result = {
+        success: true,
+        platform: 'bilibili',
+        title: 'Bilibili Video',
+        redirectUrl: `/reels/bili_${id}`
+      };
+      cache.set(cacheKey, { data: result, expires: Date.now() + CACHE_TTL });
+      return json(debug ? { ...result, debug: debugLog } : result);
+    }
   }
-  return null;
-}
-
-function slugify(text: string): string {
-  return (text || '')
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 80);
-}
-
-function getCache(key: string) {
-  const hit = MEMORY_CACHE.get(key);
-  if (!hit) return null;
-  if (Date.now() > hit.expires) {
-    MEMORY_CACHE.delete(key);
-    return null;
+  
+  // ═══ FACEBOOK — ANIME IDENTIFICATION FLOW ═══
+  if (platform === 'facebook') {
+    log('Starting Facebook resolution...');
+    
+    let title = '';
+    let description = '';
+    let fbVideoId = extractFacebookDirectId(targetUrl);
+    log('Direct FB ID', fbVideoId);
+    
+    // Step 1: Check dataset if direct ID
+    if (fbVideoId) {
+      const fbVideo = await lookupInDataset(fbVideoId, origin);
+      log('Dataset lookup', fbVideo ? 'FOUND' : 'NOT FOUND');
+      if (fbVideo) {
+        title = fbVideo.title || '';
+        description = fbVideo.description || '';
+      }
+    }
+    
+    // Step 2: If no title/desc yet, SCRAPE Facebook page
+    if (!title && !description) {
+      log('Scraping FB page...');
+      const scraped = await scrapeFacebookPage(targetUrl);
+      log('Scraped', scraped);
+      title = scraped.title;
+      description = scraped.description;
+      
+      // If scraped ogUrl has a direct ID, use it
+      if (scraped.ogUrl && !fbVideoId) {
+        const extractedFromOg = extractFacebookDirectId(scraped.ogUrl);
+        if (extractedFromOg) {
+          fbVideoId = extractedFromOg;
+          // Try dataset lookup with extracted ID
+          const fbVideo = await lookupInDataset(fbVideoId, origin);
+          if (fbVideo) {
+            if (!title) title = fbVideo.title || '';
+            if (!description) description = fbVideo.description || '';
+          }
+        }
+      }
+    }
+    
+    // Step 3: Try oEmbed as backup
+    if (!title && !description) {
+      log('Trying oEmbed...');
+      const oembed = await tryFacebookOEmbed(targetUrl);
+      log('oEmbed result', oembed);
+      title = oembed.title;
+      description = oembed.description;
+    }
+    
+    log('Final title/desc', { title, description });
+    
+    // Step 4: Send to Groq for anime identification
+    if ((title || description) && groqKey) {
+      log('Calling Groq...');
+      const animeInfo = await identifyAnimeWithGroq(title, description, groqKey);
+      log('Groq response', animeInfo);
+      
+      if (animeInfo && animeInfo.anime && animeInfo.anime !== 'Unknown' && animeInfo.confidence >= 0.5) {
+        const slug = slugify(animeInfo.anime);
+        const episode = animeInfo.episode > 0 ? animeInfo.episode : 1;
+        
+        const result = {
+          success: true,
+          platform: 'facebook',
+          title: animeInfo.anime,
+          anime: animeInfo.anime,
+          episode: episode,
+          confidence: animeInfo.confidence,
+          slug: slug,
+          redirectUrl: `/reels/anime_${slug}_ep${episode}`,
+          source: 'facebook',
+          detectedFrom: title || description
+        };
+        cache.set(cacheKey, { data: result, expires: Date.now() + CACHE_TTL });
+        return json(debug ? { ...result, debug: debugLog } : result);
+      }
+      
+      // Groq returned but low confidence
+      if (animeInfo) {
+        return json({
+          success: false,
+          platform: 'facebook',
+          error: 'Could not identify anime with sufficient confidence',
+          hint: `Best guess: "${animeInfo.anime}" (confidence: ${animeInfo.confidence})`,
+          title: title,
+          description: description ? description.substring(0, 150) : '',
+          debug: debug ? debugLog : undefined
+        }, 200);
+      }
+    }
+    
+    // Nothing worked
+    return json({
+      success: false,
+      platform: 'facebook',
+      error: 'Could not detect anime from this Facebook video',
+      hint: title || description 
+        ? 'AI could not identify the anime from the caption. Try a link with clearer title.'
+        : 'Could not extract video info. This might be a private post or the link format is not supported.',
+      title: title || null,
+      description: description ? description.substring(0, 150) : null,
+      videoId: fbVideoId,
+      debug: debug ? debugLog : undefined
+    }, 200);
   }
-  return hit.data;
-}
+  
+  return json({
+    success: false,
+    error: 'Unsupported platform',
+    platform: platform,
+    debug: debug ? debugLog : undefined
+  }, 400);
+};
 
-function setCache(key: string, data: unknown, ttl: number) {
-  MEMORY_CACHE.set(key, { data, expires: Date.now() + ttl });
-}
+export const POST: APIRoute = async (ctx) => {
+  const body = await ctx.request.json().catch(() => ({})) as any;
+  const url = new URL(ctx.request.url);
+  url.searchParams.set('url', body.url || '');
+  if (body.debug) url.searchParams.set('debug', '1');
+  if (body.refresh) url.searchParams.set('refresh', '1');
+  return GET({ ...ctx, url } as any);
+};
+
+export const OPTIONS: APIRoute = () => {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    }
+  });
+};
