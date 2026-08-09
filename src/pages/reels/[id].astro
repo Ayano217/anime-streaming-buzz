@@ -36,7 +36,6 @@ if (isAnimeExternal) {
 }
 
 function getPlatformData(vid) {
-  // AnimoTVSlash anime
   if (vid.startsWith('anime_')) {
     const m = vid.match(/^anime_(.+)_ep(\d+)$/);
     if (m) {
@@ -114,7 +113,6 @@ function extractSeriesFromTitle(title) {
 let video = null;
 let allVideos = [];
 
-// ═══ Build video object ═══
 if (isAnimeExternal && externalAnime) {
   const platformData = getPlatformData(videoId);
   video = {
@@ -134,7 +132,6 @@ if (isAnimeExternal && externalAnime) {
     totalEpisodes: externalAnime.episodes ? externalAnime.episodes.length : 26,
   };
 } else {
-  // Existing logic for normal videos
   try {
     const apiUrl = new URL('/api/social-feed', Astro.url.origin);
     apiUrl.searchParams.set('limit', '100');
@@ -207,8 +204,8 @@ const metaParts = ['HD', typeLabel];
 if (publishText) metaParts.push(publishText);
 const metaText = metaParts.join(' • ');
 
-// External anime episodes data for sidebar
 const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.episodes : [];
+const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
 ---
 
 <BaseLayout title={`${video.title} | AniTubeBuzz`}>
@@ -227,7 +224,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
            data-ep-num={animeEpNum}>
         <div class="rp-grid">
 
-          <!-- MAIN COLUMN (LEFT) -->
           <div class="rp-main">
 
             <div class={`rp-player ${isAnimeExternal ? 'rp-player-external' : ''}`} id="videoCard" data-aspect={videoAspect}>
@@ -339,7 +335,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
               </div>
             )}
 
-            <!-- COMMENTS -->
             <section class="rp-comments">
               <div class="rp-comments-head">
                 <h3 class="rp-comments-title"><span id="commentCount">0</span> Comments</h3>
@@ -367,7 +362,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
               </div>
             </section>
 
-            <!-- MORE LIKE THIS -->
             <section class="rp-more-section" id="moreSection">
               <div class="rp-section-head">
                 <div class="rp-section-title">
@@ -385,47 +379,108 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
 
           </div>
 
-          <!-- SIDEBAR (RIGHT) -->
           <aside class="rp-sidebar">
-            <div class="rp-sidebar-head">
-              <div class="rp-sidebar-title">
-                <span class="rp-section-bar"></span>
-                <span>{isAnimeExternal ? '📺 Episodes' : 'Up Next'}</span>
-              </div>
-              <label class="rp-autoplay-label">
-                <span>Autoplay</span>
-                <input type="checkbox" id="autoplayToggle" checked />
-                <span class="rp-switch"></span>
-              </label>
-            </div>
-
             {isAnimeExternal && externalEpisodes.length > 0 && (
-              <div id="externalEpisodes" class="rp-ext-episodes">
-                {externalEpisodes.map(ep => (
-                  <a class={`rp-ext-ep-card ${ep.number === animeEpNum ? 'active' : ''}`} 
-                     href={`/reels/${ep.embedId}`}
-                     data-ep-num={ep.number}>
-                    <div class="rp-ext-ep-thumb">
-                      {ep.thumbnail ? (
-                        <img src={ep.thumbnail} alt={`Episode ${ep.number}`} loading="lazy" onerror="this.style.opacity=0.3" />
-                      ) : (
-                        <div class="rp-ext-ep-num-fallback">{ep.number}</div>
-                      )}
-                      <div class="rp-ext-ep-num-badge">{ep.number}</div>
-                      {ep.number === animeEpNum && <div class="rp-ext-ep-active-overlay"></div>}
+              <div class="rp-ep-box" id="epBox">
+                <button class="rp-ep-header" id="epHeader" aria-expanded="true">
+                  <div class="rp-ep-head-left">
+                    <div class="rp-ep-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="7" width="20" height="15" rx="2"></rect>
+                        <polyline points="17 2 12 7 7 2"></polyline>
+                      </svg>
                     </div>
-                    <div class="rp-ext-ep-info">
-                      <div class="rp-ext-ep-title">Episode {ep.number}</div>
-                      <div class="rp-ext-ep-meta">{ep.number === animeEpNum ? '▶ Playing now' : 'Click to watch'}</div>
+                    <div class="rp-ep-head-text">
+                      <div class="rp-ep-head-title">Episodes</div>
+                      <div class="rp-ep-head-sub">
+                        <span class="rp-ep-count">{externalEpisodes.length}</span>
+                        <span class="rp-ep-dot">•</span>
+                        <span class="rp-ep-current">EP {animeEpNum}</span>
+                        {totalRealThumbs > 0 && (
+                          <>
+                            <span class="rp-ep-dot">•</span>
+                            <span class="rp-ep-hd">HD</span>
+                          </>
+                        )}
+                      </div>
                     </div>
-                    {ep.number === animeEpNum && <div class="rp-ext-ep-playing"><span></span><span></span><span></span></div>}
-                  </a>
-                ))}
+                  </div>
+                  <div class="rp-ep-head-right">
+                    <label class="rp-autoplay-mini" onclick="event.stopPropagation();">
+                      <input type="checkbox" id="autoplayToggle" checked />
+                      <span class="rp-switch-mini"></span>
+                    </label>
+                    <div class="rp-ep-chevron" id="epChevron">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                    </div>
+                  </div>
+                </button>
+
+                <div class="rp-ep-body" id="epBody">
+                  <div class="rp-ep-scroll" id="externalEpisodes">
+                    {externalEpisodes.map(ep => (
+                      <a class={`rp-ext-ep-card ${ep.number === animeEpNum ? 'active' : ''} ${ep.hasRealThumb ? 'has-real' : ''}`} 
+                         href={`/reels/${ep.embedId}`}
+                         data-ep-num={ep.number}>
+                        <div class="rp-ext-ep-thumb">
+                          {ep.thumbnail ? (
+                            <img src={ep.thumbnail} alt={`Episode ${ep.number}`} loading="lazy" />
+                          ) : (
+                            <div class="rp-ext-ep-num-fallback">{ep.number}</div>
+                          )}
+                          <div class="rp-ext-ep-overlay"></div>
+                          <div class="rp-ext-ep-num-badge">EP {ep.number}</div>
+                          {ep.hasRealThumb && ep.number !== animeEpNum && (
+                            <div class="rp-ext-ep-play-mini">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M8 5v14l11-7z"></path>
+                              </svg>
+                            </div>
+                          )}
+                          {ep.number === animeEpNum && (
+                            <div class="rp-ext-ep-playing-overlay">
+                              <div class="rp-ext-ep-playing-wave">
+                                <span></span><span></span><span></span><span></span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div class="rp-ext-ep-info">
+                          <div class="rp-ext-ep-title">Episode {ep.number}</div>
+                          <div class="rp-ext-ep-meta">
+                            {ep.number === animeEpNum ? (
+                              <><span class="rp-ep-live-dot"></span> Playing now</>
+                            ) : ep.hasRealThumb ? (
+                              'Available HD'
+                            ) : (
+                              'Coming soon'
+                            )}
+                          </div>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
             {!isAnimeExternal && (
-              <div id="relatedFeed" class="rp-side-list"></div>
+              <>
+                <div class="rp-sidebar-head">
+                  <div class="rp-sidebar-title">
+                    <span class="rp-section-bar"></span>
+                    <span>Up Next</span>
+                  </div>
+                  <label class="rp-autoplay-label">
+                    <span>Autoplay</span>
+                    <input type="checkbox" id="autoplayToggle" checked />
+                    <span class="rp-switch"></span>
+                  </label>
+                </div>
+                <div id="relatedFeed" class="rp-side-list"></div>
+              </>
             )}
           </aside>
 
@@ -449,7 +504,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
     }
     .rp-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 400px;
+      grid-template-columns: minmax(0, 1fr) 420px;
       gap: 24px;
       align-items: start;
     }
@@ -458,19 +513,13 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       position: sticky;
       top: 80px;
       max-height: calc(100vh - 100px);
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding-right: 4px;
-    }
-    .rp-sidebar::-webkit-scrollbar { width: 6px; }
-    .rp-sidebar::-webkit-scrollbar-track { background: transparent; }
-    .rp-sidebar::-webkit-scrollbar-thumb {
-      background: rgba(192, 132, 252, 0.3);
-      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
     }
 
-    /* ============ PLAYER ============ */
-      .rp-player {
+    /* ============ PLAYER (Normal) ============ */
+    .rp-player {
       width: 100%;
       background: #000;
       border-radius: 16px;
@@ -486,12 +535,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       background: #000;
       overflow: hidden;
     }
-    .rp-player-external {
-      overflow: hidden !important;
-    }
-    .rp-player-external .rp-external-wrap * {
-      -webkit-tap-highlight-color: transparent;
-    }
     .rp-player[data-aspect="portrait"] .rp-player-frame {
       padding-top: min(85vh, 900px);
       max-width: 500px;
@@ -505,18 +548,22 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       border: 0;
     }
 
-           /* ============ EXTERNAL ANIME IFRAME (DYNAMIC SCALED CROP) ============ */
+    /* ============ EXTERNAL ANIME IFRAME ============ */
     .rp-player-external {
       overflow: visible;
       isolation: isolate;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      border-radius: 0;
     }
     .rp-player-external .rp-player-frame {
       position: relative;
       width: 100%;
       padding-top: 0 !important;
-      background: #000;
+      background: transparent;
       overflow: visible;
-      min-height: 300px;
+      min-height: 240px;
     }
     .rp-external-wrap {
       position: relative;
@@ -524,7 +571,8 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       overflow: hidden;
       background: #000;
       border-radius: 16px;
-      /* height set by JS to match scaled video */
+      border: 1px solid rgba(192, 132, 252, 0.2);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
     }
     .rp-ext-iframe {
       position: absolute;
@@ -538,24 +586,11 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       background: transparent;
       display: block;
       scrollbar-width: none;
-      /* width/height/transform set by JS */
     }
-    .rp-ext-iframe::-webkit-scrollbar {
-      display: none;
-    }
-    /* Fullscreen adjustments */
-    .rp-external-wrap:fullscreen {
-      background: #000;
-      width: 100vw;
-      height: 100vh;
-      border-radius: 0;
-    }
-    .rp-external-wrap:-webkit-full-screen {
-      background: #000;
-      width: 100vw;
-      height: 100vh;
-    }
-    /* BRAND WATERMARK */
+    .rp-ext-iframe::-webkit-scrollbar { display: none; }
+    .rp-external-wrap:fullscreen { background: #000; width: 100vw; height: 100vh; border-radius: 0; }
+    .rp-external-wrap:-webkit-full-screen { background: #000; width: 100vw; height: 100vh; }
+
     .rp-ext-brand {
       position: absolute;
       top: 14px;
@@ -566,6 +601,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       padding: 7px 14px;
       background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border-radius: 22px;
       z-index: 15;
       pointer-events: none;
@@ -601,48 +637,8 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       border-radius: 4px;
       box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
     }
-    /* CUSTOM CONTROLS BAR — our own fullscreen button */
-    .rp-ext-controls {
-      position: absolute;
-      bottom: 12px;
-      right: 14px;
-      z-index: 20;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-    }
-    .rp-external-wrap:hover .rp-ext-controls {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .rp-ext-ctrl-bar {
-      display: flex;
-      gap: 8px;
-      padding: 6px;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(14px);
-      border-radius: 24px;
-      border: 1px solid rgba(192, 132, 252, 0.25);
-    }
-    .rp-ext-fs-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, rgba(192, 132, 252, 0.2), rgba(232, 121, 249, 0.2));
-      border: 1px solid rgba(192, 132, 252, 0.35);
-      color: #fff;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .rp-ext-fs-btn:hover {
-      background: linear-gradient(135deg, #c084fc, #e879f9);
-      transform: scale(1.08);
-      box-shadow: 0 4px 16px rgba(192, 132, 252, 0.5);
-    }
-    /* ============ NORMAL PLAYER LOADER ============ */
+
+    /* ============ VIDEO LOADER ============ */
     .rp-vloader {
       position: absolute;
       inset: 0;
@@ -726,12 +722,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       border-bottom: 1px solid rgba(192, 132, 252, 0.12);
       flex-wrap: wrap;
     }
-    .rp-channel {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
+    .rp-channel { display: flex; align-items: center; gap: 12px; min-width: 0; }
     .rp-avatar {
       width: 44px;
       height: 44px;
@@ -747,12 +738,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       font-family: 'Bricolage Grotesque', sans-serif;
       box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
     }
-    .rp-channel-name {
-      font-size: 15px;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1.2;
-    }
+    .rp-channel-name { font-size: 15px; font-weight: 700; color: #fff; line-height: 1.2; }
     .rp-channel-meta {
       display: flex;
       align-items: center;
@@ -771,16 +757,14 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       animation: rpPulse 2s ease-in-out infinite;
     }
     @keyframes rpPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-    .rp-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+
+    /* ============ ACTION BUTTONS ============ */
+    .rp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .rp-btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 14px;
+      padding: 9px 16px;
       border-radius: 20px;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.08);
@@ -788,29 +772,48 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
       font-family: inherit;
+      position: relative;
+      overflow: hidden;
     }
+    .rp-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.2), rgba(232, 121, 249, 0.2));
+      opacity: 0;
+      transition: opacity 0.25s;
+      z-index: 0;
+    }
+    .rp-btn > * { position: relative; z-index: 1; }
     .rp-btn:hover {
-      background: rgba(192, 132, 252, 0.15);
-      border-color: rgba(192, 132, 252, 0.4);
+      background: rgba(192, 132, 252, 0.12);
+      border-color: rgba(192, 132, 252, 0.5);
       color: #fff;
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(192, 132, 252, 0.25);
     }
+    .rp-btn:hover::before { opacity: 1; }
+    .rp-btn:active { transform: translateY(0); }
     .rp-btn.active {
-      background: linear-gradient(135deg, rgba(192, 132, 252, 0.25), rgba(232, 121, 249, 0.25));
-      border-color: rgba(192, 132, 252, 0.6);
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.3));
+      border-color: rgba(192, 132, 252, 0.7);
       color: #e879f9;
+      box-shadow: 0 4px 16px rgba(232, 121, 249, 0.4);
     }
-    .rp-btn.active svg { fill: #e879f9; stroke: #e879f9; }
+    .rp-btn.active svg { fill: #e879f9; stroke: #e879f9; animation: rpBtnPop 0.35s ease-out; }
+    @keyframes rpBtnPop { 0% { transform: scale(1); } 50% { transform: scale(1.35); } 100% { transform: scale(1); } }
     .rp-btn-next {
       background: linear-gradient(135deg, #c084fc, #e879f9);
       color: #fff;
       border-color: transparent;
+      box-shadow: 0 4px 16px rgba(192, 132, 252, 0.35);
     }
     .rp-btn-next:hover {
       background: linear-gradient(135deg, #d8b4fe, #f0abfc);
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(192, 132, 252, 0.5);
     }
 
     /* ============ DESCRIPTION ============ */
@@ -821,12 +824,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       border-radius: 12px;
       padding: 14px 16px;
     }
-    .rp-desc-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
+    .rp-desc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
     .rp-desc-title {
       display: flex;
       align-items: center;
@@ -863,48 +861,27 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
     .rp-desc-body.expanded { max-height: 1000px; }
     .rp-desc-body p { margin: 0; white-space: pre-wrap; }
 
-    /* ============ COMMENTS ============ */
-    .rp-comments {
-      margin-top: 28px;
-      padding-top: 24px;
-      border-top: 1px solid rgba(192, 132, 252, 0.12);
-    }
-    .rp-comments-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-    .rp-comments-title {
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 18px;
-      font-weight: 700;
-      color: #fff;
-      margin: 0;
-    }
+    /* ============ COMMENTS — PREMIUM ============ */
+    .rp-comments { margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(192, 132, 252, 0.12); }
+    .rp-comments-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .rp-comments-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 700; color: #fff; margin: 0; }
     .rp-sort-btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
-      background: transparent;
-      border: 0;
-      color: rgba(255, 255, 255, 0.7);
+      padding: 7px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.75);
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      border-radius: 8px;
+      border-radius: 20px;
       font-family: inherit;
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
-    .rp-sort-btn:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
-    .rp-comment-input-row {
-      display: grid;
-      grid-template-columns: 40px 1fr;
-      gap: 14px;
-      margin-bottom: 24px;
-      align-items: start;
-    }
+    .rp-sort-btn:hover { background: rgba(192, 132, 252, 0.1); border-color: rgba(192, 132, 252, 0.3); color: #fff; }
+    .rp-comment-input-row { display: grid; grid-template-columns: 40px 1fr; gap: 14px; margin-bottom: 24px; align-items: start; }
     .rp-my-av {
       width: 40px !important;
       height: 40px !important;
@@ -920,6 +897,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       font-size: 15px !important;
       font-family: 'Bricolage Grotesque', sans-serif !important;
       flex-shrink: 0 !important;
+      box-shadow: 0 3px 10px rgba(192, 132, 252, 0.35);
     }
     .rp-comment-input-wrap { min-width: 0; }
     .rp-comment-input {
@@ -927,54 +905,50 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       background: transparent;
       border: 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 8px 0;
+      padding: 10px 0;
       color: #fff;
       font-size: 14px;
       font-family: inherit;
       outline: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.25s;
     }
-    .rp-comment-input:focus { border-bottom-color: #c084fc; }
+    .rp-comment-input:focus { border-bottom-color: #c084fc; border-bottom-width: 2px; }
     .rp-comment-input::placeholder { color: rgba(255, 255, 255, 0.4); }
-    .rp-comment-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 10px;
-    }
+    .rp-comment-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
     .rp-cancel-btn, .rp-submit-btn {
-      padding: 8px 16px;
-      border-radius: 18px;
+      padding: 9px 20px;
+      border-radius: 20px;
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
       border: 0;
       font-family: inherit;
-      transition: all 0.2s;
+      transition: all 0.25s;
     }
-    .rp-cancel-btn {
-      background: transparent;
-      color: rgba(255, 255, 255, 0.7);
-    }
-    .rp-cancel-btn:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
-    .rp-submit-btn {
-      background: linear-gradient(135deg, #c084fc, #e879f9);
-      color: #fff;
-    }
-    .rp-submit-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4); }
-    .rp-comments-list { display: flex; flex-direction: column; gap: 18px; }
+    .rp-cancel-btn { background: transparent; color: rgba(255, 255, 255, 0.7); }
+    .rp-cancel-btn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+    .rp-submit-btn { background: linear-gradient(135deg, #c084fc, #e879f9); color: #fff; box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4); }
+    .rp-submit-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(192, 132, 252, 0.55); }
+    .rp-comments-list { display: flex; flex-direction: column; gap: 20px; }
     .rp-comments-empty {
-      padding: 30px 20px;
+      padding: 40px 20px;
       text-align: center;
       color: rgba(255, 255, 255, 0.5);
       font-size: 14px;
+      background: rgba(28, 15, 61, 0.3);
+      border-radius: 12px;
+      border: 1px dashed rgba(192, 132, 252, 0.2);
     }
     .rp-comment {
       display: grid;
       grid-template-columns: 40px 1fr;
       gap: 14px;
       align-items: start;
+      padding: 4px;
+      border-radius: 12px;
+      transition: background 0.2s;
     }
+    .rp-comment:hover { background: rgba(192, 132, 252, 0.04); }
     .rp-c-avatar {
       width: 40px !important;
       height: 40px !important;
@@ -989,15 +963,10 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       font-size: 15px !important;
       font-family: 'Bricolage Grotesque', sans-serif !important;
       flex-shrink: 0 !important;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
     }
     .rp-c-body { min-width: 0; }
-    .rp-c-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 4px;
-      flex-wrap: wrap;
-    }
+    .rp-c-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
     .rp-c-name { font-size: 13px; font-weight: 700; color: #fff; }
     .rp-c-time {
       font-size: 12px;
@@ -1007,8 +976,8 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
     .rp-c-text {
       font-size: 14px;
       color: rgba(255, 255, 255, 0.9);
-      line-height: 1.5;
-      margin: 0 0 8px;
+      line-height: 1.55;
+      margin: 0 0 10px;
       word-wrap: break-word;
     }
     .rp-c-actions { display: flex; align-items: center; gap: 4px; }
@@ -1016,57 +985,69 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 10px;
+      padding: 7px 12px;
       background: transparent;
-      border: 0;
+      border: 1px solid transparent;
       color: rgba(255, 255, 255, 0.7);
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      border-radius: 16px;
+      border-radius: 18px;
       font-family: inherit;
       transition: all 0.2s;
     }
-    .rp-c-btn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
-    .rp-c-btn.active { color: #c084fc; }
-    .rp-c-btn.active svg { fill: #c084fc; }
-    .rp-c-reply-btn { padding: 6px 12px; font-weight: 700; }
-    .rp-c-reply-btn:hover { color: #c084fc; }
+    .rp-c-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .rp-c-btn.active {
+      background: rgba(192, 132, 252, 0.15);
+      color: #e879f9;
+      border-color: rgba(192, 132, 252, 0.4);
+    }
+    .rp-c-btn.active svg {
+      fill: #e879f9;
+      animation: rpBtnPop 0.35s ease-out;
+    }
+    .rp-c-reply-btn { padding: 7px 14px; font-weight: 700; }
+    .rp-c-reply-btn:hover { color: #c084fc; background: rgba(192, 132, 252, 0.1); }
     .rp-c-count {
       font-size: 12px;
       color: rgba(255, 255, 255, 0.7);
       margin: 0 4px;
       font-family: 'JetBrains Mono', monospace;
       min-width: 12px;
+      font-weight: 700;
     }
-    .rp-c-replies { margin-top: 12px; display: flex; flex-direction: column; gap: 14px; }
+    .rp-c-replies { margin-top: 14px; display: flex; flex-direction: column; gap: 14px; padding-left: 6px; border-left: 2px solid rgba(192, 132, 252, 0.15); padding-left: 14px; }
     .rp-c-reply { display: grid; grid-template-columns: 32px 1fr; gap: 12px; align-items: start; }
     .rp-c-reply .rp-c-avatar { width: 32px !important; height: 32px !important; min-width: 32px !important; max-width: 32px !important; font-size: 13px !important; }
     .rp-c-reply-toggle {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
+      padding: 7px 14px;
       margin-top: 8px;
-      background: transparent;
-      border: 0;
+      background: rgba(192, 132, 252, 0.08);
+      border: 1px solid rgba(192, 132, 252, 0.2);
       color: #c084fc;
       font-size: 13px;
       font-weight: 700;
       cursor: pointer;
-      border-radius: 16px;
+      border-radius: 18px;
       font-family: inherit;
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
-    .rp-c-reply-toggle:hover { background: rgba(192, 132, 252, 0.1); }
-    .rp-c-reply-form { margin-top: 10px; display: grid; grid-template-columns: 32px 1fr; gap: 12px; }
+    .rp-c-reply-toggle:hover { background: rgba(192, 132, 252, 0.15); border-color: rgba(192, 132, 252, 0.4); transform: translateY(-1px); }
+    .rp-c-reply-form { margin-top: 12px; display: grid; grid-template-columns: 32px 1fr; gap: 12px; }
     .rp-c-reply-form .rp-my-av { width: 32px !important; height: 32px !important; min-width: 32px !important; max-width: 32px !important; font-size: 13px !important; }
     .rp-c-reply-input {
       width: 100%;
       background: transparent;
       border: 0;
       border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 6px 0;
+      padding: 7px 0;
       color: #fff;
       font-size: 13px;
       font-family: inherit;
@@ -1076,17 +1057,8 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
     .rp-c-reply-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 
     /* ============ MORE LIKE THIS ============ */
-    .rp-more-section {
-      margin-top: 40px;
-      padding-top: 24px;
-      border-top: 1px solid rgba(192, 132, 252, 0.12);
-    }
-    .rp-section-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
+    .rp-more-section { margin-top: 40px; padding-top: 24px; border-top: 1px solid rgba(192, 132, 252, 0.12); }
+    .rp-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
     .rp-section-title {
       display: flex;
       align-items: center;
@@ -1141,7 +1113,349 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
     }
     @keyframes rpSpin { to { transform: rotate(360deg); } }
 
-    /* ============ SIDEBAR ============ */
+    /* ============ SIDEBAR — PREMIUM ACCORDION EPISODES BOX ============ */
+    .rp-ep-box {
+      background: linear-gradient(180deg, rgba(28, 15, 61, 0.7) 0%, rgba(28, 15, 61, 0.4) 100%);
+      border: 1px solid rgba(192, 132, 252, 0.2);
+      border-radius: 16px;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(192, 132, 252, 0.05) inset;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 100px);
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .rp-ep-box.collapsed {
+      max-height: 76px;
+    }
+    .rp-ep-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.12), rgba(232, 121, 249, 0.08));
+      border: 0;
+      border-bottom: 1px solid rgba(192, 132, 252, 0.18);
+      cursor: pointer;
+      width: 100%;
+      color: #fff;
+      font-family: inherit;
+      transition: background 0.25s;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .rp-ep-header:hover { background: linear-gradient(135deg, rgba(192, 132, 252, 0.18), rgba(232, 121, 249, 0.12)); }
+    .rp-ep-box.collapsed .rp-ep-header { border-bottom-color: transparent; }
+    .rp-ep-head-left { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+    .rp-ep-icon {
+      width: 38px;
+      height: 38px;
+      min-width: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(192, 132, 252, 0.4);
+    }
+    .rp-ep-head-text { min-width: 0; text-align: left; }
+    .rp-ep-head-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.2;
+      letter-spacing: -0.2px;
+    }
+    .rp-ep-head-sub {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 3px;
+      flex-wrap: wrap;
+    }
+    .rp-ep-count {
+      display: inline-block;
+      padding: 2px 8px;
+      background: rgba(192, 132, 252, 0.25);
+      border-radius: 10px;
+      color: #fff;
+      font-weight: 800;
+    }
+    .rp-ep-dot { opacity: 0.4; }
+    .rp-ep-current { color: #e879f9; font-weight: 700; }
+    .rp-ep-hd {
+      display: inline-block;
+      padding: 2px 7px;
+      background: linear-gradient(135deg, #10b981, #34d399);
+      color: #fff;
+      font-weight: 800;
+      border-radius: 4px;
+      font-size: 9px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    }
+    .rp-ep-head-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+    /* Autoplay Mini Toggle */
+    .rp-autoplay-mini { display: inline-flex; align-items: center; cursor: pointer; }
+    .rp-autoplay-mini input { display: none; }
+    .rp-switch-mini {
+      position: relative;
+      width: 32px;
+      height: 18px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 9px;
+      transition: background 0.25s;
+      display: block;
+    }
+    .rp-switch-mini::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    .rp-autoplay-mini input:checked + .rp-switch-mini {
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      box-shadow: 0 0 10px rgba(232, 121, 249, 0.5);
+    }
+    .rp-autoplay-mini input:checked + .rp-switch-mini::after { transform: translateX(14px); }
+
+    /* Chevron */
+    .rp-ep-chevron {
+      color: #fff;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+    }
+    .rp-ep-box.collapsed .rp-ep-chevron { transform: rotate(-90deg); }
+
+    /* Body */
+    .rp-ep-body {
+      overflow: hidden;
+      transition: opacity 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      flex: 1;
+    }
+    .rp-ep-box.collapsed .rp-ep-body { opacity: 0; pointer-events: none; }
+    .rp-ep-scroll {
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px 10px;
+      flex: 1;
+      min-height: 0;
+    }
+    .rp-ep-scroll::-webkit-scrollbar { width: 6px; }
+    .rp-ep-scroll::-webkit-scrollbar-track { background: transparent; }
+    .rp-ep-scroll::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(192, 132, 252, 0.4), rgba(232, 121, 249, 0.4));
+      border-radius: 3px;
+    }
+    .rp-ep-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(192, 132, 252, 0.6), rgba(232, 121, 249, 0.6)); }
+
+    /* Episode Card */
+    .rp-ext-ep-card {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(192, 132, 252, 0.08);
+      border-radius: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .rp-ext-ep-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.15), rgba(232, 121, 249, 0.15));
+      opacity: 0;
+      transition: opacity 0.25s;
+      z-index: 0;
+    }
+    .rp-ext-ep-card > * { position: relative; z-index: 1; }
+    .rp-ext-ep-card:hover {
+      border-color: rgba(192, 132, 252, 0.5);
+      transform: translateX(3px);
+      box-shadow: 0 6px 20px rgba(192, 132, 252, 0.2);
+    }
+    .rp-ext-ep-card:hover::before { opacity: 1; }
+    .rp-ext-ep-card:hover .rp-ext-ep-play-mini {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    .rp-ext-ep-card:hover .rp-ext-ep-thumb img {
+      transform: scale(1.08);
+    }
+    .rp-ext-ep-card.active {
+      background: linear-gradient(135deg, rgba(192, 132, 252, 0.25), rgba(232, 121, 249, 0.2));
+      border-color: rgba(232, 121, 249, 0.7);
+      box-shadow: 0 8px 24px rgba(192, 132, 252, 0.3), 0 0 0 1px rgba(232, 121, 249, 0.3) inset;
+    }
+    .rp-ext-ep-card.active::before { opacity: 0; }
+
+    .rp-ext-ep-thumb {
+      position: relative;
+      width: 130px;
+      height: 78px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1a0f3d;
+      border: 1px solid rgba(192, 132, 252, 0.2);
+    }
+    .rp-ext-ep-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .rp-ext-ep-num-fallback {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      color: #fff;
+      font-weight: 800;
+      font-size: 22px;
+      font-family: 'Bricolage Grotesque', sans-serif;
+    }
+    .rp-ext-ep-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 45%, rgba(0, 0, 0, 0.8) 100%);
+      z-index: 1;
+    }
+    .rp-ext-ep-num-badge {
+      position: absolute;
+      bottom: 5px;
+      left: 5px;
+      padding: 3px 7px;
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      border-radius: 4px;
+      z-index: 3;
+      letter-spacing: 0.3px;
+      backdrop-filter: blur(4px);
+    }
+    .rp-ext-ep-play-mini {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.6);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      opacity: 0;
+      z-index: 4;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 4px 16px rgba(192, 132, 252, 0.6);
+    }
+    .rp-ext-ep-play-mini svg { margin-left: 2px; }
+    .rp-ext-ep-playing-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(52, 211, 153, 0.35));
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .rp-ext-ep-playing-wave {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      z-index: 3;
+    }
+    .rp-ext-ep-playing-wave span {
+      display: block;
+      width: 3px;
+      background: #fff;
+      border-radius: 2px;
+      animation: rpEpWave 1s ease-in-out infinite;
+      box-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
+    }
+    .rp-ext-ep-playing-wave span:nth-child(1) { height: 8px; animation-delay: 0s; }
+    .rp-ext-ep-playing-wave span:nth-child(2) { height: 16px; animation-delay: 0.15s; }
+    .rp-ext-ep-playing-wave span:nth-child(3) { height: 12px; animation-delay: 0.3s; }
+    .rp-ext-ep-playing-wave span:nth-child(4) { height: 18px; animation-delay: 0.45s; }
+    @keyframes rpEpWave {
+      0%, 100% { transform: scaleY(0.4); opacity: 0.7; }
+      50% { transform: scaleY(1); opacity: 1; }
+    }
+    .rp-ext-ep-card.active .rp-ext-ep-thumb {
+      border-color: rgba(16, 185, 129, 0.7);
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+    }
+    .rp-ext-ep-info { min-width: 0; padding: 2px 4px 2px 0; }
+    .rp-ext-ep-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.2;
+      font-family: 'Bricolage Grotesque', sans-serif;
+    }
+    .rp-ext-ep-meta {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.55);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .rp-ext-ep-card.active .rp-ext-ep-meta { color: #34d399; font-weight: 700; }
+    .rp-ep-live-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 8px #34d399;
+      animation: rpPulse 1.5s ease-in-out infinite;
+    }
+    .rp-ext-ep-card.has-real .rp-ext-ep-thumb {
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    /* ============ NORMAL SIDEBAR ============ */
     .rp-sidebar-head {
       display: flex;
       align-items: center;
@@ -1189,128 +1503,12 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       border-radius: 50%;
       transition: transform 0.2s;
     }
-    .rp-autoplay-label input:checked + .rp-switch {
-      background: linear-gradient(135deg, #c084fc, #e879f9);
-    }
+    .rp-autoplay-label input:checked + .rp-switch { background: linear-gradient(135deg, #c084fc, #e879f9); }
     .rp-autoplay-label input:checked + .rp-switch::after { transform: translateX(14px); }
 
-    /* ============ EXTERNAL EPISODES LIST ============ */
-    .rp-ext-episodes {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .rp-ext-ep-card {
-      display: grid;
-      grid-template-columns: 100px 1fr auto;
-      gap: 12px;
-      align-items: center;
-      padding: 10px 12px;
-      background: rgba(28, 15, 61, 0.4);
-      border: 1px solid rgba(192, 132, 252, 0.1);
-      border-radius: 10px;
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-      transition: all 0.2s ease;
-    }
-    .rp-ext-ep-card:hover {
-      background: rgba(192, 132, 252, 0.12);
-      border-color: rgba(192, 132, 252, 0.4);
-      transform: translateX(2px);
-    }
-    .rp-ext-ep-card.active {
-      background: linear-gradient(135deg, rgba(192, 132, 252, 0.25), rgba(232, 121, 249, 0.2));
-      border-color: rgba(192, 132, 252, 0.6);
-      box-shadow: 0 4px 16px rgba(192, 132, 252, 0.2);
-    }
-    .rp-ext-ep-thumb {
-      position: relative;
-      width: 100px;
-      height: 60px;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #1a0f3d;
-      border: 1px solid rgba(192, 132, 252, 0.2);
-    }
-    .rp-ext-ep-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    .rp-ext-ep-num-fallback {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #c084fc, #e879f9);
-      color: #fff;
-      font-weight: 800;
-      font-size: 20px;
-      font-family: 'Bricolage Grotesque', sans-serif;
-    }
-    .rp-ext-ep-num-badge {
-      position: absolute;
-      bottom: 4px;
-      left: 4px;
-      padding: 2px 6px;
-      background: rgba(0, 0, 0, 0.85);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 800;
-      font-family: 'JetBrains Mono', monospace;
-      border-radius: 4px;
-      z-index: 2;
-    }
-    .rp-ext-ep-active-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.4), rgba(52, 211, 153, 0.4));
-      z-index: 1;
-    }
-    .rp-ext-ep-card.active .rp-ext-ep-thumb {
-      border-color: rgba(16, 185, 129, 0.6);
-      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
-    }
-    .rp-ext-ep-info { min-width: 0; }
-    .rp-ext-ep-title {
-      font-size: 14px;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1.2;
-    }
-    .rp-ext-ep-meta {
-      font-size: 11px;
-      color: rgba(255, 255, 255, 0.55);
-      font-family: 'JetBrains Mono', monospace;
-      margin-top: 2px;
-    }
-    .rp-ext-ep-card.active .rp-ext-ep-meta { color: #10b981; }
-    .rp-ext-ep-playing {
-      display: flex;
-      align-items: flex-end;
-      gap: 3px;
-      padding-right: 4px;
-    }
-    .rp-ext-ep-playing span {
-      display: block;
-      width: 3px;
-      background: linear-gradient(180deg, #10b981, #34d399);
-      border-radius: 2px;
-      animation: rpEpWave 1s ease-in-out infinite;
-    }
-    .rp-ext-ep-playing span:nth-child(1) { height: 10px; animation-delay: 0s; }
-    .rp-ext-ep-playing span:nth-child(2) { height: 16px; animation-delay: 0.2s; }
-    .rp-ext-ep-playing span:nth-child(3) { height: 12px; animation-delay: 0.4s; }
-    @keyframes rpEpWave {
-      0%, 100% { transform: scaleY(0.4); }
-      50% { transform: scaleY(1); }
-    }
-
-    /* ============ NORMAL SIDEBAR (Up Next) ============ */
-    .rp-side-list { display: flex; flex-direction: column; gap: 10px; }
+    .rp-side-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: calc(100vh - 200px); padding-right: 4px; }
+    .rp-side-list::-webkit-scrollbar { width: 6px; }
+    .rp-side-list::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.3); border-radius: 3px; }
     .rp-side-card {
       display: grid;
       grid-template-columns: 168px 1fr;
@@ -1389,11 +1587,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .rp-side-meta {
-      font-size: 10px;
-      color: rgba(255, 255, 255, 0.4);
-      font-family: 'JetBrains Mono', monospace;
-    }
+    .rp-side-meta { font-size: 10px; color: rgba(255, 255, 255, 0.4); font-family: 'JetBrains Mono', monospace; }
     .rp-side-ad {
       display: grid;
       grid-template-columns: 168px 1fr;
@@ -1407,10 +1601,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       border: 1px solid rgba(251, 191, 36, 0.3);
       transition: all 0.2s;
     }
-    .rp-side-ad:hover {
-      background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(249, 115, 22, 0.15));
-      border-color: rgba(251, 191, 36, 0.6);
-    }
+    .rp-side-ad:hover { background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(249, 115, 22, 0.15)); border-color: rgba(251, 191, 36, 0.6); }
     .rp-side-ad .rp-side-badge { background: linear-gradient(135deg, #fbbf24, #f97316); }
     .rp-side-ad-price {
       font-size: 13px;
@@ -1420,14 +1611,8 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       margin-top: 2px;
     }
 
-    /* ============ FEED CARDS (home style .at-na-card) ============ */
-    .at-na-card {
-      display: block;
-      cursor: pointer;
-      text-decoration: none;
-      color: inherit;
-      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
+    /* ============ FEED CARDS ============ */
+    .at-na-card { display: block; cursor: pointer; text-decoration: none; color: inherit; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
     .at-na-card:hover { transform: translateY(-4px); }
     .at-na-thumb {
       position: relative;
@@ -1440,18 +1625,8 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
       transition: border-color 0.3s, box-shadow 0.3s;
     }
-    .at-na-card:hover .at-na-thumb {
-      border-color: rgba(192, 132, 252, 0.5);
-      box-shadow: 0 8px 24px rgba(192, 132, 252, 0.25);
-    }
-    .at-na-img {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: transform 0.5s;
-    }
+    .at-na-card:hover .at-na-thumb { border-color: rgba(192, 132, 252, 0.5); box-shadow: 0 8px 24px rgba(192, 132, 252, 0.25); }
+    .at-na-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
     .at-na-card:hover .at-na-img { transform: scale(1.06); }
     .at-na-shine {
       position: absolute;
@@ -1488,10 +1663,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       z-index: 3;
       box-shadow: 0 4px 20px rgba(192, 132, 252, 0.6);
     }
-    .at-na-card:hover .at-na-play {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
+    .at-na-card:hover .at-na-play { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     .at-na-play svg { width: 18px; height: 18px; color: #fff; margin-left: 2px; }
     .at-na-badge {
       position: absolute;
@@ -1573,23 +1745,18 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
     }
     .at-na-ad .at-na-thumb { border-color: rgba(251, 191, 36, 0.3); }
     .at-na-ad .at-na-badge { background: linear-gradient(135deg, #fbbf24, #f97316); }
-    .at-na-ad-price {
-      font-size: 14px;
-      font-weight: 800;
-      color: #fbbf24;
-      font-family: 'JetBrains Mono', monospace;
-      margin-top: 4px;
-    }
+    .at-na-ad-price { font-size: 14px; font-weight: 800; color: #fbbf24; font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
 
     /* ============ RESPONSIVE ============ */
-    @media (max-width: 1200px) {
-      .rp-grid { grid-template-columns: minmax(0, 1fr) 340px; }
-      .rp-side-card, .rp-side-ad { grid-template-columns: 140px 1fr; }
-      .rp-side-thumb { width: 140px; padding-top: 79px; }
+    @media (max-width: 1280px) {
+      .rp-grid { grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; }
+      .rp-ext-ep-card { grid-template-columns: 110px 1fr; }
+      .rp-ext-ep-thumb { width: 110px; height: 66px; }
     }
-    @media (max-width: 960px) {
+    @media (max-width: 1024px) {
       .rp-grid { grid-template-columns: 1fr; }
       .rp-sidebar { position: static; max-height: none; }
+      .rp-ep-box { max-height: 500px; }
       .rp-container { padding: 0 16px; }
       .rp-title { font-size: 18px; }
     }
@@ -1598,9 +1765,15 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       .rp-container { padding: 0 12px; }
       .rp-actions .rp-btn-lbl { display: none; }
       .rp-btn { padding: 8px 10px; }
+      .rp-btn-next { padding: 8px 14px; }
+      .rp-btn-next .rp-btn-lbl { display: inline; }
       .rp-feed-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-      .rp-side-card, .rp-side-ad { grid-template-columns: 130px 1fr; }
-      .rp-side-thumb { width: 130px; padding-top: 73px; }
+      .rp-ext-ep-card { grid-template-columns: 100px 1fr; padding: 6px; }
+      .rp-ext-ep-thumb { width: 100px; height: 60px; }
+      .rp-ext-ep-title { font-size: 13px; }
+      .rp-ep-head-title { font-size: 15px; }
+      .rp-ep-box { max-height: 450px; }
+      .rp-ep-box.collapsed { max-height: 72px; }
     }
   </style>
 
@@ -1636,7 +1809,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
           return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
         });
       }
-
       function timeAgo(ts) {
         var diff = Math.floor((Date.now() - ts) / 1000);
         if (diff < 60) return 'just now';
@@ -1645,7 +1817,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
         return Math.floor(diff / 2592000) + 'mo ago';
       }
-
       function hashColor(str) {
         var colors = [
           'linear-gradient(135deg, #c084fc, #e879f9)',
@@ -1661,7 +1832,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         for (var i = 0; i < str.length; i++) h = (h << 5) - h + str.charCodeAt(i);
         return colors[Math.abs(h) % colors.length];
       }
-
       function randomDuration() {
         var mins = Math.floor(Math.random() * 25) + 3;
         var secs = Math.floor(Math.random() * 60);
@@ -1682,41 +1852,31 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       }
       function getInitial(name) { return (name || 'A').charAt(0).toUpperCase(); }
 
-      // ============ HISTORY / LIKE / SAVE ============
       function saveToHistory() {
         try {
           var hist = JSON.parse(localStorage.getItem('anitube_history') || '[]');
           hist = hist.filter(function(h) { return h.id !== currentId; });
           hist.unshift({
-            id: currentId,
-            title: currentVideo.title,
-            channel: currentVideo.channel,
-            thumbnail: currentVideo.thumbnail,
-            type: currentVideo.type,
-            watchedAt: Date.now()
+            id: currentId, title: currentVideo.title, channel: currentVideo.channel,
+            thumbnail: currentVideo.thumbnail, type: currentVideo.type, watchedAt: Date.now()
           });
           if (hist.length > 100) hist = hist.slice(0, 100);
           localStorage.setItem('anitube_history', JSON.stringify(hist));
         } catch (e) {}
       }
       function isLiked() {
-        try {
-          var liked = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
-          return liked.indexOf(currentId) !== -1;
-        } catch (e) { return false; }
+        try { return JSON.parse(localStorage.getItem('anitube_liked') || '[]').indexOf(currentId) !== -1; }
+        catch (e) { return false; }
       }
       function isSaved() {
-        try {
-          var saved = JSON.parse(localStorage.getItem('anitube_saved') || '[]');
-          return saved.some(function(s) { return s.id === currentId; });
-        } catch (e) { return false; }
+        try { return JSON.parse(localStorage.getItem('anitube_saved') || '[]').some(function(s) { return s.id === currentId; }); }
+        catch (e) { return false; }
       }
       function toggleLike() {
         try {
           var liked = JSON.parse(localStorage.getItem('anitube_liked') || '[]');
           var idx = liked.indexOf(currentId);
-          if (idx === -1) liked.push(currentId);
-          else liked.splice(idx, 1);
+          if (idx === -1) liked.push(currentId); else liked.splice(idx, 1);
           localStorage.setItem('anitube_liked', JSON.stringify(liked));
           updateLikeBtn();
         } catch (e) {}
@@ -1727,14 +1887,8 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
           var idx = -1;
           for (var i = 0; i < saved.length; i++) if (saved[i].id === currentId) { idx = i; break; }
           if (idx === -1) {
-            saved.unshift({
-              id: currentId,
-              title: currentVideo.title,
-              channel: currentVideo.channel,
-              thumbnail: currentVideo.thumbnail,
-              type: currentVideo.type,
-              savedAt: Date.now()
-            });
+            saved.unshift({ id: currentId, title: currentVideo.title, channel: currentVideo.channel,
+              thumbnail: currentVideo.thumbnail, type: currentVideo.type, savedAt: Date.now() });
           } else saved.splice(idx, 1);
           localStorage.setItem('anitube_saved', JSON.stringify(saved));
           updateSaveBtn();
@@ -1743,23 +1897,20 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
       function updateLikeBtn() {
         var btn = document.getElementById('likeBtn');
         if (!btn) return;
-        if (isLiked()) btn.classList.add('active');
-        else btn.classList.remove('active');
+        if (isLiked()) btn.classList.add('active'); else btn.classList.remove('active');
       }
       function updateSaveBtn() {
         var btn = document.getElementById('saveBtn');
         if (!btn) return;
-        if (isSaved()) btn.classList.add('active');
-        else btn.classList.remove('active');
+        if (isSaved()) btn.classList.add('active'); else btn.classList.remove('active');
       }
 
       function hideVideoLoader() {
         var l = document.getElementById('videoLoader');
         if (l) l.classList.add('hidden');
       }
-
       function setupDoubleTap() {
-        if (isExternal) return; // No double-tap for external
+        if (isExternal) return;
         var frame = document.querySelector('.rp-player-frame');
         var heart = document.getElementById('doubleTapHeart');
         if (!frame || !heart) return;
@@ -1775,7 +1926,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
           last = now;
         });
       }
-
       function doShare() {
         var url = window.location.href;
         if (navigator.share) {
@@ -1793,7 +1943,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
           }
         }
       }
-
       function setupDescToggle() {
         var btn = document.getElementById('descToggle');
         var body = document.getElementById('descContent');
@@ -1808,7 +1957,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
           }
         });
       }
-
       function getUsername() {
         var name = localStorage.getItem('anitube_username');
         if (!name) {
@@ -1819,7 +1967,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         return name;
       }
 
-      // ============ COMMENTS ============
       function getComments() {
         try { return JSON.parse(localStorage.getItem('anitube_chat_' + currentId) || '[]'); }
         catch (e) { return []; }
@@ -1988,11 +2135,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         }
         if (!input || !actions || !cancel || !submit) return;
         input.addEventListener('focus', function() { actions.style.display = 'flex'; });
-        cancel.addEventListener('click', function() {
-          input.value = '';
-          actions.style.display = 'none';
-          input.blur();
-        });
+        cancel.addEventListener('click', function() { input.value = ''; actions.style.display = 'none'; input.blur(); });
         submit.addEventListener('click', function() {
           if (!input.value.trim()) return;
           var comments = getComments();
@@ -2007,7 +2150,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         });
       }
 
-      // ============ SIDEBAR CARDS (normal mode) ============
       function makeSidebarCard(v) {
         var badge = '';
         if (v.isNew) badge = '<div class="rp-side-badge">NEW</div>';
@@ -2040,8 +2182,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         html += '</div></a>';
         return html;
       }
-
-      // ============ MORE FEED CARDS ============
       function makeFeedCard(v) {
         var badge = '';
         if (v.isNew) badge = '<div class="at-na-badge">NEW</div>';
@@ -2076,7 +2216,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         html += '</div></a>';
         return html;
       }
-
       function renderSidebar() {
         var el = document.getElementById('relatedFeed');
         if (!el) return;
@@ -2185,7 +2324,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
 
       function goNext() {
         if (isExternal && extEpisodes.length > 0) {
-          // Find next episode
           for (var i = 0; i < extEpisodes.length; i++) {
             if (extEpisodes[i].number === extCurrentEp + 1) {
               window.location.href = '/reels/' + extEpisodes[i].embedId;
@@ -2197,7 +2335,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
           window.location.href = '/reels/' + sidebarItems[0].id;
         }
       }
-
       function setupAutoplay() {
         var toggle = document.getElementById('autoplayToggle');
         if (!toggle) return;
@@ -2222,14 +2359,14 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         }, 150);
       }
 
-             function setupIframe() {
+      function setupIframe() {
         var iframe = document.getElementById('videoFrame');
         if (!iframe) return;
         iframe.addEventListener('load', hideVideoLoader);
         setTimeout(hideVideoLoader, 3500);
       }
 
-      // ============ DYNAMIC IFRAME SCALING (Cross-origin crop) ============
+      // ============ EXTERNAL IFRAME CROP (Cross-origin) ============
       function setupExternalCrop() {
         var PAGE_VIEWPORT_W = 1121;
         var VIDEO_W = 950;
@@ -2242,7 +2379,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         var iframe = document.getElementById('videoFrame');
         if (!wrap || !iframe) return;
 
-        // Set iframe intrinsic size (untransformed)
         iframe.style.width = PAGE_VIEWPORT_W + 'px';
         iframe.style.height = PAGE_HEIGHT + 'px';
         iframe.style.left = '0';
@@ -2252,15 +2388,12 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         function updateCrop() {
           var containerWidth = Math.max(1, wrap.clientWidth);
           var s = containerWidth / VIDEO_W;
-          s = Math.max(0.45, Math.min(1.6, s));
-
-          var translateX = -VIDEO_LEFT;
-          var translateY = -VIDEO_TOP;
-
+          s = Math.max(0.3, Math.min(1.8, s));
+          var translateX = -VIDEO_LEFT * s;
+          var translateY = -VIDEO_TOP * s;
           iframe.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + s + ')';
           iframe.style.webkitTransform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + s + ')';
-
-          var visibleHeight = Math.ceil(VIDEO_H * s + 8);
+          var visibleHeight = Math.ceil(VIDEO_H * s);
           wrap.style.height = visibleHeight + 'px';
         }
 
@@ -2275,6 +2408,7 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
 
         window.addEventListener('load', scheduleUpdate, { passive: true });
         window.addEventListener('resize', scheduleUpdate, { passive: true });
+        window.addEventListener('orientationchange', scheduleUpdate, { passive: true });
         scheduleUpdate();
 
         if ('ResizeObserver' in window) {
@@ -2284,30 +2418,51 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
           } catch (e) {}
         }
 
-        // Also update after iframe loads (content may shift)
         iframe.addEventListener('load', function() {
           setTimeout(scheduleUpdate, 100);
           setTimeout(scheduleUpdate, 500);
           setTimeout(scheduleUpdate, 1500);
+          setTimeout(scheduleUpdate, 3000);
         });
 
-        // Block right-click on wrapper (not iframe content — cross-origin)
-        wrap.addEventListener('contextmenu', function(e) {
-          e.preventDefault();
+        wrap.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+      }
+
+      // ============ EPISODE ACCORDION ============
+      function setupEpisodeAccordion() {
+        var box = document.getElementById('epBox');
+        var header = document.getElementById('epHeader');
+        if (!box || !header) return;
+
+        // Restore saved state (default: expanded)
+        try {
+          var savedState = localStorage.getItem('anitube_ep_collapsed');
+          if (savedState === 'true') box.classList.add('collapsed');
+        } catch (e) {}
+
+        header.addEventListener('click', function() {
+          box.classList.toggle('collapsed');
+          var isCollapsed = box.classList.contains('collapsed');
+          try { localStorage.setItem('anitube_ep_collapsed', isCollapsed ? 'true' : 'false'); } catch (e) {}
+          header.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
         });
       }
-      // Scroll active episode into view (external mode)
+
       function scrollActiveEpisode() {
         if (!isExternal) return;
         setTimeout(function() {
           var active = document.querySelector('.rp-ext-ep-card.active');
-          if (active && active.scrollIntoView) {
-            active.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          var scroller = document.getElementById('externalEpisodes');
+          if (active && scroller) {
+            var activeTop = active.offsetTop;
+            var scrollerHeight = scroller.clientHeight;
+            var activeHeight = active.clientHeight;
+            scroller.scrollTop = Math.max(0, activeTop - (scrollerHeight / 2) + (activeHeight / 2));
           }
-        }, 800);
+        }, 400);
       }
 
-        function init() {
+      function init() {
         saveToHistory();
         updateLikeBtn();
         updateSaveBtn();
@@ -2319,9 +2474,10 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         renderComments();
         initFeeds();
         loadProducts();
-        scrollActiveEpisode();
         if (isExternal) {
-         setupExternalCrop();
+          setupExternalCrop();
+          setupEpisodeAccordion();
+          scrollActiveEpisode();
         }
         var likeBtn = document.getElementById('likeBtn');
         var saveBtn = document.getElementById('saveBtn');
@@ -2331,7 +2487,6 @@ const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.epis
         if (saveBtn) saveBtn.addEventListener('click', toggleSave);
         if (sendBtn) sendBtn.addEventListener('click', doShare);
         if (nextBtn) nextBtn.addEventListener('click', goNext);
-
         window.addEventListener('scroll', onScroll, { passive: true });
       }
 
