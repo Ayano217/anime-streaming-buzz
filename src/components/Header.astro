@@ -39,7 +39,7 @@ const navItems = [
           type="text" 
           id="quickSearch" 
           class="si-input" 
-          placeholder="Search or paste link..." 
+          placeholder="Search anime, caption, or paste link..." 
           autocomplete="off"
           spellcheck="false"
         />
@@ -89,7 +89,7 @@ const navItems = [
     </div>
   </div>
   
-  <!-- MOBILE SEARCH BAR — always visible below header on mobile -->
+  <!-- MOBILE SEARCH BAR -->
   <div class="mobile-search-bar">
     <div class="msb-inner" id="msbInner">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="color:rgba(192,132,252,0.8);flex-shrink:0">
@@ -100,7 +100,7 @@ const navItems = [
         type="text" 
         id="mobileSearch" 
         class="msb-input" 
-        placeholder="Search anime or paste link..." 
+        placeholder="Search anime, caption, or paste link..." 
         autocomplete="off" 
         spellcheck="false" 
       />
@@ -136,13 +136,13 @@ const navItems = [
     <div class="url-toast-spin"></div>
     <div class="url-toast-text">
       <span class="url-toast-title" id="urlToastTitle">Detecting anime...</span>
-      <span class="url-toast-sub" id="urlToastSub">Analyzing link with AI</span>
+      <span class="url-toast-sub" id="urlToastSub">Searching database</span>
     </div>
     <button class="url-toast-cancel" id="urlToastCancel" aria-label="Cancel">✕</button>
   </div>
 </div>
 
-<!-- 🎨 SIDE MENU -->
+<!-- SIDE MENU -->
 <div id="sideMenu" class="side-menu">
   <div class="side-menu-backdrop" id="sideMenuBackdrop"></div>
   <aside class="side-menu-panel">
@@ -200,32 +200,6 @@ const navItems = [
       <div class="sm-divider"></div>
 
       <div class="sm-section">
-        <div class="sm-section-label">Community <span class="sm-coming-badge">Soon</span></div>
-        <div class="sm-item sm-item-disabled">
-          <div class="sm-item-icon sm-icon-grad">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-            </svg>
-          </div>
-          <div class="sm-item-label">Global Chat</div>
-          <span class="sm-live-dot"></span>
-        </div>
-        <div class="sm-item sm-item-disabled">
-          <div class="sm-item-icon sm-icon-grad">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-          </div>
-          <div class="sm-item-label">Friends & Messages</div>
-        </div>
-      </div>
-
-      <div class="sm-divider"></div>
-
-      <div class="sm-section">
         <div class="sm-section-label">Settings</div>
         <button class="sm-item sm-item-btn" id="smThemeToggle">
           <div class="sm-item-icon sm-icon-purple">
@@ -251,22 +225,6 @@ const navItems = [
           </div>
           <div class="sm-item-label">Clear My Data</div>
         </button>
-      </div>
-
-      <div class="sm-divider"></div>
-
-      <div class="sm-section">
-        <div class="sm-section-label">About</div>
-        <a href="/about" class="sm-item">
-          <div class="sm-item-icon sm-icon-grad">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
-            </svg>
-          </div>
-          <div class="sm-item-label">About AniTubeBuzz</div>
-        </a>
       </div>
 
       <div class="sm-bottom-space"></div>
@@ -308,74 +266,6 @@ const navItems = [
     return String(s || '').toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
-  }
-
-  /* ═══ FUZZY MATCHING ═══ */
-  var ANIME_ALIASES = {
-    'jjk': 'jujutsu kaisen', 'jjjk': 'jujutsu kaisen',
-    'aot': 'attack on titan', 'snk': 'attack on titan',
-    'ds': 'demon slayer', 'kny': 'demon slayer',
-    'op': 'one piece', 'onep': 'one piece',
-    'mha': 'my hero academia', 'bnha': 'my hero academia',
-    'sao': 'sword art online',
-    'fmab': 'fullmetal alchemist brotherhood', 'fma': 'fullmetal alchemist',
-    'hxh': 'hunter x hunter',
-    'jjba': 'jojo bizarre adventure', 'jojo': 'jojo bizarre adventure',
-    'nge': 'neon genesis evangelion', 'eva': 'neon genesis evangelion',
-    'ccs': 'cardcaptor sakura',
-    'sds': 'seven deadly sins', 'nnt': 'seven deadly sins',
-    'natoro': 'naruto', 'nauto': 'naruto', 'narto': 'naruto',
-    'onepice': 'one piece', 'onepeice': 'one piece',
-    'csm': 'chainsaw man', 'chainsaw': 'chainsaw man',
-    'spy': 'spy x family', 'sxf': 'spy x family',
-    'rezero': 're zero',
-    'oshi': 'oshi no ko',
-    'frieren': 'sousou no frieren',
-    'bluelock': 'blue lock',
-    'mushoku': 'mushoku tensei',
-    'tokrev': 'tokyo revengers',
-    'tokyo rev': 'tokyo revengers'
-  };
-
-  function normalize(s) {
-    return String(s || '').toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s]/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
-  function expandQuery(q) {
-    var norm = normalize(q);
-    if (!norm) return [q];
-    var queries = [norm];
-    if (ANIME_ALIASES[norm]) queries.unshift(ANIME_ALIASES[norm]);
-    var words = norm.split(' ');
-    var expanded = words.map(function(w) { return ANIME_ALIASES[w] || w; }).join(' ');
-    if (expanded !== norm) queries.push(expanded);
-    return queries;
-  }
-
-  function scoreMatch(title, query) {
-    var t = normalize(title);
-    var q = normalize(query);
-    if (!t || !q) return 0;
-    if (t === q) return 100;
-    if (t.startsWith(q)) return 90;
-    if (t.indexOf(q) !== -1) return 80;
-    var qWords = q.split(' ');
-    var tWords = t.split(' ');
-    var matches = 0;
-    for (var i = 0; i < qWords.length; i++) {
-      for (var j = 0; j < tWords.length; j++) {
-        if (tWords[j].startsWith(qWords[i]) || (qWords[i].length > 3 && tWords[j].indexOf(qWords[i]) !== -1)) {
-          matches++; break;
-        }
-      }
-    }
-    if (matches > 0) return 40 + (matches / qWords.length) * 30;
-    return 0;
   }
 
   /* THEME */
@@ -426,7 +316,6 @@ const navItems = [
     document.body.style.overflow = 'hidden';
     updateMenuCounts();
     updateSmThemeTag();
-    loadUsername();
   }
   function closeSideMenu() {
     if (!sideMenu) return;
@@ -446,18 +335,6 @@ const navItems = [
       closeMobileSearchDD();
     }
   });
-
-  function loadUsername() {
-    try {
-      var un = localStorage.getItem('anitube_username');
-      var uEl = $('smUsername');
-      var subEl = $('smUserSub');
-      if (un && uEl) {
-        uEl.textContent = un;
-        if (subEl) subEl.textContent = '@' + un.toLowerCase().replace(/\s+/g, '_');
-      }
-    } catch(e) {}
-  }
 
   function updateMenuCounts() {
     try {
@@ -493,12 +370,44 @@ const navItems = [
     });
   }
 
-  /* ═══ SEARCH LOGIC ═══ */
+  /* ═══════════════════════════════════════
+     🔍 SEARCH LOGIC
+     Priority:
+     1. Check fb-anime.json (your database) 
+     2. Fallback to Kitsu (general anime search)
+  ═══════════════════════════════════════ */
+  
   var searchCache = {};
+
+  function searchFbDatabase(query, ctrl) {
+    return fetch('/api/fb-search?q=' + encodeURIComponent(query) + '&limit=8', {
+      signal: ctrl.signal
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data && data.success && data.results && data.results.length > 0) {
+          return data.results.map(function(item) {
+            return {
+              source: 'fb',
+              anime: item.anime,
+              title: item.title,
+              episode: item.episode,
+              caption: item.caption,
+              thumb: item.thumbnail || '',
+              confidence: item.confidence,
+              matchType: item.matchType,
+              watchUrl: item.watchUrl
+            };
+          });
+        }
+        return [];
+      })
+      .catch(function() { return []; });
+  }
 
   function searchKitsu(query, ctrl) {
     var url = 'https://kitsu.io/api/edge/anime?filter[text]=' + encodeURIComponent(query) + 
-              '&page[limit]=20&fields[anime]=canonicalTitle,titles,posterImage,averageRating,episodeCount,startDate,subtype,slug';
+              '&page[limit]=8&fields[anime]=canonicalTitle,titles,posterImage,averageRating,episodeCount,startDate,subtype,slug';
     return fetch(url, { signal: ctrl.signal, headers: { 'Accept': 'application/vnd.api+json' } })
       .then(function(r) { return r.json(); })
       .then(function(data) {
@@ -506,106 +415,136 @@ const navItems = [
         return data.data.map(function(item) {
           var attr = item.attributes || {};
           var poster = attr.posterImage || {};
-          var title = attr.canonicalTitle || (attr.titles ? (attr.titles.en || attr.titles.en_jp || attr.titles.ja_jp) : '') || 'Unknown';
+          var title = attr.canonicalTitle || 'Unknown';
           var year = attr.startDate ? String(attr.startDate).substring(0, 4) : '';
           var rating = attr.averageRating ? (parseFloat(attr.averageRating) / 10).toFixed(1) : '';
+          var slug = attr.slug || slugify(title);
           return {
-            id: item.id,
+            source: 'kitsu',
+            anime: slug,
             title: title,
-            thumb: poster.small || poster.tiny || poster.medium || '',
+            episode: 1,
+            thumb: poster.small || poster.tiny || '',
             year: year,
-            episodes: attr.episodeCount || null,
             rating: rating,
             subtype: attr.subtype || '',
-            slug: attr.slug || slugify(title)
+            episodes: attr.episodeCount || null,
+            watchUrl: '/reels/anime_' + encodeURIComponent(slug) + '_ep1'
           };
         });
-      });
+      })
+      .catch(function() { return []; });
   }
 
   function renderResults(results, query, dropdown) {
     if (!dropdown) return;
+    
     if (!results || results.length === 0) {
       dropdown.innerHTML =
         '<div class="hsr-empty">' +
         '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>' +
         '<div><div class="hsr-empty-t">No results for "' + esc(query) + '"</div>' +
-        '<div class="hsr-empty-s">Try different spelling</div></div></div>';
+        '<div class="hsr-empty-s">Try different keywords or paste a link</div></div></div>';
       dropdown.classList.add('open');
       return;
     }
 
-    var html = '<div class="hsr-hint">' + results.length + ' results</div>';
-    results.forEach(function(item) {
-      var thumb = item.thumb || '';
-      var title = item.title || 'Unknown';
-      var year = item.year || '';
-      var eps = item.episodes ? item.episodes + ' EP' : '';
-      var rating = item.rating || '';
-      var subtype = item.subtype || '';
-      var metaParts = [];
-      if (subtype) metaParts.push(subtype);
-      if (year) metaParts.push(year);
-      if (eps) metaParts.push(eps);
-      var slug = item.slug || slugify(title);
-      var href = '/reels/anime_' + encodeURIComponent(slug) + '_ep1';
-
-      html += '<a href="' + href + '" class="sd-card">';
-      html += '<div class="sd-thumb">';
-      if (thumb) html += '<img src="' + esc(thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'">';
-      html += '</div>';
-      html += '<div class="sd-body">';
-      html += '<div class="sd-title">' + esc(title) + '</div>';
-      html += '<div class="sd-meta">';
-      if (rating) html += '<span class="sd-rating">★ ' + rating + '</span>';
-      metaParts.forEach(function(p, idx) {
-        if (idx > 0 || rating) html += '<span class="sd-dot">·</span>';
-        html += '<span>' + esc(p) + '</span>';
+    // Separate FB results and Kitsu results
+    var fbResults = results.filter(function(r) { return r.source === 'fb'; });
+    var kitsuResults = results.filter(function(r) { return r.source === 'kitsu'; });
+    
+    var html = '';
+    
+    if (fbResults.length > 0) {
+      html += '<div class="hsr-hint hsr-hint-fb">🎬 From your Facebook posts</div>';
+      fbResults.forEach(function(item) {
+        html += buildFbCard(item);
       });
-      html += '</div></div></a>';
-    });
+    }
+    
+    if (kitsuResults.length > 0) {
+      html += '<div class="hsr-hint">📚 General anime database</div>';
+      kitsuResults.forEach(function(item) {
+        html += buildKitsuCard(item);
+      });
+    }
 
     dropdown.innerHTML = html;
     dropdown.classList.add('open');
   }
+  
+  function buildFbCard(item) {
+    var html = '<a href="' + item.watchUrl + '" class="sd-card sd-card-fb">';
+    html += '<div class="sd-thumb sd-thumb-fb">';
+    if (item.thumb) {
+      html += '<img src="' + esc(item.thumb) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'">';
+    } else {
+      html += '<div class="sd-fb-icon">🎬</div>';
+    }
+    html += '<span class="sd-fb-badge">FB</span>';
+    html += '</div>';
+    html += '<div class="sd-body">';
+    html += '<div class="sd-title">' + esc(item.title || item.anime) + '</div>';
+    if (item.caption) {
+      html += '<div class="sd-caption">' + esc(item.caption.substring(0, 80)) + (item.caption.length > 80 ? '…' : '') + '</div>';
+    }
+    html += '<div class="sd-meta">';
+    html += '<span class="sd-ep">EP ' + item.episode + '</span>';
+    if (item.matchType === 'link') {
+      html += '<span class="sd-dot">·</span><span class="sd-link-match">🔗 Link match</span>';
+    }
+    html += '</div>';
+    html += '</div></a>';
+    return html;
+  }
+  
+  function buildKitsuCard(item) {
+    var html = '<a href="' + item.watchUrl + '" class="sd-card">';
+    html += '<div class="sd-thumb">';
+    if (item.thumb) {
+      html += '<img src="' + esc(item.thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'">';
+    }
+    html += '</div>';
+    html += '<div class="sd-body">';
+    html += '<div class="sd-title">' + esc(item.title) + '</div>';
+    html += '<div class="sd-meta">';
+    if (item.rating) html += '<span class="sd-rating">★ ' + item.rating + '</span>';
+    if (item.subtype) { if (item.rating) html += '<span class="sd-dot">·</span>'; html += '<span>' + esc(item.subtype) + '</span>'; }
+    if (item.year) { html += '<span class="sd-dot">·</span><span>' + esc(item.year) + '</span>'; }
+    if (item.episodes) { html += '<span class="sd-dot">·</span><span>' + item.episodes + ' EP</span>'; }
+    html += '</div>';
+    html += '</div></a>';
+    return html;
+  }
 
   function doSearch(rawQuery, dropdown, spinner) {
-    var cacheKey = normalize(rawQuery);
+    var cacheKey = rawQuery.toLowerCase().trim();
     if (searchCache[cacheKey]) {
       renderResults(searchCache[cacheKey], rawQuery, dropdown);
       return;
     }
+    
     if (spinner) spinner.style.display = 'flex';
     var ctrl = new AbortController();
     dropdown.innerHTML = '<div class="hsr-loading"><div class="hsr-spin"></div><span>Searching...</span></div>';
     dropdown.classList.add('open');
 
-    var queries = expandQuery(rawQuery);
-    var primaryQuery = queries[0];
-
-    searchKitsu(primaryQuery, ctrl)
-      .then(function(results) {
-        if (spinner) spinner.style.display = 'none';
-        if (results && results.length > 0) {
-          results.forEach(function(r) { r._score = scoreMatch(r.title, rawQuery); });
-          results.sort(function(a, b) { return b._score - a._score; });
-          searchCache[cacheKey] = results;
-          renderResults(results, rawQuery, dropdown);
-        } else if (queries.length > 1) {
-          searchKitsu(queries[1], ctrl).then(function(res2) {
-            searchCache[cacheKey] = res2;
-            renderResults(res2, rawQuery, dropdown);
-          });
-        } else {
-          renderResults([], rawQuery, dropdown);
-        }
-      })
-      .catch(function(err) {
-        if (spinner) spinner.style.display = 'none';
-        if (err && err.name === 'AbortError') return;
-        dropdown.innerHTML = '<div class="hsr-empty"><div><div class="hsr-empty-t">Search failed</div><div class="hsr-empty-s">Try again</div></div></div>';
-        dropdown.classList.add('open');
-      });
+    // Search BOTH FB database AND Kitsu in parallel
+    Promise.all([
+      searchFbDatabase(rawQuery, ctrl),
+      searchKitsu(rawQuery, ctrl)
+    ]).then(function(both) {
+      if (spinner) spinner.style.display = 'none';
+      var fbResults = both[0] || [];
+      var kitsuResults = both[1] || [];
+      var combined = fbResults.concat(kitsuResults);
+      searchCache[cacheKey] = combined;
+      renderResults(combined, rawQuery, dropdown);
+    }).catch(function() {
+      if (spinner) spinner.style.display = 'none';
+      dropdown.innerHTML = '<div class="hsr-empty"><div><div class="hsr-empty-t">Search failed</div><div class="hsr-empty-s">Try again</div></div></div>';
+      dropdown.classList.add('open');
+    });
   }
 
   /* URL TOAST */
@@ -618,7 +557,7 @@ const navItems = [
   function showUrlToast(title, sub) {
     if (!urlToast) return;
     if (urlToastTitle) urlToastTitle.textContent = title || 'Detecting...';
-    if (urlToastSub) urlToastSub.textContent = sub || 'Analyzing...';
+    if (urlToastSub) urlToastSub.textContent = sub || 'Searching...';
     urlToast.style.display = 'flex';
     requestAnimationFrame(function() { urlToast.classList.add('visible'); });
   }
@@ -637,7 +576,7 @@ const navItems = [
   function resolveUrl(url) {
     if (urlResolveCtrl) urlResolveCtrl.abort();
     urlResolveCtrl = new AbortController();
-    showUrlToast('Detecting anime...', 'AI analyzing');
+    showUrlToast('Detecting anime...', 'Checking database');
     fetch('/api/link-resolver?url=' + encodeURIComponent(url), { signal: urlResolveCtrl.signal })
       .then(function(r) { return r.json(); })
       .then(function(data) {
@@ -646,7 +585,7 @@ const navItems = [
           setTimeout(function() { hideUrlToast(); window.location.href = data.redirectUrl; }, 700);
         } else {
           hideUrlToast();
-          alert('Could not detect anime from this link');
+          alert('Could not detect anime from this link. It might not be in our database yet.');
         }
       })
       .catch(function(err) {
@@ -682,6 +621,8 @@ const navItems = [
       var val = searchInput.value.trim();
       if (siClear) siClear.style.display = val.length > 0 ? 'flex' : 'none';
       if (!val) { closeSearchDD(); searchDD.innerHTML = ''; return; }
+      
+      // If URL, show quick redirect option
       if (isUrl(val)) {
         clearTimeout(searchTimer);
         searchDD.innerHTML =
@@ -693,10 +634,11 @@ const navItems = [
         if (btn) btn.addEventListener('click', function(e) { e.preventDefault(); closeSearchDD(); resolveUrl(val); });
         return;
       }
+      
       clearTimeout(searchTimer);
       searchTimer = setTimeout(function() {
         if (val.length >= 2) doSearch(val, searchDD, siSpinner);
-      }, 350);
+      }, 300);
     });
 
     searchInput.addEventListener('keydown', function(e) {
@@ -755,7 +697,7 @@ const navItems = [
       clearTimeout(mobileSearchTimer);
       mobileSearchTimer = setTimeout(function() {
         if (val.length >= 2) doSearch(val, mobileSearchDD, msbSpinner);
-      }, 350);
+      }, 300);
     });
 
     mobileSearchInput.addEventListener('keydown', function(e) {
@@ -773,7 +715,6 @@ const navItems = [
 </script>
 
 <style is:global>
-  /* HEADER */
   .site-header {
     position: sticky; top: 0; left: 0; right: 0;
     z-index: 100;
@@ -823,7 +764,6 @@ const navItems = [
 
   .header-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
-  /* SEARCH — LARGER 340px */
   .search-inline {
     position: relative;
     display: flex; align-items: center;
@@ -886,7 +826,7 @@ const navItems = [
     border: 1px solid rgba(192, 132, 252, 0.3);
     border-radius: 14px;
     padding: 8px;
-    max-height: 500px;
+    max-height: 520px;
     overflow-y: auto;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(16px);
@@ -895,7 +835,7 @@ const navItems = [
     visibility: hidden;
     transform: translateY(-6px);
     transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-    width: 420px;
+    width: 440px;
   }
   [data-theme="light"] .sdd {
     background: rgba(255, 255, 255, 0.98);
@@ -910,11 +850,21 @@ const navItems = [
   .sdd-mobile { width: calc(100vw - 24px); right: 12px; left: 12px; }
 
   .hsr-hint {
-    padding: 6px 10px 8px;
-    color: #e879f9;
+    padding: 8px 10px 6px;
+    color: rgba(192,132,252,0.9);
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.62rem; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 4px;
+  }
+  .hsr-hint-fb {
+    color: #e879f9;
+    background: linear-gradient(90deg, rgba(232,121,249,0.1), transparent);
+    border-left: 3px solid #e879f9;
+    padding-left: 10px;
+    border-radius: 0 6px 6px 0;
+    margin-top: 0;
   }
 
   .hsr-loading {
@@ -950,7 +900,7 @@ const navItems = [
     font-size: 0.64rem; opacity: 0.75;
   }
 
-  /* CARD */
+  /* CARDS */
   .sd-card {
     display: flex !important;
     align-items: center;
@@ -964,6 +914,15 @@ const navItems = [
   }
   .sd-card:hover { background: rgba(192, 132, 252, 0.1); }
   [data-theme="light"] .sd-card:hover { background: rgba(168, 85, 247, 0.08); }
+
+  .sd-card-fb {
+    background: linear-gradient(90deg, rgba(232,121,249,0.06), transparent);
+    border: 1px solid rgba(232,121,249,0.15);
+  }
+  .sd-card-fb:hover {
+    background: linear-gradient(90deg, rgba(232,121,249,0.15), rgba(192,132,252,0.05));
+    border-color: rgba(232,121,249,0.35);
+  }
 
   .sd-thumb {
     width: 56px !important;
@@ -981,18 +940,37 @@ const navItems = [
     height: 78px !important;
     max-width: 56px !important;
     max-height: 78px !important;
-    min-width: 56px !important;
-    min-height: 78px !important;
     object-fit: cover !important;
     display: block !important;
-    aspect-ratio: auto !important;
-    border-radius: 0 !important;
+  }
+  .sd-thumb-fb {
+    background: linear-gradient(135deg, rgba(232,121,249,0.25), rgba(192,132,252,0.15)) !important;
+  }
+  .sd-fb-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    opacity: 0.7;
+  }
+  .sd-fb-badge {
+    position: absolute;
+    top: 4px; left: 4px;
+    padding: 2px 5px;
+    background: #1877f2;
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem; font-weight: 800;
+    border-radius: 3px;
+    box-shadow: 0 2px 4px rgba(24,119,242,0.5);
   }
 
   .sd-body {
     flex: 1; min-width: 0; overflow: hidden;
     display: flex; flex-direction: column;
-    justify-content: center; gap: 5px;
+    justify-content: center; gap: 4px;
   }
   .sd-title {
     font-family: 'Bricolage Grotesque', sans-serif;
@@ -1002,6 +980,20 @@ const navItems = [
     -webkit-box-orient: vertical; overflow: hidden;
   }
   [data-theme="light"] .sd-title { color: #1e0f36; }
+  
+  .sd-caption {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-style: italic;
+  }
+  [data-theme="light"] .sd-caption { color: rgba(30,15,54,0.6); }
+  
   .sd-meta {
     display: flex; align-items: center; gap: 5px;
     font-family: 'JetBrains Mono', monospace;
@@ -1013,8 +1005,21 @@ const navItems = [
   [data-theme="light"] .sd-meta { color: rgba(30,15,54,0.55); }
   .sd-rating { color: #fbbf24; font-weight: 700; }
   .sd-dot { opacity: 0.4; }
+  
+  .sd-ep {
+    padding: 2px 7px;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    color: #fff !important;
+    font-weight: 800;
+    border-radius: 4px;
+    font-size: 0.6rem;
+  }
+  
+  .sd-link-match {
+    color: #10b981;
+    font-weight: 700;
+  }
 
-  /* LINK DETECT BUTTON */
   .sd-linkbtn {
     display: flex; align-items: center; gap: 12px;
     padding: 14px;
@@ -1025,7 +1030,6 @@ const navItems = [
     border: 1px solid rgba(232,121,249,0.3);
     font-family: 'Bricolage Grotesque', sans-serif;
     font-size: 0.9rem; font-weight: 700;
-    transition: background 0.2s;
   }
   .sd-linkbtn:hover { background: linear-gradient(135deg, rgba(232,121,249,0.25), rgba(192,132,252,0.18)); }
   .sd-linkbtn svg { color: #e879f9; flex-shrink: 0; }
@@ -1093,7 +1097,7 @@ const navItems = [
   }
   [data-theme="light"] .url-toast-cancel { color: rgba(30,15,54,0.6); }
 
-  /* ICON BTNS */
+  /* ICONS */
   .header-icon-btn {
     display: flex; align-items: center; justify-content: center;
     width: 38px; height: 38px;
@@ -1194,7 +1198,6 @@ const navItems = [
     transition: visibility 0.4s;
   }
   .side-menu.open { visibility: visible; pointer-events: auto; }
-
   .side-menu-backdrop {
     position: absolute; inset: 0;
     background: rgba(10,5,23,0.7);
@@ -1204,7 +1207,6 @@ const navItems = [
   }
   [data-theme="light"] .side-menu-backdrop { background: rgba(30,15,54,0.5); }
   .side-menu.open .side-menu-backdrop { opacity: 1; }
-
   .side-menu-panel {
     position: absolute; top: 0; right: 0; bottom: 0;
     width: 340px; max-width: 92vw;
@@ -1220,11 +1222,7 @@ const navItems = [
     border-left-color: rgba(168,85,247,0.2);
   }
   .side-menu.open .side-menu-panel { transform: translateX(0); }
-
   .sm-scroll { flex: 1; overflow-y: auto; }
-  .sm-scroll::-webkit-scrollbar { width: 4px; }
-  .sm-scroll::-webkit-scrollbar-thumb { background: rgba(192,132,252,0.3); border-radius: 4px; }
-
   .sm-header {
     display: flex; align-items: center; gap: 12px;
     padding: 20px 18px 18px;
@@ -1258,7 +1256,6 @@ const navItems = [
     flex-shrink: 0;
   }
   [data-theme="light"] .sm-close { color: rgba(30,15,54,0.7); }
-
   .sm-section { padding: 8px 10px; }
   .sm-section-label {
     font-family: 'JetBrains Mono', monospace;
@@ -1266,18 +1263,8 @@ const navItems = [
     letter-spacing: 0.1em; text-transform: uppercase;
     color: rgba(255,255,255,0.5);
     padding: 6px 10px 8px;
-    display: flex; align-items: center; gap: 8px;
   }
   [data-theme="light"] .sm-section-label { color: rgba(30,15,54,0.58); }
-
-  .sm-coming-badge {
-    font-family: 'JetBrains Mono', monospace; font-size: 0.55rem;
-    padding: 2px 6px;
-    background: rgba(232,121,249,0.15);
-    color: #e879f9; border-radius: 4px;
-    text-transform: none;
-  }
-
   .sm-item {
     display: flex; align-items: center; gap: 12px;
     padding: 9px 10px; border-radius: 10px;
@@ -1290,9 +1277,6 @@ const navItems = [
   }
   .sm-item:hover { background: rgba(192,132,252,0.1); }
   [data-theme="light"] .sm-item:hover { background: rgba(168,85,247,0.08); }
-  .sm-item-disabled { opacity: 0.5; cursor: not-allowed; }
-  .sm-item-disabled:hover { background: transparent; }
-
   .sm-item-icon {
     width: 34px; height: 34px; border-radius: 9px;
     display: flex; align-items: center; justify-content: center;
@@ -1303,15 +1287,12 @@ const navItems = [
   .sm-icon-pink   { background: linear-gradient(135deg, #ec4899, #e879f9); }
   .sm-icon-cyan   { background: linear-gradient(135deg, #06b6d4, #7dd3fc); }
   .sm-icon-red    { background: linear-gradient(135deg, #ef4444, #f87171); }
-  .sm-icon-grad   { background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc); }
-
   .sm-item-label {
     flex: 1; font-family: 'DM Sans', sans-serif;
     font-size: 0.88rem; font-weight: 600;
     color: #ffffff;
   }
   [data-theme="light"] .sm-item-label { color: #1e0f36; }
-
   .sm-item-count {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.68rem; font-weight: 700;
@@ -1321,7 +1302,6 @@ const navItems = [
     min-width: 24px; text-align: center;
   }
   [data-theme="light"] .sm-item-count { color: #a855f7; background: rgba(168,85,247,0.1); }
-
   .sm-item-tag {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.62rem; font-weight: 700;
@@ -1331,24 +1311,15 @@ const navItems = [
     border: 1px solid rgba(192,132,252,0.2);
   }
   [data-theme="light"] .sm-item-tag { color: rgba(30,15,54,0.7); }
-
-  .sm-live-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: #10b981;
-  }
-
   .sm-theme-sun { display: none; }
   .sm-theme-moon { display: block; }
   [data-theme="light"] .sm-theme-sun { display: block; }
   [data-theme="light"] .sm-theme-moon { display: none; }
-
   .sm-divider {
     height: 1px; margin: 4px 18px;
     background: linear-gradient(90deg, transparent, rgba(192,132,252,0.2), transparent);
   }
-
   .sm-bottom-space { height: 100px; }
-
   .sm-footer {
     padding: 12px 18px 18px;
     border-top: 1px solid rgba(192,132,252,0.12);
@@ -1371,12 +1342,12 @@ const navItems = [
   /* RESPONSIVE */
   @media (max-width: 1100px) {
     .search-inline { width: 280px; }
-    .sdd { width: 380px; }
+    .sdd { width: 400px; }
     .nav-link { padding: 7px 12px; font-size: 0.85rem; }
   }
   @media (max-width: 900px) {
     .search-inline { width: 220px; }
-    .sdd { width: 340px; }
+    .sdd { width: 360px; }
   }
   @media (max-width: 768px) {
     .header-nav { display: none; }
