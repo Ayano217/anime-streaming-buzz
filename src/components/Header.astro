@@ -122,7 +122,7 @@ const navItems = [
   </div>
 </div>
 
-<!-- 🎨 SLIDING SIDE MENU PANEL -->
+<!-- 🎨 SIDE MENU -->
 <div id="sideMenu" class="side-menu">
   <div class="side-menu-backdrop" id="sideMenuBackdrop"></div>
   <aside class="side-menu-panel">
@@ -146,7 +146,6 @@ const navItems = [
     </div>
 
     <div class="sm-scroll">
-      
       <div class="sm-section">
         <div class="sm-section-label">My Content</div>
         
@@ -186,7 +185,6 @@ const navItems = [
 
       <div class="sm-section">
         <div class="sm-section-label">Community <span class="sm-coming-badge">Soon</span></div>
-        
         <div class="sm-item sm-item-disabled">
           <div class="sm-item-icon sm-icon-grad">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -196,7 +194,6 @@ const navItems = [
           <div class="sm-item-label">Global Chat</div>
           <span class="sm-live-dot"></span>
         </div>
-        
         <div class="sm-item sm-item-disabled">
           <div class="sm-item-icon sm-icon-grad">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -208,7 +205,6 @@ const navItems = [
           </div>
           <div class="sm-item-label">Friends & Messages</div>
         </div>
-        
         <div class="sm-item sm-item-disabled">
           <div class="sm-item-icon sm-icon-grad">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -224,7 +220,6 @@ const navItems = [
 
       <div class="sm-section">
         <div class="sm-section-label">Settings</div>
-        
         <button class="sm-item sm-item-btn" id="smThemeToggle">
           <div class="sm-item-icon sm-icon-purple">
             <svg class="sm-theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -243,7 +238,6 @@ const navItems = [
           <div class="sm-item-label">Switch Appearance</div>
           <span class="sm-item-tag" id="smThemeTag">Dark</span>
         </button>
-        
         <button class="sm-item sm-item-btn" id="smNewsletter">
           <div class="sm-item-icon sm-icon-cyan">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -253,7 +247,6 @@ const navItems = [
           </div>
           <div class="sm-item-label">Newsletter</div>
         </button>
-        
         <button class="sm-item sm-item-btn" id="smClearData">
           <div class="sm-item-icon sm-icon-red">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -270,7 +263,6 @@ const navItems = [
 
       <div class="sm-section">
         <div class="sm-section-label">About</div>
-        
         <a href="/about" class="sm-item">
           <div class="sm-item-icon sm-icon-grad">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -281,7 +273,6 @@ const navItems = [
           </div>
           <div class="sm-item-label">About AniTubeBuzz</div>
         </a>
-        
         <button class="sm-item sm-item-btn" id="smReportBtn">
           <div class="sm-item-icon sm-icon-orange">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -295,7 +286,6 @@ const navItems = [
       </div>
 
       <div class="sm-bottom-space"></div>
-
     </div>
 
     <div class="sm-footer">
@@ -304,7 +294,6 @@ const navItems = [
       </div>
       <div class="sm-footer-tagline">Made with 💜 for anime fans</div>
     </div>
-
   </aside>
 </div>
 
@@ -361,7 +350,177 @@ const navItems = [
     });
   }
 
-  /* THEME */
+  function slugify(s) {
+    return String(s || '').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  /* ═══════════════════════════════════════
+     🧠 FUZZY MATCHING
+     Handles: natoro→naruto, jjjk→jujutsu kaisen
+  ═══════════════════════════════════════ */
+
+  /* Popular anime shortcuts / typo dictionary */
+  var ANIME_ALIASES = {
+    'jjk': 'jujutsu kaisen',
+    'jjjk': 'jujutsu kaisen',
+    'jujutsu': 'jujutsu kaisen',
+    'aot': 'attack on titan',
+    'snk': 'attack on titan',
+    'shingeki': 'attack on titan',
+    'ds': 'demon slayer',
+    'kny': 'demon slayer kimetsu no yaiba',
+    'kimetsu': 'demon slayer',
+    'op': 'one piece',
+    'onep': 'one piece',
+    'ohshc': 'ouran high school host club',
+    'mha': 'my hero academia',
+    'bnha': 'my hero academia',
+    'boku': 'my hero academia',
+    'hero aca': 'my hero academia',
+    'sao': 'sword art online',
+    'swordart': 'sword art online',
+    'fmab': 'fullmetal alchemist brotherhood',
+    'fma': 'fullmetal alchemist',
+    'hxh': 'hunter x hunter',
+    'hunter': 'hunter x hunter',
+    'jjba': 'jojo bizarre adventure',
+    'jojo': 'jojo bizarre adventure',
+    'nge': 'neon genesis evangelion',
+    'eva': 'neon genesis evangelion',
+    'ccs': 'cardcaptor sakura',
+    'kll': 'kill la kill',
+    'sds': 'seven deadly sins',
+    'nnt': 'seven deadly sins nanatsu no taizai',
+    'ygo': 'yu gi oh',
+    'yyh': 'yu yu hakusho',
+    'cog': 'code geass',
+    'gto': 'great teacher onizuka',
+    'bleach tybw': 'bleach thousand year blood war',
+    'natoro': 'naruto',
+    'nauto': 'naruto',
+    'naruoto': 'naruto',
+    'narto': 'naruto',
+    'onepice': 'one piece',
+    'onepeice': 'one piece',
+    'attck': 'attack on titan',
+    'demonslayer': 'demon slayer',
+    'chainsaw': 'chainsaw man',
+    'csm': 'chainsaw man',
+    'spy': 'spy x family',
+    'sxf': 'spy x family',
+    'reZero': 're zero',
+    'rezero': 're zero',
+    'konosuba': 'konosuba god blessing wonderful world',
+    'oshi': 'oshi no ko',
+    'ono': 'oshi no ko',
+    'frieren': 'sousou no frieren',
+    'blue lock': 'blue lock',
+    'bluelock': 'blue lock',
+    'mushoku': 'mushoku tensei',
+    'jobless': 'mushoku tensei jobless reincarnation',
+    'tokyo rev': 'tokyo revengers',
+    'tokrev': 'tokyo revengers',
+    'yofukashi': 'call of the night',
+    'call night': 'call of the night'
+  };
+
+  /* Normalize query — remove accents, lowercase, trim */
+  function normalize(s) {
+    return String(s || '').toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /* Expand query using aliases + typo corrections */
+  function expandQuery(q) {
+    var norm = normalize(q);
+    if (!norm) return [q];
+    
+    var queries = [norm];
+    
+    // Check direct alias
+    if (ANIME_ALIASES[norm]) {
+      queries.unshift(ANIME_ALIASES[norm]);
+    }
+    
+    // Check word-level aliases
+    var words = norm.split(' ');
+    var expandedWords = words.map(function(w) {
+      return ANIME_ALIASES[w] || w;
+    });
+    var expanded = expandedWords.join(' ');
+    if (expanded !== norm) queries.push(expanded);
+    
+    return queries;
+  }
+
+  /* Simple Levenshtein distance */
+  function levenshtein(a, b) {
+    if (!a) return b ? b.length : 0;
+    if (!b) return a.length;
+    if (Math.abs(a.length - b.length) > 3) return 99;
+    
+    var matrix = [];
+    var i, j;
+    for (i = 0; i <= b.length; i++) matrix[i] = [i];
+    for (j = 0; j <= a.length; j++) matrix[0][j] = j;
+    
+    for (i = 1; i <= b.length; i++) {
+      for (j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+    return matrix[b.length][a.length];
+  }
+
+  /* Score results by fuzzy match quality */
+  function scoreMatch(title, query) {
+    var t = normalize(title);
+    var q = normalize(query);
+    if (!t || !q) return 0;
+    
+    if (t === q) return 100;
+    if (t.startsWith(q)) return 90;
+    if (t.indexOf(q) !== -1) return 80;
+    
+    // Word-level match
+    var qWords = q.split(' ');
+    var tWords = t.split(' ');
+    var matches = 0;
+    for (var i = 0; i < qWords.length; i++) {
+      for (var j = 0; j < tWords.length; j++) {
+        if (tWords[j].startsWith(qWords[i]) || 
+            (qWords[i].length > 3 && tWords[j].indexOf(qWords[i]) !== -1)) {
+          matches++;
+          break;
+        }
+      }
+    }
+    if (matches > 0) return 40 + (matches / qWords.length) * 30;
+    
+    // Fuzzy fallback
+    var dist = levenshtein(t.substring(0, q.length + 2), q);
+    if (dist <= 2) return 60 - dist * 10;
+    
+    return 0;
+  }
+
+  /* ═══════════════════════════════════════
+     🎨 THEME
+  ═══════════════════════════════════════ */
   var themeBtn = $('themeToggle');
   if (themeBtn) {
     themeBtn.addEventListener('click', function() {
@@ -462,11 +621,7 @@ const navItems = [
   updateMenuCounts();
 
   var smThemeToggle = $('smThemeToggle');
-  if (smThemeToggle) {
-    smThemeToggle.addEventListener('click', function() {
-      if (themeBtn) themeBtn.click();
-    });
-  }
+  if (smThemeToggle) smThemeToggle.addEventListener('click', function() { if (themeBtn) themeBtn.click(); });
 
   var smNewsletter = $('smNewsletter');
   if (smNewsletter) {
@@ -537,7 +692,7 @@ const navItems = [
   }
 
   /* ═══════════════════════════════════════
-     🔍 SEARCH — Compact, home-page style
+     🔍 SEARCH — KITSU API + Fuzzy Matching
   ═══════════════════════════════════════ */
   var searchInput = $('quickSearch');
   var searchDD = $('searchDD');
@@ -603,27 +758,25 @@ const navItems = [
     showUrlToast('Detecting anime...', 'AI is analyzing the link');
     closeSearchDD();
 
-    fetch('/api/link-resolver?url=' + encodeURIComponent(url), {
-      signal: urlResolveCtrl.signal
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data && data.success && data.redirectUrl) {
-        showUrlToast('Found: ' + (data.title || 'Anime'), 'Redirecting...');
-        setTimeout(function() {
+    fetch('/api/link-resolver?url=' + encodeURIComponent(url), { signal: urlResolveCtrl.signal })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data && data.success && data.redirectUrl) {
+          showUrlToast('Found: ' + (data.title || 'Anime'), 'Redirecting...');
+          setTimeout(function() {
+            hideUrlToast();
+            window.location.href = data.redirectUrl;
+          }, 700);
+        } else {
           hideUrlToast();
-          window.location.href = data.redirectUrl;
-        }, 700);
-      } else {
+          showUrlResolveFail(url);
+        }
+      })
+      .catch(function(err) {
+        if (err && err.name === 'AbortError') return;
         hideUrlToast();
         showUrlResolveFail(url);
-      }
-    })
-    .catch(function(err) {
-      if (err && err.name === 'AbortError') return;
-      hideUrlToast();
-      showUrlResolveFail(url);
-    });
+      });
   }
 
   function showUrlResolveFail(url) {
@@ -642,9 +795,12 @@ const navItems = [
     openSearchDD();
   }
 
-  /* RENDER SEARCH RESULTS */
-  function renderSearchResults(results, query) {
+  /* ═══════════════════════════════════════
+     🎴 RENDER SEARCH RESULTS
+  ═══════════════════════════════════════ */
+  function renderSearchResults(results, query, correctionUsed) {
     if (!searchDD) return;
+    
     if (!results || results.length === 0) {
       searchDD.innerHTML =
         '<div class="hsr-empty">' +
@@ -656,80 +812,149 @@ const navItems = [
       return;
     }
 
-    var html = '<div class="hsr-hint">' + results.length + ' results</div>';
+    var html = '<div class="hsr-hint">' + results.length + ' results';
+    if (correctionUsed && correctionUsed !== normalize(query)) {
+      html += ' · <span class="hsr-correction">showing "' + esc(correctionUsed) + '"</span>';
+    }
+    html += '</div>';
 
-    results.slice(0, 5).forEach(function(item) {
-      var thumb = item.image || item.thumbnail || item.poster || '';
-      var title = item.title || item.name || 'Unknown';
+    results.slice(0, 6).forEach(function(item) {
+      var thumb = item.thumb || '';
+      var title = item.title || 'Unknown';
       var year = item.year || '';
-      var eps = item.episodeCount ? item.episodeCount + ' EP' : '';
-      var rating = item.rating || item.score || '';
+      var eps = item.episodes ? item.episodes + ' EP' : '';
+      var rating = item.rating ? Number(item.rating).toFixed(1) : '';
+      var subtype = item.subtype || '';
+      
       var metaParts = [];
+      if (subtype) metaParts.push(subtype);
       if (year) metaParts.push(year);
       if (eps) metaParts.push(eps);
-      var meta = metaParts.join(' · ');
-      var slug = item.slug || item.id || title.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+      
+      var slug = item.slug || slugify(title);
       var href = '/reels/anime_' + encodeURIComponent(slug) + '_ep1';
-      var isNew = item.status === 'current' || item.status === 'airing';
 
       html += '<a href="' + href + '" class="sd-card">';
       html += '<div class="sd-thumb">';
       if (thumb) {
-        html += '<img src="' + esc(thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'">';
+        html += '<img src="' + esc(thumb) + '" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display=\'none\';this.parentNode.classList.add(\'sd-thumb-noimg\')">';
+      } else {
+        html += '';
       }
-      if (isNew) html += '<span class="sd-new">NEW</span>';
       html += '</div>';
       html += '<div class="sd-body">';
       html += '<div class="sd-title">' + esc(title) + '</div>';
       html += '<div class="sd-meta">';
       if (rating) html += '<span class="sd-rating">★ ' + rating + '</span>';
-      if (meta) html += '<span class="sd-dot">·</span><span>' + esc(meta) + '</span>';
+      metaParts.forEach(function(p, idx) {
+        if (idx > 0 || rating) html += '<span class="sd-dot">·</span>';
+        html += '<span>' + esc(p) + '</span>';
+      });
       html += '</div>';
       html += '</div>';
       html += '</a>';
     });
 
-    if (results.length > 5) {
-      html += '<a href="/search?q=' + encodeURIComponent(query) + '" class="sd-viewall">View all ' + results.length + ' results →</a>';
+    if (results.length > 6) {
+      html += '<a href="/search?q=' + encodeURIComponent(query) + '" class="sd-viewall">View all results →</a>';
     }
 
     searchDD.innerHTML = html;
     openSearchDD();
   }
 
-  function doTextSearch(query) {
-    if (searchCache[query]) {
-      renderSearchResults(searchCache[query], query);
+  /* ═══════════════════════════════════════
+     🌐 KITSU API SEARCH (Primary — client-side, CORS friendly)
+  ═══════════════════════════════════════ */
+  function searchKitsu(query, ctrl) {
+    var url = 'https://kitsu.io/api/edge/anime?filter[text]=' + 
+              encodeURIComponent(query) + 
+              '&page[limit]=10&fields[anime]=canonicalTitle,titles,posterImage,averageRating,episodeCount,startDate,subtype,slug';
+    
+    return fetch(url, { signal: ctrl.signal, headers: { 'Accept': 'application/vnd.api+json' } })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data || !data.data) return [];
+        return data.data.map(function(item) {
+          var attr = item.attributes || {};
+          var poster = attr.posterImage || {};
+          var title = attr.canonicalTitle || (attr.titles ? (attr.titles.en || attr.titles.en_jp || attr.titles.ja_jp) : '') || 'Unknown';
+          var year = attr.startDate ? String(attr.startDate).substring(0, 4) : '';
+          var rating = attr.averageRating ? (parseFloat(attr.averageRating) / 10).toFixed(1) : '';
+          
+          return {
+            id: item.id,
+            title: title,
+            thumb: poster.small || poster.tiny || poster.medium || '',
+            year: year,
+            episodes: attr.episodeCount || null,
+            rating: rating,
+            subtype: attr.subtype || '',
+            slug: attr.slug || slugify(title)
+          };
+        });
+      });
+  }
+
+  function doTextSearch(rawQuery) {
+    var cacheKey = normalize(rawQuery);
+    if (searchCache[cacheKey]) {
+      renderSearchResults(searchCache[cacheKey].results, rawQuery, searchCache[cacheKey].corrected);
       return;
     }
+    
     if (activeCtrl) activeCtrl.abort();
     activeCtrl = new AbortController();
     showSpinner();
 
-    searchDD.innerHTML = '<div class="hsr-loading"><div class="hsr-spin"></div><span>Searching...</span></div>';
-    openSearchDD();
-
-    fetch('/api/anime-external?action=search&q=' + encodeURIComponent(query), {
-      signal: activeCtrl.signal
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      hideSpinner();
-      var results = (data && data.results) ? data.results : (Array.isArray(data) ? data : []);
-      searchCache[query] = results;
-      renderSearchResults(results, query);
-    })
-    .catch(function(err) {
-      if (err && err.name === 'AbortError') return;
-      hideSpinner();
-      searchDD.innerHTML =
-        '<div class="hsr-empty">' +
-        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
-        '<div><div class="hsr-empty-t">Search failed</div>' +
-        '<div class="hsr-empty-s">Please try again</div></div>' +
-        '</div>';
+    if (searchDD) {
+      searchDD.innerHTML = '<div class="hsr-loading"><div class="hsr-spin"></div><span>Searching...</span></div>';
       openSearchDD();
-    });
+    }
+
+    // Try multiple query variations (with alias/typo correction)
+    var queries = expandQuery(rawQuery);
+    var primaryQuery = queries[0];
+    
+    searchKitsu(primaryQuery, activeCtrl)
+      .then(function(results) {
+        // If good results, use them
+        if (results && results.length > 0) {
+          // Score & sort by fuzzy match
+          results.forEach(function(r) { r._score = scoreMatch(r.title, rawQuery); });
+          results.sort(function(a, b) { return b._score - a._score; });
+          
+          searchCache[cacheKey] = { results: results, corrected: primaryQuery !== normalize(rawQuery) ? primaryQuery : null };
+          hideSpinner();
+          renderSearchResults(results, rawQuery, searchCache[cacheKey].corrected);
+          return;
+        }
+        
+        // Fallback: try secondary query
+        if (queries.length > 1) {
+          return searchKitsu(queries[1], activeCtrl).then(function(res2) {
+            searchCache[cacheKey] = { results: res2, corrected: queries[1] };
+            hideSpinner();
+            renderSearchResults(res2, rawQuery, queries[1]);
+          });
+        }
+        
+        hideSpinner();
+        renderSearchResults([], rawQuery, null);
+      })
+      .catch(function(err) {
+        if (err && err.name === 'AbortError') return;
+        hideSpinner();
+        if (searchDD) {
+          searchDD.innerHTML =
+            '<div class="hsr-empty">' +
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+            '<div><div class="hsr-empty-t">Search failed</div>' +
+            '<div class="hsr-empty-s">Please try again</div></div>' +
+            '</div>';
+          openSearchDD();
+        }
+      });
   }
 
   /* INPUT HANDLER */
@@ -751,7 +976,7 @@ const navItems = [
           searchDD.innerHTML =
             '<div class="hsr-hint">🔗 Link detected</div>' +
             '<a href="#" class="sd-linkbtn" id="resolveNowBtn">' +
-            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>' +
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>' +
             '<span>Find anime from this link</span>' +
             '</a>';
           openSearchDD();
@@ -770,7 +995,7 @@ const navItems = [
       clearTimeout(searchTimer);
       searchTimer = setTimeout(function() {
         if (val.length >= 2) doTextSearch(val);
-      }, 400);
+      }, 350);
     });
 
     searchInput.addEventListener('keydown', function(e) {
@@ -945,55 +1170,99 @@ const navItems = [
   .si-clear:hover { background: rgba(239,68,68,0.3); color: #ef4444; }
 
   /* ═══════════════════════════════════════
-     🎨 SEARCH DROPDOWN — Compact Cards
+     🎨 PREMIUM DROPDOWN
   ═══════════════════════════════════════ */
   .sdd {
     position: absolute;
-    top: calc(100% + 10px);
+    top: calc(100% + 12px);
     right: 0;
-    background: rgba(12,6,30,0.98);
-    border: 1px solid rgba(192,132,252,0.25);
-    border-radius: 14px;
-    padding: 8px;
-    max-height: 480px;
+    background: rgba(12, 6, 30, 0.98);
+    border: 1px solid rgba(192, 132, 252, 0.3);
+    border-radius: 16px;
+    padding: 10px;
+    max-height: 540px;
     overflow-y: auto;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 25px rgba(192,132,252,0.12);
-    z-index: 200;
-    opacity: 0; visibility: hidden;
-    transform: translateY(-6px);
-    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
-    width: 380px;
-    max-width: calc(100vw - 20px);
+    box-shadow: 
+      0 25px 60px rgba(0, 0, 0, 0.5),
+      0 0 30px rgba(192, 132, 252, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 500;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(0.98);
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+    width: 440px;
+    max-width: calc(100vw - 24px);
   }
   [data-theme="light"] .sdd {
-    background: rgba(255,255,255,0.98);
-    border-color: rgba(168,85,247,0.2);
-    box-shadow: 0 20px 50px rgba(30,15,54,0.15);
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(168, 85, 247, 0.25);
+    box-shadow: 
+      0 25px 60px rgba(30, 15, 54, 0.2),
+      0 0 30px rgba(168, 85, 247, 0.12);
   }
-  .sdd.open { opacity: 1; visibility: visible; transform: translateY(0); }
-  .sdd::-webkit-scrollbar { width: 4px; }
-  .sdd::-webkit-scrollbar-thumb { background: rgba(192,132,252,0.3); border-radius: 4px; }
+  .sdd.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+  }
+  .sdd::-webkit-scrollbar { width: 5px; }
   .sdd::-webkit-scrollbar-track { background: transparent; }
+  .sdd::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(192,132,252,0.4), rgba(232,121,249,0.4));
+    border-radius: 6px;
+  }
 
-  /* HINT LABEL */
+  /* HINT */
   .hsr-hint {
-    padding: 6px 10px 8px;
+    padding: 8px 12px 10px;
     color: #e879f9;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem; font-weight: 700;
-    letter-spacing: 0.08em; text-transform: uppercase;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .hsr-hint::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #e879f9;
+    box-shadow: 0 0 8px #e879f9;
+    animation: hint-pulse 1.5s infinite;
+    flex-shrink: 0;
+  }
+  .hsr-correction {
+    color: #7dd3fc;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-weight: 600;
+  }
+  @keyframes hint-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
   }
 
   /* LOADING */
   .hsr-loading {
-    display: flex; align-items: center; justify-content: center;
-    gap: 10px; padding: 1.8rem 1rem;
-    color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace; font-size: 0.72rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 2rem 1rem;
+    color: rgba(255,255,255,0.6);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
   }
+  [data-theme="light"] .hsr-loading { color: rgba(30,15,54,0.6); }
   .hsr-spin {
-    width: 14px; height: 14px;
-    border: 2px solid rgba(192,132,252,0.3);
+    width: 16px; height: 16px;
+    border: 2px solid rgba(192,132,252,0.25);
     border-top-color: #e879f9;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
@@ -1001,78 +1270,101 @@ const navItems = [
 
   /* EMPTY / ERROR */
   .hsr-empty {
-    display: flex; align-items: center; gap: 10px;
-    padding: 14px 12px;
-    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 14px;
+    color: rgba(255,255,255,0.65);
   }
+  [data-theme="light"] .hsr-empty { color: rgba(30,15,54,0.65); }
   .hsr-empty svg { flex-shrink: 0; color: #c084fc; }
   .hsr-empty-t {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.82rem; font-weight: 700;
-    color: var(--text-primary); margin-bottom: 2px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 3px;
     line-height: 1.2;
   }
+  [data-theme="light"] .hsr-empty-t { color: #1e0f36; }
   .hsr-empty-s {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem; opacity: 0.7;
+    font-size: 0.66rem;
+    opacity: 0.75;
     line-height: 1.2;
   }
 
   /* ═══════════════════════════════════════
-     🎴 SEARCH CARD — Compact horizontal
+     🎴 PREMIUM CARD
   ═══════════════════════════════════════ */
   .sd-card {
     display: flex !important;
     align-items: center;
-    gap: 10px;
-    padding: 8px;
-    border-radius: 10px;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 12px;
     text-decoration: none;
     color: inherit;
-    transition: background 0.15s ease, transform 0.15s ease;
-    margin-bottom: 2px;
+    transition: background 0.2s ease, transform 0.2s ease;
+    margin-bottom: 3px;
     position: relative;
+    overflow: hidden;
+  }
+  .sd-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 10px; bottom: 10px;
+    width: 3px;
+    background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    border-radius: 3px;
   }
   .sd-card:hover {
-    background: rgba(192,132,252,0.1);
-    transform: translateX(-2px);
+    background: rgba(192, 132, 252, 0.12);
+    transform: translateX(-3px);
   }
-  [data-theme="light"] .sd-card:hover {
-    background: rgba(168,85,247,0.08);
+  [data-theme="light"] .sd-card:hover { background: rgba(168, 85, 247, 0.08); }
+  .sd-card:hover::before { opacity: 1; }
+  .sd-card:hover .sd-thumb img {
+    transform: scale(1.08);
   }
 
-  /* THUMB — SMALL 56x80 (landscape-ish poster) */
+  /* PREMIUM THUMB — 60x84 poster */
   .sd-thumb {
-    width: 56px;
-    height: 80px;
-    min-width: 56px;
-    max-width: 56px;
-    border-radius: 8px;
-    overflow: hidden;
-    background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(125,211,252,0.1));
-    position: relative;
-    flex-shrink: 0;
+    width: 60px !important;
+    height: 84px !important;
+    min-width: 60px !important;
+    max-width: 60px !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    background: linear-gradient(135deg, rgba(192,132,252,0.25), rgba(125,211,252,0.15)) !important;
+    position: relative !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3) !important;
   }
   .sd-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+    width: 60px !important;
+    height: 84px !important;
+    max-width: 60px !important;
+    max-height: 84px !important;
+    min-width: 60px !important;
+    min-height: 84px !important;
+    object-fit: cover !important;
+    display: block !important;
+    transition: transform 0.4s ease !important;
+    border-radius: 0 !important;
+    aspect-ratio: auto !important;
   }
-
-  /* NEW badge on thumb */
-  .sd-new {
+  .sd-thumb-noimg::after {
+    content: '📺';
     position: absolute;
-    top: 4px; left: 4px;
-    padding: 2px 5px;
-    background: linear-gradient(135deg, #ef4444, #f97316);
-    color: #fff;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.48rem; font-weight: 800;
-    letter-spacing: 0.03em;
-    border-radius: 3px;
-    box-shadow: 0 2px 4px rgba(239,68,68,0.35);
-    line-height: 1;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    opacity: 0.4;
   }
 
   /* CARD BODY */
@@ -1081,82 +1373,108 @@ const navItems = [
     min-width: 0;
     overflow: hidden;
     padding-right: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
   }
   .sd-title {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1.25;
+    color: #ffffff;
+    line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 4px;
+    letter-spacing: -0.01em;
   }
+  [data-theme="light"] .sd-title { color: #1e0f36; }
   .sd-meta {
     display: flex;
     align-items: center;
     gap: 6px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--text-muted);
+    font-size: 0.66rem;
+    color: rgba(255,255,255,0.55);
     line-height: 1;
+    flex-wrap: wrap;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
   }
+  [data-theme="light"] .sd-meta { color: rgba(30,15,54,0.55); }
   .sd-rating {
     color: #fbbf24;
     font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
   }
-  .sd-dot {
-    opacity: 0.5;
-  }
+  .sd-dot { opacity: 0.4; }
 
-  /* LINK BUTTON (when URL detected) */
+  /* LINK BUTTON */
   .sd-linkbtn {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 14px;
-    border-radius: 10px;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
     text-decoration: none;
-    color: #e879f9;
-    background: linear-gradient(135deg, rgba(232,121,249,0.12), rgba(192,132,252,0.08));
-    border: 1px solid rgba(232,121,249,0.25);
+    color: #ffffff;
+    background: linear-gradient(135deg, rgba(232,121,249,0.18), rgba(192,132,252,0.12), rgba(125,211,252,0.1));
+    border: 1px solid rgba(232,121,249,0.35);
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    transition: background 0.2s, border-color 0.2s, transform 0.15s;
-    margin: 2px 0;
+    transition: all 0.25s ease;
+    margin: 4px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .sd-linkbtn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(232,121,249,0.3), rgba(192,132,252,0.2));
+    opacity: 0;
+    transition: opacity 0.25s;
   }
   .sd-linkbtn:hover {
-    background: linear-gradient(135deg, rgba(232,121,249,0.2), rgba(192,132,252,0.15));
-    border-color: rgba(232,121,249,0.5);
+    border-color: rgba(232,121,249,0.6);
     transform: translateX(-2px);
+    box-shadow: 0 6px 20px rgba(232,121,249,0.25);
   }
+  .sd-linkbtn:hover::before { opacity: 1; }
+  .sd-linkbtn > * { position: relative; z-index: 1; }
   .sd-linkbtn svg {
     color: #e879f9;
     flex-shrink: 0;
+    filter: drop-shadow(0 0 4px rgba(232,121,249,0.5));
   }
+  [data-theme="light"] .sd-linkbtn { color: #1e0f36; }
 
   /* VIEW ALL */
   .sd-viewall {
-    display: block;
-    text-align: center;
-    padding: 10px 12px;
-    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 12px;
+    margin-top: 6px;
     border-top: 1px solid rgba(192,132,252,0.15);
     color: #c084fc;
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.78rem;
+    font-size: 0.82rem;
     font-weight: 700;
     text-decoration: none;
     transition: color 0.2s, background 0.2s;
-    border-radius: 0 0 8px 8px;
+    border-radius: 0 0 10px 10px;
   }
   .sd-viewall:hover {
     color: #e879f9;
-    background: rgba(232,121,249,0.06);
+    background: rgba(232,121,249,0.08);
   }
 
   /* ═══════════════════════════════════════
@@ -1321,7 +1639,7 @@ const navItems = [
   }
 
   /* ═══════════════════════════════════════
-     🎨 SIDE MENU (unchanged, kept minimal)
+     🎨 SIDE MENU
   ═══════════════════════════════════════ */
   .side-menu {
     position: fixed; inset: 0;
@@ -1345,7 +1663,7 @@ const navItems = [
   .side-menu-panel {
     position: absolute; top: 0; right: 0; bottom: 0;
     width: 380px; max-width: 92vw;
-    background: linear-gradient(180deg, #14092a 0%, #0a0517 100%) !important;
+    background: linear-gradient(180deg, #14092a 0%, #0a0517 100%);
     border-left: 1px solid rgba(192,132,252,0.25);
     transform: translateX(100%);
     transition: transform 0.38s cubic-bezier(0.34,1.4,0.64,1);
@@ -1353,7 +1671,7 @@ const navItems = [
     box-shadow: -20px 0 60px rgba(0,0,0,0.5);
   }
   [data-theme="light"] .side-menu-panel {
-    background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%) !important;
+    background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%);
     border-left-color: rgba(168,85,247,0.2);
     box-shadow: -20px 0 60px rgba(30,15,54,0.15);
   }
@@ -1382,14 +1700,14 @@ const navItems = [
   .sm-username {
     font-family: 'Bricolage Grotesque', sans-serif;
     font-size: 1rem; font-weight: 700;
-    color: #ffffff !important; line-height: 1.2;
+    color: #ffffff; line-height: 1.2;
   }
-  [data-theme="light"] .sm-username { color: #1e0f36 !important; }
+  [data-theme="light"] .sm-username { color: #1e0f36; }
   .sm-user-sub {
     font-family: 'JetBrains Mono', monospace; font-size: 0.7rem;
-    color: rgba(255,255,255,0.5) !important; margin-top: 2px;
+    color: rgba(255,255,255,0.5); margin-top: 2px;
   }
-  [data-theme="light"] .sm-user-sub { color: rgba(30,15,54,0.55) !important; }
+  [data-theme="light"] .sm-user-sub { color: rgba(30,15,54,0.55); }
 
   .sm-close {
     width: 34px; height: 34px; border-radius: 50%;
@@ -1411,22 +1729,22 @@ const navItems = [
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.63rem; font-weight: 700;
     letter-spacing: 0.1em; text-transform: uppercase;
-    color: rgba(255,255,255,0.5) !important;
+    color: rgba(255,255,255,0.5);
     padding: 8px 10px 10px;
     display: flex; align-items: center; gap: 8px;
   }
-  [data-theme="light"] .sm-section-label { color: rgba(30,15,54,0.58) !important; }
+  [data-theme="light"] .sm-section-label { color: rgba(30,15,54,0.58); }
 
   .sm-coming-badge {
     font-family: 'JetBrains Mono', monospace; font-size: 0.55rem;
     padding: 2px 6px;
     background: rgba(232,121,249,0.15);
-    color: #e879f9 !important; border-radius: 4px;
+    color: #e879f9; border-radius: 4px;
     border: 1px solid rgba(232,121,249,0.3);
     text-transform: none; letter-spacing: 0.03em;
   }
   [data-theme="light"] .sm-coming-badge {
-    background: rgba(168,85,247,0.12); color: #a855f7 !important;
+    background: rgba(168,85,247,0.12); color: #a855f7;
     border-color: rgba(168,85,247,0.3);
   }
 
@@ -1463,28 +1781,28 @@ const navItems = [
   .sm-item-label {
     flex: 1; font-family: 'DM Sans', sans-serif;
     font-size: 0.9rem; font-weight: 600;
-    color: #ffffff !important;
+    color: #ffffff;
   }
-  [data-theme="light"] .sm-item-label { color: #1e0f36 !important; }
+  [data-theme="light"] .sm-item-label { color: #1e0f36; }
 
   .sm-item-count {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.7rem; font-weight: 700;
-    color: #e879f9 !important;
+    color: #e879f9;
     background: rgba(232,121,249,0.12);
     padding: 3px 8px; border-radius: 8px; min-width: 26px; text-align: center;
   }
-  [data-theme="light"] .sm-item-count { color: #a855f7 !important; background: rgba(168,85,247,0.1); }
+  [data-theme="light"] .sm-item-count { color: #a855f7; background: rgba(168,85,247,0.1); }
 
   .sm-item-tag {
     font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 700;
-    color: rgba(255,255,255,0.75) !important;
+    color: rgba(255,255,255,0.75);
     background: rgba(192,132,252,0.08);
     padding: 3px 8px; border-radius: 8px;
     border: 1px solid rgba(192,132,252,0.2);
   }
   [data-theme="light"] .sm-item-tag {
-    color: rgba(30,15,54,0.7) !important;
+    color: rgba(30,15,54,0.7);
     background: rgba(168,85,247,0.07); border-color: rgba(168,85,247,0.2);
   }
 
@@ -1520,13 +1838,13 @@ const navItems = [
     font-family: 'Bricolage Grotesque', sans-serif;
     font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 4px;
   }
-  .sm-footer-mid { color: #ffffff !important; }
-  [data-theme="light"] .sm-footer-mid { color: #1e0f36 !important; }
+  .sm-footer-mid { color: #ffffff; }
+  [data-theme="light"] .sm-footer-mid { color: #1e0f36; }
   .sm-footer-tagline {
     font-family: 'JetBrains Mono', monospace; font-size: 0.67rem;
-    color: rgba(255,255,255,0.48) !important; letter-spacing: 0.03em;
+    color: rgba(255,255,255,0.48); letter-spacing: 0.03em;
   }
-  [data-theme="light"] .sm-footer-tagline { color: rgba(30,15,54,0.52) !important; }
+  [data-theme="light"] .sm-footer-tagline { color: rgba(30,15,54,0.52); }
 
   /* ═══════════════════════════════════════
      📧 EMAIL MODAL
@@ -1582,14 +1900,14 @@ const navItems = [
   .email-modal-title {
     font-family: 'Bricolage Grotesque', sans-serif;
     font-size: 1.4rem; font-weight: 800;
-    color: #ffffff !important; margin: 0 0 0.5rem; letter-spacing: -0.02em;
+    color: #ffffff; margin: 0 0 0.5rem; letter-spacing: -0.02em;
   }
-  [data-theme="light"] .email-modal-title { color: #1e0f36 !important; }
+  [data-theme="light"] .email-modal-title { color: #1e0f36; }
   .email-modal-desc {
-    color: rgba(255,255,255,0.7) !important; font-size: 0.88rem;
+    color: rgba(255,255,255,0.7); font-size: 0.88rem;
     line-height: 1.5; margin: 0 0 1.5rem;
   }
-  [data-theme="light"] .email-modal-desc { color: rgba(30,15,54,0.75) !important; }
+  [data-theme="light"] .email-modal-desc { color: rgba(30,15,54,0.75); }
 
   .email-form { display: flex; gap: 8px; flex-direction: column; }
   .email-input {
@@ -1631,337 +1949,15 @@ const navItems = [
   /* ═══════════════════════════════════════
      📐 RESPONSIVE
   ═══════════════════════════════════════ */
-  /* ═══════════════════════════════════════
-     🔍 HEADER SEARCH DROPDOWN — Premium Style
-  ═══════════════════════════════════════ */
-  .sdd {
-    position: absolute;
-    top: calc(100% + 12px);
-    right: 0;
-    background: rgba(12, 6, 30, 0.98);
-    border: 1px solid rgba(192, 132, 252, 0.3);
-    border-radius: 16px;
-    padding: 10px;
-    max-height: 520px;
-    overflow-y: auto;
-    box-shadow: 
-      0 25px 60px rgba(0, 0, 0, 0.5),
-      0 0 30px rgba(192, 132, 252, 0.15),
-      0 0 0 1px rgba(192, 132, 252, 0.1);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    z-index: 500;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-8px) scale(0.98);
-    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
-    width: 420px;
-    max-width: calc(100vw - 24px);
-  }
-  [data-theme="light"] .sdd {
-    background: rgba(255, 255, 255, 0.98);
-    border-color: rgba(168, 85, 247, 0.25);
-    box-shadow: 
-      0 25px 60px rgba(30, 15, 54, 0.2),
-      0 0 30px rgba(168, 85, 247, 0.12);
-  }
-  .sdd.open {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0) scale(1);
-  }
-  .sdd::-webkit-scrollbar { width: 5px; }
-  .sdd::-webkit-scrollbar-track { background: transparent; }
-  .sdd::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, rgba(192,132,252,0.4), rgba(232,121,249,0.4));
-    border-radius: 6px;
-  }
-
-  /* HINT */
-  .hsr-hint {
-    padding: 8px 12px 10px;
-    color: #e879f9;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .hsr-hint::before {
-    content: '';
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: #e879f9;
-    box-shadow: 0 0 8px #e879f9;
-    animation: hint-pulse 1.5s infinite;
-  }
-  @keyframes hint-pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(0.8); }
-  }
-
-  /* LOADING */
-  .hsr-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 2rem 1rem;
-    color: rgba(255,255,255,0.6);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.75rem;
-  }
-  [data-theme="light"] .hsr-loading { color: rgba(30,15,54,0.6); }
-  .hsr-spin {
-    width: 16px; height: 16px;
-    border: 2px solid rgba(192,132,252,0.25);
-    border-top-color: #e879f9;
-    border-radius: 50%;
-    animation: hsr-spin 0.7s linear infinite;
-  }
-  @keyframes hsr-spin { to { transform: rotate(360deg); } }
-
-  /* EMPTY / ERROR */
-  .hsr-empty {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px 14px;
-    color: rgba(255,255,255,0.65);
-  }
-  [data-theme="light"] .hsr-empty { color: rgba(30,15,54,0.65); }
-  .hsr-empty svg { flex-shrink: 0; color: #c084fc; }
-  .hsr-empty-t {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: #ffffff;
-    margin-bottom: 3px;
-    line-height: 1.2;
-  }
-  [data-theme="light"] .hsr-empty-t { color: #1e0f36; }
-  .hsr-empty-s {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.66rem;
-    opacity: 0.75;
-    line-height: 1.2;
-  }
-
-  /* ═══════════════════════════════════════
-     🎴 PREMIUM SEARCH CARD — Home Style
-  ═══════════════════════════════════════ */
-  .sd-card {
-    display: flex;
-    align-items: stretch;
-    gap: 12px;
-    padding: 10px;
-    border-radius: 12px;
-    text-decoration: none;
-    color: inherit;
-    transition: background 0.2s ease, transform 0.2s ease;
-    margin-bottom: 3px;
-    position: relative;
-    overflow: hidden;
-  }
-  .sd-card::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    border-radius: 3px;
-  }
-  .sd-card:hover {
-    background: rgba(192, 132, 252, 0.12);
-    transform: translateX(-3px);
-  }
-  [data-theme="light"] .sd-card:hover { background: rgba(168, 85, 247, 0.08); }
-  .sd-card:hover::before { opacity: 1; }
-  .sd-card:hover .sd-thumb img {
-    transform: scale(1.1);
-  }
-
-  /* THUMB — SMALL POSTER 60×84 */
-  .sd-thumb {
-    width: 60px;
-    height: 84px;
-    min-width: 60px;
-    max-width: 60px;
-    border-radius: 8px;
-    overflow: hidden;
-    background: linear-gradient(135deg, rgba(192,132,252,0.2), rgba(125,211,252,0.12));
-    position: relative;
-    flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  }
-  .sd-thumb img {
-    width: 60px !important;
-    height: 84px !important;
-    max-width: 60px !important;
-    max-height: 84px !important;
-    min-width: 60px !important;
-    min-height: 84px !important;
-    object-fit: cover !important;
-    display: block !important;
-    transition: transform 0.4s ease;
-  }
-  .sd-thumb::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.4) 100%);
-    pointer-events: none;
-  }
-
-  /* NEW badge */
-  .sd-new {
-    position: absolute;
-    top: 5px; left: 5px;
-    padding: 2px 6px;
-    background: linear-gradient(135deg, #ef4444, #f97316);
-    color: #fff;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.5rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    border-radius: 4px;
-    box-shadow: 0 2px 6px rgba(239,68,68,0.5);
-    line-height: 1;
-    z-index: 2;
-  }
-
-  /* CARD BODY */
-  .sd-body {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    padding-right: 4px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 6px;
-  }
-  .sd-title {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #ffffff;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    letter-spacing: -0.01em;
-  }
-  [data-theme="light"] .sd-title { color: #1e0f36; }
-  .sd-meta {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    color: rgba(255,255,255,0.55);
-    line-height: 1;
-    flex-wrap: wrap;
-  }
-  [data-theme="light"] .sd-meta { color: rgba(30,15,54,0.55); }
-  .sd-rating {
-    color: #fbbf24;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-  }
-  .sd-dot {
-    opacity: 0.4;
-    font-size: 0.7rem;
-  }
-
-  /* LINK DETECTED BUTTON */
-  .sd-linkbtn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    border-radius: 12px;
-    text-decoration: none;
-    color: #ffffff;
-    background: linear-gradient(135deg, rgba(232,121,249,0.18), rgba(192,132,252,0.12), rgba(125,211,252,0.1));
-    border: 1px solid rgba(232,121,249,0.35);
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 700;
-    transition: all 0.25s ease;
-    margin: 4px 0;
-    position: relative;
-    overflow: hidden;
-  }
-  .sd-linkbtn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(232,121,249,0.3), rgba(192,132,252,0.2));
-    opacity: 0;
-    transition: opacity 0.25s;
-  }
-  .sd-linkbtn:hover {
-    border-color: rgba(232,121,249,0.6);
-    transform: translateX(-2px);
-    box-shadow: 0 6px 20px rgba(232,121,249,0.25);
-  }
-  .sd-linkbtn:hover::before { opacity: 1; }
-  .sd-linkbtn > * { position: relative; z-index: 1; }
-  .sd-linkbtn svg {
-    color: #e879f9;
-    flex-shrink: 0;
-    filter: drop-shadow(0 0 4px rgba(232,121,249,0.5));
-  }
-  [data-theme="light"] .sd-linkbtn { color: #1e0f36; }
-
-  /* VIEW ALL */
-  .sd-viewall {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding: 12px;
-    margin-top: 6px;
-    border-top: 1px solid rgba(192,132,252,0.15);
-    color: #c084fc;
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 700;
-    text-decoration: none;
-    transition: color 0.2s, background 0.2s;
-    border-radius: 0 0 10px 10px;
-  }
-  .sd-viewall:hover {
-    color: #e879f9;
-    background: rgba(232,121,249,0.08);
-  }
-
-  /* Mobile dropdown */
-  @media (max-width: 768px) {
-    .sdd { width: 340px; }
-  }
-  @media (max-width: 480px) {
-    .sdd { width: calc(100vw - 20px); }
-  }
   @media (max-width: 1024px) {
     .search-inline { width: 200px; }
-    .sdd { width: 340px; }
+    .sdd { width: 380px; }
     .nav-link { padding: 7px 12px; font-size: 0.85rem; }
   }
   @media (max-width: 768px) {
     .header-nav { display: none; }
     .search-inline { width: 150px; }
-    .sdd { width: 300px; }
+    .sdd { width: 340px; }
     .mobile-only { display: flex; }
     .header-right { gap: 6px; }
     .header-icon-btn { width: 34px; height: 34px; }
@@ -1972,6 +1968,7 @@ const navItems = [
   }
   @media (max-width: 480px) {
     .search-inline { display: none; }
+    .sdd { width: calc(100vw - 20px); }
     .header-inner { gap: 0.5rem; }
     .header-logo { font-size: 1.15rem; }
   }
