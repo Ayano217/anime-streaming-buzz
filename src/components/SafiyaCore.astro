@@ -464,3 +464,1752 @@
     background: rgba(239, 68, 68, 0.15);
   }
 </style>
+  /* ═══════════════════════════════════════════════
+     💬 CHAT WINDOW
+  ═══════════════════════════════════════════════ */
+  #safiya-root .sf-chat {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9998;
+    width: 380px;
+    height: 620px;
+    max-height: calc(100vh - 40px);
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(180deg, rgba(22, 13, 40, 0.98), rgba(14, 8, 26, 0.99)) !important;
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    border-radius: 20px;
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.7),
+      0 0 40px rgba(220, 39, 67, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(28px) saturate(1.3);
+    -webkit-backdrop-filter: blur(28px) saturate(1.3);
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(16px) scale(0.96);
+    transform-origin: bottom right;
+    transition: all 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #safiya-root .sf-chat-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+  }
+
+  /* ═══════════════ HEADER ═══════════════ */
+  #safiya-root .sf-chat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: rgba(28, 18, 48, 0.6) !important;
+    border-bottom: 1px solid rgba(192, 132, 252, 0.12);
+    flex-shrink: 0;
+    backdrop-filter: blur(10px);
+  }
+
+  #safiya-root .sf-icon-btn {
+    background: transparent;
+    border: none;
+    color: rgba(192, 132, 252, 0.85);
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #safiya-root .sf-icon-btn:hover {
+    background: rgba(192, 132, 252, 0.14);
+    color: #e879f9;
+  }
+  #safiya-root .sf-icon-btn:active { transform: scale(0.94); }
+  #safiya-root .sf-icon-btn-danger:hover {
+    background: rgba(239, 68, 68, 0.16);
+    color: #f87171;
+  }
+
+  #safiya-root .sf-chat-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+  }
+  #safiya-root .sf-chat-user-avatar {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      0 2px 8px rgba(220, 39, 67, 0.35);
+    overflow: hidden;
+  }
+  #safiya-root .sf-chat-avatar-letter {
+    color: #fff !important;
+    font-weight: 800;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.02em;
+  }
+  #safiya-root .sf-chat-user-dot {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 11px;
+    height: 11px;
+    background: #22c55e;
+    border: 2.5px solid #14082a;
+    border-radius: 50%;
+    z-index: 3;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+  }
+  #safiya-root .sf-chat-user-info { flex: 1; min-width: 0; }
+  #safiya-root .sf-chat-user-name {
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: #f5ecff !important;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+  #safiya-root .sf-chat-user-status {
+    font-size: 0.7rem;
+    color: rgba(192, 132, 252, 0.75) !important;
+    margin-top: 3px;
+    font-weight: 500;
+  }
+  #safiya-root .sf-chat-actions {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ═══════════════ CHAT BODY ═══════════════ */
+  #safiya-root .sf-chat-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 14px 12px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(192, 132, 252, 0.25) transparent;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  #safiya-root .sf-chat-body::-webkit-scrollbar { width: 4px; }
+  #safiya-root .sf-chat-body::-webkit-scrollbar-thumb {
+    background: rgba(192, 132, 252, 0.3);
+    border-radius: 3px;
+  }
+
+  /* ═══════════════ TIMESTAMPS ═══════════════ */
+  #safiya-root .sf-msg-time {
+    text-align: center;
+    font-size: 0.6rem;
+    color: rgba(192, 132, 252, 0.45) !important;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    margin: 14px 0 8px;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* ═══════════════ MESSAGE ROWS ═══════════════ */
+  #safiya-root .sf-msg-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    margin: 2px 0;
+    animation: sfMsgIn 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+    max-width: 100%;
+  }
+  @keyframes sfMsgIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  #safiya-root .sf-msg-her { justify-content: flex-start; }
+  #safiya-root .sf-msg-me { justify-content: flex-end; }
+
+  #safiya-root .sf-msg-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    box-shadow: 0 1px 4px rgba(220, 39, 67, 0.35);
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* ═══════════════ MESSAGE BUBBLES (Instagram DM style) ═══════════════ */
+  #safiya-root .sf-msg-bubble {
+    max-width: 78%;
+    padding: 9px 14px;
+    border-radius: 20px;
+    font-size: 0.905rem;
+    line-height: 1.42;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    font-family: 'Inter', 'DM Sans', sans-serif !important;
+    font-weight: 450;
+    letter-spacing: -0.005em;
+    position: relative;
+    cursor: pointer;
+    -webkit-user-select: text;
+    user-select: text;
+    transition: transform 0.15s ease;
+  }
+  #safiya-root .sf-msg-bubble:active {
+    transform: scale(0.98);
+  }
+
+  /* Her messages — soft glass */
+  #safiya-root .sf-msg-her .sf-msg-bubble {
+    background: rgba(45, 27, 78, 0.7) !important;
+    color: #f5ecff !important;
+    border: 1px solid rgba(192, 132, 252, 0.18);
+    border-bottom-left-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  /* My messages — Instagram gradient */
+  #safiya-root .sf-msg-me .sf-msg-bubble {
+    background: linear-gradient(135deg, #833ab4 0%, #dc2743 50%, #fcb045 100%) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom-right-radius: 6px;
+    box-shadow: 0 3px 12px rgba(220, 39, 67, 0.3);
+    font-weight: 500;
+  }
+
+  /* Hide avatar for consecutive her messages */
+  #safiya-root .sf-msg-row + .sf-msg-row.sf-msg-her .sf-msg-avatar {
+    visibility: hidden;
+  }
+
+  /* ═══════════════ REPLY PREVIEW IN MESSAGE ═══════════════ */
+  #safiya-root .sf-msg-reply-quote {
+    background: rgba(255, 255, 255, 0.08);
+    border-left: 3px solid rgba(232, 121, 249, 0.6);
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+  #safiya-root .sf-msg-me .sf-msg-reply-quote {
+    background: rgba(255, 255, 255, 0.15);
+    border-left-color: rgba(255, 255, 255, 0.7);
+  }
+  #safiya-root .sf-msg-reply-quote-label {
+    font-weight: 700;
+    color: #e879f9;
+    margin-bottom: 2px;
+    font-size: 0.68rem;
+  }
+  #safiya-root .sf-msg-me .sf-msg-reply-quote-label {
+    color: rgba(255, 255, 255, 0.9);
+  }
+  #safiya-root .sf-msg-reply-quote-text {
+    color: rgba(245, 236, 255, 0.8);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  #safiya-root .sf-msg-me .sf-msg-reply-quote-text {
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  /* ═══════════════ ANIME/LINK CARD (Watch Now button) ═══════════════ */
+  #safiya-root .sf-anime-card {
+    margin-top: 8px;
+    background: linear-gradient(135deg, rgba(131, 58, 180, 0.15), rgba(220, 39, 67, 0.1)) !important;
+    border: 1px solid rgba(232, 121, 249, 0.35);
+    border-radius: 14px;
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    transition: all 0.2s;
+  }
+  #safiya-root .sf-anime-card:hover {
+    border-color: rgba(232, 121, 249, 0.6);
+    transform: translateY(-1px);
+  }
+  #safiya-root .sf-anime-card-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #833ab4, #fd1d1d);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  #safiya-root .sf-anime-card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  #safiya-root .sf-anime-card-info {
+    flex: 1;
+    min-width: 0;
+  }
+  #safiya-root .sf-anime-card-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 3px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  #safiya-root .sf-anime-card-meta {
+    font-size: 0.7rem;
+    color: rgba(232, 121, 249, 0.9);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  #safiya-root .sf-anime-card-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 12px;
+    background: linear-gradient(135deg, #833ab4, #dc2743, #fcb045) !important;
+    color: #fff !important;
+    text-decoration: none;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    box-shadow: 0 3px 12px rgba(220, 39, 67, 0.4);
+    transition: transform 0.15s;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  #safiya-root .sf-anime-card-btn:hover {
+    transform: scale(1.05);
+  }
+  #safiya-root .sf-anime-card-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* ═══════════════ TYPING INDICATOR ═══════════════ */
+  #safiya-root .sf-msg-typing {
+    background: rgba(45, 27, 78, 0.7) !important;
+    border: 1px solid rgba(192, 132, 252, 0.18);
+    padding: 11px 16px;
+    border-radius: 20px;
+    border-bottom-left-radius: 6px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  #safiya-root .sf-msg-typing span {
+    width: 6px;
+    height: 6px;
+    background: linear-gradient(135deg, #833ab4, #dc2743);
+    border-radius: 50%;
+    animation: sfTBounce 1.3s ease-in-out infinite;
+  }
+  #safiya-root .sf-msg-typing span:nth-child(2) { animation-delay: 0.15s; }
+  #safiya-root .sf-msg-typing span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes sfTBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* ═══════════════ MESSAGE MENU (long-press popup) ═══════════════ */
+  #safiya-root .sf-msg-menu {
+    position: fixed;
+    z-index: 10001;
+    background: rgba(28, 18, 48, 0.98);
+    border: 1px solid rgba(192, 132, 252, 0.3);
+    border-radius: 12px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 130px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px);
+    animation: sfMenuIn 0.15s ease-out;
+  }
+  @keyframes sfMenuIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  #safiya-root .sf-msg-menu-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    color: #f5ecff;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 8px;
+    text-align: left;
+    width: 100%;
+    transition: background 0.15s;
+  }
+  #safiya-root .sf-msg-menu-btn:hover {
+    background: rgba(192, 132, 252, 0.15);
+  }
+  #safiya-root .sf-msg-menu-btn svg {
+    color: rgba(232, 121, 249, 0.8);
+  }
+  #safiya-root .sf-msg-menu-danger {
+    color: #fca5a5 !important;
+  }
+  #safiya-root .sf-msg-menu-danger svg {
+    color: #fca5a5;
+  }
+  #safiya-root .sf-msg-menu-danger:hover {
+    background: rgba(239, 68, 68, 0.15) !important;
+  }
+
+  /* Selected message highlight */
+  #safiya-root .sf-msg-bubble.sf-selected {
+    background: linear-gradient(135deg, rgba(232, 121, 249, 0.3), rgba(220, 39, 67, 0.2)) !important;
+    border-color: rgba(232, 121, 249, 0.5) !important;
+  }
+
+  /* ═══════════════ REPLY PREVIEW BAR (above composer) ═══════════════ */
+  #safiya-root .sf-reply-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(45, 27, 78, 0.6);
+    border-top: 1px solid rgba(192, 132, 252, 0.15);
+    animation: sfReplyIn 0.2s ease-out;
+  }
+  @keyframes sfReplyIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  #safiya-root .sf-reply-bar {
+    width: 3px;
+    align-self: stretch;
+    background: linear-gradient(180deg, #e879f9, #833ab4);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  #safiya-root .sf-reply-content {
+    flex: 1;
+    min-width: 0;
+  }
+  #safiya-root .sf-reply-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #e879f9;
+    margin-bottom: 2px;
+  }
+  #safiya-root .sf-reply-text {
+    font-size: 0.78rem;
+    color: rgba(245, 236, 255, 0.7);
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  #safiya-root .sf-reply-close {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: rgba(240, 232, 255, 0.6);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  #safiya-root .sf-reply-close:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+  }
+
+  /* ═══════════════ COMPOSER ═══════════════ */
+  #safiya-root .sf-chat-composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 10px 12px 12px;
+    background: rgba(28, 18, 48, 0.6) !important;
+    border-top: 1px solid rgba(192, 132, 252, 0.12);
+    flex-shrink: 0;
+    backdrop-filter: blur(10px);
+  }
+  #safiya-root .sf-composer-input {
+    flex: 1;
+    background: rgba(45, 27, 78, 0.45);
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    border-radius: 22px;
+    padding: 8px 14px;
+    min-width: 0;
+    transition: border-color 0.2s, background 0.2s;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+  #safiya-root .sf-composer-input:focus-within {
+    border-color: rgba(232, 121, 249, 0.5);
+    background: rgba(45, 27, 78, 0.6);
+  }
+  #safiya-root #s-input {
+    width: 100%;
+    background: transparent !important;
+    border: none !important;
+    color: #f5ecff !important;
+    font-family: 'Inter', 'DM Sans', sans-serif !important;
+    font-size: 0.905rem;
+    padding: 0;
+    outline: none;
+    resize: none;
+    line-height: 1.4;
+    font-weight: 450;
+    letter-spacing: -0.005em;
+    max-height: 100px;
+    overflow-y: auto;
+  }
+  #safiya-root #s-input::placeholder {
+    color: rgba(192, 132, 252, 0.5) !important;
+    font-weight: 400;
+  }
+  #safiya-root .sf-composer-send {
+    background: linear-gradient(135deg, #833ab4, #dc2743, #fcb045) !important;
+    border: none;
+    color: #fff !important;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    box-shadow: 0 3px 12px rgba(220, 39, 67, 0.4);
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #safiya-root .sf-composer-send:hover { transform: scale(1.06); }
+  #safiya-root .sf-composer-send:active { transform: scale(0.94); }
+  #safiya-root .sf-composer-send:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* ═══════════════════════════════════════════════
+     📱 MINIMIZED PILL
+  ═══════════════════════════════════════════════ */
+  #safiya-root .sf-mini {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 14px 5px 5px;
+    background: linear-gradient(180deg, rgba(38, 22, 66, 0.98) 0%, rgba(14, 8, 26, 0.99) 100%) !important;
+    border: 1px solid rgba(232, 121, 249, 0.32);
+    border-radius: 22px;
+    box-shadow:
+      inset 0 1.5px 0 rgba(255, 255, 255, 0.1),
+      0 8px 24px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(16px);
+    transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #safiya-root .sf-mini-show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  #safiya-root .sf-mini-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 17px;
+    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff !important;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(220, 39, 67, 0.35);
+    font-weight: 800;
+    font-size: 0.9rem;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.02em;
+  }
+  #safiya-root .sf-mini-name {
+    font-weight: 700;
+    color: #f5ecff !important;
+    font-size: 0.85rem;
+    letter-spacing: -0.01em;
+  }
+  #safiya-root .sf-mini-badge {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff !important;
+    border-radius: 999px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 800;
+  }
+  #safiya-root .sf-mini-close {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: rgba(240, 232, 255, 0.55);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.65rem;
+    font-weight: 700;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #safiya-root .sf-mini-close:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.14);
+  }
+
+  /* ═══════════════════════════════════════════════
+     📱 RESPONSIVE (mobile fullscreen)
+  ═══════════════════════════════════════════════ */
+  @media (max-width: 720px) {
+    #safiya-root .sf-launcher {
+      right: 14px;
+      bottom: 14px;
+      height: 44px;
+      min-width: 128px;
+      border-radius: 22px;
+    }
+    #safiya-root .sf-launcher-neon { border-radius: 22px; }
+    #safiya-root .sf-launcher::before { border-radius: 24px; }
+    #safiya-root .sf-launcher-inner {
+      padding: 3px 14px 3px 3px;
+      gap: 8px;
+      border-radius: 22px;
+    }
+    #safiya-root .sf-launcher-avatar {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      border-radius: 18px;
+    }
+    #safiya-root .sf-launcher-name { font-size: 0.8rem; }
+    #safiya-root .sf-launcher-status { font-size: 0.6rem; }
+
+    #safiya-root .sf-teaser {
+      bottom: 68px;
+      right: 12px;
+      left: 12px;
+      width: auto;
+    }
+
+    #safiya-root .sf-chat {
+      bottom: 0 !important;
+      right: 0 !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100vw !important;
+      max-width: 100vw !important;
+      height: 100vh !important;
+      max-height: 100vh !important;
+      border-radius: 0 !important;
+      border: none !important;
+    }
+
+    #safiya-root .sf-msg-bubble {
+      max-width: 82%;
+      font-size: 0.92rem;
+    }
+
+    #safiya-root #s-input { 
+      font-size: 0.95rem; 
+    }
+    #safiya-root .sf-composer-send { 
+      width: 40px; 
+      height: 40px; 
+    }
+
+    #safiya-root .sf-mini {
+      bottom: 12px;
+      right: 12px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #safiya-root .sf-launcher-neon,
+    #safiya-root .sf-launcher::before {
+      animation: none !important;
+    }
+  }
+<script is:inline>
+(function() {
+  'use strict';
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 STORAGE KEYS
+  // ═══════════════════════════════════════════════════
+  var STORAGE_NS = 'safiya_v14';
+  var MEMORY_KEY = STORAGE_NS + ':memory';
+  var USER_KEY = STORAGE_NS + ':user';
+  var OWNER_KEY = STORAGE_NS + ':owner';
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 DOM REFERENCES
+  // ═══════════════════════════════════════════════════
+  var $ = function(id) { return document.getElementById(id); };
+  
+  var root = $('safiya-root');
+  var head = $('safiya-head');
+  var notify = $('safiya-notify');
+  var bubble = $('safiya-bubble');
+  var bubbleText = $('s-bubble-text');
+  var bubbleX = $('s-bubble-x');
+  var chat = $('safiya-chat');
+  var chatBody = $('s-chat-body');
+  var chatInput = $('s-input');
+  var sendBtn = $('s-send');
+  var backBtn = $('s-back');
+  var minBtn = $('s-min');
+  var closeBtn = $('s-close');
+  var clearBtn = $('s-clear');
+  var mini = $('safiya-mini');
+  var miniX = $('s-mini-x');
+  var miniNew = $('s-mini-new');
+  var statusText = $('s-chat-status');
+  var msgMenu = $('s-msg-menu');
+  var replyPreview = $('s-reply-preview');
+  var replyLabel = $('s-reply-label');
+  var replyText = $('s-reply-text');
+  var replyClose = $('s-reply-close');
+
+  if (!root || !chat || !head || !chatBody || !chatInput) return;
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 STATE
+  // ═══════════════════════════════════════════════════
+  var state = {
+    open: false,
+    minimized: false,
+    inited: false,
+    newCount: 0,
+    bubbleTimer: null,
+    selectedMsgIdx: null,
+    replyingTo: null, // { sender, text, idx }
+    isOwner: false,
+    userName: ''
+  };
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 STORAGE HELPERS
+  // ═══════════════════════════════════════════════════
+  function safeGet(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+  function safeSet(key, val) {
+    try {
+      localStorage.setItem(key, JSON.stringify(val));
+    } catch (e) {}
+  }
+  function safeRemove(key) {
+    try { localStorage.removeItem(key); } catch (e) {}
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 MEMORY (chat history + user profile)
+  // ═══════════════════════════════════════════════════
+  var memory = normalizeMemory(safeGet(MEMORY_KEY, null));
+
+  function normalizeMemory(raw) {
+    var m = (raw && typeof raw === 'object') ? raw : {};
+    var now = Date.now();
+    m.schemaVersion = 14;
+    m.chatHistory = Array.isArray(m.chatHistory) ? m.chatHistory : [];
+    m.firstMet = m.firstMet || now;
+    m.lastVisit = typeof m.lastVisit === 'number' ? m.lastVisit : now;
+    m.visits = typeof m.visits === 'number' ? m.visits : 0;
+    m.userName = typeof m.userName === 'string' ? m.userName : '';
+    m.currentMood = typeof m.currentMood === 'string' ? m.currentMood : 'neutral';
+    m.behavior = m.behavior || { pagesViewed: [], lastPage: '' };
+    m.behavior.pagesViewed = Array.isArray(m.behavior.pagesViewed) ? m.behavior.pagesViewed : [];
+    m.behavior.lastPage = m.behavior.lastPage || '';
+    
+    // Increment visits on new session (>20 min gap)
+    if (!m.lastVisit || now - m.lastVisit > 20 * 60 * 1000) {
+      m.visits += 1;
+    }
+    m.lastVisit = now;
+    
+    // Trim history to last 200 messages
+    if (m.chatHistory.length > 200) {
+      m.chatHistory = m.chatHistory.slice(-200);
+    }
+    
+    return m;
+  }
+
+  function saveMemory() {
+    memory.lastVisit = Date.now();
+    safeSet(MEMORY_KEY, memory);
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 OWNER DETECTION (Ayano recognition)
+  // ═══════════════════════════════════════════════════
+  function checkIsOwner() {
+    // Method 1: LocalStorage flag
+    try {
+      if (localStorage.getItem(OWNER_KEY) === 'yes') return true;
+    } catch (e) {}
+    
+    // Method 2: URL param ?ayano=true
+    try {
+      if (window.location.search.indexOf('ayano=true') !== -1) {
+        localStorage.setItem(OWNER_KEY, 'yes');
+        return true;
+      }
+    } catch (e) {}
+    
+    return false;
+  }
+
+  function detectOwnerFromMessage(text) {
+    if (state.isOwner) return false;
+    var lower = text.toLowerCase();
+    // Multiple patterns to detect "I am Ayano"
+    var patterns = [
+      /\bi\s+am\s+ayano\b/,
+      /\bi'm\s+ayano\b/,
+      /\bmy\s+name\s+is\s+ayano\b/,
+      /\bcall\s+me\s+ayano\b/,
+      /\bthis\s+is\s+ayano\b/,
+      /\bami\s+ayano\b/,
+      /\bamar\s+nam\s+ayano\b/,
+      /\bayano\s+here\b/
+    ];
+    for (var i = 0; i < patterns.length; i++) {
+      if (patterns[i].test(lower)) {
+        try { localStorage.setItem(OWNER_KEY, 'yes'); } catch (e) {}
+        state.isOwner = true;
+        state.userName = 'Ayano';
+        memory.userName = 'Ayano';
+        saveMemory();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function detectUserName(text) {
+    if (memory.userName) return; // Already have name
+    var lower = text.toLowerCase();
+    var patterns = [
+      /(?:my\s+name\s+is|i\s+am|i'm|call\s+me)\s+([a-z][a-zA-Z]{1,15})/i,
+      /(?:ami|amar\s+nam)\s+([a-z][a-zA-Z]{1,15})/i
+    ];
+    var blocked = /^(fine|good|bad|ok|okay|sure|the|and|but|from|hello|hi|hey|bye|user|test|kemon|acho|bhalo|kharap|kichu|hobe|hoye|please|thanks|not|yes|no)$/i;
+    
+    for (var i = 0; i < patterns.length; i++) {
+      var match = text.match(patterns[i]);
+      if (match && match[1]) {
+        var name = match[1].trim();
+        if (name.length < 2 || name.length > 16 || blocked.test(name)) continue;
+        // Capitalize first letter
+        name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+        memory.userName = name;
+        state.userName = name;
+        saveMemory();
+        return name;
+      }
+    }
+    return null;
+  }
+
+  // Init owner status
+  state.isOwner = checkIsOwner();
+  state.userName = memory.userName || (state.isOwner ? 'Ayano' : '');
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 UTILITY FUNCTIONS
+  // ═══════════════════════════════════════════════════
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c) {
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+
+  function formatTimestamp(ts) {
+    var d = new Date(ts);
+    var days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+    var h = d.getHours();
+    var m = d.getMinutes();
+    var ap = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    m = m < 10 ? '0' + m : m;
+    return days[d.getDay()] + ' AT ' + h + ':' + m + ' ' + ap;
+  }
+
+  function extractUrl(text) {
+    var match = text.match(/https?:\/\/[^\s<>"']+/i);
+    return match ? match[0] : null;
+  }
+
+  function detectPlatform(url) {
+    var u = url.toLowerCase();
+    if (/facebook\.com|fb\.watch|fb\.com/.test(u)) return 'facebook';
+    if (/youtube\.com|youtu\.be/.test(u)) return 'youtube';
+    if (/instagram\.com/.test(u)) return 'instagram';
+    if (/tiktok\.com/.test(u)) return 'tiktok';
+    if (/twitter\.com|x\.com/.test(u)) return 'twitter';
+    if (/dailymotion\.com|dai\.ly/.test(u)) return 'dailymotion';
+    if (/bilibili\.com/.test(u)) return 'bilibili';
+    return 'link';
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 UI VISIBILITY (launcher, bubble, notify)
+  // ═══════════════════════════════════════════════════
+  function pulseLauncher() {
+    if (!head) return;
+    head.classList.add('sf-launcher-hot');
+    setTimeout(function() { head.classList.remove('sf-launcher-hot'); }, 2400);
+  }
+  function showNotify() {
+    if (notify) {
+      notify.style.display = 'flex';
+      pulseLauncher();
+    }
+  }
+  function hideNotify() {
+    if (notify) notify.style.display = 'none';
+  }
+
+  function showBubble(text, ms) {
+    if (state.open) return;
+    ms = ms || 6000;
+    clearTimeout(state.bubbleTimer);
+    bubbleText.textContent = text;
+    bubble.classList.add('sf-teaser-show');
+    showNotify();
+    state.bubbleTimer = setTimeout(function() {
+      bubble.classList.remove('sf-teaser-show');
+    }, ms);
+  }
+
+  function hideBubble() {
+    clearTimeout(state.bubbleTimer);
+    bubble.classList.remove('sf-teaser-show');
+  }
+
+  bubbleX.addEventListener('click', function(e) {
+    e.stopPropagation();
+    hideBubble();
+    hideNotify();
+  });
+  bubble.addEventListener('click', function() { openChat(); });
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 MESSAGE RENDERING
+  // ═══════════════════════════════════════════════════
+  function addTimestampEl(ts) {
+    var d = document.createElement('div');
+    d.className = 'sf-msg-time';
+    d.textContent = formatTimestamp(ts);
+    chatBody.appendChild(d);
+  }
+
+  function addMessage(text, sender, opts) {
+    opts = opts || {};
+    var idx = memory.chatHistory.length;
+    
+    var row = document.createElement('div');
+    row.className = 'sf-msg-row sf-msg-' + sender;
+    row.dataset.idx = String(idx);
+
+    if (sender === 'her') {
+      var avatar = document.createElement('div');
+      avatar.className = 'sf-msg-avatar';
+      avatar.textContent = 'S';
+      row.appendChild(avatar);
+    }
+
+    var bubble = document.createElement('div');
+    bubble.className = 'sf-msg-bubble';
+    bubble.dataset.idx = String(idx);
+
+    // Add reply quote if replying
+    if (opts.replyTo) {
+      var quote = document.createElement('div');
+      quote.className = 'sf-msg-reply-quote';
+      var qLabel = document.createElement('div');
+      qLabel.className = 'sf-msg-reply-quote-label';
+      qLabel.textContent = opts.replyTo.sender === 'me' ? 'You' : 'Safiya';
+      quote.appendChild(qLabel);
+      var qText = document.createElement('div');
+      qText.className = 'sf-msg-reply-quote-text';
+      qText.textContent = opts.replyTo.text.slice(0, 100);
+      quote.appendChild(qText);
+      bubble.appendChild(quote);
+    }
+
+    // Main text
+    var textNode = document.createElement('div');
+    textNode.className = 'sf-msg-text';
+    textNode.textContent = text;
+    bubble.appendChild(textNode);
+
+    // Add anime card if provided
+    if (opts.animeMatch && opts.animeMatch.watchUrl) {
+      var card = document.createElement('div');
+      card.className = 'sf-anime-card';
+      
+      var thumb = document.createElement('div');
+      thumb.className = 'sf-anime-card-thumb';
+      if (opts.animeMatch.thumbnail) {
+        var img = document.createElement('img');
+        img.src = opts.animeMatch.thumbnail;
+        img.referrerPolicy = 'no-referrer';
+        img.onerror = function() { this.style.display = 'none'; thumb.textContent = '🎬'; };
+        thumb.appendChild(img);
+      } else {
+        thumb.textContent = '🎬';
+      }
+      card.appendChild(thumb);
+      
+      var info = document.createElement('div');
+      info.className = 'sf-anime-card-info';
+      var title = document.createElement('div');
+      title.className = 'sf-anime-card-title';
+      title.textContent = opts.animeMatch.title || 'Watch Anime';
+      info.appendChild(title);
+      var meta = document.createElement('div');
+      meta.className = 'sf-anime-card-meta';
+      var metaParts = [];
+      if (opts.animeMatch.episode) metaParts.push('EP ' + opts.animeMatch.episode);
+      if (opts.animeMatch.season && opts.animeMatch.season > 1) metaParts.push('S' + opts.animeMatch.season);
+      metaParts.push('HD');
+      meta.textContent = metaParts.join(' · ');
+      info.appendChild(meta);
+      card.appendChild(info);
+      
+      var btn = document.createElement('a');
+      btn.className = 'sf-anime-card-btn';
+      btn.href = opts.animeMatch.watchUrl;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg><span>Watch</span>';
+      card.appendChild(btn);
+      
+      bubble.appendChild(card);
+    }
+
+    row.appendChild(bubble);
+    chatBody.appendChild(row);
+
+    // Scroll to bottom
+    requestAnimationFrame(function() {
+      chatBody.scrollTop = chatBody.scrollHeight;
+    });
+
+    // Save to memory
+    if (!opts.skipSave) {
+      var msgObj = {
+        sender: sender,
+        text: text,
+        time: Date.now()
+      };
+      if (opts.replyTo) msgObj.replyTo = { sender: opts.replyTo.sender, text: opts.replyTo.text.slice(0, 100) };
+      if (opts.animeMatch) msgObj.animeMatch = opts.animeMatch;
+      memory.chatHistory.push(msgObj);
+      if (memory.chatHistory.length > 200) {
+        memory.chatHistory = memory.chatHistory.slice(-200);
+      }
+      saveMemory();
+    }
+
+    // If minimized and her message, increment badge
+    if (sender === 'her' && !opts.skipSave && state.minimized) {
+      state.newCount++;
+      miniNew.textContent = String(state.newCount);
+      miniNew.style.display = 'flex';
+    }
+
+    // Attach long-press handler
+    attachMessageActions(bubble, idx);
+  }
+
+  function addTyping() {
+    var row = document.createElement('div');
+    row.className = 'sf-msg-row sf-msg-her';
+    row.id = 's-typing';
+    
+    var avatar = document.createElement('div');
+    avatar.className = 'sf-msg-avatar';
+    avatar.textContent = 'S';
+    row.appendChild(avatar);
+    
+    var typing = document.createElement('div');
+    typing.className = 'sf-msg-typing';
+    typing.innerHTML = '<span></span><span></span><span></span>';
+    row.appendChild(typing);
+    
+    chatBody.appendChild(row);
+    requestAnimationFrame(function() { chatBody.scrollTop = chatBody.scrollHeight; });
+    return row;
+  }
+
+  function removeTyping() {
+    var t = $('s-typing');
+    if (t) t.remove();
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 RESTORE CHAT HISTORY
+  // ═══════════════════════════════════════════════════
+  function restoreChatHistory() {
+    if (state.inited) return;
+    state.inited = true;
+    chatBody.innerHTML = '';
+    
+    var history = memory.chatHistory || [];
+    
+    if (history.length === 0) {
+      addTimestampEl(Date.now());
+      // First greeting
+      var greeting;
+      if (state.isOwner) {
+        greeting = 'Ayano! 💜 Tumi eshecho, ami khusi hoye gechi... amar sathe kotha bolo na? 🥺';
+      } else if (state.userName) {
+        greeting = 'Hi ' + state.userName + '! 💜 Kemon acho? Ami Safiya, tomar sathe kotha bolte peye khusi 😊';
+      } else {
+        greeting = 'Hi there! 💜 Ami Safiya... anime niye kotha bolo? Ba tomar naam ki bolo na? 🌸';
+      }
+      addMessage(greeting, 'her');
+      return;
+    }
+    
+    var lastTs = 0;
+    for (var i = 0; i < history.length; i++) {
+      var msg = history[i];
+      if (msg.time - lastTs > 30 * 60 * 1000) {
+        addTimestampEl(msg.time);
+      }
+      addMessage(msg.text, msg.sender, {
+        skipSave: true,
+        replyTo: msg.replyTo || null,
+        animeMatch: msg.animeMatch || null
+      });
+      lastTs = msg.time;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 STATUS UPDATE
+  // ═══════════════════════════════════════════════════
+  function updateStatus(text) {
+    if (statusText) statusText.textContent = text || (state.isOwner ? 'Ayano-mode 💜' : 'Active now');
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 EXPORT for PART 2B
+  // ═══════════════════════════════════════════════════
+  window.__safiyaCore = {
+    state: state,
+    memory: memory,
+    saveMemory: saveMemory,
+    root: root, head: head, notify: notify,
+    bubble: bubble, chat: chat, chatBody: chatBody, chatInput: chatInput,
+    sendBtn: sendBtn, backBtn: backBtn, minBtn: minBtn, closeBtn: closeBtn, clearBtn: clearBtn,
+    mini: mini, miniX: miniX, miniNew: miniNew,
+    statusText: statusText, msgMenu: msgMenu,
+    replyPreview: replyPreview, replyLabel: replyLabel, replyText: replyText, replyClose: replyClose,
+    addMessage: addMessage, addTyping: addTyping, removeTyping: removeTyping,
+    addTimestampEl: addTimestampEl, restoreChatHistory: restoreChatHistory,
+    updateStatus: updateStatus, showBubble: showBubble, hideBubble: hideBubble,
+    showNotify: showNotify, hideNotify: hideNotify,
+    detectOwnerFromMessage: detectOwnerFromMessage,
+    detectUserName: detectUserName,
+    extractUrl: extractUrl, detectPlatform: detectPlatform,
+    escapeHtml: escapeHtml
+  };
+  
+  // Placeholder — real attachMessageActions defined in PART 2B
+  window.__attachMessageActions = null;
+  function attachMessageActions(bubble, idx) {
+    if (window.__attachMessageActions) window.__attachMessageActions(bubble, idx);
+  }
+
+})();
+</script>
+<script is:inline>
+(function() {
+  'use strict';
+
+  // Get references from PART 2A
+  var core = window.__safiyaCore;
+  if (!core) { console.error('[Safiya] Core not initialized'); return; }
+
+  var state = core.state;
+  var memory = core.memory;
+  var saveMemory = core.saveMemory;
+  var chat = core.chat;
+  var chatBody = core.chatBody;
+  var chatInput = core.chatInput;
+  var sendBtn = core.sendBtn;
+  var head = core.head;
+  var mini = core.mini;
+  var msgMenu = core.msgMenu;
+  var replyPreview = core.replyPreview;
+  var replyLabel = core.replyLabel;
+  var replyText = core.replyText;
+  var replyClose = core.replyClose;
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 OPEN / CLOSE / MINIMIZE
+  // ═══════════════════════════════════════════════════
+  function openChat() {
+    if (state.minimized) {
+      unminimize();
+      return;
+    }
+    state.open = true;
+    chat.classList.add('sf-chat-open');
+    chat.setAttribute('aria-hidden', 'false');
+    head.classList.add('sf-launcher-hide');
+    core.hideBubble();
+    core.hideNotify();
+    core.restoreChatHistory();
+    core.updateStatus();
+    setTimeout(function() { chatInput.focus(); }, 300);
+  }
+
+  function closeChat() {
+    state.open = false;
+    state.minimized = false;
+    chat.classList.remove('sf-chat-open');
+    chat.setAttribute('aria-hidden', 'true');
+    head.classList.remove('sf-launcher-hide');
+    mini.classList.remove('sf-mini-show');
+    cancelReply();
+    hideMenu();
+  }
+
+  function minimizeChat() {
+    state.open = false;
+    state.minimized = true;
+    chat.classList.remove('sf-chat-open');
+    chat.setAttribute('aria-hidden', 'true');
+    mini.classList.add('sf-mini-show');
+    head.classList.add('sf-launcher-hide');
+    hideMenu();
+  }
+
+  function unminimize() {
+    state.minimized = false;
+    state.newCount = 0;
+    core.miniNew.style.display = 'none';
+    mini.classList.remove('sf-mini-show');
+    state.open = true;
+    chat.classList.add('sf-chat-open');
+    chat.setAttribute('aria-hidden', 'false');
+    core.updateStatus();
+  }
+
+  function clearChat() {
+    if (!confirm('Clear all conversation? This cannot be undone.')) return;
+    memory.chatHistory = [];
+    saveMemory();
+    chatBody.innerHTML = '';
+    state.inited = false;
+    core.restoreChatHistory();
+  }
+
+  head.addEventListener('click', openChat);
+  core.backBtn.addEventListener('click', closeChat);
+  core.closeBtn.addEventListener('click', closeChat);
+  core.minBtn.addEventListener('click', minimizeChat);
+  core.clearBtn.addEventListener('click', clearChat);
+  mini.addEventListener('click', unminimize);
+  core.miniX.addEventListener('click', function(e) {
+    e.stopPropagation();
+    closeChat();
+  });
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 AUTO-EXPAND TEXTAREA
+  // ═══════════════════════════════════════════════════
+  function autoResizeInput() {
+    chatInput.style.height = 'auto';
+    var newHeight = Math.min(chatInput.scrollHeight, 100);
+    chatInput.style.height = newHeight + 'px';
+  }
+  chatInput.addEventListener('input', autoResizeInput);
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 REPLY HANDLING
+  // ═══════════════════════════════════════════════════
+  function startReply(msg) {
+    state.replyingTo = msg;
+    replyLabel.textContent = 'Replying to ' + (msg.sender === 'me' ? 'yourself' : 'Safiya');
+    replyText.textContent = msg.text.slice(0, 100);
+    replyPreview.style.display = 'flex';
+    chatInput.focus();
+  }
+
+  function cancelReply() {
+    state.replyingTo = null;
+    replyPreview.style.display = 'none';
+  }
+
+  replyClose.addEventListener('click', cancelReply);
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 MESSAGE ACTIONS (long-press menu)
+  // ═══════════════════════════════════════════════════
+  var longPressTimer = null;
+  var longPressTriggered = false;
+
+  function showMenu(bubbleEl, idx) {
+    var rect = bubbleEl.getBoundingClientRect();
+    msgMenu.style.display = 'flex';
+    
+    // Position menu near the bubble
+    var menuHeight = 130;
+    var top = rect.top - menuHeight - 8;
+    if (top < 60) top = rect.bottom + 8;
+    var left = rect.left;
+    var maxLeft = window.innerWidth - 150;
+    if (left > maxLeft) left = maxLeft;
+    if (left < 10) left = 10;
+    
+    msgMenu.style.top = top + 'px';
+    msgMenu.style.left = left + 'px';
+    msgMenu.dataset.msgIdx = String(idx);
+    
+    // Highlight selected message
+    var allBubbles = chatBody.querySelectorAll('.sf-msg-bubble');
+    for (var i = 0; i < allBubbles.length; i++) allBubbles[i].classList.remove('sf-selected');
+    bubbleEl.classList.add('sf-selected');
+  }
+
+  function hideMenu() {
+    msgMenu.style.display = 'none';
+    var allBubbles = chatBody.querySelectorAll('.sf-msg-bubble');
+    for (var i = 0; i < allBubbles.length; i++) allBubbles[i].classList.remove('sf-selected');
+  }
+
+  // Long-press or right-click on messages
+  window.__attachMessageActions = function(bubbleEl, idx) {
+    // Right-click (desktop)
+    bubbleEl.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      showMenu(bubbleEl, idx);
+    });
+
+    // Long-press (mobile)
+    bubbleEl.addEventListener('touchstart', function(e) {
+      longPressTriggered = false;
+      longPressTimer = setTimeout(function() {
+        longPressTriggered = true;
+        showMenu(bubbleEl, idx);
+        if (navigator.vibrate) navigator.vibrate(30);
+      }, 500);
+    }, { passive: true });
+
+    bubbleEl.addEventListener('touchend', function() {
+      clearTimeout(longPressTimer);
+    });
+    bubbleEl.addEventListener('touchmove', function() {
+      clearTimeout(longPressTimer);
+    });
+  };
+
+  // Menu button clicks
+  msgMenu.addEventListener('click', function(e) {
+    var btn = e.target.closest('.sf-msg-menu-btn');
+    if (!btn) return;
+    var action = btn.dataset.action;
+    var idx = parseInt(msgMenu.dataset.msgIdx);
+    if (isNaN(idx) || !memory.chatHistory[idx]) { hideMenu(); return; }
+    
+    var msg = memory.chatHistory[idx];
+    
+    if (action === 'copy') {
+      copyText(msg.text);
+    } else if (action === 'reply') {
+      startReply({ sender: msg.sender, text: msg.text });
+    } else if (action === 'delete') {
+      deleteMessage(idx);
+    }
+    hideMenu();
+  });
+
+  function copyText(text) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function() {
+        showToast('Copied! 💜');
+      }).catch(function() {
+        showToast('Copy failed');
+      });
+    } else {
+      // Fallback
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        showToast('Copied! 💜');
+      } catch (e) {
+        showToast('Copy failed');
+      }
+      document.body.removeChild(ta);
+    }
+  }
+
+  function deleteMessage(idx) {
+    if (!confirm('Delete this message?')) return;
+    memory.chatHistory.splice(idx, 1);
+    saveMemory();
+    // Re-render
+    chatBody.innerHTML = '';
+    state.inited = false;
+    core.restoreChatHistory();
+  }
+
+  function showToast(text) {
+    var t = document.createElement('div');
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(28,18,48,0.98);border:1px solid rgba(232,121,249,0.4);color:#fff;padding:10px 18px;border-radius:100px;font-size:0.85rem;font-weight:600;z-index:10002;box-shadow:0 8px 24px rgba(0,0,0,0.4);animation:sfToastIn 0.25s ease-out;';
+    t.textContent = text;
+    document.body.appendChild(t);
+    setTimeout(function() {
+      t.style.opacity = '0';
+      t.style.transition = 'opacity 0.3s';
+      setTimeout(function() { t.remove(); }, 300);
+    }, 1500);
+  }
+
+  // Close menu on outside click
+  document.addEventListener('click', function(e) {
+    if (msgMenu.style.display === 'flex' && !msgMenu.contains(e.target)) {
+      var isBubble = e.target.closest && e.target.closest('.sf-msg-bubble');
+      if (!isBubble) hideMenu();
+    }
+  });
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 LINK DETECTION → KV LOOKUP
+  // ═══════════════════════════════════════════════════
+  async function checkLinkForAnime(url) {
+    try {
+      var res = await fetch('/api/link-resolver?url=' + encodeURIComponent(url));
+      if (!res.ok) return null;
+      var data = await res.json();
+      if (data && data.success && data.redirectUrl) {
+        return {
+          title: data.title || 'Anime',
+          watchUrl: data.redirectUrl,
+          source: data.source || 'database'
+        };
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  async function checkTextForAnime(text) {
+    // Search KV database for text query
+    try {
+      var res = await fetch('/api/fb-search?q=' + encodeURIComponent(text.slice(0, 100)) + '&limit=1');
+      if (!res.ok) return null;
+      var data = await res.json();
+      if (data && data.success && data.results && data.results.length > 0) {
+        var top = data.results[0];
+        if (top.confidence && top.confidence >= 0.7) {
+          return {
+            title: top.title,
+            episode: top.episode,
+            season: top.season,
+            thumbnail: top.thumbnail,
+            watchUrl: top.watchUrl
+          };
+        }
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 SEND MESSAGE
+  // ═══════════════════════════════════════════════════
+  var sending = false;
+
+  async function sendMessage() {
+    if (sending) return;
+    var text = chatInput.value.trim();
+    if (!text) return;
+    
+    sending = true;
+    sendBtn.disabled = true;
+    
+    // Detect owner / user name
+    core.detectOwnerFromMessage(text);
+    if (!memory.userName) core.detectUserName(text);
+    
+    var replyToCopy = state.replyingTo ? { sender: state.replyingTo.sender, text: state.replyingTo.text } : null;
+    
+    // Add user message
+    core.addMessage(text, 'me', { replyTo: replyToCopy });
+    chatInput.value = '';
+    chatInput.style.height = 'auto';
+    cancelReply();
+    
+    // Check for URL in message
+    var url = core.extractUrl(text);
+    var animeMatch = null;
+    var linkMeta = null;
+    
+    if (url) {
+      linkMeta = {
+        url: url,
+        platform: core.detectPlatform(url)
+      };
+      // Try to lookup in KV
+      animeMatch = await checkLinkForAnime(url);
+    } else if (text.length > 3) {
+      // Text search — check if it matches known anime
+      animeMatch = await checkTextForAnime(text);
+    }
+    
+    // Show typing
+    setTimeout(function() {
+      core.addTyping();
+      core.updateStatus('typing...');
+    }, 250);
+    
+    // Build context for API
+    var ctx = {
+      message: text,
+      isOwner: state.isOwner,
+      userName: memory.userName || (state.isOwner ? 'Ayano' : ''),
+      visits: memory.visits,
+      history: memory.chatHistory.slice(-20),
+      currentMood: memory.currentMood,
+      pagesViewed: (memory.behavior.pagesViewed || []).slice(-5).map(function(p) { return p.path; }),
+      animeMatch: animeMatch, // Already resolved anime from KV
+      linkMeta: linkMeta,     // Raw URL info
+      preferredLanguage: /[\u0980-\u09FF]/.test(text) ? 'bn' : 'en'
+    };
+    
+    // Call API
+    try {
+      var res = await fetch('/api/safiya-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ctx)
+      });
+      
+      var data;
+      if (res.ok) {
+        data = await res.json();
+      } else {
+        throw new Error('API failed');
+      }
+      
+      var reply = (data && data.reply) ? data.reply : 'Sorry, mind ta blank hoye gelo... abar bolo? 🥺';
+      var mood = (data && data.mood) ? data.mood : 'neutral';
+      memory.currentMood = mood;
+      saveMemory();
+      
+      core.removeTyping();
+      core.updateStatus();
+      
+      // Add reply with anime card if found
+      core.addMessage(reply, 'her', {
+        animeMatch: animeMatch
+      });
+      
+    } catch (e) {
+      core.removeTyping();
+      core.updateStatus();
+      core.addMessage('Ekhon connection e problem hocche 😔... Ektu por abar chesta koro?', 'her');
+    }
+    
+    sending = false;
+    sendBtn.disabled = false;
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  
+  chatInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 PAGE TRACKING (for context)
+  // ═══════════════════════════════════════════════════
+  var currentPath = window.location.pathname || '/';
+  if (memory.behavior.lastPage !== currentPath) {
+    memory.behavior.pagesViewed.push({ path: currentPath, time: Date.now() });
+    if (memory.behavior.pagesViewed.length > 30) {
+      memory.behavior.pagesViewed = memory.behavior.pagesViewed.slice(-30);
+    }
+    memory.behavior.lastPage = currentPath;
+    saveMemory();
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 HIDE BACK-TO-TOP BUTTON (avoid overlap)
+  // ═══════════════════════════════════════════════════
+  function hideBackToTop() {
+    var selectors = ['#btt', '#back-to-top', '.back-to-top', '.btt', '#scroll-top'];
+    for (var i = 0; i < selectors.length; i++) {
+      var els = document.querySelectorAll(selectors[i]);
+      for (var j = 0; j < els.length; j++) {
+        els[j].style.display = 'none';
+        els[j].style.visibility = 'hidden';
+        els[j].style.pointerEvents = 'none';
+      }
+    }
+  }
+  hideBackToTop();
+  setInterval(hideBackToTop, 3000);
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 KEYBOARD SHORTCUTS
+  // ═══════════════════════════════════════════════════
+  document.addEventListener('keydown', function(e) {
+    // Escape closes menu / cancels reply
+    if (e.key === 'Escape') {
+      if (msgMenu.style.display === 'flex') { hideMenu(); return; }
+      if (state.replyingTo) { cancelReply(); return; }
+    }
+    // Ctrl+Shift+A = Ayano mode (secret)
+    if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+      e.preventDefault();
+      try { localStorage.setItem('safiya_v14:owner', 'yes'); } catch (err) {}
+      state.isOwner = true;
+      memory.userName = 'Ayano';
+      state.userName = 'Ayano';
+      saveMemory();
+      core.showBubble('Ayano-sama! 💜 Tumi eshecho ~', 6000);
+      core.updateStatus();
+    }
+  });
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 GLOBAL API
+  // ═══════════════════════════════════════════════════
+  window.Safiya = {
+    open: openChat,
+    close: closeChat,
+    minimize: minimizeChat,
+    clear: clearChat,
+    say: core.showBubble,
+    memory: function() { return memory; },
+    setName: function(n) { 
+      memory.userName = String(n || '').trim().slice(0, 16); 
+      state.userName = memory.userName;
+      saveMemory(); 
+    },
+    setOwner: function() {
+      try { localStorage.setItem('safiya_v14:owner', 'yes'); } catch (e) {}
+      state.isOwner = true;
+      memory.userName = 'Ayano';
+      saveMemory();
+    },
+    reset: function() {
+      try {
+        localStorage.removeItem('safiya_v14:memory');
+        localStorage.removeItem('safiya_v14:owner');
+        localStorage.removeItem('safiya_v14:user');
+      } catch (e) {}
+      location.reload();
+    }
+  };
+
+  // Add toast animation to page
+  var animStyle = document.createElement('style');
+  animStyle.textContent = '@keyframes sfToastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }';
+  document.head.appendChild(animStyle);
+
+  // Init: if there's chat history, show subtle notification
+  if (memory.chatHistory.length > 0 && !state.open) {
+    setTimeout(function() {
+      // Silent notification (no bubble spam)
+      // User can click launcher to see
+    }, 1000);
+  } else if (memory.chatHistory.length === 0) {
+    // First-time greeting bubble after 3s
+    setTimeout(function() {
+      if (!state.open) {
+        var greeting = state.isOwner ? 'Ayano! Ami wait korchi 💜' : 'Hey! Kotha bolbe? 💜';
+        core.showBubble(greeting, 7000);
+      }
+    }, 3000);
+  }
+
+})();
+</script>
+
