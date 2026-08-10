@@ -1667,7 +1667,83 @@
   function updateStatus(text) {
     if (statusText) statusText.textContent = text || (state.isOwner ? 'Ayano-mode 💜' : 'Active now');
   }
-
+   // ═══════════════════════════════════════════════════
+  // 🎯 DP LOADER (Safiya's profile picture)
+  // ═══════════════════════════════════════════════════
+  var DP_URL = null;
+  function loadSafiyaDP() {
+    var candidates = [
+      '/safiya/avatar.png',
+      '/safiya/avatar.jpg',
+      '/safiya/avatar.webp',
+      '/safiya/safiya.png',
+      '/safiya/safiya.jpg'
+    ];
+    var idx = 0;
+    function tryNext() {
+      if (idx >= candidates.length) return;
+      var url = candidates[idx++];
+      var img = new Image();
+      img.onload = function() {
+        DP_URL = url;
+        applyDPEverywhere(url);
+      };
+      img.onerror = tryNext;
+      img.src = url;
+    }
+    tryNext();
+  }
+  
+  function applyDPEverywhere(url) {
+    // Launcher avatar
+    var launcherAvatar = document.querySelector('#safiya-root .sf-launcher-avatar');
+    if (launcherAvatar) {
+      launcherAvatar.style.backgroundImage = 'url(' + url + ')';
+      launcherAvatar.style.backgroundSize = 'cover';
+      launcherAvatar.style.backgroundPosition = 'center';
+      var launcherIcon = document.getElementById('s-head-icon');
+      if (launcherIcon) launcherIcon.style.display = 'none';
+    }
+    
+    // Teaser bubble avatar
+    var teaserAvatar = document.querySelector('#safiya-root .sf-teaser-avatar');
+    if (teaserAvatar) {
+      teaserAvatar.style.backgroundImage = 'url(' + url + ')';
+      teaserAvatar.style.backgroundSize = 'cover';
+      teaserAvatar.style.backgroundPosition = 'center';
+      teaserAvatar.textContent = '';
+    }
+    
+    // Chat header avatar
+    var chatAvatar = document.querySelector('#safiya-root .sf-chat-user-avatar');
+    if (chatAvatar) {
+      chatAvatar.style.backgroundImage = 'url(' + url + ')';
+      chatAvatar.style.backgroundSize = 'cover';
+      chatAvatar.style.backgroundPosition = 'center';
+      var chatLetter = document.querySelector('.sf-chat-avatar-letter');
+      if (chatLetter) chatLetter.style.display = 'none';
+    }
+    
+    // Mini pill avatar
+    var miniAvatar = document.querySelector('#safiya-root .sf-mini-avatar');
+    if (miniAvatar) {
+      miniAvatar.style.backgroundImage = 'url(' + url + ')';
+      miniAvatar.style.backgroundSize = 'cover';
+      miniAvatar.style.backgroundPosition = 'center';
+      miniAvatar.textContent = '';
+    }
+    
+    // All message avatars (existing + future)
+    var msgAvatars = document.querySelectorAll('#safiya-root .sf-msg-avatar');
+    for (var i = 0; i < msgAvatars.length; i++) {
+      msgAvatars[i].style.backgroundImage = 'url(' + url + ')';
+      msgAvatars[i].style.backgroundSize = 'cover';
+      msgAvatars[i].style.backgroundPosition = 'center';
+      msgAvatars[i].textContent = '';
+    }
+  }
+  
+  loadSafiyaDP();
   // ═══════════════════════════════════════════════════
   // 🎯 EXPORT for PART 2B
   // ═══════════════════════════════════════════════════
