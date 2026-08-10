@@ -1,0 +1,1179 @@
+---
+export const prerender = false;
+---
+
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin Panel | AniTubeBuzz</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ═══ LOGIN SCREEN ═══ -->
+  <div id="loginScreen" class="ad-login-screen">
+    <div class="ad-login-card">
+      <div class="ad-login-logo">
+        <span class="grad-text">Ani</span><span class="tube-text">Tube</span><span class="grad-text">Buzz</span>
+      </div>
+      <div class="ad-login-badge">🔐 ADMIN PANEL</div>
+      <h1 class="ad-login-title">Welcome Back</h1>
+      <p class="ad-login-sub">Enter your admin password to continue</p>
+      
+      <div class="ad-login-input-wrap">
+        <input 
+          type="password" 
+          id="loginPassword" 
+          placeholder="Enter password..." 
+          class="ad-login-input"
+          autocomplete="current-password"
+        />
+        <button id="loginBtn" class="ad-login-btn">
+          <span id="loginBtnText">Login</span>
+          <div id="loginBtnSpin" class="ad-spin" style="display:none"></div>
+        </button>
+      </div>
+      
+      <div id="loginError" class="ad-login-error" style="display:none"></div>
+      
+      <div class="ad-login-footer">
+        <div class="ad-login-safe">🔒 Your data is encrypted & secure</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ADMIN DASHBOARD ═══ -->
+  <div id="adminDashboard" class="ad-dashboard" style="display:none">
+    
+    <!-- HEADER -->
+    <header class="ad-header">
+      <div class="ad-header-inner">
+        <a href="/" class="ad-header-logo">
+          <span class="grad-text">Ani</span><span class="tube-text">Tube</span><span class="grad-text">Buzz</span>
+          <span class="ad-admin-tag">ADMIN</span>
+        </a>
+        <div class="ad-header-right">
+          <a href="/" class="ad-nav-link">🏠 Home</a>
+          <button id="logoutBtn" class="ad-logout-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="ad-main">
+      <div class="ad-container">
+        
+        <div class="ad-grid">
+          
+          <!-- LEFT: ADD FORM -->
+          <div class="ad-form-card">
+            <div class="ad-card-header">
+              <div class="ad-card-title">
+                <span class="ad-card-icon">➕</span>
+                <span>Add New Video</span>
+              </div>
+              <div class="ad-card-sub">Paste FB link(s) — system will handle the rest</div>
+            </div>
+
+            <div class="ad-form-body">
+              
+              <!-- FB LINKS -->
+              <div class="ad-field">
+                <label class="ad-label">
+                  <span class="ad-label-icon">📎</span>
+                  Facebook Link(s)
+                  <span class="ad-label-hint">Paste 1 or more (all will be linked to same video)</span>
+                </label>
+                <div id="fbLinksList" class="ad-fb-list">
+                  <div class="ad-fb-row">
+                    <input type="text" class="ad-input ad-fb-input" placeholder="https://facebook.com/reel/... or /share/v/..." />
+                    <button class="ad-fb-remove" onclick="removeFbLink(this)" title="Remove">✕</button>
+                  </div>
+                </div>
+                <button type="button" id="addFbLinkBtn" class="ad-add-more-btn">
+                  <span>+</span> Add another link
+                </button>
+              </div>
+
+              <!-- ANIME NAME -->
+              <div class="ad-field">
+                <label class="ad-label">
+                  <span class="ad-label-icon">🎭</span>
+                  Anime Name
+                  <span class="ad-label-hint">Type to search (auto-fills poster & slug)</span>
+                </label>
+                <div class="ad-search-wrap">
+                  <input 
+                    type="text" 
+                    id="animeName" 
+                    class="ad-input" 
+                    placeholder="e.g., Little Busters Refrain"
+                    autocomplete="off"
+                  />
+                  <div id="animeSuggestions" class="ad-suggestions"></div>
+                </div>
+              </div>
+
+              <!-- SEASON + EPISODE -->
+              <div class="ad-row2">
+                <div class="ad-field">
+                  <label class="ad-label">
+                    <span class="ad-label-icon">📺</span>
+                    Season
+                  </label>
+                  <input type="number" id="animeSeason" class="ad-input" placeholder="1" value="1" min="1" />
+                </div>
+                <div class="ad-field">
+                  <label class="ad-label">
+                    <span class="ad-label-icon">🎬</span>
+                    Episode
+                  </label>
+                  <input type="number" id="animeEpisode" class="ad-input" placeholder="1" value="1" min="1" />
+                </div>
+              </div>
+
+              <!-- CAPTION -->
+              <div class="ad-field">
+                <label class="ad-label">
+                  <span class="ad-label-icon">💬</span>
+                  Caption <span class="ad-label-optional">(optional)</span>
+                </label>
+                <textarea 
+                  id="animeCaption" 
+                  class="ad-input ad-textarea" 
+                  placeholder="e.g., She literally tried to kill him"
+                  rows="2"
+                ></textarea>
+              </div>
+
+              <!-- WATCH URL (Advanced) -->
+              <details class="ad-advanced">
+                <summary class="ad-advanced-toggle">
+                  <span>⚙️ Advanced Options</span>
+                  <span class="ad-advanced-arrow">▼</span>
+                </summary>
+                <div class="ad-advanced-body">
+                  <div class="ad-field">
+                    <label class="ad-label">
+                      <span class="ad-label-icon">🔗</span>
+                      Custom Watch URL <span class="ad-label-optional">(only if auto-race fails)</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      id="animeWatchUrl" 
+                      class="ad-input" 
+                      placeholder="https://gogoanime.or.at/xyz-episode-1/"
+                    />
+                    <div class="ad-hint">Leave empty for automatic multi-source detection</div>
+                  </div>
+                  <div class="ad-field">
+                    <label class="ad-label">
+                      <span class="ad-label-icon">🏷️</span>
+                      Extra Keywords <span class="ad-label-optional">(optional)</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      id="animeKeywords" 
+                      class="ad-input" 
+                      placeholder="character names, comma separated"
+                    />
+                  </div>
+                </div>
+              </details>
+
+              <!-- SUBMIT -->
+              <button id="submitBtn" class="ad-submit-btn">
+                <span id="submitText">✨ Add Video</span>
+                <div id="submitSpin" class="ad-spin" style="display:none"></div>
+              </button>
+
+              <div id="submitResult" class="ad-result" style="display:none"></div>
+            </div>
+          </div>
+
+          <!-- RIGHT: RECENT LIST -->
+          <div class="ad-list-card">
+            <div class="ad-card-header">
+              <div class="ad-card-title">
+                <span class="ad-card-icon">📊</span>
+                <span>Recent Videos</span>
+                <span id="listCount" class="ad-list-count">0</span>
+              </div>
+              <button id="refreshListBtn" class="ad-refresh-btn" title="Refresh">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <polyline points="23 4 23 10 17 10"/>
+                  <polyline points="1 20 1 14 7 14"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+              </button>
+            </div>
+
+            <div id="videosList" class="ad-list-body">
+              <div class="ad-list-loading">
+                <div class="ad-spin"></div>
+                <span>Loading videos...</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ═══ STYLES ═══ -->
+  <style is:global>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: #0a0517; color: #fff; font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    
+    .grad-text {
+      background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .tube-text { color: #fff; }
+
+    .ad-spin {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(192,132,252,0.25);
+      border-top-color: #e879f9;
+      border-radius: 50%;
+      animation: adSpin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes adSpin { to { transform: rotate(360deg); } }
+
+    /* ═══ LOGIN SCREEN ═══ */
+    .ad-login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #0a0517 0%, #1a0b3d 50%, #0a0517 100%);
+    }
+    .ad-login-card {
+      background: rgba(28, 15, 61, 0.6);
+      border: 1px solid rgba(192, 132, 252, 0.25);
+      border-radius: 24px;
+      padding: 40px 32px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      text-align: center;
+    }
+    .ad-login-logo {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .ad-login-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: linear-gradient(135deg, rgba(192,132,252,0.2), rgba(232,121,249,0.15));
+      border: 1px solid rgba(232,121,249,0.4);
+      border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 800;
+      color: #e879f9;
+      letter-spacing: 0.15em;
+      margin-bottom: 20px;
+    }
+    .ad-login-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .ad-login-sub {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 28px;
+    }
+    .ad-login-input-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .ad-login-input {
+      width: 100%;
+      padding: 14px 16px;
+      background: rgba(10, 5, 23, 0.7);
+      border: 1px solid rgba(192,132,252,0.25);
+      border-radius: 12px;
+      color: #fff;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .ad-login-input:focus {
+      border-color: rgba(232,121,249,0.6);
+      box-shadow: 0 0 0 3px rgba(192,132,252,0.15);
+    }
+    .ad-login-input::placeholder { color: rgba(255,255,255,0.35); }
+    .ad-login-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .ad-login-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(232,121,249,0.35); }
+    .ad-login-btn:disabled { opacity: 0.6; cursor: wait; }
+    .ad-login-error {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      border-radius: 10px;
+      color: #fca5a5;
+      font-size: 0.85rem;
+    }
+    .ad-login-footer {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(192,132,252,0.15);
+    }
+    .ad-login-safe {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ═══ HEADER ═══ */
+    .ad-dashboard { min-height: 100vh; background: #0a0517; }
+    .ad-header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(10, 5, 23, 0.9);
+      border-bottom: 1px solid rgba(192,132,252,0.15);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+    .ad-header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .ad-header-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 800;
+      text-decoration: none;
+      color: inherit;
+    }
+    .ad-admin-tag {
+      display: inline-block;
+      padding: 3px 8px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 800;
+      border-radius: 5px;
+      letter-spacing: 0.1em;
+      margin-left: 4px;
+    }
+    .ad-header-right { display: flex; align-items: center; gap: 10px; }
+    .ad-nav-link {
+      padding: 8px 14px;
+      background: rgba(192,132,252,0.1);
+      border: 1px solid rgba(192,132,252,0.2);
+      border-radius: 100px;
+      color: rgba(255,255,255,0.85);
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .ad-nav-link:hover { background: rgba(192,132,252,0.2); color: #fff; }
+    .ad-logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 100px;
+      color: #fca5a5;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .ad-logout-btn:hover { background: rgba(239, 68, 68, 0.2); color: #fff; }
+
+    /* ═══ MAIN LAYOUT ═══ */
+    .ad-main { padding: 32px 0 60px; }
+    .ad-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .ad-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .ad-form-card, .ad-list-card {
+      background: rgba(28, 15, 61, 0.4);
+      border: 1px solid rgba(192, 132, 252, 0.15);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .ad-card-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid rgba(192, 132, 252, 0.12);
+      background: linear-gradient(135deg, rgba(192,132,252,0.08), rgba(232,121,249,0.04));
+    }
+    .ad-card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .ad-card-icon {
+      font-size: 1.2rem;
+    }
+    .ad-card-sub {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.55);
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .ad-list-count {
+      margin-left: auto;
+      padding: 3px 10px;
+      background: rgba(192,132,252,0.2);
+      border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #e879f9;
+    }
+    .ad-refresh-btn {
+      margin-left: auto;
+      width: 32px; height: 32px;
+      background: rgba(192,132,252,0.1);
+      border: 1px solid rgba(192,132,252,0.2);
+      border-radius: 50%;
+      color: #c084fc;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.3s;
+    }
+    .ad-refresh-btn:hover { background: rgba(192,132,252,0.2); transform: rotate(180deg); }
+
+    /* ═══ FORM ═══ */
+    .ad-form-body { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+    .ad-field { display: flex; flex-direction: column; gap: 8px; }
+    .ad-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .ad-label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.9);
+      flex-wrap: wrap;
+    }
+    .ad-label-icon { font-size: 1rem; }
+    .ad-label-hint {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: rgba(255,255,255,0.45);
+      text-transform: none;
+      margin-left: auto;
+    }
+    .ad-label-optional {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.4);
+      font-weight: 500;
+    }
+    .ad-input {
+      width: 100%;
+      padding: 11px 14px;
+      background: rgba(10, 5, 23, 0.6);
+      border: 1px solid rgba(192,132,252,0.2);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .ad-input:focus {
+      border-color: rgba(232,121,249,0.6);
+      box-shadow: 0 0 0 3px rgba(192,132,252,0.12);
+    }
+    .ad-input::placeholder { color: rgba(255,255,255,0.3); }
+    .ad-textarea { resize: vertical; min-height: 60px; }
+    .ad-hint {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.45);
+      margin-top: 4px;
+    }
+
+    .ad-fb-list { display: flex; flex-direction: column; gap: 8px; }
+    .ad-fb-row {
+      display: flex; gap: 8px; align-items: center;
+    }
+    .ad-fb-input { flex: 1; }
+    .ad-fb-remove {
+      width: 34px; height: 40px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 10px;
+      color: #fca5a5;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .ad-fb-remove:hover { background: rgba(239, 68, 68, 0.2); }
+    .ad-add-more-btn {
+      align-self: flex-start;
+      padding: 6px 12px;
+      background: rgba(192,132,252,0.1);
+      border: 1px dashed rgba(192,132,252,0.35);
+      border-radius: 8px;
+      color: #c084fc;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .ad-add-more-btn:hover { background: rgba(192,132,252,0.2); }
+
+    .ad-search-wrap { position: relative; }
+    .ad-suggestions {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: rgba(20, 10, 40, 0.98);
+      border: 1px solid rgba(192,132,252,0.3);
+      border-radius: 10px;
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 50;
+      display: none;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+    }
+    .ad-suggestions.open { display: block; }
+    .ad-suggestion {
+      display: flex;
+      gap: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      border-radius: 6px;
+      align-items: center;
+    }
+    .ad-suggestion:hover { background: rgba(192,132,252,0.12); }
+    .ad-sug-thumb {
+      width: 40px; height: 56px;
+      border-radius: 5px;
+      background: rgba(192,132,252,0.15);
+      flex-shrink: 0;
+      overflow: hidden;
+      object-fit: cover;
+    }
+    .ad-sug-info { flex: 1; min-width: 0; }
+    .ad-sug-title { font-size: 0.85rem; font-weight: 700; color: #fff; line-height: 1.3; }
+    .ad-sug-meta { font-size: 0.7rem; color: rgba(255,255,255,0.55); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+
+    .ad-advanced {
+      border: 1px solid rgba(192,132,252,0.15);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .ad-advanced-toggle {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px;
+      background: rgba(192,132,252,0.05);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.8);
+      list-style: none;
+    }
+    .ad-advanced-toggle::-webkit-details-marker { display: none; }
+    .ad-advanced-arrow { transition: transform 0.2s; font-size: 0.7rem; }
+    .ad-advanced[open] .ad-advanced-arrow { transform: rotate(180deg); }
+    .ad-advanced-body {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      border-top: 1px solid rgba(192,132,252,0.12);
+    }
+
+    .ad-submit-btn {
+      padding: 14px;
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .ad-submit-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(232,121,249,0.35); }
+    .ad-submit-btn:disabled { opacity: 0.6; cursor: wait; transform: none; }
+
+    .ad-result {
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .ad-result.success {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #6ee7b7;
+    }
+    .ad-result.error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+    }
+
+    /* ═══ LIST ═══ */
+    .ad-list-body {
+      padding: 12px;
+      max-height: 720px;
+      overflow-y: auto;
+    }
+    .ad-list-loading, .ad-list-empty {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 40px;
+      color: rgba(255,255,255,0.5);
+      font-size: 0.9rem;
+      flex-direction: column;
+    }
+    .ad-video-card {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(28, 15, 61, 0.4);
+      border: 1px solid rgba(192,132,252,0.1);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .ad-video-card:hover { border-color: rgba(232,121,249,0.35); }
+    .ad-vc-thumb {
+      width: 90px; height: 60px;
+      border-radius: 8px;
+      background: rgba(192,132,252,0.15);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+      position: relative;
+      font-size: 1.4rem;
+    }
+    .ad-vc-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .ad-vc-ep-badge {
+      position: absolute;
+      bottom: 3px; right: 3px;
+      padding: 1px 5px;
+      background: rgba(0,0,0,0.85);
+      border-radius: 3px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem;
+      font-weight: 800;
+      color: #fff;
+    }
+    .ad-vc-info { flex: 1; min-width: 0; }
+    .ad-vc-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .ad-vc-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: rgba(255,255,255,0.5);
+      flex-wrap: wrap;
+    }
+    .ad-vc-fb-count {
+      padding: 1px 6px;
+      background: rgba(24, 119, 242, 0.15);
+      color: #60a5fa;
+      border-radius: 3px;
+      font-weight: 700;
+    }
+    .ad-vc-actions { display: flex; flex-direction: column; gap: 6px; }
+    .ad-vc-btn {
+      width: 30px; height: 30px;
+      border: 1px solid rgba(192,132,252,0.2);
+      background: rgba(192,132,252,0.08);
+      border-radius: 8px;
+      color: #c084fc;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem;
+    }
+    .ad-vc-btn:hover { background: rgba(192,132,252,0.2); }
+    .ad-vc-btn.delete { color: #fca5a5; border-color: rgba(239,68,68,0.2); background: rgba(239,68,68,0.06); }
+    .ad-vc-btn.delete:hover { background: rgba(239,68,68,0.2); }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media (max-width: 900px) {
+      .ad-grid { grid-template-columns: 1fr; }
+      .ad-container { padding: 0 16px; }
+      .ad-header-inner { padding: 0 16px; }
+      .ad-nav-link span, .ad-logout-btn span { display: none; }
+      .ad-logout-btn { padding: 8px; }
+    }
+  </style>
+
+  <!-- ═══ PART 3B script comes next — DO NOT EDIT above line ═══ -->
+  <!-- ═══ JAVASCRIPT ═══ -->
+  <script is:inline>
+    (function() {
+      var TOKEN_KEY = 'anitube_admin_token';
+      var loginScreen = document.getElementById('loginScreen');
+      var dashboard = document.getElementById('adminDashboard');
+      var loginBtn = document.getElementById('loginBtn');
+      var loginBtnText = document.getElementById('loginBtnText');
+      var loginBtnSpin = document.getElementById('loginBtnSpin');
+      var loginPassword = document.getElementById('loginPassword');
+      var loginError = document.getElementById('loginError');
+
+      /* ═══════════ AUTH ═══════════ */
+      function getToken() {
+        try { return localStorage.getItem(TOKEN_KEY) || ''; } catch(e) { return ''; }
+      }
+      function setToken(t) {
+        try { localStorage.setItem(TOKEN_KEY, t); } catch(e) {}
+      }
+      function clearToken() {
+        try { localStorage.removeItem(TOKEN_KEY); } catch(e) {}
+      }
+
+      function showDashboard() {
+        loginScreen.style.display = 'none';
+        dashboard.style.display = 'block';
+        loadVideoList();
+      }
+      function showLogin() {
+        loginScreen.style.display = 'flex';
+        dashboard.style.display = 'none';
+        loginPassword.value = '';
+        loginPassword.focus();
+      }
+
+      async function doLogin() {
+        var pwd = loginPassword.value.trim();
+        if (!pwd) { showLoginError('Please enter password'); return; }
+        loginBtn.disabled = true;
+        loginBtnText.style.display = 'none';
+        loginBtnSpin.style.display = 'inline-block';
+        loginError.style.display = 'none';
+        try {
+          var res = await fetch('/api/admin-auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pwd })
+          });
+          var data = await res.json();
+          if (data.success && data.token) {
+            setToken(data.token);
+            showDashboard();
+          } else {
+            showLoginError(data.error || 'Login failed');
+          }
+        } catch(e) {
+          showLoginError('Network error. Try again.');
+        }
+        loginBtn.disabled = false;
+        loginBtnText.style.display = 'inline';
+        loginBtnSpin.style.display = 'none';
+      }
+      function showLoginError(msg) {
+        loginError.textContent = msg;
+        loginError.style.display = 'block';
+      }
+
+      loginBtn.addEventListener('click', doLogin);
+      loginPassword.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') doLogin();
+      });
+
+      /* ═══════════ LOGOUT ═══════════ */
+      document.getElementById('logoutBtn').addEventListener('click', function() {
+        if (confirm('Logout?')) {
+          clearToken();
+          showLogin();
+        }
+      });
+
+      /* ═══════════ FB LINK MANAGEMENT ═══════════ */
+      window.removeFbLink = function(btn) {
+        var rows = document.querySelectorAll('.ad-fb-row');
+        if (rows.length <= 1) {
+          btn.parentElement.querySelector('.ad-fb-input').value = '';
+          return;
+        }
+        btn.parentElement.remove();
+      };
+
+      document.getElementById('addFbLinkBtn').addEventListener('click', function() {
+        var list = document.getElementById('fbLinksList');
+        var row = document.createElement('div');
+        row.className = 'ad-fb-row';
+        row.innerHTML = '<input type="text" class="ad-input ad-fb-input" placeholder="https://facebook.com/reel/... or /share/v/..." /><button class="ad-fb-remove" onclick="removeFbLink(this)" title="Remove">✕</button>';
+        list.appendChild(row);
+        row.querySelector('input').focus();
+      });
+
+      /* ═══════════ KITSU ANIME SUGGESTIONS ═══════════ */
+      var animeName = document.getElementById('animeName');
+      var animeSuggestions = document.getElementById('animeSuggestions');
+      var suggestTimer = null;
+      var selectedAnimeSlug = '';
+      var selectedAnimeThumb = '';
+
+      animeName.addEventListener('input', function() {
+        var q = animeName.value.trim();
+        selectedAnimeSlug = '';
+        selectedAnimeThumb = '';
+        if (suggestTimer) clearTimeout(suggestTimer);
+        if (q.length < 2) {
+          animeSuggestions.classList.remove('open');
+          animeSuggestions.innerHTML = '';
+          return;
+        }
+        suggestTimer = setTimeout(function() { fetchSuggestions(q); }, 350);
+      });
+
+      animeName.addEventListener('blur', function() {
+        setTimeout(function() { animeSuggestions.classList.remove('open'); }, 200);
+      });
+
+      animeName.addEventListener('focus', function() {
+        if (animeSuggestions.innerHTML.trim()) animeSuggestions.classList.add('open');
+      });
+
+      function fetchSuggestions(q) {
+        var url = 'https://kitsu.io/api/edge/anime?filter[text]=' + encodeURIComponent(q) + '&page[limit]=6&fields[anime]=canonicalTitle,posterImage,slug,episodeCount,startDate';
+        fetch(url, { headers: { 'Accept': 'application/vnd.api+json' } })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (!data || !data.data || data.data.length === 0) {
+              animeSuggestions.innerHTML = '<div class="ad-suggestion"><div class="ad-sug-info"><div class="ad-sug-title" style="color:rgba(255,255,255,0.5)">No match found</div><div class="ad-sug-meta">You can still add manually</div></div></div>';
+              animeSuggestions.classList.add('open');
+              return;
+            }
+            var html = '';
+            data.data.forEach(function(item) {
+              var attr = item.attributes || {};
+              var poster = attr.posterImage || {};
+              var thumb = poster.tiny || poster.small || '';
+              var title = attr.canonicalTitle || 'Unknown';
+              var slug = attr.slug || '';
+              var year = attr.startDate ? String(attr.startDate).substring(0, 4) : '';
+              var eps = attr.episodeCount || '?';
+              html += '<div class="ad-suggestion" data-title="' + escapeAttr(title) + '" data-slug="' + escapeAttr(slug) + '" data-thumb="' + escapeAttr(thumb) + '">';
+              if (thumb) {
+                html += '<img class="ad-sug-thumb" src="' + escapeAttr(thumb) + '" alt="" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'"/>';
+              } else {
+                html += '<div class="ad-sug-thumb">🎌</div>';
+              }
+              html += '<div class="ad-sug-info">';
+              html += '<div class="ad-sug-title">' + escapeHtml(title) + '</div>';
+              html += '<div class="ad-sug-meta">' + eps + ' EP · ' + (year || 'N/A') + '</div>';
+              html += '</div>';
+              html += '</div>';
+            });
+            animeSuggestions.innerHTML = html;
+            animeSuggestions.classList.add('open');
+            animeSuggestions.querySelectorAll('.ad-suggestion').forEach(function(el) {
+              if (!el.getAttribute('data-slug')) return;
+              el.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                var title = el.getAttribute('data-title');
+                var slug = el.getAttribute('data-slug');
+                var thumb = el.getAttribute('data-thumb');
+                animeName.value = title;
+                selectedAnimeSlug = slug;
+                selectedAnimeThumb = thumb;
+                animeSuggestions.classList.remove('open');
+              });
+            });
+          })
+          .catch(function() {
+            animeSuggestions.innerHTML = '<div class="ad-suggestion"><div class="ad-sug-info"><div class="ad-sug-title" style="color:rgba(255,255,255,0.5)">Search failed</div><div class="ad-sug-meta">You can still add manually</div></div></div>';
+            animeSuggestions.classList.add('open');
+          });
+      }
+
+      function escapeHtml(s) {
+        return String(s || '').replace(/[&<>"']/g, function(c) {
+          return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+        });
+      }
+      function escapeAttr(s) { return String(s || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+      function slugify(s) {
+        return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+      }
+
+      /* ═══════════ SUBMIT VIDEO ═══════════ */
+      var submitBtn = document.getElementById('submitBtn');
+      var submitText = document.getElementById('submitText');
+      var submitSpin = document.getElementById('submitSpin');
+      var submitResult = document.getElementById('submitResult');
+
+      submitBtn.addEventListener('click', async function() {
+        submitResult.style.display = 'none';
+
+        var fbLinks = [];
+        document.querySelectorAll('.ad-fb-input').forEach(function(inp) {
+          var v = inp.value.trim();
+          if (v) fbLinks.push(v);
+        });
+
+        var title = animeName.value.trim();
+        var season = parseInt(document.getElementById('animeSeason').value) || 1;
+        var episode = parseInt(document.getElementById('animeEpisode').value) || 1;
+        var caption = document.getElementById('animeCaption').value.trim();
+        var watchUrl = document.getElementById('animeWatchUrl').value.trim();
+        var keywords = document.getElementById('animeKeywords').value.trim();
+
+        if (fbLinks.length === 0) { showResult('error', '❌ Please add at least one Facebook link'); return; }
+        if (!title) { showResult('error', '❌ Anime name is required'); return; }
+
+        var slug = selectedAnimeSlug || slugify(title);
+        var thumb = selectedAnimeThumb || '';
+
+        submitBtn.disabled = true;
+        submitText.style.display = 'none';
+        submitSpin.style.display = 'inline-block';
+
+        try {
+          var res = await fetch('/api/admin-add', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + getToken()
+            },
+            body: JSON.stringify({
+              fbLinks: fbLinks,
+              animeTitle: title,
+              animeSlug: slug,
+              season: season,
+              episode: episode,
+              caption: caption,
+              keywords: keywords,
+              watchUrl: watchUrl,
+              thumbnail: thumb
+            })
+          });
+          var data = await res.json();
+          if (data.success) {
+            showResult('success', '✅ Video added! ' + data.record.fbIds.length + ' FB link(s) linked.');
+            // Reset form (keep season/episode for quick add of next ep)
+            document.querySelectorAll('.ad-fb-input').forEach(function(inp) { inp.value = ''; });
+            document.getElementById('animeCaption').value = '';
+            document.getElementById('animeWatchUrl').value = '';
+            // Auto-increment episode
+            document.getElementById('animeEpisode').value = episode + 1;
+            loadVideoList();
+          } else {
+            if (res.status === 401) {
+              showResult('error', '❌ Session expired. Please login again.');
+              setTimeout(function() { clearToken(); showLogin(); }, 1500);
+            } else {
+              showResult('error', '❌ ' + (data.error || 'Failed to add'));
+            }
+          }
+        } catch(e) {
+          showResult('error', '❌ Network error. Try again.');
+        }
+        submitBtn.disabled = false;
+        submitText.style.display = 'inline';
+        submitSpin.style.display = 'none';
+      });
+
+      function showResult(type, msg) {
+        submitResult.className = 'ad-result ' + type;
+        submitResult.textContent = msg;
+        submitResult.style.display = 'block';
+        setTimeout(function() { submitResult.style.display = 'none'; }, 5000);
+      }
+
+      /* ═══════════ VIDEO LIST ═══════════ */
+      var videosList = document.getElementById('videosList');
+      var listCount = document.getElementById('listCount');
+      document.getElementById('refreshListBtn').addEventListener('click', loadVideoList);
+
+      async function loadVideoList() {
+        videosList.innerHTML = '<div class="ad-list-loading"><div class="ad-spin"></div><span>Loading videos...</span></div>';
+        try {
+          var res = await fetch('/api/admin-list', {
+            headers: { 'Authorization': 'Bearer ' + getToken() }
+          });
+          var data = await res.json();
+          if (res.status === 401) {
+            clearToken(); showLogin(); return;
+          }
+          if (data.success && data.videos) {
+            listCount.textContent = data.total;
+            renderVideoList(data.videos);
+          } else {
+            videosList.innerHTML = '<div class="ad-list-empty">Failed to load videos</div>';
+          }
+        } catch(e) {
+          videosList.innerHTML = '<div class="ad-list-empty">Network error</div>';
+        }
+      }
+
+      function renderVideoList(videos) {
+        if (!videos.length) {
+          videosList.innerHTML = '<div class="ad-list-empty"><div style="font-size:2rem">📭</div><div>No videos yet. Add your first!</div></div>';
+          return;
+        }
+        var html = '';
+        videos.forEach(function(v) {
+          var thumb = v.thumbnail || '';
+          var reelUrl = '/reels/anime_' + encodeURIComponent(v.animeSlug) + '_ep' + v.episode;
+          html += '<div class="ad-video-card">';
+          html += '<a href="' + reelUrl + '" target="_blank" class="ad-vc-thumb">';
+          if (thumb) {
+            html += '<img src="' + escapeAttr(thumb) + '" alt="" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'"/>';
+          } else {
+            html += '🎬';
+          }
+          html += '<span class="ad-vc-ep-badge">EP ' + v.episode + '</span>';
+          html += '</a>';
+          html += '<div class="ad-vc-info">';
+          html += '<div class="ad-vc-title">' + escapeHtml(v.animeTitle) + '</div>';
+          html += '<div class="ad-vc-meta">';
+          html += '<span class="ad-vc-fb-count">🔗 ' + (v.fbIds || []).length + ' FB</span>';
+          html += '<span>S' + v.season + '·EP' + v.episode + '</span>';
+          if (v.watchUrl) html += '<span style="color:#34d399">🎯 Custom URL</span>';
+          html += '<span>' + timeAgo(v.createdAt) + '</span>';
+          html += '</div>';
+          html += '</div>';
+          html += '<div class="ad-vc-actions">';
+          html += '<a href="' + reelUrl + '" target="_blank" class="ad-vc-btn" title="Preview">👁</a>';
+          html += '<button class="ad-vc-btn delete" onclick="deleteVideo(\'' + v.id + '\', \'' + escapeAttr(v.animeTitle) + '\')" title="Delete">🗑</button>';
+          html += '</div>';
+          html += '</div>';
+        });
+        videosList.innerHTML = html;
+      }
+
+      function timeAgo(ts) {
+        var diff = Math.floor((Date.now() - ts) / 1000);
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff/60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
+        if (diff < 2592000) return Math.floor(diff/86400) + 'd ago';
+        return Math.floor(diff/2592000) + 'mo ago';
+      }
+
+      window.deleteVideo = async function(id, title) {
+        if (!confirm('Delete "' + title + '"?\n\nThis cannot be undone.')) return;
+        try {
+          var res = await fetch('/api/admin-delete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + getToken()
+            },
+            body: JSON.stringify({ id: id })
+          });
+          var data = await res.json();
+          if (data.success) {
+            loadVideoList();
+          } else {
+            alert('Delete failed: ' + (data.error || 'Unknown'));
+          }
+        } catch(e) {
+          alert('Network error');
+        }
+      };
+
+      /* ═══════════ INIT ═══════════ */
+      function init() {
+        var token = getToken();
+        if (token) {
+          // Try to load list — if 401, will fall back to login
+          fetch('/api/admin-list', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(function(r) {
+              if (r.ok) {
+                showDashboard();
+              } else {
+                clearToken();
+                showLogin();
+              }
+            })
+            .catch(function() {
+              showLogin();
+            });
+        } else {
+          showLogin();
+        }
+      }
+      init();
+    })();
+  </script>
+
+</body>
+</html>
