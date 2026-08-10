@@ -1,13 +1,17 @@
 ---
 // ═══════════════════════════════════════════════════════════════
-// SAFIYA CORE v13 — CURVED DISPLAY PILL + NEON NEON BORDER
+// SAFIYA v14 — INSTAGRAM DM STYLE, NO AVATAR, SMART LINK DETECTION
 // Path: src/components/SafiyaCore.astro
 // ═══════════════════════════════════════════════════════════════
-// ✅ Curved display look (Samsung edge screen vibe)
-// ✅ Sharp rotating neon border (not diffuse blur)
-// ✅ 3D glass premium feel
-// ✅ Back-to-top button auto-hidden when Safiya visible
-// ✅ All chat features preserved
+// ✅ Live2D REMOVED (screen free, no lag)
+// ✅ Instagram DM style bubbles with gradients
+// ✅ Sweet caring girl personality
+// ✅ FB link auto-detect → Watch Now button
+// ✅ KV integration for anime lookup
+// ✅ Long-press message → Copy/Reply/Delete
+// ✅ Reply preview like WhatsApp
+// ✅ Long text scrolls perfectly
+// ✅ Owner recognition (Ayano)
 // ═══════════════════════════════════════════════════════════════
 ---
 
@@ -18,12 +22,7 @@
     <span class="sf-launcher-neon"></span>
     <span class="sf-launcher-inner">
       <span class="sf-launcher-avatar">
-        <span class="sf-launcher-icon" id="s-head-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-        </span>
-        <img id="s-head-dp" class="sf-launcher-dp" src="" alt="" style="display:none;" />
+        <span class="sf-launcher-icon" id="s-head-icon">S</span>
         <span class="sf-launcher-dot"></span>
       </span>
       <span class="sf-launcher-text">
@@ -36,44 +35,18 @@
 
   <!-- ═══════════════ TEASER BUBBLE ═══════════════ -->
   <div id="safiya-bubble" class="sf-teaser">
-    <div class="sf-teaser-avatar" id="s-bubble-dp-wrap">
-      <img id="s-bubble-dp" class="sf-teaser-dp" src="" alt="" style="display:none;" />
-    </div>
+    <div class="sf-teaser-avatar">S</div>
     <div class="sf-teaser-body">
       <div class="sf-teaser-name">Safiya</div>
       <div class="sf-teaser-text" id="s-bubble-text"></div>
     </div>
-    <button class="sf-teaser-close" id="s-bubble-x" aria-label="Dismiss">
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
-    </button>
-  </div>
-
-  <!-- ═══════════════ AVATAR (LIVE2D) ═══════════════ -->
-  <div id="safiya-avatar" class="sf-avatar" aria-hidden="true">
-    <div class="sf-avatar-glow"></div>
-    <div class="sf-avatar-inner">
-      <canvas id="s-avatar-canvas"></canvas>
-      <div id="s-avatar-fallback" class="sf-avatar-fallback">
-        <div class="sf-avatar-fb-orb">
-          <div class="sf-avatar-fb-face">
-            <div class="sf-avatar-fb-eye sf-avatar-fb-eye-l"></div>
-            <div class="sf-avatar-fb-eye sf-avatar-fb-eye-r"></div>
-            <div class="sf-avatar-fb-mouth"></div>
-          </div>
-        </div>
-        <div class="sf-avatar-fb-name">Safiya</div>
-      </div>
-      <div id="s-avatar-loader" class="sf-avatar-loader">
-        <div class="sf-avatar-spinner"></div>
-      </div>
-    </div>
-    <div class="sf-avatar-hint">💜 Touch me~</div>
+    <button class="sf-teaser-close" id="s-bubble-x" aria-label="Dismiss">✕</button>
   </div>
 
   <!-- ═══════════════ CHAT WINDOW ═══════════════ -->
   <div id="safiya-chat" class="sf-chat" aria-hidden="true">
+    
+    <!-- HEADER -->
     <header class="sf-chat-header">
       <button class="sf-icon-btn" id="s-back" aria-label="Back">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -82,9 +55,8 @@
       </button>
 
       <div class="sf-chat-user">
-        <div class="sf-chat-user-avatar" id="s-chat-head-avatar">
-          <span id="s-chat-head-letter">S</span>
-          <img id="s-chat-head-dp" class="sf-chat-user-dp" src="" alt="" style="display:none;" />
+        <div class="sf-chat-user-avatar">
+          <span class="sf-chat-avatar-letter">S</span>
           <span class="sf-chat-user-dot"></span>
         </div>
         <div class="sf-chat-user-info">
@@ -94,6 +66,12 @@
       </div>
 
       <div class="sf-chat-actions">
+        <button class="sf-icon-btn" id="s-clear" aria-label="Clear chat" title="Clear conversation">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/>
+          </svg>
+        </button>
         <button class="sf-icon-btn" id="s-min" aria-label="Minimize">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="5" y1="12" x2="19" y2="12"/>
@@ -107,21 +85,54 @@
       </div>
     </header>
 
+    <!-- BODY -->
     <div class="sf-chat-body" id="s-chat-body"></div>
 
-    <div class="sf-chat-composer">
-      <button class="sf-composer-btn" aria-label="Add">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+    <!-- MESSAGE ACTION MENU (long-press popup) -->
+    <div class="sf-msg-menu" id="s-msg-menu" style="display:none">
+      <button class="sf-msg-menu-btn" data-action="reply">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 17 4 12 9 7"/>
+          <path d="M20 18v-2a4 4 0 0 0-4-4H4"/>
         </svg>
+        <span>Reply</span>
       </button>
+      <button class="sf-msg-menu-btn" data-action="copy">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        <span>Copy</span>
+      </button>
+      <button class="sf-msg-menu-btn sf-msg-menu-danger" data-action="delete">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/>
+        </svg>
+        <span>Delete</span>
+      </button>
+    </div>
+
+    <!-- REPLY PREVIEW (above composer when replying) -->
+    <div class="sf-reply-preview" id="s-reply-preview" style="display:none">
+      <div class="sf-reply-bar"></div>
+      <div class="sf-reply-content">
+        <div class="sf-reply-label" id="s-reply-label">Replying to Safiya</div>
+        <div class="sf-reply-text" id="s-reply-text"></div>
+      </div>
+      <button class="sf-reply-close" id="s-reply-close" aria-label="Cancel reply">✕</button>
+    </div>
+
+    <!-- COMPOSER -->
+    <div class="sf-chat-composer">
       <div class="sf-composer-input">
-        <input type="text" id="s-input" placeholder="Message..." autocomplete="off" maxlength="500" />
-        <button class="sf-composer-emoji" aria-label="Emoji">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
-          </svg>
-        </button>
+        <textarea 
+          id="s-input" 
+          placeholder="Message..." 
+          autocomplete="off" 
+          maxlength="1000" 
+          rows="1"
+        ></textarea>
       </div>
       <button class="sf-composer-send" id="s-send" aria-label="Send">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
@@ -133,705 +144,31 @@
 
   <!-- ═══════════════ MINIMIZED PILL ═══════════════ -->
   <div id="safiya-mini" class="sf-mini" aria-hidden="true">
-    <div class="sf-mini-avatar">
-      <span id="s-mini-letter">S</span>
-      <img id="s-mini-dp" class="sf-mini-dp" src="" alt="" style="display:none;" />
-    </div>
+    <div class="sf-mini-avatar">S</div>
     <span class="sf-mini-name">Safiya</span>
     <span class="sf-mini-badge" id="s-mini-new">0</span>
-    <button class="sf-mini-close" id="s-mini-x" aria-label="Close">
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
-    </button>
+    <button class="sf-mini-close" id="s-mini-x" aria-label="Close">✕</button>
   </div>
 
 </div>
 
-<script is:inline>
-(function() {
-  'use strict';
-
-  var MODEL_PATH = '/live2d/safiya/izumi_illust.model3.json';
-  var MODEL_FALLBACKS = [
-    '/live2d/safiya/izumi_illust.model3.json',
-    '/live2d/haru/haru_greeter_t05.model3.json'
-  ];
-
-  var STORAGE_NS = 'safiya_v13';
-  var LEGACY_MEMORY_KEY = 'safiya_memory';
-  var DEVICE_KEY = STORAGE_NS + ':device_id';
-  var MEMORY_PREFIX = STORAGE_NS + ':memory:';
-  var INDEX_KEY = STORAGE_NS + ':index';
-  var CREATOR_KEY = 'safiya_creator';
-
-  var $ = function(id) { return document.getElementById(id); };
-  var root = $('safiya-root'), head = $('safiya-head'), notify = $('safiya-notify');
-  var bubble = $('safiya-bubble'), bubbleText = $('s-bubble-text'), bubbleX = $('s-bubble-x');
-  var chat = $('safiya-chat'), chatBody = $('s-chat-body'), chatInput = $('s-input');
-  var sendBtn = $('s-send'), backBtn = $('s-back'), minBtn = $('s-min'), closeBtn = $('s-close');
-  var mini = $('safiya-mini'), miniX = $('s-mini-x'), miniNew = $('s-mini-new');
-  var avatar = $('safiya-avatar'), avatarCanvas = $('s-avatar-canvas');
-  var avatarFallback = $('s-avatar-fallback'), avatarLoader = $('s-avatar-loader');
-  var statusText = $('s-chat-status');
-  if (!root || !chat || !head || !bubble || !chatBody || !chatInput) return;
-
-  function safeGet(k, f) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : f; } catch(e) { return f; } }
-  function safeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) {} }
-  function safeRemove(k) { try { localStorage.removeItem(k); } catch(e) {} }
-  function getCookie(n) { try { var m = document.cookie.match(new RegExp('(?:^|; )' + n.replace(/[.$?*|{}()[\]\\/+^]/g, '\\$&') + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : ''; } catch(e) { return ''; } }
-  function setCookie(n, v, d) { try { document.cookie = n + '=' + encodeURIComponent(v) + '; path=/; max-age=' + ((d||3650)*86400) + '; SameSite=Lax'; } catch(e) {} }
-  function ensureArray(v) { return Array.isArray(v) ? v : []; }
-  function trimArray(v, m) { var a = ensureArray(v); return a.length <= m ? a : a.slice(a.length - m); }
-
-  function createDeviceId() { return 'sf_' + Math.random().toString(36).slice(2, 12) + '_' + Date.now().toString(36); }
-  function getDeviceId() {
-    var id = '';
-    try { id = localStorage.getItem(DEVICE_KEY) || ''; } catch(e) {}
-    if (!id) id = getCookie(DEVICE_KEY);
-    if (!id) id = createDeviceId();
-    try { localStorage.setItem(DEVICE_KEY, id); } catch(e) {}
-    setCookie(DEVICE_KEY, id, 3650);
-    return id;
-  }
-
-  var deviceId = getDeviceId();
-  var memoryKey = MEMORY_PREFIX + deviceId;
-
-  function normalizeMemory(raw) {
-    var now = Date.now();
-    var m = raw && typeof raw === 'object' ? raw : {};
-    m.schemaVersion = 13;
-    m.deviceId = deviceId;
-    m.firstMet = m.firstMet || now;
-    m.lastVisit = typeof m.lastVisit === 'number' ? m.lastVisit : 0;
-    m.pageViews = typeof m.pageViews === 'number' ? m.pageViews : 0;
-    m.visits = typeof m.visits === 'number' ? m.visits : 0;
-    m.currentMood = typeof m.currentMood === 'string' ? m.currentMood : 'neutral';
-    m.chatHistory = trimArray(m.chatHistory, 700);
-    m.userName = typeof m.userName === 'string' ? m.userName : '';
-    m.updatedAt = now;
-    if (!m.profile || typeof m.profile !== 'object') m.profile = {};
-    if (!m.relationship || typeof m.relationship !== 'object') m.relationship = {};
-    if (!m.behavior || typeof m.behavior !== 'object') m.behavior = {};
-    if (!m.automation || typeof m.automation !== 'object') m.automation = {};
-    var p = m.profile;
-    p.userType = p.userType || 'unknown';
-    p.prefLanguage = p.prefLanguage || 'en';
-    p.favoriteAnime = p.favoriteAnime || '';
-    p.femaleSignals = p.femaleSignals || 0;
-    p.maleSignals = p.maleSignals || 0;
-    var r = m.relationship;
-    r.userMessages = r.userMessages || 0;
-    r.stageKey = r.stageKey || 'stranger';
-    r.score = r.score || 0;
-    var b = m.behavior;
-    b.pagesViewed = trimArray(b.pagesViewed, 80);
-    b.animeClicked = trimArray(b.animeClicked, 50);
-    b.productsClicked = trimArray(b.productsClicked, 50);
-    b.watchHistory = trimArray(b.watchHistory, 40);
-    b.savedVideos = trimArray(b.savedVideos, 40);
-    b.sharedLinks = trimArray(b.sharedLinks, 40);
-    b.lastPage = b.lastPage || '';
-    var a = m.automation;
-    a.chatOpen = typeof a.chatOpen === 'boolean' ? a.chatOpen : false;
-    a.chatMinimized = typeof a.chatMinimized === 'boolean' ? a.chatMinimized : false;
-    m.pageViews += 1;
-    if (!m.lastVisit || now - m.lastVisit > 20 * 60 * 1000) m.visits += 1;
-    m.lastVisit = now;
-    return m;
-  }
-
-  var memory = normalizeMemory(safeGet(memoryKey, null) || safeGet(LEGACY_MEMORY_KEY, null) || {});
-
-  function persistMemory() {
-    memory.updatedAt = Date.now();
-    safeSet(memoryKey, memory);
-    safeSet(LEGACY_MEMORY_KEY, memory);
-    setCookie(DEVICE_KEY, deviceId, 3650);
-  }
-
-  var isCreator = false;
-  try { isCreator = localStorage.getItem(CREATOR_KEY) === 'ayano-217'; } catch(e) {}
-
-  function detectUserType(t) {
-    if (!t) return;
-    var l = t.toLowerCase();
-    if (/\b(i am a girl|i'm a girl|i am female|ami meye)\b/i.test(l)) { memory.profile.userType = 'girl'; memory.profile.femaleSignals += 1; }
-    else if (/\b(i am a boy|i'm a boy|i am male|ami chele)\b/i.test(l)) { if (memory.profile.userType !== 'girl') memory.profile.userType = 'boy'; memory.profile.maleSignals += 1; }
-  }
-  function detectName(t) {
-    if (!t) return '';
-    var patterns = [/(?:my\s+name\s+is|i\s+am|i'm|call\s+me)\s+([a-z][a-zA-Z0-9_-]{1,19})/i, /(?:amar\s+nam\s+|ami\s+)([a-z][a-zA-Z0-9_-]{1,19})/i];
-    var block = /^(tumi|tomar|amar|ami|apni|good|bad|fine|ok|okay|sure|the|and|but|from|hello|hi|hey|bye|safiya|user|test|kemon|acho|bhalo|kharap|kichu|hobe|hoye|korbo|korchi|kore|please|thanks)$/i;
-    for (var i = 0; i < patterns.length; i++) {
-      var m = t.match(patterns[i]);
-      if (m && m[1]) {
-        var raw = m[1].replace(/[_-]+/g, ' ').trim();
-        if (raw.length < 2 || raw.length > 20 || block.test(raw)) continue;
-        var name = raw.split(/\s+/).map(function(x) { return x.charAt(0).toUpperCase() + x.slice(1).toLowerCase(); }).join(' ').slice(0, 24);
-        if (!name) continue;
-        memory.userName = name;
-        persistMemory();
-        return name;
-      }
-    }
-    return '';
-  }
-  function rememberLanguage(t) {
-    if (!t) return;
-    var bn = /[\u0980-\u09FF]/.test(t) || /\b(ami|amar|tumi|tomar|kemon|acho|bhalo|na|ki|keno|hobe|lagche|valo|dekho|achi|bolo)\b/i.test(t);
-    memory.profile.prefLanguage = bn ? 'bn' : 'en';
-  }
-  function analyzeUserText(t) { rememberLanguage(t); detectUserType(t); detectName(t); }
-
-  var DP_URL = null;
-  function applyDPToMsgAvatar(el, url) {
-    if (!el || el.dataset.hasDp === '1') return;
-    el.dataset.hasDp = '1';
-    el.style.backgroundImage = 'url(' + url + ')';
-    el.style.backgroundSize = 'cover';
-    el.style.backgroundPosition = 'center';
-  }
-  function applyDPEverywhere(url) {
-    var headDp = $('s-head-dp'), headIcon = $('s-head-icon');
-    if (headDp && headIcon) { headDp.src = url; headDp.style.display = 'block'; headIcon.style.display = 'none'; }
-    var bubbleDp = $('s-bubble-dp');
-    if (bubbleDp) { bubbleDp.src = url; bubbleDp.style.display = 'block'; }
-    var chatHeadDp = $('s-chat-head-dp'), chatHeadLetter = $('s-chat-head-letter');
-    if (chatHeadDp && chatHeadLetter) { chatHeadDp.src = url; chatHeadDp.style.display = 'block'; chatHeadLetter.style.display = 'none'; }
-    var miniDp = $('s-mini-dp'), miniLetter = $('s-mini-letter');
-    if (miniDp && miniLetter) { miniDp.src = url; miniDp.style.display = 'block'; miniLetter.style.display = 'none'; }
-    var msgAvatars = document.querySelectorAll('#safiya-root .sf-msg-avatar');
-    for (var i = 0; i < msgAvatars.length; i++) applyDPToMsgAvatar(msgAvatars[i], url);
-  }
-  function tryLoadDP() {
-    var candidates = ['/safiya/avatar.png', '/safiya/avatar.jpg', '/safiya/avatar.webp'];
-    var idx = 0;
-    function tryNext() {
-      if (idx >= candidates.length) return;
-      var url = candidates[idx++];
-      var img = new Image();
-      img.onload = function() { DP_URL = url; applyDPEverywhere(url); };
-      img.onerror = tryNext;
-      img.src = url;
-    }
-    tryNext();
-  }
-  tryLoadDP();
-
-  var mood = memory.currentMood || 'neutral';
-  var chatOpen = false, isMinimized = false, chatInited = false, newMessageCount = 0, bubbleT = null;
-
-  function pulseLauncher() {
-    if (!head) return;
-    head.classList.add('sf-launcher-hot');
-    setTimeout(function() { head.classList.remove('sf-launcher-hot'); }, 2400);
-  }
-  function showNotify() { if (notify) { notify.style.display = 'flex'; pulseLauncher(); } }
-  function hideNotify() { if (notify) notify.style.display = 'none'; }
-  function showBubble(text, ms) {
-    if (chatOpen) return;
-    ms = ms || 6000;
-    clearTimeout(bubbleT);
-    bubbleText.textContent = text;
-    bubble.classList.add('sf-teaser-show');
-    showNotify();
-    bubbleT = setTimeout(function() { bubble.classList.remove('sf-teaser-show'); }, ms);
-  }
-  function hideBubble() { clearTimeout(bubbleT); bubble.classList.remove('sf-teaser-show'); }
-
-  bubbleX.addEventListener('click', function(e) { e.stopPropagation(); hideBubble(); hideNotify(); });
-  bubble.addEventListener('click', openChat);
-
-  function fmtTime(ts) {
-    var d = new Date(ts), days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
-    var h = d.getHours(), m = d.getMinutes(), ap = h >= 12 ? 'PM' : 'AM';
-    h = h % 12 || 12; m = m < 10 ? '0' + m : m;
-    return days[d.getDay()] + ' AT ' + h + ':' + m + ' ' + ap;
-  }
-  function addTimestampEl(ts) {
-    var d = document.createElement('div');
-    d.className = 'sf-msg-time'; d.textContent = fmtTime(ts);
-    chatBody.appendChild(d);
-  }
-  function addMessage(text, sender, opts) {
-    opts = opts || {};
-    var row = document.createElement('div');
-    row.className = 'sf-msg-row sf-msg-' + sender;
-    if (sender === 'her') {
-      var av = document.createElement('div');
-      av.className = 'sf-msg-avatar';
-      if (DP_URL) applyDPToMsgAvatar(av, DP_URL);
-      row.appendChild(av);
-    }
-    var bub = document.createElement('div');
-    bub.className = 'sf-msg-bubble';
-    bub.textContent = text;
-    row.appendChild(bub);
-    chatBody.appendChild(row);
-    requestAnimationFrame(function() { chatBody.scrollTop = chatBody.scrollHeight; });
-    if (!opts.skipSave) {
-      var msgObj = { sender: sender, text: text, time: Date.now() };
-      if (opts.meta) msgObj.meta = opts.meta;
-      memory.chatHistory.push(msgObj);
-      memory.chatHistory = trimArray(memory.chatHistory, 700);
-      persistMemory();
-    }
-    if (sender === 'her' && !opts.skipSave && isMinimized) {
-      newMessageCount++;
-      miniNew.textContent = String(newMessageCount);
-      miniNew.style.display = 'flex';
-    }
-  }
-  function addTyping() {
-    var row = document.createElement('div');
-    row.className = 'sf-msg-row sf-msg-her';
-    row.id = 's-typing';
-    var av = document.createElement('div');
-    av.className = 'sf-msg-avatar';
-    if (DP_URL) applyDPToMsgAvatar(av, DP_URL);
-    row.appendChild(av);
-    var t = document.createElement('div');
-    t.className = 'sf-msg-typing';
-    t.innerHTML = '<span></span><span></span><span></span>';
-    row.appendChild(t);
-    chatBody.appendChild(row);
-    requestAnimationFrame(function() { chatBody.scrollTop = chatBody.scrollHeight; });
-    return row;
-  }
-  function removeTyping() { var t = $('s-typing'); if (t) t.remove(); }
-
-  function restoreChatHistory() {
-    if (chatInited) return;
-    chatInited = true;
-    chatBody.innerHTML = '';
-    var history = memory.chatHistory || [];
-    if (history.length === 0) {
-      addTimestampEl(Date.now());
-      addMessage(isCreator ? 'Ayano... you came 💜' : (memory.profile.userType === 'girl' ? 'oh hey' : 'hi'), 'her');
-      return;
-    }
-    var lastTs = 0;
-    for (var i = 0; i < history.length; i++) {
-      var msg = history[i];
-      if (msg.time - lastTs > 30 * 60 * 1000) addTimestampEl(msg.time);
-      addMessage(msg.text, msg.sender, { skipSave: true });
-      lastTs = msg.time;
-    }
-  }
-  function updateStatusLabel() { if (statusText) statusText.textContent = isCreator ? 'Ayano mode' : 'Active now'; }
-
-  // ═══ BACK-TO-TOP AUTO HIDE ═══
-  function hideBackToTop() {
-    // common IDs / classes for back-to-top
-    var selectors = ['#btt', '#back-to-top', '.back-to-top', '.btt', '#scroll-top', '.scroll-top', '#scrollTop'];
-    for (var i = 0; i < selectors.length; i++) {
-      var els = document.querySelectorAll(selectors[i]);
-      for (var j = 0; j < els.length; j++) {
-        els[j].style.display = 'none';
-        els[j].style.visibility = 'hidden';
-        els[j].style.pointerEvents = 'none';
-      }
-    }
-  }
-  hideBackToTop();
-  // Keep hiding periodically in case it re-appears
-  setInterval(hideBackToTop, 2000);
-
-  function openChat() {
-    if (isMinimized) { unminimize(); return; }
-    chatOpen = true;
-    memory.automation.chatOpen = true;
-    memory.automation.chatMinimized = false;
-    persistMemory();
-    chat.classList.add('sf-chat-open');
-    chat.setAttribute('aria-hidden', 'false');
-    avatar.classList.add('sf-avatar-show');
-    avatar.setAttribute('aria-hidden', 'false');
-    head.classList.add('sf-launcher-hide');
-    hideBubble();
-    hideNotify();
-    restoreChatHistory();
-    updateStatusLabel();
-    loadLive2D();
-    setTimeout(function() { chatInput.focus(); }, 300);
-  }
-  function closeChat() {
-    chatOpen = false; isMinimized = false;
-    memory.automation.chatOpen = false;
-    memory.automation.chatMinimized = false;
-    persistMemory();
-    chat.classList.remove('sf-chat-open');
-    chat.setAttribute('aria-hidden', 'true');
-    avatar.classList.remove('sf-avatar-show');
-    avatar.setAttribute('aria-hidden', 'true');
-    head.classList.remove('sf-launcher-hide');
-    mini.classList.remove('sf-mini-show');
-  }
-  function minimizeChat() {
-    chatOpen = false; isMinimized = true;
-    memory.automation.chatOpen = false;
-    memory.automation.chatMinimized = true;
-    persistMemory();
-    chat.classList.remove('sf-chat-open');
-    chat.setAttribute('aria-hidden', 'true');
-    avatar.classList.remove('sf-avatar-show');
-    avatar.setAttribute('aria-hidden', 'true');
-    mini.classList.add('sf-mini-show');
-    head.classList.add('sf-launcher-hide');
-  }
-  function unminimize() {
-    isMinimized = false; newMessageCount = 0;
-    miniNew.style.display = 'none';
-    mini.classList.remove('sf-mini-show');
-    chatOpen = true;
-    memory.automation.chatOpen = true;
-    memory.automation.chatMinimized = false;
-    persistMemory();
-    chat.classList.add('sf-chat-open');
-    chat.setAttribute('aria-hidden', 'false');
-    avatar.classList.add('sf-avatar-show');
-    avatar.setAttribute('aria-hidden', 'false');
-    updateStatusLabel();
-  }
-
-  head.addEventListener('click', openChat);
-  backBtn.addEventListener('click', closeChat);
-  closeBtn.addEventListener('click', closeChat);
-  minBtn.addEventListener('click', minimizeChat);
-  mini.addEventListener('click', unminimize);
-  miniX.addEventListener('click', function(e) { e.stopPropagation(); closeChat(); });
-
-  function sendMsg() {
-    var text = chatInput.value.trim();
-    if (!text) return;
-    analyzeUserText(text);
-    addMessage(text, 'me');
-    chatInput.value = '';
-    triggerMotionByKeyword('listen');
-
-    setTimeout(function() {
-      addTyping();
-      statusText.textContent = 'typing...';
-      var ctx = {
-        message: text, isCreator: isCreator, visits: memory.visits, mood: mood,
-        userName: memory.userName || '',
-        history: memory.chatHistory.slice(-20),
-        pagesViewed: memory.behavior.pagesViewed.slice(-8).map(function(p) { return p.path; }),
-        animeClicked: memory.behavior.animeClicked.slice(-5).map(function(a) { return a.slug; }),
-        productsClicked: memory.behavior.productsClicked.length,
-        relationshipStage: memory.relationship.stageKey,
-        relationshipScore: memory.relationship.score,
-        userType: memory.profile.userType,
-        favoriteAnime: memory.profile.favoriteAnime || '',
-        preferredLanguage: memory.profile.prefLanguage || 'en',
-        watchHistory: memory.behavior.watchHistory.slice(-5),
-        savedVideos: memory.behavior.savedVideos.slice(-5),
-        sharedLinks: memory.behavior.sharedLinks.slice(-5),
-        deviceId: deviceId
-      };
-      fetch('/api/safiya-chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(ctx)
-      }).then(function(res) {
-        if (res.ok) return res.json();
-        throw new Error('AI failed');
-      }).then(function(data) {
-        var reply = data && data.reply ? data.reply : '';
-        if (data && data.mood) { mood = data.mood; memory.currentMood = mood; persistMemory(); }
-        var meta = null;
-        if (data && data.linkMeta) {
-          meta = { linkInfo: data.linkMeta };
-          memory.behavior.sharedLinks.push({
-            url: data.linkMeta.url, platform: data.linkMeta.platform,
-            title: data.linkMeta.title || '', animeGuess: data.linkMeta.animeGuess || '',
-            isProtected: !!data.linkMeta.isProtected, time: Date.now()
-          });
-          memory.behavior.sharedLinks = trimArray(memory.behavior.sharedLinks, 40);
-          persistMemory();
-        }
-        finishReply(reply, meta);
-      }).catch(function() {
-        finishReply("brain lag... say that again? 🙄", null);
-      });
-    }, 320);
-  }
-  function finishReply(reply, meta) {
-    if (!reply) reply = '...';
-    removeTyping();
-    updateStatusLabel();
-    addMessage(reply, 'her', { meta: meta });
-    triggerMotionFromText(reply);
-  }
-  sendBtn.addEventListener('click', sendMsg);
-  chatInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
-  });
-
-  // ═══ LIVE2D ═══
-  var live2dApp = null, live2dModel = null;
-  var live2dLoaded = false, live2dLoading = false;
-  var availableMotions = [], availableExpressions = [];
-  var lastMotionTime = 0, idleMotionInterval = null, currentAudio = null;
-
-  function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
-  function stopAllAudio() {
-    if (currentAudio) { try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e) {} currentAudio = null; }
-    if (live2dModel && live2dModel.internalModel) {
-      try {
-        var mm = live2dModel.internalModel.motionManager;
-        if (mm && mm.currentAudio) { try { mm.currentAudio.pause(); mm.currentAudio = null; } catch(e) {} }
-      } catch(e) {}
-    }
-  }
-  function loadLive2D() {
-    if (live2dLoaded || live2dLoading) return;
-    live2dLoading = true;
-    if (avatarLoader) avatarLoader.style.display = 'flex';
-    var libs = [
-      'https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js',
-      'https://cdn.jsdelivr.net/npm/pixi.js@7.3.2/dist/pixi.min.js',
-      'https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js'
-    ];
-    function loadScript(src) {
-      return new Promise(function(res, rej) {
-        if (document.querySelector('script[src="' + src + '"]')) return res();
-        var s = document.createElement('script');
-        s.src = src; s.async = true; s.onload = res; s.onerror = rej;
-        document.head.appendChild(s);
-      });
-    }
-    function tryLoadModel(path) {
-      return fetch(path, { method: 'HEAD' }).then(function(res) {
-        if (!res.ok) return null;
-        return PIXI.live2d.Live2DModel.from(path, { autoInteract: false, autoUpdate: true, motionPreload: 'NONE' });
-      }).catch(function() { return null; });
-    }
-    (function() {
-      var loadChain = Promise.resolve();
-      libs.forEach(function(src) { loadChain = loadChain.then(function() { return loadScript(src); }); });
-      loadChain.then(function() {
-        if (typeof PIXI === 'undefined' || !PIXI.live2d) throw new Error('libs missing');
-        if (PIXI.live2d.SoundManager) PIXI.live2d.SoundManager.volume = 0;
-        if (PIXI.live2d.config) PIXI.live2d.config.sound = false;
-        var isMobile = window.innerWidth <= 720;
-        var w = isMobile ? 120 : 240, h = isMobile ? 170 : 340;
-        var app = new PIXI.Application({
-          view: avatarCanvas, width: w, height: h,
-          backgroundAlpha: 0, antialias: true,
-          resolution: window.devicePixelRatio || 1, autoDensity: true
-        });
-        live2dApp = app;
-        var pathsToTry = [MODEL_PATH].concat(MODEL_FALLBACKS.filter(function(p) { return p !== MODEL_PATH; }));
-        var modelChain = Promise.resolve(null);
-        pathsToTry.forEach(function(p) {
-          modelChain = modelChain.then(function(m) { if (m) return m; return tryLoadModel(p); });
-        });
-        return modelChain.then(function(model) {
-          if (!model) throw new Error('No model loaded');
-          var scale = (h / model.height) * 0.95;
-          model.scale.set(scale);
-          model.anchor.set(0.5, 0.5);
-          model.x = w / 2; model.y = h / 2;
-          app.stage.addChild(model);
-          live2dModel = model;
-          live2dLoaded = true;
-          if (avatarLoader) avatarLoader.style.display = 'none';
-          if (avatarFallback) avatarFallback.style.display = 'none';
-          avatarCanvas.style.display = 'block';
-          try {
-            var mm = model.internalModel && model.internalModel.motionManager;
-            if (mm) {
-              if (mm.playSound) mm.playSound = function() { return; };
-              if (mm._playSound) mm._playSound = function() { return; };
-              if (mm.on) mm.on('motionStart', function() { stopAllAudio(); });
-            }
-            if (model.volume !== undefined) model.volume = 0;
-          } catch(e) {}
-          try {
-            var settings = model.internalModel && model.internalModel.settings;
-            if (settings && settings.motions) {
-              availableMotions = [];
-              Object.keys(settings.motions).forEach(function(group) {
-                availableMotions.push({ groupName: group, count: (settings.motions[group] || []).length });
-              });
-            }
-            if (settings && settings.expressions) {
-              availableExpressions = settings.expressions.map(function(e) { return e.Name || e.name; }).filter(Boolean);
-            }
-          } catch(e) {}
-          var tracking = { x: 0, y: 0 };
-          document.addEventListener('mousemove', function(e) {
-            if (!chatOpen) return;
-            var rect = avatar.getBoundingClientRect();
-            var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
-            tracking.x = (e.clientX - cx) / (window.innerWidth / 2);
-            tracking.y = (e.clientY - cy) / (window.innerHeight / 2);
-          }, { passive: true });
-          app.ticker.add(function() {
-            if (model && model.internalModel) { try { model.focus(tracking.x, tracking.y); } catch(e) {} }
-          });
-          model.on('hit', function(hitAreas) {
-            try { if (!hitAreas || !hitAreas.length) return; handleTouch(); } catch(e) {}
-          });
-          startIdleMotions();
-          setTimeout(function() { playRandomMotion(); }, 800);
-        });
-      }).catch(function() {
-        if (avatarLoader) avatarLoader.style.display = 'none';
-        live2dLoading = false;
-      });
-    })();
-  }
-  function playMotion(g, i, p) {
-    if (!live2dModel) return false;
-    p = p || 2;
-    try { stopAllAudio(); if (typeof i === 'number') live2dModel.motion(g, i, p); else live2dModel.motion(g, undefined, p); lastMotionTime = Date.now(); setTimeout(stopAllAudio, 60); setTimeout(stopAllAudio, 200); return true; } catch(e) { return false; }
-  }
-  function playRandomMotion() {
-    if (!live2dModel || !availableMotions.length) return;
-    var nonIdle = availableMotions.filter(function(m) { return !/idle/i.test(m.groupName); });
-    var pool = nonIdle.length ? nonIdle : availableMotions;
-    playMotion(pick(pool).groupName, undefined, 2);
-  }
-  function playExpression(n) { if (!live2dModel) return false; try { live2dModel.expression(n); return true; } catch(e) { return false; } }
-  function findMotionGroup(kws) {
-    if (!availableMotions.length) return null;
-    for (var i = 0; i < kws.length; i++) {
-      var kw = kws[i].toLowerCase();
-      var f = availableMotions.find(function(m) { return m.groupName.toLowerCase().indexOf(kw) !== -1; });
-      if (f) return f.groupName;
-    }
-    return null;
-  }
-  function triggerMotionByKeyword(ctx) {
-    if (!live2dModel) return;
-    var map = { greet: ['greet','hello','hi','wave'], happy: ['happy','smile','joy','laugh'], sad: ['sad','cry'], angry: ['angry','mad','flick'], shy: ['shy','blush','flick_head','head'], surprise: ['surprise','shock','gasp'], listen: ['idle','listen','wait'], love: ['love','heart','flirt'], dance: ['dance','body'] };
-    var g = findMotionGroup(map[ctx] || [ctx]);
-    if (g) { playMotion(g, undefined, 2); return true; }
-    playRandomMotion();
-    return false;
-  }
-  function tryExpression(kws) {
-    if (!availableExpressions.length) return false;
-    for (var i = 0; i < kws.length; i++) {
-      var f = availableExpressions.find(function(e) { return e.toLowerCase().indexOf(kws[i].toLowerCase()) !== -1; });
-      if (f) { playExpression(f); return true; }
-    }
-    return false;
-  }
-  function triggerMotionFromText(text) {
-    if (!live2dModel || !text) return;
-    var t = text.toLowerCase();
-    if (/💜|💕|cute|shy|blush|missed/.test(t)) { triggerMotionByKeyword('shy'); tryExpression(['shy','blush','happy']); }
-    else if (/😤|angry|mad|hmph|ugh|stop|baka/.test(t)) { triggerMotionByKeyword('angry'); tryExpression(['angry','mad']); }
-    else if (/hi|hey|hello|welcome|back/.test(t)) { triggerMotionByKeyword('greet'); tryExpression(['happy','smile']); }
-    else if (/✨|😊|nice|good|great|yay|lol|bestie/.test(t)) { triggerMotionByKeyword('happy'); tryExpression(['happy','smile']); }
-    else if (/😳|really|omg|wow/.test(t)) { triggerMotionByKeyword('surprise'); tryExpression(['surprise','shock']); }
-    else if (Math.random() < 0.35) playRandomMotion();
-  }
-  function startIdleMotions() {
-    if (idleMotionInterval) clearInterval(idleMotionInterval);
-    idleMotionInterval = setInterval(function() {
-      if (!live2dModel || !chatOpen) return;
-      if (Date.now() - lastMotionTime < 12000) return;
-      if (Math.random() < 0.32) playRandomMotion();
-    }, 8000);
-  }
-  var lastTouchAt = 0;
-  function handleTouch() {
-    var now = Date.now();
-    if (now - lastTouchAt < 800) return;
-    lastTouchAt = now;
-    playRandomMotion();
-    if (Math.random() < 0.5 && availableExpressions.length) playExpression(pick(availableExpressions));
-    if (navigator.vibrate) navigator.vibrate(20);
-    avatar.classList.remove('sf-avatar-tap');
-    void avatar.offsetWidth;
-    avatar.classList.add('sf-avatar-tap');
-  }
-  avatar.addEventListener('click', function() { handleTouch(); });
-
-  var cp = window.location.pathname || '/';
-  if (memory.behavior.lastPage !== cp) {
-    memory.behavior.pagesViewed.push({ path: cp, time: Date.now() });
-    memory.behavior.pagesViewed = trimArray(memory.behavior.pagesViewed, 80);
-    memory.behavior.lastPage = cp;
-    persistMemory();
-  }
-  document.addEventListener('click', function(e) {
-    var a = e.target && e.target.closest ? e.target.closest('a') : null;
-    if (!a) return;
-    var h = a.getAttribute('href') || '';
-    if (h.indexOf('/anime/') === 0) {
-      memory.behavior.animeClicked.push({ slug: h.replace('/anime/', '').replace(/\/+$/, ''), time: Date.now() });
-      memory.behavior.animeClicked = trimArray(memory.behavior.animeClicked, 50);
-      persistMemory();
-    } else if (h.indexOf('/product/') === 0 || a.dataset.productId) {
-      var id = a.dataset.productId || h.replace('/product/', '').replace(/\/+$/, '');
-      memory.behavior.productsClicked.push({ id: id, time: Date.now() });
-      memory.behavior.productsClicked = trimArray(memory.behavior.productsClicked, 50);
-      persistMemory();
-    }
-  }, { passive: true });
-
-  if (memory.automation.chatOpen) {
-    setTimeout(function() { openChat(); }, 300);
-  } else if (memory.automation.chatMinimized) {
-    setTimeout(function() {
-      isMinimized = true;
-      mini.classList.add('sf-mini-show');
-      head.classList.add('sf-launcher-hide');
-    }, 300);
-  }
-
-  document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
-      e.preventDefault();
-      try { localStorage.setItem(CREATOR_KEY, 'ayano-217'); } catch(err) {}
-      isCreator = true; memory.userName = 'Ayano'; persistMemory();
-      showBubble('Ayano-sama 💜', 6000);
-      setTimeout(function() { location.reload(); }, 1600);
-    }
-  });
-
-  window.Safiya = {
-    open: openChat, close: closeChat, minimize: minimizeChat, say: showBubble,
-    memory: function() { return safeGet(memoryKey, {}); },
-    name: function() { return memory.userName; },
-    setName: function(n) { memory.userName = String(n || '').trim().slice(0, 24); persistMemory(); },
-    history: function() { return memory.chatHistory; },
-    clearHistory: function() { memory.chatHistory = []; persistMemory(); chatBody.innerHTML = ''; chatInited = false; },
-    reset: function() {
-      try { safeRemove(memoryKey); safeRemove(LEGACY_MEMORY_KEY); safeRemove(DEVICE_KEY); safeRemove(CREATOR_KEY); } catch(e) {}
-      setCookie(DEVICE_KEY, '', -1);
-      location.reload();
-    },
-    claimCreator: function() {
-      try { localStorage.setItem(CREATOR_KEY, 'ayano-217'); } catch(e) {}
-      isCreator = true; memory.userName = 'Ayano'; persistMemory();
-      showBubble('Ayano-sama 💜', 6000);
-    }
-  };
-})();
-</script>
-
 <style is:global>
   /* ═══════════════════════════════════════════════
-     ROOT
+     🎨 ROOT STYLES
   ═══════════════════════════════════════════════ */
   #safiya-root {
     font-family: 'Inter', 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
     user-select: none;
     -webkit-user-select: none;
   }
+  #safiya-root *, #safiya-root *::before, #safiya-root *::after {
+    box-sizing: border-box;
+  }
   #safiya-root svg { display: block; flex-shrink: 0; }
-  #safiya-root button { font-family: inherit; }
+  #safiya-root button { font-family: inherit; cursor: pointer; }
 
   /* ═══════════════════════════════════════════════
-     🎯 LAUNCHER PILL — CURVED DISPLAY + NEON TUBE BORDER
+     🎯 LAUNCHER PILL — Instagram gradient neon
   ═══════════════════════════════════════════════ */
   #safiya-root .sf-launcher {
     position: fixed;
@@ -843,7 +180,6 @@
     height: 48px;
     min-width: 140px;
     border-radius: 24px;
-    cursor: pointer;
     background: transparent;
     overflow: visible;
     transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
@@ -859,7 +195,6 @@
     transform: translateY(10px) scale(0.9);
   }
 
-  /* 🌈 NEON TUBE BORDER — sharp rotating gradient line */
   #safiya-root .sf-launcher-neon {
     position: absolute;
     inset: 0;
@@ -867,13 +202,13 @@
     padding: 1.5px;
     background: conic-gradient(
       from var(--sf-angle, 0deg),
-      #c084fc 0%,
-      #e879f9 15%,
-      #f0abfc 30%,
-      #7dd3fc 50%,
-      #c084fc 70%,
-      #e879f9 85%,
-      #c084fc 100%
+      #f09433 0%,
+      #e6683c 15%,
+      #dc2743 30%,
+      #cc2366 50%,
+      #bc1888 70%,
+      #833ab4 85%,
+      #f09433 100%
     );
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,
@@ -885,7 +220,6 @@
     z-index: 1;
   }
 
-  /* Fallback for browsers without @property (still works via animation on custom prop via keyframes) */
   @property --sf-angle {
     syntax: '<angle>';
     initial-value: 0deg;
@@ -896,7 +230,6 @@
     to { --sf-angle: 360deg; }
   }
 
-  /* Subtle outer glow — soft, premium (not diffuse) */
   #safiya-root .sf-launcher::before {
     content: '';
     position: absolute;
@@ -905,11 +238,11 @@
     background: conic-gradient(
       from var(--sf-angle, 0deg),
       transparent 0%,
-      rgba(232, 121, 249, 0.35) 15%,
+      rgba(220, 39, 67, 0.35) 15%,
       transparent 30%,
-      rgba(125, 211, 252, 0.3) 50%,
+      rgba(188, 24, 136, 0.3) 50%,
       transparent 65%,
-      rgba(192, 132, 252, 0.35) 85%,
+      rgba(131, 58, 180, 0.35) 85%,
       transparent 100%
     );
     filter: blur(6px);
@@ -924,7 +257,6 @@
     filter: blur(10px);
   }
 
-  /* ✨ CURVED DISPLAY INNER — 3D glass with top highlight */
   #safiya-root .sf-launcher-inner {
     position: relative;
     z-index: 2;
@@ -941,33 +273,10 @@
         rgba(12, 6, 22, 0.99) 100%
       );
     box-shadow:
-      /* Top glass highlight (curved display top edge shine) */
       inset 0 1.5px 0 rgba(255, 255, 255, 0.12),
-      /* Bottom subtle inner shadow (curve bottom depth) */
       inset 0 -1px 0 rgba(0, 0, 0, 0.5),
-      /* Side highlights for curved feel */
-      inset 1px 0 0 rgba(232, 121, 249, 0.08),
-      inset -1px 0 0 rgba(125, 211, 252, 0.08),
-      /* Deep drop shadow for 3D lift */
       0 8px 20px rgba(0, 0, 0, 0.55),
       0 2px 6px rgba(0, 0, 0, 0.4);
-  }
-
-  /* Extra top glass reflection (curved screen top edge) */
-  #safiya-root .sf-launcher-inner::before {
-    content: '';
-    position: absolute;
-    top: 1px;
-    left: 8%;
-    right: 8%;
-    height: 40%;
-    border-radius: 24px 24px 40% 40%;
-    background: linear-gradient(180deg,
-      rgba(255, 255, 255, 0.08) 0%,
-      rgba(255, 255, 255, 0.02) 60%,
-      transparent 100%
-    );
-    pointer-events: none;
   }
 
   #safiya-root .sf-launcher-avatar {
@@ -980,28 +289,20 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.3),
       inset 0 -1px 0 rgba(0, 0, 0, 0.2),
-      0 2px 8px rgba(192, 132, 252, 0.35);
+      0 2px 8px rgba(220, 39, 67, 0.4);
     flex-shrink: 0;
   }
 
   #safiya-root .sf-launcher-icon {
     color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #safiya-root .sf-launcher-dp {
-    position: absolute;
-    inset: 0;
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    border-radius: 20px;
+    font-weight: 800;
+    font-size: 1.15rem;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.02em;
   }
 
   #safiya-root .sf-launcher-dot {
@@ -1028,7 +329,6 @@
   }
 
   #safiya-root .sf-launcher-name {
-    font-family: 'Inter', 'DM Sans', sans-serif !important;
     color: #f7edff !important;
     font-size: 0.85rem;
     font-weight: 700;
@@ -1114,20 +414,18 @@
     width: 32px;
     height: 32px;
     border-radius: 10px;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
+    background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
     flex-shrink: 0;
-    overflow: hidden;
-    position: relative;
-  }
-  #safiya-root .sf-teaser-dp {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff !important;
+    font-weight: 800;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
   }
   #safiya-root .sf-teaser-body { flex: 1; min-width: 0; }
   #safiya-root .sf-teaser-name {
-    font-family: 'Inter', sans-serif;
     font-weight: 700;
     font-size: 0.72rem;
     color: #e879f9 !important;
@@ -1140,6 +438,7 @@
     color: #f0e8ff !important;
     font-weight: 450;
     letter-spacing: -0.005em;
+    word-wrap: break-word;
   }
   #safiya-root .sf-teaser-close {
     position: absolute;
@@ -1156,714 +455,12 @@
     justify-content: center;
     border-radius: 50%;
     padding: 0;
+    font-size: 0.7rem;
+    font-weight: 700;
     transition: all 0.15s;
   }
   #safiya-root .sf-teaser-close:hover {
     color: #ef4444;
     background: rgba(239, 68, 68, 0.15);
-  }
-
-  /* ═══════════════════════════════════════════════
-     👤 AVATAR (LIVE2D)
-  ═══════════════════════════════════════════════ */
-  #safiya-root .sf-avatar {
-    position: fixed;
-    bottom: 28px;
-    right: 434px;
-    z-index: 9996;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateX(16px) scale(0.9);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  #safiya-root .sf-avatar-show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(0) scale(1);
-    animation: sfFloat 5s ease-in-out infinite;
-  }
-  @keyframes sfFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
-  }
-  #safiya-root .sf-avatar-tap {
-    animation: sfTap 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  @keyframes sfTap {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
-  #safiya-root .sf-avatar-glow {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 260px;
-    height: 260px;
-    transform: translate(-50%, -50%);
-    background: radial-gradient(circle, rgba(232,121,249,0.25) 0%, rgba(192,132,252,0.1) 40%, transparent 70%);
-    filter: blur(25px);
-    pointer-events: none;
-    animation: sfGlow 3s ease-in-out infinite;
-    z-index: -1;
-  }
-  @keyframes sfGlow {
-    0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
-    50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.1); }
-  }
-  #safiya-root .sf-avatar-inner {
-    position: relative;
-    width: 240px;
-    height: 340px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  #safiya-root #s-avatar-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100% !important;
-    height: 100% !important;
-    display: none;
-    z-index: 2;
-  }
-  #safiya-root .sf-avatar-fallback {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 18px;
-    z-index: 1;
-  }
-  #safiya-root .sf-avatar-fb-orb {
-    position: relative;
-    width: 160px;
-    height: 160px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), rgba(232,121,249,0.55) 30%, rgba(192,132,252,0.85) 60%, rgba(125,74,208,0.95));
-    box-shadow: 0 15px 50px rgba(192,132,252,0.5), inset -18px -18px 50px rgba(74,27,138,0.45);
-    animation: sfBreathe 3s ease-in-out infinite;
-  }
-  @keyframes sfBreathe {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
-  #safiya-root .sf-avatar-fb-face {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -40%);
-    width: 100px;
-    height: 60px;
-  }
-  #safiya-root .sf-avatar-fb-eye {
-    position: absolute;
-    top: 0;
-    width: 12px;
-    height: 18px;
-    background: #1a0a2e;
-    border-radius: 50%;
-    animation: sfBlink 4s ease-in-out infinite;
-  }
-  #safiya-root .sf-avatar-fb-eye-l { left: 15px; }
-  #safiya-root .sf-avatar-fb-eye-r { right: 15px; }
-  @keyframes sfBlink {
-    0%, 92%, 100% { transform: scaleY(1); }
-    94% { transform: scaleY(0.1); }
-  }
-  #safiya-root .sf-avatar-fb-mouth {
-    position: absolute;
-    bottom: 5px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 30px;
-    height: 15px;
-    border: 3px solid #1a0a2e;
-    border-top: none;
-    border-radius: 0 0 30px 30px;
-  }
-  #safiya-root .sf-avatar-fb-name {
-    font-weight: 800;
-    font-size: 1.15rem;
-    color: #e879f9 !important;
-    letter-spacing: 0.15em;
-  }
-  #safiya-root .sf-avatar-loader {
-    position: absolute;
-    inset: 0;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 4;
-  }
-  #safiya-root .sf-avatar-spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid rgba(192,132,252,0.2);
-    border-top-color: #e879f9;
-    border-radius: 50%;
-    animation: sfSpinner 0.8s linear infinite;
-  }
-  @keyframes sfSpinner {
-    to { transform: rotate(360deg); }
-  }
-  #safiya-root .sf-avatar-hint {
-    margin-top: 8px;
-    background: rgba(18, 10, 32, 0.92);
-    border: 1px solid rgba(232, 121, 249, 0.35);
-    color: #f0e8ff !important;
-    padding: 5px 12px;
-    border-radius: 999px;
-    font-size: 0.68rem;
-    font-weight: 600;
-    white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(10px);
-    animation: sfHint 2s ease-in-out infinite;
-    pointer-events: none;
-  }
-  @keyframes sfHint {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
-  }
-
-  /* ═══════════════════════════════════════════════
-     💬 CHAT WINDOW
-  ═══════════════════════════════════════════════ */
-  #safiya-root .sf-chat {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 9998;
-    width: 380px;
-    height: 620px;
-    max-height: calc(100vh - 40px);
-    display: flex;
-    flex-direction: column;
-    background: linear-gradient(180deg, rgba(22, 13, 40, 0.97), rgba(14, 8, 26, 0.98)) !important;
-    border: 1px solid rgba(192, 132, 252, 0.16);
-    border-radius: 20px;
-    box-shadow:
-      0 24px 60px rgba(0, 0, 0, 0.6),
-      0 0 40px rgba(192, 132, 252, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(28px) saturate(1.3);
-    -webkit-backdrop-filter: blur(28px) saturate(1.3);
-    overflow: hidden;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(16px) scale(0.96);
-    transform-origin: bottom right;
-    transition: all 0.32s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  #safiya-root .sf-chat-open {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0) scale(1);
-  }
-
-  #safiya-root .sf-chat-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    background: rgba(28, 18, 48, 0.55) !important;
-    border-bottom: 1px solid rgba(192, 132, 252, 0.1);
-    flex-shrink: 0;
-    backdrop-filter: blur(10px);
-  }
-
-  #safiya-root .sf-icon-btn {
-    background: transparent;
-    border: none;
-    color: rgba(192, 132, 252, 0.85);
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    padding: 0;
-    flex-shrink: 0;
-    -webkit-tap-highlight-color: transparent;
-  }
-  #safiya-root .sf-icon-btn:hover {
-    background: rgba(192, 132, 252, 0.14);
-    color: #e879f9;
-  }
-  #safiya-root .sf-icon-btn:active { transform: scale(0.94); }
-  #safiya-root .sf-icon-btn-danger:hover {
-    background: rgba(239, 68, 68, 0.16);
-    color: #f87171;
-  }
-
-  #safiya-root .sf-chat-user {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-    min-width: 0;
-  }
-  #safiya-root .sf-chat-user-avatar {
-    position: relative;
-    width: 36px;
-    height: 36px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff !important;
-    flex-shrink: 0;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.25),
-      0 2px 8px rgba(192, 132, 252, 0.35);
-    font-weight: 800;
-    font-size: 1rem;
-    overflow: hidden;
-    font-family: 'Inter', sans-serif;
-  }
-  #safiya-root .sf-chat-user-dp {
-    position: absolute;
-    inset: 0;
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    border-radius: 12px;
-    z-index: 1;
-  }
-  #safiya-root .sf-chat-user-dot {
-    position: absolute;
-    bottom: -1px;
-    right: -1px;
-    width: 11px;
-    height: 11px;
-    background: #22c55e;
-    border: 2.5px solid #14082a;
-    border-radius: 50%;
-    z-index: 3;
-    box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
-  }
-  #safiya-root .sf-chat-user-info { flex: 1; min-width: 0; }
-  #safiya-root .sf-chat-user-name {
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 700;
-    font-size: 0.98rem;
-    color: #f5ecff !important;
-    line-height: 1.15;
-    letter-spacing: -0.01em;
-  }
-  #safiya-root .sf-chat-user-status {
-    font-size: 0.7rem;
-    color: rgba(192, 132, 252, 0.75) !important;
-    margin-top: 3px;
-    font-weight: 500;
-  }
-  #safiya-root .sf-chat-actions {
-    display: flex;
-    gap: 2px;
-    flex-shrink: 0;
-  }
-
-  #safiya-root .sf-chat-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 14px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(192, 132, 252, 0.25) transparent;
-    scroll-behavior: smooth;
-  }
-  #safiya-root .sf-chat-body::-webkit-scrollbar { width: 4px; }
-  #safiya-root .sf-chat-body::-webkit-scrollbar-thumb {
-    background: rgba(192, 132, 252, 0.3);
-    border-radius: 3px;
-  }
-
-  #safiya-root .sf-msg-time {
-    text-align: center;
-    font-size: 0.6rem;
-    color: rgba(192, 132, 252, 0.45) !important;
-    font-weight: 700;
-    letter-spacing: 0.15em;
-    margin: 14px 0 8px;
-    text-transform: uppercase;
-    font-family: 'Inter', sans-serif;
-  }
-
-  #safiya-root .sf-msg-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 6px;
-    margin: 2px 0;
-    animation: sfMsgIn 0.24s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  @keyframes sfMsgIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  #safiya-root .sf-msg-her { justify-content: flex-start; }
-  #safiya-root .sf-msg-me { justify-content: flex-end; }
-
-  #safiya-root .sf-msg-avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #f0abfc 0%, #c084fc 60%, #a855f7 100%);
-    background-size: cover;
-    background-position: center;
-    flex-shrink: 0;
-    box-shadow: 0 1px 4px rgba(192, 132, 252, 0.35);
-  }
-
-  #safiya-root .sf-msg-bubble {
-    max-width: 72%;
-    padding: 9px 13px;
-    border-radius: 18px;
-    font-size: 0.905rem;
-    line-height: 1.42;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    font-family: 'Inter', 'DM Sans', sans-serif !important;
-    font-weight: 450;
-    letter-spacing: -0.005em;
-  }
-
-  #safiya-root .sf-msg-her .sf-msg-bubble {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(168, 85, 247, 0.18)) !important;
-    color: #f5ecff !important;
-    border: 1px solid rgba(192, 132, 252, 0.28);
-    border-bottom-left-radius: 5px;
-    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.08);
-  }
-
-  #safiya-root .sf-msg-me .sf-msg-bubble {
-    background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899) !important;
-    color: #ffffff !important;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-bottom-right-radius: 5px;
-    box-shadow: 0 3px 10px rgba(168, 85, 247, 0.28);
-    font-weight: 500;
-  }
-
-  #safiya-root .sf-msg-row + .sf-msg-row.sf-msg-her .sf-msg-avatar {
-    visibility: hidden;
-  }
-
-  #safiya-root .sf-msg-typing {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(168, 85, 247, 0.18)) !important;
-    border: 1px solid rgba(192, 132, 252, 0.28);
-    padding: 11px 15px;
-    border-radius: 18px;
-    border-bottom-left-radius: 5px;
-    display: flex;
-    gap: 4px;
-  }
-  #safiya-root .sf-msg-typing span {
-    width: 6px;
-    height: 6px;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    border-radius: 50%;
-    animation: sfTBounce 1.3s ease-in-out infinite;
-  }
-  #safiya-root .sf-msg-typing span:nth-child(2) { animation-delay: 0.15s; }
-  #safiya-root .sf-msg-typing span:nth-child(3) { animation-delay: 0.3s; }
-  @keyframes sfTBounce {
-    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-    30% { transform: translateY(-5px); opacity: 1; }
-  }
-
-  #safiya-root .sf-chat-composer {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 12px 12px;
-    background: rgba(28, 18, 48, 0.55) !important;
-    border-top: 1px solid rgba(192, 132, 252, 0.1);
-    flex-shrink: 0;
-    backdrop-filter: blur(10px);
-  }
-  #safiya-root .sf-composer-btn {
-    background: transparent;
-    border: none;
-    color: rgba(192, 132, 252, 0.85);
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border-radius: 50%;
-    padding: 0;
-    flex-shrink: 0;
-    transition: all 0.15s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  #safiya-root .sf-composer-btn:hover {
-    background: rgba(192, 132, 252, 0.14);
-    color: #e879f9;
-  }
-  #safiya-root .sf-composer-input {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    background: rgba(45, 27, 78, 0.4);
-    border: 1px solid rgba(192, 132, 252, 0.18);
-    border-radius: 20px;
-    padding: 0 6px 0 14px;
-    min-width: 0;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  #safiya-root .sf-composer-input:focus-within {
-    border-color: rgba(232, 121, 249, 0.5);
-    background: rgba(45, 27, 78, 0.55);
-  }
-  #safiya-root #s-input {
-    flex: 1;
-    background: transparent !important;
-    border: none !important;
-    color: #f5ecff !important;
-    font-family: 'Inter', 'DM Sans', sans-serif !important;
-    font-size: 0.905rem;
-    padding: 9px 0;
-    outline: none;
-    min-width: 0;
-    font-weight: 450;
-    letter-spacing: -0.005em;
-  }
-  #safiya-root #s-input::placeholder {
-    color: rgba(192, 132, 252, 0.45) !important;
-    font-weight: 400;
-  }
-  #safiya-root .sf-composer-emoji {
-    background: none;
-    border: none;
-    color: rgba(192, 132, 252, 0.75);
-    padding: 5px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    border-radius: 50%;
-    -webkit-tap-highlight-color: transparent;
-  }
-  #safiya-root .sf-composer-emoji:hover { color: #e879f9; }
-  #safiya-root .sf-composer-send {
-    background: linear-gradient(135deg, #a855f7, #e879f9, #7dd3fc) !important;
-    border: none;
-    color: #fff !important;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: all 0.2s;
-    box-shadow: 0 3px 12px rgba(192, 132, 252, 0.42);
-    padding: 0;
-    -webkit-tap-highlight-color: transparent;
-  }
-  #safiya-root .sf-composer-send:hover { transform: scale(1.06); }
-  #safiya-root .sf-composer-send:active { transform: scale(0.96); }
-
-  /* ═══════════════════════════════════════════════
-     📱 MINIMIZED PILL — matches launcher style
-  ═══════════════════════════════════════════════ */
-  #safiya-root .sf-mini {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 9998;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 5px 14px 5px 5px;
-    background: linear-gradient(180deg, rgba(38, 22, 66, 0.98) 0%, rgba(14, 8, 26, 0.99) 100%) !important;
-    border: 1px solid rgba(232, 121, 249, 0.32);
-    border-radius: 22px;
-    box-shadow:
-      inset 0 1.5px 0 rgba(255, 255, 255, 0.1),
-      0 8px 24px rgba(0, 0, 0, 0.5);
-    cursor: pointer;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(16px);
-    transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  #safiya-root .sf-mini-show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
-  }
-  #safiya-root .sf-mini-avatar {
-    width: 34px;
-    height: 34px;
-    border-radius: 17px;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff !important;
-    flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(192, 132, 252, 0.35);
-    font-weight: 800;
-    font-size: 0.82rem;
-    overflow: hidden;
-    position: relative;
-    font-family: 'Inter', sans-serif;
-  }
-  #safiya-root .sf-mini-dp {
-    position: absolute;
-    inset: 0;
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    border-radius: 17px;
-  }
-  #safiya-root .sf-mini-name {
-    font-family: 'Inter', sans-serif;
-    font-weight: 700;
-    color: #f5ecff !important;
-    font-size: 0.85rem;
-    letter-spacing: -0.01em;
-  }
-  #safiya-root .sf-mini-badge {
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    background: linear-gradient(135deg, #ef4444, #f97316);
-    color: #fff !important;
-    border-radius: 999px;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.6rem;
-    font-weight: 800;
-  }
-  #safiya-root .sf-mini-close {
-    background: rgba(255, 255, 255, 0.05);
-    border: none;
-    color: rgba(240, 232, 255, 0.55);
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    padding: 0;
-    transition: all 0.15s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  #safiya-root .sf-mini-close:hover {
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.14);
-  }
-
-  /* ═══════════════════════════════════════════════
-     📱 RESPONSIVE
-  ═══════════════════════════════════════════════ */
-  @media (max-width: 1024px) {
-    #safiya-root .sf-chat { width: 360px; }
-    #safiya-root .sf-avatar { right: 390px; }
-  }
-
-  @media (max-width: 720px) {
-    #safiya-root .sf-launcher {
-      right: 14px;
-      bottom: 14px;
-      height: 44px;
-      min-width: 128px;
-      border-radius: 22px;
-    }
-    #safiya-root .sf-launcher-neon { border-radius: 22px; }
-    #safiya-root .sf-launcher::before { border-radius: 24px; }
-    #safiya-root .sf-launcher-inner {
-      padding: 3px 14px 3px 3px;
-      gap: 8px;
-      border-radius: 22px;
-    }
-    #safiya-root .sf-launcher-avatar {
-      width: 36px;
-      height: 36px;
-      min-width: 36px;
-      border-radius: 18px;
-    }
-    #safiya-root .sf-launcher-name { font-size: 0.8rem; }
-    #safiya-root .sf-launcher-status { font-size: 0.6rem; }
-
-    #safiya-root .sf-teaser {
-      bottom: 68px;
-      right: 12px;
-      left: 12px;
-      width: auto;
-    }
-
-    #safiya-root .sf-chat {
-      bottom: 12px !important;
-      right: 12px !important;
-      left: 12px !important;
-      width: auto !important;
-      max-width: none !important;
-      height: 85vh !important;
-      max-height: 85vh !important;
-    }
-
-    #safiya-root .sf-avatar {
-      display: flex !important;
-      position: fixed !important;
-      bottom: auto !important;
-      top: 76px !important;
-      left: 8px !important;
-      right: auto !important;
-      z-index: 10000 !important;
-    }
-    #safiya-root .sf-avatar-inner { width: 120px !important; height: 170px !important; }
-    #safiya-root .sf-avatar-glow { width: 160px !important; height: 160px !important; }
-    #safiya-root .sf-avatar-fb-orb { width: 90px !important; height: 90px !important; }
-    #safiya-root .sf-avatar-fb-name { font-size: 0.85rem !important; }
-    #safiya-root .sf-avatar-fb-face {
-      width: 60px !important;
-      height: 40px !important;
-      transform: translate(-50%, -40%) scale(0.6) !important;
-    }
-    #safiya-root .sf-avatar-hint {
-      font-size: 0.6rem !important;
-      padding: 3px 8px !important;
-    }
-
-    #safiya-root #s-input { font-size: 0.95rem; padding: 11px 0; }
-    #safiya-root .sf-composer-send { width: 38px; height: 38px; }
-
-    #safiya-root .sf-mini {
-      bottom: 12px;
-      right: 12px;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    #safiya-root .sf-launcher-neon,
-    #safiya-root .sf-launcher::before,
-    #safiya-root .sf-avatar-glow,
-    #safiya-root .sf-avatar-show,
-    #safiya-root .sf-avatar-fb-orb,
-    #safiya-root .sf-avatar-fb-eye,
-    #safiya-root .sf-avatar-hint {
-      animation: none !important;
-    }
   }
 </style>
