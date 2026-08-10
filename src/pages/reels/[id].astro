@@ -186,7 +186,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
               <div class="rp-player rp-player-external" id="videoCard">
                 <div class="rp-player-frame">
                   <div class="rp-external-wrap" id="externalWrap">
-                    <!-- Poster placeholder while iframe loads -->
                     <div class="rp-ext-placeholder" id="extPlaceholder">
                       <img src={video.thumbnail} alt={video.title} class="rp-ext-placeholder-img" loading="eager" referrerpolicy="no-referrer" />
                       <div class="rp-ext-placeholder-overlay"></div>
@@ -200,7 +199,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
                         <div class="rp-ext-placeholder-text">Loading player...</div>
                       </div>
                     </div>
-                    <!-- Iframe will be injected here by JS after 500ms -->
                     <div class="rp-ext-brand">
                       <span class="rp-ext-logo">AniTubeBuzz</span>
                       <span class="rp-ext-live">HD</span>
@@ -522,9 +520,13 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
 
   <Footer slot="footer" />
   <style is:global>
-    /* ============ BASE ============ */
+    /* ============ BASE (FORCED DARK BACKGROUND & NO WHITE GAPS) ============ */
+    html, body {
+      background-color: #0a0517 !important;
+      color: #ffffff !important;
+    }
     .rp-section {
-      background: #0a0517;
+      background: #0a0517 !important;
       min-height: 100vh;
       padding: 20px 0 60px;
     }
@@ -534,6 +536,7 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
       padding: 0 24px;
       width: 100%;
       box-sizing: border-box;
+      background: #0a0517 !important;
     }
     .rp-grid {
       display: grid;
@@ -1488,7 +1491,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
       .rp-dot { animation: none; }
     }
   </style>
-
   <script is:inline define:vars={{ 
     INITIAL_VIDEO: video, 
     INITIAL_FEED: allVideos.slice(0, 50), 
@@ -2036,7 +2038,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
         setTimeout(hideVideoLoader, 3500);
       }
 
-      // ============ OPTIMIZED EXTERNAL IFRAME (500ms delay + smart crop) ============
       function setupExternalIframe() {
         var root = document.getElementById('reels-root');
         var wrap = document.getElementById('externalWrap');
@@ -2051,7 +2052,7 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
         var VIDEO_H = 555;
         var VIDEO_LEFT = 86;
         var VIDEO_TOP = 340;
-        var PAGE_HEIGHT = 3200;
+        var PAGE_HEIGHT = 2000; // Optimized height for lower mobile RAM usage
 
         var iframe = null;
         var lastCropWidth = 0;
@@ -2086,24 +2087,20 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
           iframe.style.height = PAGE_HEIGHT + 'px';
           wrap.appendChild(iframe);
 
-          // Apply crop after iframe DOM inserted
           requestAnimationFrame(function() {
             applyCrop();
-            // Hide placeholder after iframe attempts to load
             iframe.addEventListener('load', function() {
               setTimeout(function() {
                 if (placeholder) placeholder.classList.add('hidden');
               }, 300);
               applyCrop();
             });
-            // Safety fallback
             setTimeout(function() {
               if (placeholder) placeholder.classList.add('hidden');
             }, 4000);
           });
         }
 
-        // Debounced resize handler (300ms - not per pixel)
         var resizeTimer = null;
         function onResize() {
           if (resizeTimer) clearTimeout(resizeTimer);
@@ -2113,12 +2110,8 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
         }
         window.addEventListener('resize', onResize, { passive: true });
         window.addEventListener('orientationchange', onResize, { passive: true });
-
-        // Block right-click
         wrap.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
-        // MAIN: Load iframe after 500ms delay (let page paint first)
-        // Use requestIdleCallback if available for even better perceived perf
         var startLoad = function() {
           setTimeout(loadIframe, 500);
         };
