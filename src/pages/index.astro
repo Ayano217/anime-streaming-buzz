@@ -1,1062 +1,579 @@
----
-// ═══════════════════════════════════════════════════════════════
-// AniTube Buzz — Home Page v2.0 (Full Rewrite)
-// Mixed content: Anime 60% + K-Drama 10% + Movies 10% + Donghua 10% + Series 10%
-// Sources: Dailymotion (heavy) + Bilibili (heavy) + YouTube + Kitsu
-// Performance: Lag-free, no GPU heavy CSS, DocumentFragment batch DOM
-// ═══════════════════════════════════════════════════════════════
-import BaseLayout from '../layouts/BaseLayout.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
----
-
-<BaseLayout>
-  <Header slot="header" />
-
-  <!-- ═══ MAIN FEED SECTION ═══ -->
-  <section class="at-home">
-    <div class="container">
-
-      <!-- ═══ CATEGORY TABS ═══ -->
-      <div class="at-tabs" id="atTabs">
-        <button class="at-tab at-tab-active" data-cat="trending">
-          <span class="at-tab-dot"></span>
-          <span>Trending</span>
-        </button>
-        <button class="at-tab" data-cat="anime">Anime</button>
-        <button class="at-tab" data-cat="kdrama">K-Drama</button>
-        <button class="at-tab" data-cat="movies">Movies</button>
-        <button class="at-tab" data-cat="donghua">Donghua</button>
-      </div>
-
-      <!-- ═══ CONTENT GRID ═══ -->
-      <div class="at-grid" id="atGrid"></div>
-
-      <!-- ═══ LOADING INDICATOR ═══ -->
-      <div class="at-loading" id="atLoading" style="display:none;">
-        <div class="at-spinner"></div>
-        <span>Loading more...</span>
-      </div>
-
-      <!-- ═══ ERROR STATE ═══ -->
-      <div class="at-error" id="atError" style="display:none;">
-        <div class="at-error-icon">
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M12 8v4M12 16h.01"/>
-          </svg>
-        </div>
-        <h3>Something went wrong</h3>
-        <p>Please try again in a moment.</p>
-        <button class="at-retry-btn" id="atRetry">Retry</button>
-      </div>
-
-      <!-- ═══ EMPTY STATE ═══ -->
-      <div class="at-empty" id="atEmpty" style="display:none;">
-        <div style="font-size:2.5rem;margin-bottom:0.5rem;">🎬</div>
-        <h3>No content found</h3>
-        <p>Try a different category!</p>
-      </div>
-
-    </div>
-  </section>
-
-  <Footer slot="footer" />
-</BaseLayout>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f0820">
+<title>AniTubeBuzz — Anime, Drama, Movies & More</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-  /* ═══ HOME PAGE LAYOUT ═══ */
-  .at-home {
-    padding: 0.5rem 0 3rem;
-    min-height: 80vh;
-  }
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:#0a0515;
+  color:#fff;
+  overflow-x:hidden;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse at top,rgba(139,92,246,.18),transparent 60%),
+    radial-gradient(ellipse at bottom right,rgba(236,72,153,.1),transparent 60%),
+    #0a0515;
+  z-index:-1;pointer-events:none;
+}
+img{max-width:100%;display:block;user-select:none;-webkit-user-drag:none}
 
-  /* ═══ CATEGORY TABS ═══ */
-  .at-tabs {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 1.25rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-    padding: 2px 0;
-  }
-  .at-tabs::-webkit-scrollbar { display: none; }
+/* ========== NAVBAR ========== */
+.navbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(15,8,32,.75);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  padding:16px 5%;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:20px;
+}
+.logo{
+  font-size:24px;font-weight:800;
+  background:linear-gradient(135deg,#c084fc,#ec4899);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  letter-spacing:-.5px;cursor:pointer;flex-shrink:0;
+}
+.nav-links{
+  display:flex;gap:8px;
+  background:rgba(255,255,255,.04);
+  padding:6px;border-radius:14px;
+}
+.nav-links a{
+  color:#a1a1b3;text-decoration:none;
+  padding:8px 20px;border-radius:10px;
+  font-size:14px;font-weight:500;
+  transition:all .2s;white-space:nowrap;
+}
+.nav-links a:hover{color:#fff}
+.nav-links a.active{
+  color:#fff;
+  background:linear-gradient(135deg,#8b5cf6,#ec4899);
+}
+.search-box{
+  flex:1;max-width:420px;position:relative;
+}
+.search-box input{
+  width:100%;padding:11px 16px 11px 42px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  color:#fff;font-size:13px;outline:none;
+  transition:all .2s;
+}
+.search-box input:focus{
+  border-color:rgba(139,92,246,.5);
+  background:rgba(255,255,255,.08);
+}
+.search-box i{
+  position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  color:#a78bfa;font-size:13px;
+}
+.nav-actions{display:flex;gap:8px}
+.icon-btn{
+  width:40px;height:40px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;font-size:14px;
+}
+.icon-btn:hover{background:rgba(139,92,246,.15);border-color:rgba(139,92,246,.3)}
+.menu-toggle{display:none}
 
-  .at-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 9px 18px;
-    background: rgba(28, 15, 61, 0.5);
-    border: 1px solid rgba(192, 132, 252, 0.15);
-    border-radius: 999px;
-    color: rgba(255, 255, 255, 0.7);
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
-    white-space: nowrap;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-  }
-  .at-tab:hover {
-    background: rgba(192, 132, 252, 0.12);
-    border-color: rgba(192, 132, 252, 0.35);
-    color: #fff;
-  }
-  .at-tab-active {
-    background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
-    border-color: transparent;
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(192, 132, 252, 0.35);
-  }
-  .at-tab-active:hover {
-    background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
-    color: #fff;
-  }
-  .at-tab-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #ef4444;
-    box-shadow: 0 0 6px #ef4444;
-    animation: atPulse 2s ease infinite;
-  }
-  .at-tab-active .at-tab-dot {
-    background: #fff;
-    box-shadow: 0 0 6px rgba(255,255,255,0.8);
-  }
-  @keyframes atPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+/* ========== SECTION ========== */
+.section{padding:30px 5% 20px}
+.section-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:20px;gap:16px;
+}
+.section-title-wrap{display:flex;align-items:center;gap:12px}
+.live-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:#10b981;
+  box-shadow:0 0 12px #10b981;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.section-title{
+  font-size:14px;color:#a78bfa;font-weight:600;
+  text-transform:uppercase;letter-spacing:1.5px;
+}
+.section-heading{
+  font-size:36px;font-weight:800;
+  background:linear-gradient(135deg,#c084fc,#ec4899);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+  margin-top:4px;
+}
+.item-count{
+  padding:8px 18px;
+  background:rgba(139,92,246,.15);
+  border:1px solid rgba(139,92,246,.3);
+  border-radius:30px;
+  font-size:13px;font-weight:600;
+  color:#c084fc;
+}
 
-  /* ═══ CONTENT GRID — 5 columns responsive ═══ */
-  .at-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 14px;
-    min-height: 300px;
-  }
-  @media (max-width: 1400px) { .at-grid { grid-template-columns: repeat(4, 1fr); } }
-  @media (max-width: 1100px) { .at-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
-  @media (max-width: 768px)  { .at-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+/* ========== TABS ========== */
+.tabs{
+  display:flex;gap:10px;overflow-x:auto;
+  padding-bottom:8px;margin-bottom:28px;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  padding:10px 22px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:30px;
+  color:#a1a1b3;font-size:14px;font-weight:600;
+  cursor:pointer;white-space:nowrap;
+  transition:all .2s;flex-shrink:0;
+  display:flex;align-items:center;gap:8px;
+}
+.tab:hover{color:#fff;border-color:rgba(139,92,246,.3)}
+.tab.active{
+  background:linear-gradient(135deg,#8b5cf6,#ec4899);
+  color:#fff;border-color:transparent;
+  box-shadow:0 4px 20px rgba(139,92,246,.4);
+}
+.tab .dot{
+  width:6px;height:6px;border-radius:50%;
+  background:#10b981;box-shadow:0 0 8px #10b981;
+}
 
-  /* ═══ VIDEO CARD ═══ */
-  .at-card {
-    display: block;
-    text-decoration: none;
-    color: inherit;
-    cursor: pointer;
-    contain: content;
-    transition: transform 0.3s ease;
-  }
-  .at-card:hover { transform: translateY(-4px); }
-  @media (max-width: 768px) { .at-card:hover { transform: translateY(-2px); } }
+/* ========== GRID ========== */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:20px;
+}
+.card{
+  background:transparent;
+  border-radius:14px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:transform .25s;
+  contain:layout style;
+}
+.card:hover{transform:translateY(-6px)}
+.card-img{
+  position:relative;
+  aspect-ratio:2/3;
+  overflow:hidden;
+  border-radius:14px;
+  background:#1a1030;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+}
+.card-img img{
+  width:100%;height:100%;
+  object-fit:cover;
+  transition:transform .4s;
+}
+.card:hover .card-img img{transform:scale(1.08)}
 
-  /* ═══ THUMBNAIL ═══ */
-  .at-thumb {
-    position: relative;
-    width: 100%;
-    padding-top: 56.25%;
-    border-radius: 12px;
-    overflow: hidden;
-    background: #0d0520;
-    border: 1px solid rgba(232, 121, 249, 0.3);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  }
-  .at-card:hover .at-thumb {
-    border-color: rgba(232, 121, 249, 0.85);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 18px rgba(192, 132, 252, 0.4);
-  }
+/* Badges */
+.badge-new{
+  position:absolute;top:10px;left:10px;
+  background:linear-gradient(135deg,#f97316,#ef4444);
+  padding:4px 10px;border-radius:6px;
+  font-size:10px;font-weight:800;
+  letter-spacing:.5px;
+  box-shadow:0 2px 10px rgba(239,68,68,.4);
+  z-index:2;
+}
+.badge-rating{
+  position:absolute;top:10px;right:10px;
+  background:rgba(0,0,0,.75);
+  backdrop-filter:blur(10px);
+  padding:4px 8px;border-radius:6px;
+  font-size:11px;font-weight:700;
+  display:flex;align-items:center;gap:4px;
+  z-index:2;
+}
+.badge-rating i{color:#fbbf24;font-size:10px}
+.badge-hd{
+  position:absolute;bottom:10px;left:10px;
+  background:rgba(0,0,0,.75);
+  backdrop-filter:blur(10px);
+  padding:3px 8px;border-radius:5px;
+  font-size:10px;font-weight:800;
+  letter-spacing:.5px;color:#fff;
+  z-index:2;
+}
+.play-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.7));
+  display:flex;align-items:flex-end;justify-content:flex-start;
+  padding:14px;
+  opacity:0;transition:opacity .3s;
+}
+.card:hover .play-overlay{opacity:1}
+.play-btn{
+  width:36px;height:36px;
+  background:linear-gradient(135deg,#8b5cf6,#ec4899);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:12px;
+  box-shadow:0 4px 15px rgba(139,92,246,.5);
+}
 
-  .at-img {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.45s ease;
-  }
-  .at-card:hover .at-img { transform: scale(1.06); }
+/* Card info below thumbnail */
+.card-info{padding:12px 4px 0}
+.card-title{
+  font-size:15px;font-weight:700;
+  color:#fff;
+  margin-bottom:6px;
+  overflow:hidden;text-overflow:ellipsis;
+  display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  line-height:1.35;min-height:40px;
+}
+.card-meta{
+  font-size:12px;color:#8b8b9e;
+  margin-bottom:4px;
+}
+.card-cat{
+  font-size:11px;
+  color:#a78bfa;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.5px;
+}
 
-  /* ═══ SHINE EFFECT (CSS only, no GPU animation loop) ═══ */
-  .at-shine {
-    position: absolute;
-    top: 0; left: -80%;
-    width: 60%; height: 100%;
-    background: linear-gradient(105deg, transparent, rgba(255,255,255,0.15), transparent);
-    z-index: 3;
-    transition: left 0.7s ease;
-    pointer-events: none;
-  }
-  .at-card:hover .at-shine { left: 120%; }
+/* ========== FOOTER ========== */
+.footer{
+  margin-top:60px;padding:30px 5%;
+  border-top:1px solid rgba(255,255,255,.05);
+  text-align:center;color:#5c5c6e;font-size:12px;
+}
 
-  /* ═══ OVERLAY (on hover only) ═══ */
-  .at-overlay {
-    position: absolute; inset: 0;
-    background: linear-gradient(180deg, transparent 40%, rgba(10,5,23,0.8) 100%);
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    pointer-events: none;
-    z-index: 3;
-  }
-  .at-card:hover .at-overlay { opacity: 1; }
+/* ========== MOBILE ========== */
+@media(max-width:1200px){
+  .grid{grid-template-columns:repeat(4,1fr);gap:18px}
+}
+@media(max-width:900px){
+  .grid{grid-template-columns:repeat(3,1fr);gap:16px}
+  .nav-links{display:none}
+  .search-box{max-width:none}
+  .section-heading{font-size:30px}
+}
+@media(max-width:640px){
+  .navbar{padding:14px 4%;gap:12px}
+  .search-box{display:none}
+  .menu-toggle{display:flex}
+  .logo{font-size:20px}
+  .section{padding:24px 4% 16px}
+  .grid{grid-template-columns:repeat(2,1fr);gap:14px}
+  .section-heading{font-size:24px}
+  .section-title{font-size:12px}
+  .item-count{font-size:12px;padding:6px 14px}
+  .card-title{font-size:13px;min-height:35px}
+  .badge-new{font-size:9px;padding:3px 8px}
+  .badge-rating{font-size:10px}
+  .tab{padding:8px 16px;font-size:13px}
+}
+@media(max-width:400px){
+  .grid{gap:12px}
+  .card-title{font-size:12px;min-height:32px}
+}
 
-  /* ═══ PLAY BUTTON ═══ */
-  .at-play {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%) scale(0.4);
-    width: 42px; height: 42px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    z-index: 5;
-    opacity: 0;
-    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-    pointer-events: none;
-    box-shadow: 0 6px 20px rgba(192, 132, 252, 0.6);
-  }
-  .at-card:hover .at-play {
-    opacity: 1;
-    transform: translate(-50%,-50%) scale(1);
-  }
-  @media (max-width: 768px) {
-    .at-play {
-      opacity: 0.7;
-      transform: translate(-50%,-50%) scale(0.7);
-    }
-    .at-card:hover .at-play {
-      opacity: 0.85;
-      transform: translate(-50%,-50%) scale(0.8);
-    }
-  }
+/* Mobile menu */
+.mobile-menu{
+  position:fixed;top:0;right:-100%;
+  width:280px;height:100vh;
+  background:rgba(15,8,32,.98);
+  backdrop-filter:blur(20px);
+  padding:80px 24px 24px;
+  transition:right .3s;
+  z-index:99;
+  border-left:1px solid rgba(255,255,255,.06);
+  overflow-y:auto;
+}
+.mobile-menu.open{right:0}
+.mobile-menu a{
+  display:flex;align-items:center;gap:12px;
+  color:#fff;text-decoration:none;
+  padding:14px 16px;border-radius:10px;
+  margin-bottom:6px;font-weight:500;font-size:14px;
+  transition:background .2s;
+}
+.mobile-menu a:hover,.mobile-menu a.active{
+  background:rgba(139,92,246,.15);color:#a78bfa;
+}
+.mobile-search{margin-bottom:20px;position:relative}
+.mobile-search input{
+  width:100%;padding:12px 14px 12px 40px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:10px;color:#fff;outline:none;font-size:14px;
+}
+.mobile-search i{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  color:#a78bfa;
+}
+.overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.6);
+  opacity:0;pointer-events:none;
+  transition:opacity .3s;z-index:98;
+}
+.overlay.show{opacity:1;pointer-events:auto}
 
-  /* ═══ BADGES ═══ */
-  .at-badge {
-    position: absolute;
-    padding: 3px 7px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.5rem;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    border-radius: 4px;
-    z-index: 6;
-    pointer-events: none;
-  }
-  .at-badge-new {
-    top: 6px; left: 6px;
-    background: linear-gradient(135deg, #ef4444, #f97316);
-    color: #fff;
-  }
-  .at-badge-type {
-    bottom: 6px; left: 6px;
-    background: rgba(10, 5, 23, 0.88);
-    color: #fbbf24;
-  }
-  .at-badge-score {
-    top: 6px; right: 6px;
-    background: rgba(10, 5, 23, 0.88);
-    color: #fbbf24;
-  }
-  .at-badge-hd {
-    bottom: 6px; right: 6px;
-    background: rgba(125, 211, 252, 0.9);
-    color: #0a0517;
-  }
-  .at-badge-src {
-    bottom: 6px; right: 6px;
-    background: rgba(10, 5, 23, 0.88);
-    color: rgba(192, 132, 252, 0.9);
-    font-size: 0.45rem;
-  }
-
-  /* ═══ CARD INFO ═══ */
-  .at-info {
-    padding: 8px 3px 4px;
-  }
-  .at-title {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--text-primary, #fff);
-    margin: 0 0 3px;
-    line-height: 1.25;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    min-height: 2em;
-    transition: color 0.3s ease;
-  }
-  .at-card:hover .at-title {
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .at-meta {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.58rem;
-    color: var(--text-muted, rgba(255,255,255,0.5));
-  }
-  .at-genre {
-    display: inline-block;
-    margin-top: 3px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.52rem;
-    font-weight: 700;
-    color: #c084fc;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  /* ═══ PRODUCT AD ROW ═══ */
-  .at-adrow {
-    grid-column: 1 / -1;
-    margin: 6px 0;
-    padding: 14px;
-    background: linear-gradient(135deg, rgba(28,15,61,0.35), rgba(20,10,45,0.25));
-    border: 1px solid rgba(192, 132, 252, 0.18);
-    border-radius: 14px;
-  }
-  .at-adrow-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-    padding: 0 2px;
-  }
-  .at-adrow-title {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    color: #e879f9;
-    text-transform: uppercase;
-  }
-  .at-adrow-title::before {
-    content: '';
-    width: 3px; height: 13px;
-    background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
-    border-radius: 2px;
-  }
-  .at-adrow-hint {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.55rem;
-    color: rgba(192, 132, 252, 0.5);
-  }
-  .at-adrow-scroll {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-behavior: smooth;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
-    padding: 2px 0 10px;
-    -webkit-overflow-scrolling: touch;
-  }
-  .at-adrow-scroll::-webkit-scrollbar { height: 5px; }
-  .at-adrow-scroll::-webkit-scrollbar-thumb { background: rgba(192,132,252,0.3); border-radius: 3px; }
-
-  .at-ad-item {
-    flex: 0 0 auto;
-    width: 160px;
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    transition: transform 0.25s ease;
-  }
-  .at-ad-item:hover { transform: translateY(-3px); }
-  @media (max-width: 768px) { .at-ad-item { width: 130px; } .at-adrow { padding: 10px; } }
-
-  .at-ad-thumb {
-    position: relative;
-    width: 100%;
-    padding-top: 75%;
-    border-radius: 8px;
-    overflow: hidden;
-    background: rgba(192, 132, 252, 0.1);
-    border: 1px solid rgba(192, 132, 252, 0.2);
-    margin-bottom: 5px;
-    transition: border-color 0.25s ease;
-  }
-  .at-ad-item:hover .at-ad-thumb {
-    border-color: rgba(232, 121, 249, 0.6);
-  }
-  .at-ad-img {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    transition: transform 0.35s ease;
-  }
-  .at-ad-item:hover .at-ad-img { transform: scale(1.05); }
-
-  .at-ad-name {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--text-primary, #fff);
-    line-height: 1.2;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin-bottom: 2px;
-  }
-  .at-ad-price {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    font-weight: 800;
-    color: #7dd3fc;
-  }
-
-  /* ═══ SKELETON LOADING (no animation = no GPU waste) ═══ */
-  .at-skel {
-    border-radius: 12px;
-  }
-  .at-skel-thumb {
-    width: 100%;
-    padding-top: 56.25%;
-    border-radius: 12px;
-    background: #1a0e35;
-  }
-  .at-skel-title {
-    margin-top: 8px;
-    height: 12px;
-    width: 75%;
-    border-radius: 6px;
-    background: #1a0e35;
-  }
-  .at-skel-meta {
-    margin-top: 5px;
-    height: 8px;
-    width: 45%;
-    border-radius: 4px;
-    background: #1a0e35;
-  }
-
-  /* ═══ LOADING INDICATOR ═══ */
-  .at-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 2rem 0;
-    color: var(--text-muted, rgba(255,255,255,0.5));
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.82rem;
-  }
-  .at-spinner {
-    width: 20px; height: 20px;
-    border: 2px solid rgba(192, 132, 252, 0.2);
-    border-top-color: #c084fc;
-    border-radius: 50%;
-    animation: atSpin 0.7s linear infinite;
-  }
-  @keyframes atSpin { to { transform: rotate(360deg); } }
-
-  /* ═══ ERROR STATE ═══ */
-  .at-error {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--text-secondary, rgba(255,255,255,0.75));
-    background: rgba(239, 68, 68, 0.05);
-    border: 1px dashed rgba(239, 68, 68, 0.25);
-    border-radius: 14px;
-    margin-top: 1.5rem;
-  }
-  .at-error-icon {
-    color: #ef4444;
-    margin-bottom: 0.75rem;
-    display: flex;
-    justify-content: center;
-  }
-  .at-error h3 {
-    font-size: 1.1rem;
-    margin: 0 0 0.4rem;
-    color: var(--text-primary, #fff);
-    font-family: 'Bricolage Grotesque', sans-serif;
-  }
-  .at-error p {
-    font-size: 0.85rem;
-    margin: 0 0 1rem;
-  }
-  .at-retry-btn {
-    padding: 8px 20px;
-    background: linear-gradient(135deg, #c084fc, #e879f9);
-    border: none;
-    border-radius: 999px;
-    color: #fff;
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.82rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: opacity 0.2s ease;
-  }
-  .at-retry-btn:hover { opacity: 0.85; }
-
-  /* ═══ EMPTY STATE ═══ */
-  .at-empty {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--text-secondary, rgba(255,255,255,0.75));
-  }
-  .at-empty h3 {
-    font-size: 1.1rem;
-    margin: 0 0 0.4rem;
-    color: var(--text-primary, #fff);
-    font-family: 'Bricolage Grotesque', sans-serif;
-  }
-  .at-empty p {
-    font-size: 0.85rem;
-    margin: 0;
-  }
+/* Skeleton loader */
+.skeleton-card .card-img{
+  background:linear-gradient(90deg,#1a1030 25%,#2a1145 50%,#1a1030 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.5s infinite;
+}
+@keyframes shimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
 </style>
-<script is:inline>
-(function(){
-  'use strict';
+</head>
+<body>
 
-  // ═══════════════════════════════════════════════════
-  // 🎯 STATE MANAGEMENT
-  // ═══════════════════════════════════════════════════
-  var currentCat = 'trending';    // Active tab
-  var isLoading = false;           // Prevent duplicate loads
-  var totalCards = 0;              // Total cards rendered
-  var seenIds = {};                // Dedupe tracker
-  var loopCount = 0;               // For cache-busting on reload
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="logo">AniTubeBuzz</div>
+  <div class="nav-links">
+    <a href="#" class="active">Home</a>
+    <a href="#">Browse</a>
+    <a href="#">Manga</a>
+    <a href="#">News</a>
+    <a href="#">Streaming</a>
+  </div>
+  <div class="search-box">
+    <i class="fas fa-search"></i>
+    <input type="text" placeholder="Search anime, drama, movies..." id="searchInput">
+  </div>
+  <div class="nav-actions">
+    <button class="icon-btn"><i class="fas fa-moon"></i></button>
+    <button class="icon-btn"><i class="fas fa-user"></i></button>
+    <button class="icon-btn menu-toggle" id="menuBtn"><i class="fas fa-bars"></i></button>
+  </div>
+</nav>
 
-  var animePage = 0;               // Kitsu anime page counter
-  var socialPage = 0;              // Social feed page counter
-  var socialTypeIdx = 0;           // Rotate through social types
-  var cardsPerAdRow = 20;          // Product ad after every 20 cards
-  var cardsSinceLastAd = 0;        // Counter for ad placement
-  var productPool = [];            // Cached product data
+<!-- MOBILE MENU -->
+<div class="overlay" id="overlay"></div>
+<div class="mobile-menu" id="mobileMenu">
+  <div class="mobile-search">
+    <i class="fas fa-search"></i>
+    <input type="text" placeholder="Search...">
+  </div>
+  <a href="#" class="active"><i class="fas fa-home"></i> Home</a>
+  <a href="#"><i class="fas fa-compass"></i> Browse</a>
+  <a href="#"><i class="fas fa-book"></i> Manga</a>
+  <a href="#"><i class="fas fa-newspaper"></i> News</a>
+  <a href="#"><i class="fas fa-play-circle"></i> Streaming</a>
+</div>
 
-  // Social type rotation for "Trending" tab (mixed content)
-  var TRENDING_TYPES = ['donghua', 'movies', 'kdrama', 'anime'];
+<!-- MAIN DISCOVER SECTION -->
+<section class="section">
+  <div class="section-head">
+    <div>
+      <div class="section-title-wrap">
+        <span class="live-dot"></span>
+        <span class="section-title">FRESH • UPDATED DAILY</span>
+      </div>
+      <h1 class="section-heading">Discover</h1>
+    </div>
+    <div class="item-count" id="itemCount">40 items</div>
+  </div>
 
-  // ═══════════════════════════════════════════════════
-  // 🎯 DOM REFERENCES
-  // ═══════════════════════════════════════════════════
-  var grid = document.getElementById('atGrid');
-  var loadingEl = document.getElementById('atLoading');
-  var errorEl = document.getElementById('atError');
-  var emptyEl = document.getElementById('atEmpty');
-  var retryBtn = document.getElementById('atRetry');
-  var tabs = document.querySelectorAll('.at-tab');
+  <div class="tabs" id="tabs">
+    <div class="tab active" data-cat="all"><span class="dot"></span>Trending</div>
+    <div class="tab" data-cat="anime">Anime</div>
+    <div class="tab" data-cat="drama">K-Drama</div>
+    <div class="tab" data-cat="movie">Movies</div>
+    <div class="tab" data-cat="donghua">Donghua</div>
+    <div class="tab" data-cat="serial">Serials</div>
+  </div>
 
-  // ═══════════════════════════════════════════════════
-  // 🛠️ HELPERS
-  // ═══════════════════════════════════════════════════
-  function esc(s) {
-    return String(s || '').replace(/[&<>"']/g, function(c){
-      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-    });
+  <div class="grid" id="mainGrid"></div>
+</section>
+
+<footer class="footer">
+  © 2026 AniTubeBuzz • Auto-updated fresh content daily
+</footer>
+
+<script>
+/* ========== CONTENT POOL ==========
+   Ratio: Anime 60% • Serial 10% • Drama 10% • Movies 10% • Donghua 10%
+*/
+const contentPool=[
+  // ===== ANIME (60%) =====
+  {t:"Skeleton Knight in Another World II",c:"anime",r:7.1,y:"2026",ep:"12 EP",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1926/140799.jpg"},
+  {t:"Mushoku Tensei: Jobless Reincarnation Season 3",c:"anime",r:9.0,y:"2026",ep:"14 EP",g:"Adventure",img:"https://cdn.myanimelist.net/images/anime/1170/124312.jpg"},
+  {t:"From Overshadowed to Overpowered: Second Reincarnation",c:"anime",r:6.7,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1600/134703.jpg"},
+  {t:"Clevatess Season 2",c:"anime",r:7.7,y:"2026",ep:"13 EP",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1015/138006.jpg"},
+  {t:"The Elusive Samurai Season 2",c:"anime",r:8.0,y:"2026",ep:"",g:"Adventure",img:"https://cdn.myanimelist.net/images/anime/1500/130665.jpg"},
+  {t:"Love Unseen Beneath the Clear Night Sky",c:"anime",r:7.8,y:"2026",ep:"",g:"Drama",img:"https://cdn.myanimelist.net/images/anime/1812/134736.jpg"},
+  {t:"The Ghost in the Shell",c:"anime",r:8.8,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1517/100633.jpg"},
+  {t:"Smoking Behind the Supermarket with You",c:"anime",r:8.5,y:"2026",ep:"12 EP",g:"Romance",img:"https://cdn.myanimelist.net/images/anime/1809/144875.jpg"},
+  {t:"Bleach: Thousand-Year Blood War - The Calamity",c:"anime",r:9.4,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1908/135431.jpg"},
+  {t:"Black Torch",c:"anime",r:7.4,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1839/145616.jpg"},
+  {t:"The 100 Girlfriends Who Really, Really, Really, Really, Really Love You",c:"anime",r:7.9,y:"2026",ep:"",g:"Comedy",img:"https://cdn.myanimelist.net/images/anime/1554/140807.jpg"},
+  {t:"Chainsmoker Cat",c:"anime",r:6.8,y:"2026",ep:"",g:"Comedy",img:"https://cdn.myanimelist.net/images/anime/1258/127249.jpg"},
+  {t:"Solo Leveling Season 3",c:"anime",r:9.2,y:"2026",ep:"12 EP",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1441/122795.jpg"},
+  {t:"Jujutsu Kaisen: Culling Arc",c:"anime",r:9.1,y:"2026",ep:"24 EP",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1806/126216.jpg"},
+  {t:"Chainsaw Man Part 2",c:"anime",r:8.9,y:"2026",ep:"12 EP",g:"Horror",img:"https://cdn.myanimelist.net/images/anime/1286/99889.jpg"},
+  {t:"Demon Slayer: Infinity Castle",c:"anime",r:9.5,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/6/73245.jpg"},
+  {t:"One Piece: Egghead Arc",c:"anime",r:9.0,y:"2026",ep:"",g:"Adventure",img:"https://cdn.myanimelist.net/images/anime/10/78745.jpg"},
+  {t:"Spy x Family Season 3",c:"anime",r:8.8,y:"2026",ep:"12 EP",g:"Comedy",img:"https://cdn.myanimelist.net/images/anime/1734/140674.jpg"},
+  {t:"Frieren Season 2",c:"anime",r:9.4,y:"2026",ep:"",g:"Fantasy",img:"https://cdn.myanimelist.net/images/anime/1980/145248.jpg"},
+  {t:"Blue Lock Season 2",c:"anime",r:8.7,y:"2026",ep:"14 EP",g:"Sports",img:"https://cdn.myanimelist.net/images/anime/1444/108005.jpg"},
+  {t:"Dandadan Season 2",c:"anime",r:8.8,y:"2026",ep:"",g:"Supernatural",img:"https://cdn.myanimelist.net/images/anime/1949/122081.jpg"},
+  {t:"Kaiju No. 8 Season 2",c:"anime",r:8.9,y:"2026",ep:"12 EP",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1613/102576.jpg"},
+  {t:"Oshi no Ko Season 3",c:"anime",r:9.0,y:"2026",ep:"",g:"Drama",img:"https://cdn.myanimelist.net/images/anime/1802/117340.jpg"},
+  {t:"Wind Breaker Season 2",c:"anime",r:8.5,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1197/144175.jpg"},
+
+  // ===== K-DRAMA (10%) =====
+  {t:"Queen of Tears",c:"drama",r:9.1,y:"2024",ep:"16 EP",g:"Romance",img:"https://image.tmdb.org/t/p/w500/aKz3lXU71wqdslzQE7dgcpiBcMt.jpg"},
+  {t:"Squid Game Season 3",c:"drama",r:9.0,y:"2026",ep:"9 EP",g:"Thriller",img:"https://image.tmdb.org/t/p/w500/dDlEmu3EZ0Pgg93K2SVNLCjCSvE.jpg"},
+  {t:"Lovely Runner",c:"drama",r:9.2,y:"2024",ep:"16 EP",g:"Romance",img:"https://image.tmdb.org/t/p/w500/ozxOFTnQZ5C89isKp3iCezDMxSy.jpg"},
+  {t:"My Demon",c:"drama",r:8.6,y:"2024",ep:"16 EP",g:"Romance",img:"https://image.tmdb.org/t/p/w500/qLGmb26nqfNaqQO7yeQNdT4XSMs.jpg"},
+
+  // ===== MOVIES (10%) =====
+  {t:"Dune: Part Two",c:"movie",r:8.7,y:"2024",ep:"",g:"Sci-Fi",img:"https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg"},
+  {t:"Oppenheimer",c:"movie",r:8.9,y:"2024",ep:"",g:"Drama",img:"https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg"},
+  {t:"Deadpool & Wolverine",c:"movie",r:8.5,y:"2024",ep:"",g:"Action",img:"https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg"},
+  {t:"Gladiator II",c:"movie",r:8.1,y:"2024",ep:"",g:"Action",img:"https://image.tmdb.org/t/p/w500/2cxhvwyEwRlysAmRH4iodkvo0z5.jpg"},
+
+  // ===== SERIALS (10%) =====
+  {t:"Wednesday Season 2",c:"serial",r:8.7,y:"2026",ep:"8 EP",g:"Mystery",img:"https://image.tmdb.org/t/p/w500/9PFonBhy4cQy7Jz20NpMygczOkv.jpg"},
+  {t:"Stranger Things 5",c:"serial",r:9.0,y:"2026",ep:"8 EP",g:"Sci-Fi",img:"https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg"},
+  {t:"House of the Dragon S3",c:"serial",r:8.8,y:"2026",ep:"10 EP",g:"Fantasy",img:"https://image.tmdb.org/t/p/w500/7QMsOTMUswlwxJP0rTTZfmz2tX2.jpg"},
+  {t:"The Bear Season 4",c:"serial",r:9.1,y:"2026",ep:"10 EP",g:"Drama",img:"https://image.tmdb.org/t/p/w500/adOzdWS35KAo21r9R4BuFCkLer6.jpg"},
+
+  // ===== DONGHUA (10%) =====
+  {t:"Soul Land II: Peerless Tang",c:"donghua",r:9.0,y:"2026",ep:"52 EP",g:"Fantasy",img:"https://cdn.myanimelist.net/images/anime/1274/119059.jpg"},
+  {t:"Battle Through the Heavens",c:"donghua",r:8.7,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1234/119821.jpg"},
+  {t:"Renegade Immortal",c:"donghua",r:8.8,y:"2026",ep:"",g:"Xianxia",img:"https://cdn.myanimelist.net/images/anime/1697/120833.jpg"},
+  {t:"Mortal Cultivation",c:"donghua",r:9.1,y:"2026",ep:"",g:"Xianxia",img:"https://cdn.myanimelist.net/images/anime/1817/125062.jpg"}
+];
+
+/* ========== HELPERS ========== */
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
   }
+  return a;
+}
 
-  function trunc(s, n) {
-    s = String(s || '');
-    return s.length > n ? s.slice(0, n).trim() + '…' : s;
+function getContent(cat='all'){
+  if(cat==='all'){
+    // Trending: mix by ratio
+    const anime=shuffle(contentPool.filter(x=>x.c==='anime')).slice(0,15);
+    const drama=shuffle(contentPool.filter(x=>x.c==='drama')).slice(0,3);
+    const movie=shuffle(contentPool.filter(x=>x.c==='movie')).slice(0,3);
+    const donghua=shuffle(contentPool.filter(x=>x.c==='donghua')).slice(0,3);
+    const serial=shuffle(contentPool.filter(x=>x.c==='serial')).slice(0,3);
+    return shuffle([...anime,...drama,...movie,...donghua,...serial]);
   }
+  return shuffle(contentPool.filter(x=>x.c===cat));
+}
 
-  function shuffle(arr) {
-    var a = arr.slice();
-    for (var i = a.length - 1; i > 0; i--) {
-      var j = Math.floor(Math.random() * (i + 1));
-      var t = a[i]; a[i] = a[j]; a[j] = t;
-    }
-    return a;
-  }
+function createCard(item){
+  const div=document.createElement('div');
+  div.className='card';
+  const epText=item.ep?` · ${item.ep}`:'';
+  div.innerHTML=`
+    <div class="card-img">
+      <span class="badge-new">NEW</span>
+      <span class="badge-rating"><i class="fas fa-star"></i>${item.r}</span>
+      <img loading="lazy" src="${item.img}" alt="${item.t}"
+        onerror="this.src='https://via.placeholder.com/300x450/1a1030/8b5cf6?text=${encodeURIComponent(item.t.slice(0,15))}'">
+      <span class="badge-hd">HD</span>
+      <div class="play-overlay">
+        <div class="play-btn"><i class="fas fa-play"></i></div>
+      </div>
+    </div>
+    <div class="card-info">
+      <div class="card-title">${item.t}</div>
+      <div class="card-meta">${item.y}${epText}</div>
+      <div class="card-cat">${item.g}</div>
+    </div>
+  `;
+  return div;
+}
 
-  // Get responsive columns count
-  function getColCount() {
-    var w = window.innerWidth;
-    if (w <= 768) return 2;
-    if (w <= 1100) return 3;
-    if (w <= 1400) return 4;
-    return 5;
-  }
+function renderGrid(cat='all'){
+  const grid=document.getElementById('mainGrid');
+  const items=getContent(cat);
+  
+  grid.innerHTML='';
+  const frag=document.createDocumentFragment();
+  items.forEach(item=>frag.appendChild(createCard(item)));
+  grid.appendChild(frag);
+  
+  document.getElementById('itemCount').textContent=`${items.length} items`;
+}
 
-  // ═══════════════════════════════════════════════════
-  // 🎨 SKELETON LOADER (no animation = no GPU waste)
-  // ═══════════════════════════════════════════════════
-  function showSkeleton() {
-    var count = getColCount() * 2;  // 2 rows of skeletons
-    var html = '';
-    for (var i = 0; i < count; i++) {
-      html += '<div class="at-skel">' +
-        '<div class="at-skel-thumb"></div>' +
-        '<div class="at-skel-title"></div>' +
-        '<div class="at-skel-meta"></div>' +
-      '</div>';
-    }
-    grid.innerHTML = html;
-  }
-
-  // ═══════════════════════════════════════════════════
-  // 🎌 ANIME CARD BUILDER (from Kitsu API)
-  // ═══════════════════════════════════════════════════
-  function buildAnimeCard(a) {
-    var title = a.title || 'Unknown';
-    var img = a.image || '';
-    var slug = a.slug || 'anime-' + a.id;
-    var score = a.score ? Number(a.score).toFixed(1) : '';
-    var year = a.year || '';
-    var eps = a.episodes && a.episodes > 0 ? a.episodes : '';
-    var genre = (a.genres && a.genres.length) ? a.genres[0] : '';
-    var isNew = a.status === 'current';
-
-    // Image or fallback icon
-    var imgHtml = img
-      ? '<img src="' + esc(img) + '" alt="' + esc(title) + '" loading="lazy" class="at-img" onerror="this.style.display=\'none\'" />'
-      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2rem;">🎌</div>';
-
-    var card = document.createElement('a');
-    card.href = '/reels/anime_' + encodeURIComponent(slug) + '_ep1';
-    card.className = 'at-card';
-
-    card.innerHTML =
-      '<div class="at-thumb">' +
-        imgHtml +
-        '<div class="at-shine"></div>' +
-        '<div class="at-overlay"></div>' +
-        '<div class="at-play">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="padding-left:2px;"><path d="M8 5v14l11-7z"/></svg>' +
-        '</div>' +
-        (isNew ? '<div class="at-badge at-badge-new">NEW</div>' : '') +
-        (score ? '<div class="at-badge at-badge-score">★ ' + score + '</div>' : '') +
-        '<div class="at-badge at-badge-hd">HD</div>' +
-      '</div>' +
-      '<div class="at-info">' +
-        '<h3 class="at-title">' + esc(trunc(title, 55)) + '</h3>' +
-        '<div class="at-meta">' +
-          (year ? esc(year) : '') +
-          (year && eps ? ' · ' : '') +
-          (eps ? esc(eps) + ' EP' : '') +
-        '</div>' +
-        (genre ? '<div class="at-genre">' + esc(genre) + '</div>' : '') +
-      '</div>';
-
-    return card;
-  }
-
-  // ═══════════════════════════════════════════════════
-  // 📺 SOCIAL VIDEO CARD (Dailymotion / Bilibili / YouTube)
-  // ═══════════════════════════════════════════════════
-  function buildSocialCard(v) {
-    var title = v.title || 'Video';
-    var img = v.thumbnail || '';
-    var channel = v.channel || 'Channel';
-    var isNew = v.isNew === true;
-
-    // Type label (small badge)
-    var typeMap = {
-      movies:  '🎬 MOVIE',
-      kdrama:  '🇰🇷 K-DRAMA',
-      donghua: '🐼 DONGHUA',
-      anime:   '🎌 ANIME',
-      series:  '📺 SERIES'
-    };
-    var typeLabel = typeMap[v.type] || '🎬 VIDEO';
-
-    // Source-specific info (small platform indicator)
-    var srcIcon = { dailymotion: 'DM', bilibili: 'BILI', youtube: 'YT' }[v.source] || '';
-
-    var imgHtml = img
-      ? '<img src="' + esc(img) + '" alt="' + esc(title) + '" loading="lazy" class="at-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
-      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>';
-
-    var card = document.createElement('a');
-    card.href = '/reels/' + encodeURIComponent(v.id);
-    card.className = 'at-card';
-
-    card.innerHTML =
-      '<div class="at-thumb">' +
-        imgHtml +
-        '<div class="at-shine"></div>' +
-        '<div class="at-overlay"></div>' +
-        '<div class="at-play">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="padding-left:2px;"><path d="M8 5v14l11-7z"/></svg>' +
-        '</div>' +
-        (isNew ? '<div class="at-badge at-badge-new">NEW</div>' : '') +
-        '<div class="at-badge at-badge-type">' + typeLabel + '</div>' +
-        (srcIcon ? '<div class="at-badge at-badge-src">' + srcIcon + '</div>' : '') +
-      '</div>' +
-      '<div class="at-info">' +
-        '<h3 class="at-title">' + esc(trunc(title, 55)) + '</h3>' +
-        '<div class="at-meta">' + esc(trunc(channel, 30)) + '</div>' +
-      '</div>';
-
-    return card;
-  }
-
-  // ═══════════════════════════════════════════════════
-  // 🛍️ PRODUCT AD ROW (horizontal scroll)
-  // ═══════════════════════════════════════════════════
-  function buildProductRow(products) {
-    if (!products || products.length === 0) return null;
-
-    var itemsHtml = products.map(function(p){
-      var img = p.image
-        ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="at-ad-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
-        : '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🛍️</div>';
-
-      var badgeHtml = p.badge
-        ? '<div style="position:absolute;top:5px;left:5px;padding:2px 6px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:3px;z-index:2;">' + esc(p.badge) + '</div>'
-        : '';
-
-      return '<a href="/product/' + esc(p.id) + '" class="at-ad-item">' +
-        '<div class="at-ad-thumb">' + img + badgeHtml + '</div>' +
-        '<div class="at-ad-name">' + esc(trunc(p.title, 40)) + '</div>' +
-        '<div class="at-ad-price">' + esc(p.price) + '</div>' +
-      '</a>';
-    }).join('');
-
-    var row = document.createElement('div');
-    row.className = 'at-adrow';
-    row.innerHTML =
-      '<div class="at-adrow-head">' +
-        '<div class="at-adrow-title">✨ Recommended For You</div>' +
-        '<div class="at-adrow-hint">← Swipe to explore →</div>' +
-      '</div>' +
-      '<div class="at-adrow-scroll">' + itemsHtml + '</div>';
-
-    return row;
-  }
-
-  // Get random product batch (8 items)
-  function getRandomProducts() {
-    if (productPool.length < 4) return productPool;
-    return shuffle(productPool).slice(0, 8);
-  }
-
-  // ═══════════════════════════════════════════════════
-  // 🖱️ DRAG SCROLL FOR PRODUCT ROWS (mouse + wheel)
-  // ═══════════════════════════════════════════════════
-  function enableDragScroll(el) {
-    if (el.dataset.dragEnabled === '1') return;
-    el.dataset.dragEnabled = '1';
-
-    var isDown = false;
-    var startX = 0;
-    var scrollLeft = 0;
-
-    el.addEventListener('mousedown', function(e){
-      isDown = true;
-      el.style.cursor = 'grabbing';
-      startX = e.pageX - el.offsetLeft;
-      scrollLeft = el.scrollLeft;
-    });
-    el.addEventListener('mouseleave', function(){
-      isDown = false;
-      el.style.cursor = 'grab';
-    });
-    el.addEventListener('mouseup', function(){
-      isDown = false;
-      el.style.cursor = 'grab';
-    });
-    el.addEventListener('mousemove', function(e){
-      if (!isDown) return;
-      e.preventDefault();
-      var x = e.pageX - el.offsetLeft;
-      var walk = (x - startX) * 1.8;
-      el.scrollLeft = scrollLeft - walk;
-    });
-
-    // Mouse wheel horizontal scroll
-    el.addEventListener('wheel', function(e){
-      if (e.deltaY !== 0) {
-        e.preventDefault();
-        el.scrollLeft += e.deltaY;
-      }
-    }, { passive: false });
-  }
-
-  // ═══════════════════════════════════════════════════
-  // 📦 LOAD PRODUCTS (once on init)
-  // ═══════════════════════════════════════════════════
-  function loadProducts() {
-    return fetch('/api/products?limit=50')
-      .then(function(res){ return res.json(); })
-      .then(function(json){
-        if (json.success && json.products) {
-          productPool = shuffle(json.products);
-        }
-      })
-      .catch(function(err){
-        console.warn('[products]', err.message);
-      });
-  }
-
-  // ═══════════════════════════════════════════════════
-  // 🎌 FETCH ANIME (Kitsu / internal API)
-  // ═══════════════════════════════════════════════════
-  function fetchAnime() {
-    animePage++;
-    var url = '/api/anime?action=list&category=airing&page=' + animePage;
-    // Cache-bust every 3rd load for fresh content
-    if (animePage % 3 === 0) url += '&nocache=1';
-
-    return fetch(url)
-      .then(function(res){ return res.json(); })
-      .then(function(json){
-        if (!json.success || !json.anime) return [];
-        return json.anime.filter(function(a){
-          if (!a.id) return false;
-          var key = 'a_' + a.id + '_' + loopCount;
-          if (seenIds[key]) return false;
-          seenIds[key] = true;
-          return true;
-        });
-      })
-      .catch(function(){ return []; });
-  }
-
-  // ═══════════════════════════════════════════════════
-  // 📺 FETCH SOCIAL VIDEOS (Dailymotion / Bilibili / YouTube)
-  // ═══════════════════════════════════════════════════
-  function fetchSocial(type) {
-    socialPage++;
-    // Random page 1-5 for content variety on every load
-    var randomPage = Math.floor(Math.random() * 5) + 1;
-    var url = '/api/social-feed?type=' + type + '&page=' + randomPage + '&limit=12';
-
-    return fetch(url)
-      .then(function(res){ return res.json(); })
-      .then(function(json){
-        if (!json.success || !json.videos) return [];
-        return json.videos.filter(function(v){
-          if (!v || !v.id) return false;
-          var key = 'v_' + v.id + '_' + loopCount;
-          if (seenIds[key]) return false;
-          seenIds[key] = true;
-          return true;
-        });
-      })
-      .catch(function(){ return []; });
-  }
-
-  // ═══════════════════════════════════════════════════
-  // 🎯 MAIN LOAD FUNCTION
-  // Content ratio: Anime 60% + Social 40% (mixed types)
-  // ═══════════════════════════════════════════════════
-  function loadFeed() {
-    if (isLoading) return;
-    isLoading = true;
-
-    if (totalCards > 0) {
-      loadingEl.style.display = 'flex';
-    }
-
-    var promises = [];
-
-    // ═══ TRENDING TAB: mixed content (anime + all social types) ═══
-    if (currentCat === 'trending') {
-      promises.push(fetchAnime());  // 60% anime
-      // Rotate through social types for variety (40% social)
-      var socialType = TRENDING_TYPES[socialTypeIdx % TRENDING_TYPES.length];
-      socialTypeIdx++;
-      promises.push(fetchSocial(socialType));
-    }
-    // ═══ ANIME TAB: Kitsu anime + social anime videos ═══
-    else if (currentCat === 'anime') {
-      promises.push(fetchAnime());
-      promises.push(fetchSocial('anime'));
-    }
-    // ═══ SPECIFIC TABS: only social feed for that type ═══
-    else {
-      promises.push(fetchSocial(currentCat));
-      promises.push(fetchSocial(currentCat));  // Double load for more content
-    }
-
-    Promise.all(promises).then(function(results){
-      var animeItems = (currentCat === 'trending' || currentCat === 'anime') ? results[0] : [];
-      var socialItems = (currentCat === 'trending' || currentCat === 'anime') ? results[1] : [].concat(results[0], results[1]);
-
-      // Shuffle for randomness (fresh feel every load)
-      animeItems = shuffle(animeItems);
-      socialItems = shuffle(socialItems);
-
-      // ═══ Retry with alternate category if exhausted ═══
-      if (animeItems.length === 0 && socialItems.length === 0) {
-        loopCount++;
-        animePage = 0;
-        socialPage = 0;
-        seenIds = {};
-
-        if (totalCards === 0) {
-          errorEl.style.display = 'block';
-          loadingEl.style.display = 'none';
-          isLoading = false;
-        } else {
-          // Silent retry
-          isLoading = false;
-          setTimeout(loadFeed, 100);
-        }
-        return;
-      }
-
-      // Clear skeleton on first load
-      if (totalCards === 0) {
-        grid.innerHTML = '';
-        errorEl.style.display = 'none';
-        emptyEl.style.display = 'none';
-      }
-
-      // ═══ BUILD BATCH USING DocumentFragment (single DOM write = fast) ═══
-      var fragment = document.createDocumentFragment();
-      var socialIdx = 0;
-
-      // Interleave: 2 anime → 1 social (60/40 ratio)
-      animeItems.forEach(function(anime, i){
-        fragment.appendChild(buildAnimeCard(anime));
-        totalCards++;
-        cardsSinceLastAd++;
-
-        // Insert 1 social card after every 2 anime cards
-        if ((i + 1) % 2 === 0 && socialIdx < socialItems.length) {
-          fragment.appendChild(buildSocialCard(socialItems[socialIdx++]));
-          totalCards++;
-          cardsSinceLastAd++;
-        }
-
-        // Insert product ad row every 20 cards
-        if (cardsSinceLastAd >= cardsPerAdRow && productPool.length >= 4) {
-          var products = getRandomProducts();
-          var adRow = buildProductRow(products);
-          if (adRow) {
-            fragment.appendChild(adRow);
-            cardsSinceLastAd = 0;
-          }
-        }
-      });
-
-      // Append remaining social cards
-      while (socialIdx < socialItems.length) {
-        fragment.appendChild(buildSocialCard(socialItems[socialIdx++]));
-        totalCards++;
-        cardsSinceLastAd++;
-      }
-
-      // ═══ SINGLE DOM APPEND (much faster than multiple appendChild) ═══
-      grid.appendChild(fragment);
-
-      // Enable drag scroll for any new product rows (idle callback = no jank)
-      if (window.requestIdleCallback) {
-        requestIdleCallback(function(){
-          var newRows = grid.querySelectorAll('.at-adrow-scroll');
-          newRows.forEach(enableDragScroll);
-        });
-      } else {
-        setTimeout(function(){
-          var newRows = grid.querySelectorAll('.at-adrow-scroll');
-          newRows.forEach(enableDragScroll);
-        }, 100);
-      }
-
-      loadingEl.style.display = 'none';
-      isLoading = false;
-    }).catch(function(err){
-      console.warn('[loadFeed]', err.message);
-      loadingEl.style.display = 'none';
-      if (totalCards === 0) {
-        errorEl.style.display = 'block';
-      }
-      isLoading = false;
-    });
-  }
-
-  // ═══════════════════════════════════════════════════
-  // 🔄 TAB SWITCHING
-  // ═══════════════════════════════════════════════════
-  tabs.forEach(function(tab){
-    tab.addEventListener('click', function(){
-      var newCat = tab.dataset.cat;
-      if (newCat === currentCat) return;
-
-      // Update active state
-      tabs.forEach(function(t){ t.classList.remove('at-tab-active'); });
-      tab.classList.add('at-tab-active');
-
-      // Reset state
-      currentCat = newCat;
-      totalCards = 0;
-      seenIds = {};
-      animePage = 0;
-      socialPage = 0;
-      socialTypeIdx = 0;
-      loopCount = 0;
-      cardsSinceLastAd = 0;
-
-      // Hide states
-      errorEl.style.display = 'none';
-      emptyEl.style.display = 'none';
-
-      // Show skeleton and load
-      showSkeleton();
-
-      // Scroll to top smoothly
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-
-      loadFeed();
+/* ========== INIT ========== */
+document.addEventListener('DOMContentLoaded',()=>{
+  renderGrid('all');
+  
+  // Tabs
+  document.querySelectorAll('#tabs .tab').forEach(tab=>{
+    tab.addEventListener('click',()=>{
+      document.querySelectorAll('#tabs .tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      renderGrid(tab.dataset.cat);
     });
   });
-
-  // ═══════════════════════════════════════════════════
-  // 🔄 RETRY BUTTON
-  // ═══════════════════════════════════════════════════
-  if (retryBtn) {
-    retryBtn.addEventListener('click', function(){
-      errorEl.style.display = 'none';
-      totalCards = 0;
-      seenIds = {};
-      animePage = 0;
-      socialPage = 0;
-      loopCount = 0;
-      showSkeleton();
-      loadFeed();
-    });
-  }
-
-  // ═══════════════════════════════════════════════════
-  // 📜 INFINITE SCROLL (debounced, lag-free)
-  // ═══════════════════════════════════════════════════
-  var scrollTimer = null;
-  var scrollListening = true;
-
-  window.addEventListener('scroll', function(){
-    if (!scrollListening || isLoading) return;
-
-    if (scrollTimer) clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(function(){
-      var scrollPos = window.scrollY + window.innerHeight;
-      var pageHeight = document.documentElement.scrollHeight;
-      // Trigger 1200px before page end
-      if (scrollPos > pageHeight - 1200) {
-        loadFeed();
-      }
-    }, 200);
-  }, { passive: true });
-
-  // ═══════════════════════════════════════════════════
-  // 🚀 INITIALIZATION
-  // ═══════════════════════════════════════════════════
-  showSkeleton();
-
-  // Load products first (for ad rows), then start feed
-  loadProducts().then(function(){
-    loadFeed();
+  
+  // Mobile menu
+  const menuBtn=document.getElementById('menuBtn');
+  const mobileMenu=document.getElementById('mobileMenu');
+  const overlay=document.getElementById('overlay');
+  menuBtn?.addEventListener('click',()=>{
+    mobileMenu.classList.toggle('open');
+    overlay.classList.toggle('show');
   });
-
-})();
+  overlay?.addEventListener('click',()=>{
+    mobileMenu.classList.remove('open');
+    overlay.classList.remove('show');
+  });
+  
+  // Search
+  document.getElementById('searchInput')?.addEventListener('input',e=>{
+    const q=e.target.value.toLowerCase().trim();
+    const grid=document.getElementById('mainGrid');
+    if(!q){renderGrid('all');return}
+    const results=contentPool.filter(x=>x.t.toLowerCase().includes(q));
+    grid.innerHTML='';
+    const frag=document.createDocumentFragment();
+    results.forEach(item=>frag.appendChild(createCard(item)));
+    grid.appendChild(frag);
+    document.getElementById('itemCount').textContent=`${results.length} items`;
+  });
+  
+  // Auto-refresh content every 60 seconds (fresh feel)
+  setInterval(()=>{
+    const activeTab=document.querySelector('#tabs .tab.active');
+    if(activeTab)renderGrid(activeTab.dataset.cat);
+  },60000);
+});
 </script>
+</body>
+</html>
