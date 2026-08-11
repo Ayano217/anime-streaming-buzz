@@ -1,579 +1,907 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0f0820">
-<title>AniTubeBuzz — Anime, Drama, Movies & More</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{
-  font-family:'Inter',system-ui,sans-serif;
-  background:#0a0515;
-  color:#fff;
-  overflow-x:hidden;
-  min-height:100vh;
-  -webkit-font-smoothing:antialiased;
-}
-body::before{
-  content:'';
-  position:fixed;inset:0;
-  background:
-    radial-gradient(ellipse at top,rgba(139,92,246,.18),transparent 60%),
-    radial-gradient(ellipse at bottom right,rgba(236,72,153,.1),transparent 60%),
-    #0a0515;
-  z-index:-1;pointer-events:none;
-}
-img{max-width:100%;display:block;user-select:none;-webkit-user-drag:none}
+---
+// ═══════════════════════════════════════════════════════════════
+// AniTube Buzz — Home Page v2.1 (Premium + Lag-Free)
+// Preserves original card design, removes Discover header
+// Mixed content: Anime 60% + K-Drama/Movies/Donghua 40%
+// Sources: Dailymotion + Bilibili + YouTube + Kitsu
+// ═══════════════════════════════════════════════════════════════
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
 
-/* ========== NAVBAR ========== */
-.navbar{
-  position:sticky;top:0;z-index:100;
-  background:rgba(15,8,32,.75);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
-  border-bottom:1px solid rgba(255,255,255,.05);
-  padding:16px 5%;
-  display:flex;align-items:center;justify-content:space-between;
-  gap:20px;
-}
-.logo{
-  font-size:24px;font-weight:800;
-  background:linear-gradient(135deg,#c084fc,#ec4899);
-  -webkit-background-clip:text;background-clip:text;
-  -webkit-text-fill-color:transparent;
-  letter-spacing:-.5px;cursor:pointer;flex-shrink:0;
-}
-.nav-links{
-  display:flex;gap:8px;
-  background:rgba(255,255,255,.04);
-  padding:6px;border-radius:14px;
-}
-.nav-links a{
-  color:#a1a1b3;text-decoration:none;
-  padding:8px 20px;border-radius:10px;
-  font-size:14px;font-weight:500;
-  transition:all .2s;white-space:nowrap;
-}
-.nav-links a:hover{color:#fff}
-.nav-links a.active{
-  color:#fff;
-  background:linear-gradient(135deg,#8b5cf6,#ec4899);
-}
-.search-box{
-  flex:1;max-width:420px;position:relative;
-}
-.search-box input{
-  width:100%;padding:11px 16px 11px 42px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:12px;
-  color:#fff;font-size:13px;outline:none;
-  transition:all .2s;
-}
-.search-box input:focus{
-  border-color:rgba(139,92,246,.5);
-  background:rgba(255,255,255,.08);
-}
-.search-box i{
-  position:absolute;left:16px;top:50%;transform:translateY(-50%);
-  color:#a78bfa;font-size:13px;
-}
-.nav-actions{display:flex;gap:8px}
-.icon-btn{
-  width:40px;height:40px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:10px;color:#fff;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:all .2s;font-size:14px;
-}
-.icon-btn:hover{background:rgba(139,92,246,.15);border-color:rgba(139,92,246,.3)}
-.menu-toggle{display:none}
+<BaseLayout>
+  <Header slot="header" />
 
-/* ========== SECTION ========== */
-.section{padding:30px 5% 20px}
-.section-head{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:20px;gap:16px;
-}
-.section-title-wrap{display:flex;align-items:center;gap:12px}
-.live-dot{
-  width:8px;height:8px;border-radius:50%;
-  background:#10b981;
-  box-shadow:0 0 12px #10b981;
-  animation:pulse 2s infinite;
-}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.section-title{
-  font-size:14px;color:#a78bfa;font-weight:600;
-  text-transform:uppercase;letter-spacing:1.5px;
-}
-.section-heading{
-  font-size:36px;font-weight:800;
-  background:linear-gradient(135deg,#c084fc,#ec4899);
-  -webkit-background-clip:text;background-clip:text;
-  -webkit-text-fill-color:transparent;
-  margin-top:4px;
-}
-.item-count{
-  padding:8px 18px;
-  background:rgba(139,92,246,.15);
-  border:1px solid rgba(139,92,246,.3);
-  border-radius:30px;
-  font-size:13px;font-weight:600;
-  color:#c084fc;
-}
+  <section class="section-block arrivals-block">
+    <div class="container">
 
-/* ========== TABS ========== */
-.tabs{
-  display:flex;gap:10px;overflow-x:auto;
-  padding-bottom:8px;margin-bottom:28px;
-  scrollbar-width:none;-webkit-overflow-scrolling:touch;
-}
-.tabs::-webkit-scrollbar{display:none}
-.tab{
-  padding:10px 22px;
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:30px;
-  color:#a1a1b3;font-size:14px;font-weight:600;
-  cursor:pointer;white-space:nowrap;
-  transition:all .2s;flex-shrink:0;
-  display:flex;align-items:center;gap:8px;
-}
-.tab:hover{color:#fff;border-color:rgba(139,92,246,.3)}
-.tab.active{
-  background:linear-gradient(135deg,#8b5cf6,#ec4899);
-  color:#fff;border-color:transparent;
-  box-shadow:0 4px 20px rgba(139,92,246,.4);
-}
-.tab .dot{
-  width:6px;height:6px;border-radius:50%;
-  background:#10b981;box-shadow:0 0 8px #10b981;
-}
+      <!-- ═══ CATEGORY TABS (no header, direct tabs) ═══ -->
+      <div class="cat-tabs" id="catTabs">
+        <button class="cat-tab active" data-cat="trending">
+          <span class="cat-tab-dot"></span>
+          <span>Trending</span>
+        </button>
+        <button class="cat-tab" data-cat="anime">Anime</button>
+        <button class="cat-tab" data-cat="kdrama">K-Drama</button>
+        <button class="cat-tab" data-cat="movies">Movies</button>
+        <button class="cat-tab" data-cat="donghua">Donghua</button>
+      </div>
 
-/* ========== GRID ========== */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:20px;
-}
-.card{
-  background:transparent;
-  border-radius:14px;
-  overflow:hidden;
-  cursor:pointer;
-  transition:transform .25s;
-  contain:layout style;
-}
-.card:hover{transform:translateY(-6px)}
-.card-img{
-  position:relative;
-  aspect-ratio:2/3;
-  overflow:hidden;
-  border-radius:14px;
-  background:#1a1030;
-  box-shadow:0 4px 20px rgba(0,0,0,.4);
-}
-.card-img img{
-  width:100%;height:100%;
-  object-fit:cover;
-  transition:transform .4s;
-}
-.card:hover .card-img img{transform:scale(1.08)}
+      <!-- ═══ FEED GRID ═══ -->
+      <div id="arrivalsFeed" class="feed-wrap"></div>
 
-/* Badges */
-.badge-new{
-  position:absolute;top:10px;left:10px;
-  background:linear-gradient(135deg,#f97316,#ef4444);
-  padding:4px 10px;border-radius:6px;
-  font-size:10px;font-weight:800;
-  letter-spacing:.5px;
-  box-shadow:0 2px 10px rgba(239,68,68,.4);
-  z-index:2;
-}
-.badge-rating{
-  position:absolute;top:10px;right:10px;
-  background:rgba(0,0,0,.75);
-  backdrop-filter:blur(10px);
-  padding:4px 8px;border-radius:6px;
-  font-size:11px;font-weight:700;
-  display:flex;align-items:center;gap:4px;
-  z-index:2;
-}
-.badge-rating i{color:#fbbf24;font-size:10px}
-.badge-hd{
-  position:absolute;bottom:10px;left:10px;
-  background:rgba(0,0,0,.75);
-  backdrop-filter:blur(10px);
-  padding:3px 8px;border-radius:5px;
-  font-size:10px;font-weight:800;
-  letter-spacing:.5px;color:#fff;
-  z-index:2;
-}
-.play-overlay{
-  position:absolute;inset:0;
-  background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.7));
-  display:flex;align-items:flex-end;justify-content:flex-start;
-  padding:14px;
-  opacity:0;transition:opacity .3s;
-}
-.card:hover .play-overlay{opacity:1}
-.play-btn{
-  width:36px;height:36px;
-  background:linear-gradient(135deg,#8b5cf6,#ec4899);
-  border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;font-size:12px;
-  box-shadow:0 4px 15px rgba(139,92,246,.5);
-}
+      <!-- ═══ LOADING INDICATOR ═══ -->
+      <div class="loading-more" id="loadingMore" style="display:none;">
+        <div class="ld-spinner"></div><span>Loading more...</span>
+      </div>
 
-/* Card info below thumbnail */
-.card-info{padding:12px 4px 0}
-.card-title{
-  font-size:15px;font-weight:700;
-  color:#fff;
-  margin-bottom:6px;
-  overflow:hidden;text-overflow:ellipsis;
-  display:-webkit-box;-webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  line-height:1.35;min-height:40px;
-}
-.card-meta{
-  font-size:12px;color:#8b8b9e;
-  margin-bottom:4px;
-}
-.card-cat{
-  font-size:11px;
-  color:#a78bfa;
-  font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.5px;
-}
+      <!-- ═══ ERROR STATE ═══ -->
+      <div class="error-msg" id="errorMsg" style="display:none;">
+        <div class="err-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 8v4M12 16h.01"/>
+          </svg>
+        </div>
+        <h3>Loading...</h3>
+        <p>Please wait a moment.</p>
+      </div>
 
-/* ========== FOOTER ========== */
-.footer{
-  margin-top:60px;padding:30px 5%;
-  border-top:1px solid rgba(255,255,255,.05);
-  text-align:center;color:#5c5c6e;font-size:12px;
-}
+    </div>
+  </section>
 
-/* ========== MOBILE ========== */
-@media(max-width:1200px){
-  .grid{grid-template-columns:repeat(4,1fr);gap:18px}
-}
-@media(max-width:900px){
-  .grid{grid-template-columns:repeat(3,1fr);gap:16px}
-  .nav-links{display:none}
-  .search-box{max-width:none}
-  .section-heading{font-size:30px}
-}
-@media(max-width:640px){
-  .navbar{padding:14px 4%;gap:12px}
-  .search-box{display:none}
-  .menu-toggle{display:flex}
-  .logo{font-size:20px}
-  .section{padding:24px 4% 16px}
-  .grid{grid-template-columns:repeat(2,1fr);gap:14px}
-  .section-heading{font-size:24px}
-  .section-title{font-size:12px}
-  .item-count{font-size:12px;padding:6px 14px}
-  .card-title{font-size:13px;min-height:35px}
-  .badge-new{font-size:9px;padding:3px 8px}
-  .badge-rating{font-size:10px}
-  .tab{padding:8px 16px;font-size:13px}
-}
-@media(max-width:400px){
-  .grid{gap:12px}
-  .card-title{font-size:12px;min-height:32px}
-}
+  <Footer slot="footer" />
+</BaseLayout>
 
-/* Mobile menu */
-.mobile-menu{
-  position:fixed;top:0;right:-100%;
-  width:280px;height:100vh;
-  background:rgba(15,8,32,.98);
-  backdrop-filter:blur(20px);
-  padding:80px 24px 24px;
-  transition:right .3s;
-  z-index:99;
-  border-left:1px solid rgba(255,255,255,.06);
-  overflow-y:auto;
-}
-.mobile-menu.open{right:0}
-.mobile-menu a{
-  display:flex;align-items:center;gap:12px;
-  color:#fff;text-decoration:none;
-  padding:14px 16px;border-radius:10px;
-  margin-bottom:6px;font-weight:500;font-size:14px;
-  transition:background .2s;
-}
-.mobile-menu a:hover,.mobile-menu a.active{
-  background:rgba(139,92,246,.15);color:#a78bfa;
-}
-.mobile-search{margin-bottom:20px;position:relative}
-.mobile-search input{
-  width:100%;padding:12px 14px 12px 40px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:10px;color:#fff;outline:none;font-size:14px;
-}
-.mobile-search i{
-  position:absolute;left:14px;top:50%;transform:translateY(-50%);
-  color:#a78bfa;
-}
-.overlay{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.6);
-  opacity:0;pointer-events:none;
-  transition:opacity .3s;z-index:98;
-}
-.overlay.show{opacity:1;pointer-events:auto}
+<style is:global>
+  @keyframes atNaCardIn { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
 
-/* Skeleton loader */
-.skeleton-card .card-img{
-  background:linear-gradient(90deg,#1a1030 25%,#2a1145 50%,#1a1030 75%);
-  background-size:200% 100%;
-  animation:shimmer 1.5s infinite;
-}
-@keyframes shimmer{
-  0%{background-position:200% 0}
-  100%{background-position:-200% 0}
-}
+  .feed-wrap {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    min-height: 400px;
+  }
+  @media (max-width: 1400px) { .feed-wrap { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 1100px) { .feed-wrap { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
+  @media (max-width: 768px) { .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+
+  /* ═══ VIDEO CARD (original premium design) ═══ */
+  .at-na-card {
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    animation: atNaCardIn 0.4s ease backwards;
+    contain: content;
+  }
+  .at-na-card:hover { transform: translateY(-4px); }
+
+  .at-na-thumb {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #0d0520;
+    border: 1px solid rgba(232, 121, 249, 0.35);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: border-color 0.35s ease, box-shadow 0.35s ease;
+  }
+  .at-na-card:hover .at-na-thumb {
+    border-color: rgba(232, 121, 249, 0.9);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(192, 132, 252, 0.5);
+  }
+
+  .at-na-img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s ease, filter 0.3s ease;
+  }
+  .at-na-card:hover .at-na-img {
+    transform: scale(1.08);
+    filter: brightness(0.65);
+  }
+
+  .at-na-shine {
+    position: absolute;
+    top: 0; left: -80%;
+    width: 60%; height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,0.2), transparent);
+    z-index: 3;
+    transition: left 0.8s ease;
+    pointer-events: none;
+  }
+  .at-na-card:hover .at-na-shine { left: 120%; }
+
+  .at-na-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(10,5,23,0.85) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .at-na-card:hover .at-na-overlay { opacity: 1; }
+
+  .at-na-play {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%) scale(0.4);
+    width: 44px; height: 44px;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+  }
+  .at-na-card:hover .at-na-play {
+    opacity: 1;
+    transform: translate(-50%,-50%) scale(1);
+  }
+
+  .at-na-card:hover .at-na-title {
+    background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  @media (max-width: 768px) {
+    .at-na-card:hover { transform: translateY(-2px); }
+    .at-na-play { opacity: 0.75 !important; transform: translate(-50%,-50%) scale(0.7) !important; }
+  }
+
+  /* ═══ PRODUCT AD ROW ═══ */
+  .product-row {
+    grid-column: 1 / -1;
+    margin: 8px 0;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(28,15,61,0.4), rgba(20,10,45,0.3));
+    border: 1px solid rgba(192,132,252,0.2);
+    border-radius: 16px;
+    position: relative;
+    animation: atNaCardIn 0.5s ease backwards;
+  }
+  .product-row-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+  .product-row-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: #e879f9;
+    text-transform: uppercase;
+  }
+  .product-row-title::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(232,121,249,0.7);
+  }
+  .product-row-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    color: rgba(192,132,252,0.6);
+    letter-spacing: 0.05em;
+  }
+  .product-row-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(192, 132, 252, 0.4) transparent;
+    padding: 4px 0 12px;
+    -webkit-overflow-scrolling: touch;
+    cursor: grab;
+    user-select: none;
+  }
+  .product-row-scroll:active { cursor: grabbing; }
+  .product-row-scroll::-webkit-scrollbar { height: 6px; background: transparent; }
+  .product-row-scroll::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.4); border-radius: 3px; }
+  .product-row-scroll::-webkit-scrollbar-thumb:hover { background: rgba(192, 132, 252, 0.7); }
+
+  .product-row-item {
+    flex: 0 0 auto;
+    width: 180px;
+    scroll-snap-align: start;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  .product-row-item:hover { transform: translateY(-3px); }
+
+  .product-row-thumb {
+    position: relative;
+    width: 100%;
+    padding-top: 75%;
+    border-radius: 10px;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(232,121,249,0.1));
+    border: 1px solid rgba(192,132,252,0.25);
+    margin-bottom: 6px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .product-row-item:hover .product-row-thumb {
+    border-color: rgba(232,121,249,0.7);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4), 0 0 15px rgba(192,132,252,0.3);
+  }
+  .product-row-img {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  .product-row-item:hover .product-row-img { transform: scale(1.06); }
+
+  .product-row-info { padding: 0 2px; }
+  .product-row-item-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 2px;
+  }
+  .product-row-price {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #7dd3fc;
+  }
+  @media (max-width: 768px) {
+    .product-row-item { width: 140px; }
+    .product-row { padding: 12px; }
+  }
+
+  /* ═══ SKELETON (no shimmer animation = no GPU waste) ═══ */
+  .skel-card { border-radius: 12px; }
+  .skel-thumb {
+    width: 100%;
+    padding-top: 56.25%;
+    border-radius: 12px;
+    background: #1a0e35;
+  }
+  .skel-title {
+    margin-top: 8px;
+    height: 12px;
+    width: 80%;
+    border-radius: 6px;
+    background: #1a0e35;
+  }
+  .skel-sub {
+    margin-top: 5px;
+    height: 8px;
+    width: 50%;
+    border-radius: 4px;
+    background: #1a0e35;
+  }
 </style>
-</head>
-<body>
 
-<!-- NAVBAR -->
-<nav class="navbar">
-  <div class="logo">AniTubeBuzz</div>
-  <div class="nav-links">
-    <a href="#" class="active">Home</a>
-    <a href="#">Browse</a>
-    <a href="#">Manga</a>
-    <a href="#">News</a>
-    <a href="#">Streaming</a>
-  </div>
-  <div class="search-box">
-    <i class="fas fa-search"></i>
-    <input type="text" placeholder="Search anime, drama, movies..." id="searchInput">
-  </div>
-  <div class="nav-actions">
-    <button class="icon-btn"><i class="fas fa-moon"></i></button>
-    <button class="icon-btn"><i class="fas fa-user"></i></button>
-    <button class="icon-btn menu-toggle" id="menuBtn"><i class="fas fa-bars"></i></button>
-  </div>
-</nav>
+<style>
+  .arrivals-block { position: relative; padding-top: 0.5rem; }
 
-<!-- MOBILE MENU -->
-<div class="overlay" id="overlay"></div>
-<div class="mobile-menu" id="mobileMenu">
-  <div class="mobile-search">
-    <i class="fas fa-search"></i>
-    <input type="text" placeholder="Search...">
-  </div>
-  <a href="#" class="active"><i class="fas fa-home"></i> Home</a>
-  <a href="#"><i class="fas fa-compass"></i> Browse</a>
-  <a href="#"><i class="fas fa-book"></i> Manga</a>
-  <a href="#"><i class="fas fa-newspaper"></i> News</a>
-  <a href="#"><i class="fas fa-play-circle"></i> Streaming</a>
-</div>
-
-<!-- MAIN DISCOVER SECTION -->
-<section class="section">
-  <div class="section-head">
-    <div>
-      <div class="section-title-wrap">
-        <span class="live-dot"></span>
-        <span class="section-title">FRESH • UPDATED DAILY</span>
-      </div>
-      <h1 class="section-heading">Discover</h1>
-    </div>
-    <div class="item-count" id="itemCount">40 items</div>
-  </div>
-
-  <div class="tabs" id="tabs">
-    <div class="tab active" data-cat="all"><span class="dot"></span>Trending</div>
-    <div class="tab" data-cat="anime">Anime</div>
-    <div class="tab" data-cat="drama">K-Drama</div>
-    <div class="tab" data-cat="movie">Movies</div>
-    <div class="tab" data-cat="donghua">Donghua</div>
-    <div class="tab" data-cat="serial">Serials</div>
-  </div>
-
-  <div class="grid" id="mainGrid"></div>
-</section>
-
-<footer class="footer">
-  © 2026 AniTubeBuzz • Auto-updated fresh content daily
-</footer>
-
-<script>
-/* ========== CONTENT POOL ==========
-   Ratio: Anime 60% • Serial 10% • Drama 10% • Movies 10% • Donghua 10%
-*/
-const contentPool=[
-  // ===== ANIME (60%) =====
-  {t:"Skeleton Knight in Another World II",c:"anime",r:7.1,y:"2026",ep:"12 EP",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1926/140799.jpg"},
-  {t:"Mushoku Tensei: Jobless Reincarnation Season 3",c:"anime",r:9.0,y:"2026",ep:"14 EP",g:"Adventure",img:"https://cdn.myanimelist.net/images/anime/1170/124312.jpg"},
-  {t:"From Overshadowed to Overpowered: Second Reincarnation",c:"anime",r:6.7,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1600/134703.jpg"},
-  {t:"Clevatess Season 2",c:"anime",r:7.7,y:"2026",ep:"13 EP",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1015/138006.jpg"},
-  {t:"The Elusive Samurai Season 2",c:"anime",r:8.0,y:"2026",ep:"",g:"Adventure",img:"https://cdn.myanimelist.net/images/anime/1500/130665.jpg"},
-  {t:"Love Unseen Beneath the Clear Night Sky",c:"anime",r:7.8,y:"2026",ep:"",g:"Drama",img:"https://cdn.myanimelist.net/images/anime/1812/134736.jpg"},
-  {t:"The Ghost in the Shell",c:"anime",r:8.8,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1517/100633.jpg"},
-  {t:"Smoking Behind the Supermarket with You",c:"anime",r:8.5,y:"2026",ep:"12 EP",g:"Romance",img:"https://cdn.myanimelist.net/images/anime/1809/144875.jpg"},
-  {t:"Bleach: Thousand-Year Blood War - The Calamity",c:"anime",r:9.4,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1908/135431.jpg"},
-  {t:"Black Torch",c:"anime",r:7.4,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1839/145616.jpg"},
-  {t:"The 100 Girlfriends Who Really, Really, Really, Really, Really Love You",c:"anime",r:7.9,y:"2026",ep:"",g:"Comedy",img:"https://cdn.myanimelist.net/images/anime/1554/140807.jpg"},
-  {t:"Chainsmoker Cat",c:"anime",r:6.8,y:"2026",ep:"",g:"Comedy",img:"https://cdn.myanimelist.net/images/anime/1258/127249.jpg"},
-  {t:"Solo Leveling Season 3",c:"anime",r:9.2,y:"2026",ep:"12 EP",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1441/122795.jpg"},
-  {t:"Jujutsu Kaisen: Culling Arc",c:"anime",r:9.1,y:"2026",ep:"24 EP",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1806/126216.jpg"},
-  {t:"Chainsaw Man Part 2",c:"anime",r:8.9,y:"2026",ep:"12 EP",g:"Horror",img:"https://cdn.myanimelist.net/images/anime/1286/99889.jpg"},
-  {t:"Demon Slayer: Infinity Castle",c:"anime",r:9.5,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/6/73245.jpg"},
-  {t:"One Piece: Egghead Arc",c:"anime",r:9.0,y:"2026",ep:"",g:"Adventure",img:"https://cdn.myanimelist.net/images/anime/10/78745.jpg"},
-  {t:"Spy x Family Season 3",c:"anime",r:8.8,y:"2026",ep:"12 EP",g:"Comedy",img:"https://cdn.myanimelist.net/images/anime/1734/140674.jpg"},
-  {t:"Frieren Season 2",c:"anime",r:9.4,y:"2026",ep:"",g:"Fantasy",img:"https://cdn.myanimelist.net/images/anime/1980/145248.jpg"},
-  {t:"Blue Lock Season 2",c:"anime",r:8.7,y:"2026",ep:"14 EP",g:"Sports",img:"https://cdn.myanimelist.net/images/anime/1444/108005.jpg"},
-  {t:"Dandadan Season 2",c:"anime",r:8.8,y:"2026",ep:"",g:"Supernatural",img:"https://cdn.myanimelist.net/images/anime/1949/122081.jpg"},
-  {t:"Kaiju No. 8 Season 2",c:"anime",r:8.9,y:"2026",ep:"12 EP",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1613/102576.jpg"},
-  {t:"Oshi no Ko Season 3",c:"anime",r:9.0,y:"2026",ep:"",g:"Drama",img:"https://cdn.myanimelist.net/images/anime/1802/117340.jpg"},
-  {t:"Wind Breaker Season 2",c:"anime",r:8.5,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1197/144175.jpg"},
-
-  // ===== K-DRAMA (10%) =====
-  {t:"Queen of Tears",c:"drama",r:9.1,y:"2024",ep:"16 EP",g:"Romance",img:"https://image.tmdb.org/t/p/w500/aKz3lXU71wqdslzQE7dgcpiBcMt.jpg"},
-  {t:"Squid Game Season 3",c:"drama",r:9.0,y:"2026",ep:"9 EP",g:"Thriller",img:"https://image.tmdb.org/t/p/w500/dDlEmu3EZ0Pgg93K2SVNLCjCSvE.jpg"},
-  {t:"Lovely Runner",c:"drama",r:9.2,y:"2024",ep:"16 EP",g:"Romance",img:"https://image.tmdb.org/t/p/w500/ozxOFTnQZ5C89isKp3iCezDMxSy.jpg"},
-  {t:"My Demon",c:"drama",r:8.6,y:"2024",ep:"16 EP",g:"Romance",img:"https://image.tmdb.org/t/p/w500/qLGmb26nqfNaqQO7yeQNdT4XSMs.jpg"},
-
-  // ===== MOVIES (10%) =====
-  {t:"Dune: Part Two",c:"movie",r:8.7,y:"2024",ep:"",g:"Sci-Fi",img:"https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg"},
-  {t:"Oppenheimer",c:"movie",r:8.9,y:"2024",ep:"",g:"Drama",img:"https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg"},
-  {t:"Deadpool & Wolverine",c:"movie",r:8.5,y:"2024",ep:"",g:"Action",img:"https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg"},
-  {t:"Gladiator II",c:"movie",r:8.1,y:"2024",ep:"",g:"Action",img:"https://image.tmdb.org/t/p/w500/2cxhvwyEwRlysAmRH4iodkvo0z5.jpg"},
-
-  // ===== SERIALS (10%) =====
-  {t:"Wednesday Season 2",c:"serial",r:8.7,y:"2026",ep:"8 EP",g:"Mystery",img:"https://image.tmdb.org/t/p/w500/9PFonBhy4cQy7Jz20NpMygczOkv.jpg"},
-  {t:"Stranger Things 5",c:"serial",r:9.0,y:"2026",ep:"8 EP",g:"Sci-Fi",img:"https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg"},
-  {t:"House of the Dragon S3",c:"serial",r:8.8,y:"2026",ep:"10 EP",g:"Fantasy",img:"https://image.tmdb.org/t/p/w500/7QMsOTMUswlwxJP0rTTZfmz2tX2.jpg"},
-  {t:"The Bear Season 4",c:"serial",r:9.1,y:"2026",ep:"10 EP",g:"Drama",img:"https://image.tmdb.org/t/p/w500/adOzdWS35KAo21r9R4BuFCkLer6.jpg"},
-
-  // ===== DONGHUA (10%) =====
-  {t:"Soul Land II: Peerless Tang",c:"donghua",r:9.0,y:"2026",ep:"52 EP",g:"Fantasy",img:"https://cdn.myanimelist.net/images/anime/1274/119059.jpg"},
-  {t:"Battle Through the Heavens",c:"donghua",r:8.7,y:"2026",ep:"",g:"Action",img:"https://cdn.myanimelist.net/images/anime/1234/119821.jpg"},
-  {t:"Renegade Immortal",c:"donghua",r:8.8,y:"2026",ep:"",g:"Xianxia",img:"https://cdn.myanimelist.net/images/anime/1697/120833.jpg"},
-  {t:"Mortal Cultivation",c:"donghua",r:9.1,y:"2026",ep:"",g:"Xianxia",img:"https://cdn.myanimelist.net/images/anime/1817/125062.jpg"}
-];
-
-/* ========== HELPERS ========== */
-function shuffle(arr){
-  const a=[...arr];
-  for(let i=a.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [a[i],a[j]]=[a[j],a[i]];
+  /* ═══ TABS ═══ */
+  .cat-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
-  return a;
-}
+  .cat-tabs::-webkit-scrollbar { display: none; }
 
-function getContent(cat='all'){
-  if(cat==='all'){
-    // Trending: mix by ratio
-    const anime=shuffle(contentPool.filter(x=>x.c==='anime')).slice(0,15);
-    const drama=shuffle(contentPool.filter(x=>x.c==='drama')).slice(0,3);
-    const movie=shuffle(contentPool.filter(x=>x.c==='movie')).slice(0,3);
-    const donghua=shuffle(contentPool.filter(x=>x.c==='donghua')).slice(0,3);
-    const serial=shuffle(contentPool.filter(x=>x.c==='serial')).slice(0,3);
-    return shuffle([...anime,...drama,...movie,...donghua,...serial]);
+  .cat-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    background: rgba(28, 15, 61, 0.5);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease, transform 0.25s ease;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
   }
-  return shuffle(contentPool.filter(x=>x.c===cat));
-}
+  .cat-tab:hover {
+    background: rgba(192, 132, 252, 0.15);
+    border-color: rgba(192, 132, 252, 0.4);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+  }
+  .cat-tab.active {
+    background: var(--grad);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(192, 132, 252, 0.4);
+  }
+  .cat-tab-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 6px #ef4444;
+    animation: lb 1.5s ease infinite;
+  }
+  .cat-tab.active .cat-tab-dot {
+    background: #fff;
+    box-shadow: 0 0 6px #fff;
+  }
+  @keyframes lb { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-function createCard(item){
-  const div=document.createElement('div');
-  div.className='card';
-  const epText=item.ep?` · ${item.ep}`:'';
-  div.innerHTML=`
-    <div class="card-img">
-      <span class="badge-new">NEW</span>
-      <span class="badge-rating"><i class="fas fa-star"></i>${item.r}</span>
-      <img loading="lazy" src="${item.img}" alt="${item.t}"
-        onerror="this.src='https://via.placeholder.com/300x450/1a1030/8b5cf6?text=${encodeURIComponent(item.t.slice(0,15))}'">
-      <span class="badge-hd">HD</span>
-      <div class="play-overlay">
-        <div class="play-btn"><i class="fas fa-play"></i></div>
-      </div>
-    </div>
-    <div class="card-info">
-      <div class="card-title">${item.t}</div>
-      <div class="card-meta">${item.y}${epText}</div>
-      <div class="card-cat">${item.g}</div>
-    </div>
-  `;
-  return div;
-}
+  /* ═══ LOADING ═══ */
+  .loading-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 2rem 0;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+  }
+  .ld-spinner {
+    width: 22px; height: 22px;
+    border: 2px solid rgba(192, 132, 252, 0.2);
+    border-top-color: #c084fc;
+    border-radius: 50%;
+    animation: sp 0.8s linear infinite;
+  }
+  @keyframes sp { to { transform: rotate(360deg); } }
 
-function renderGrid(cat='all'){
-  const grid=document.getElementById('mainGrid');
-  const items=getContent(cat);
-  
-  grid.innerHTML='';
-  const frag=document.createDocumentFragment();
-  items.forEach(item=>frag.appendChild(createCard(item)));
-  grid.appendChild(frag);
-  
-  document.getElementById('itemCount').textContent=`${items.length} items`;
-}
+  /* ═══ ERROR ═══ */
+  .error-msg {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+    background: rgba(239, 68, 68, 0.06);
+    border: 1px dashed rgba(239, 68, 68, 0.3);
+    border-radius: 16px;
+    margin-top: 2rem;
+  }
+  .err-icon { color: #ef4444; margin-bottom: 1rem; display: flex; justify-content: center; }
+  .error-msg h3 {
+    font-size: 1.2rem;
+    margin: 0 0 0.5rem;
+    color: var(--text-primary);
+    font-family: 'Bricolage Grotesque', sans-serif;
+  }
+  .error-msg p { font-size: 0.88rem; margin: 0; }
+</style>
+<script is:inline>
+(function(){
+  'use strict';
 
-/* ========== INIT ========== */
-document.addEventListener('DOMContentLoaded',()=>{
-  renderGrid('all');
-  
-  // Tabs
-  document.querySelectorAll('#tabs .tab').forEach(tab=>{
-    tab.addEventListener('click',()=>{
-      document.querySelectorAll('#tabs .tab').forEach(t=>t.classList.remove('active'));
+  // ═══════════════════════════════════════════════════
+  // 🎯 STATE
+  // ═══════════════════════════════════════════════════
+  var currentCat = 'trending';
+  var isLoading = false;
+  var totalCards = 0;
+  var seenIds = {};
+  var loopCount = 0;
+
+  var animePage = 0;
+  var socialTypeIdx = 0;
+  var cardsSinceLastAd = 0;
+  var CARDS_PER_AD_ROW = 20;
+  var productPool = [];
+
+  // Social type rotation for "Trending" tab (mixed variety)
+  var TRENDING_TYPES = ['donghua', 'movies', 'kdrama', 'anime'];
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 DOM REFERENCES
+  // ═══════════════════════════════════════════════════
+  var feed = document.getElementById('arrivalsFeed');
+  var loadingEl = document.getElementById('loadingMore');
+  var errMsg = document.getElementById('errorMsg');
+  var tabs = document.querySelectorAll('.cat-tab');
+
+  // ═══════════════════════════════════════════════════
+  // 🛠️ HELPERS
+  // ═══════════════════════════════════════════════════
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function trunc(s, n) {
+    s = String(s || '');
+    return s.length > n ? s.slice(0, n).trim() + '…' : s;
+  }
+
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  function getColCount() {
+    var w = window.innerWidth;
+    if (w <= 768) return 2;
+    if (w <= 1100) return 3;
+    if (w <= 1400) return 4;
+    return 5;
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎨 SKELETON (no shimmer = no GPU waste)
+  // ═══════════════════════════════════════════════════
+  function showSkeleton() {
+    var count = getColCount() * 2;
+    var html = '';
+    for (var i = 0; i < count; i++) {
+      html += '<div class="skel-card">' +
+        '<div class="skel-thumb"></div>' +
+        '<div class="skel-title"></div>' +
+        '<div class="skel-sub"></div>' +
+      '</div>';
+    }
+    feed.innerHTML = html;
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎌 ANIME CARD (from Kitsu API — same design as before)
+  // ═══════════════════════════════════════════════════
+  function animeCard(a, i) {
+    var t = a.title || 'Unknown';
+    var img = a.image || '';
+    var sl = a.slug || 'anime-' + a.id;
+    var sc = a.score ? Number(a.score).toFixed(1) : '';
+    var yr = a.year || '';
+    var ep = a.episodes && a.episodes > 0 ? a.episodes : '';
+    var g = (a.genres && a.genres.length) ? a.genres[0] : '';
+    var nw = a.status === 'current';
+    var delay = ((i % 8) * 40) + 'ms';
+
+    var imgHtml = img
+      ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="at-na-img" onerror="this.style.display=\'none\'" />'
+      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2rem;">🎬</div>';
+
+    var el = document.createElement('a');
+    el.href = '/reels/anime_' + encodeURIComponent(sl) + '_ep1';
+    el.className = 'at-na-card';
+    el.style.animationDelay = delay;
+
+    el.innerHTML =
+      '<div class="at-na-thumb">' +
+        imgHtml +
+        '<div class="at-na-shine"></div>' +
+        '<div class="at-na-overlay"></div>' +
+        '<div class="at-na-play">' +
+          '<div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:2px;box-shadow:0 8px 25px rgba(192,132,252,0.7);z-index:2;">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+          '</div>' +
+        '</div>' +
+        (nw ? '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">NEW</div>' : '') +
+        (sc ? '<div style="position:absolute;top:6px;right:6px;padding:3px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:800;border-radius:4px;z-index:6;">★ ' + sc + '</div>' : '') +
+        '<div style="position:absolute;bottom:6px;left:6px;padding:2px 7px;background:rgba(125,211,252,0.9);color:#0a0517;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">HD</div>' +
+      '</div>' +
+      '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
+        '<h3 class="at-na-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(t, 55)) + '</h3>' +
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;">' +
+          (yr ? esc(yr) : '') +
+          (yr && ep ? ' · ' : '') +
+          (ep ? esc(ep) + ' EP' : '') +
+        '</div>' +
+        (g ? '<div style="display:inline-block;margin-top:3px;font-family:\'JetBrains Mono\',monospace;font-size:0.52rem;font-weight:700;color:#c084fc;letter-spacing:0.05em;text-transform:uppercase;">' + esc(g) + '</div>' : '') +
+      '</div>';
+
+    return el;
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 📺 SOCIAL CARD (Dailymotion / Bilibili / YouTube)
+  // ═══════════════════════════════════════════════════
+  function socialCard(v, i) {
+    var t = v.title || 'Video';
+    var img = v.thumbnail || '';
+    var delay = ((i % 8) * 40) + 'ms';
+
+    var typeLabel = {
+      movies:  '🎬 MOVIE',
+      kdrama:  '🇰🇷 K-DRAMA',
+      donghua: '🐼 DONGHUA',
+      anime:   '🎌 ANIME'
+    }[v.type] || '📺 VIDEO';
+
+    var imgHtml = img
+      ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="at-na-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
+      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>';
+
+    var el = document.createElement('a');
+    el.href = '/reels/' + encodeURIComponent(v.id);
+    el.className = 'at-na-card';
+    el.style.animationDelay = delay;
+
+    el.innerHTML =
+      '<div class="at-na-thumb">' +
+        imgHtml +
+        '<div class="at-na-shine"></div>' +
+        '<div class="at-na-overlay"></div>' +
+        '<div class="at-na-play">' +
+          '<div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:2px;box-shadow:0 8px 25px rgba(192,132,252,0.7);z-index:2;">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+          '</div>' +
+        '</div>' +
+        (v.isNew ? '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">NEW</div>' : '') +
+        '<div style="position:absolute;bottom:6px;left:6px;padding:2px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:4px;z-index:6;">' + typeLabel + '</div>' +
+      '</div>' +
+      '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
+        '<h3 class="at-na-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(t, 55)) + '</h3>' +
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;">' + esc(v.channel || 'Channel') + '</div>' +
+      '</div>';
+
+    return el;
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🛍️ PRODUCT AD ROW (same original design)
+  // ═══════════════════════════════════════════════════
+  function productRow(products) {
+    if (!products || products.length === 0) return null;
+
+    var itemsHtml = products.map(function(p){
+      var img = p.image
+        ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="product-row-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
+        : '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🛍️</div>';
+
+      var badge = p.badge
+        ? '<div style="position:absolute;top:5px;left:5px;padding:2px 6px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:3px;z-index:2;">' + esc(p.badge) + '</div>'
+        : '';
+
+      return '<a href="/product/' + esc(p.id) + '" class="product-row-item">' +
+        '<div class="product-row-thumb">' + img + badge + '</div>' +
+        '<div class="product-row-info">' +
+          '<div class="product-row-item-title">' + esc(trunc(p.title, 40)) + '</div>' +
+          '<div class="product-row-price">' + esc(p.price) + '</div>' +
+        '</div>' +
+      '</a>';
+    }).join('');
+
+    var row = document.createElement('div');
+    row.className = 'product-row';
+    row.innerHTML =
+      '<div class="product-row-header">' +
+        '<div class="product-row-title">✨ Recommended For You</div>' +
+        '<div class="product-row-hint">← Swipe to explore →</div>' +
+      '</div>' +
+      '<div class="product-row-scroll">' + itemsHtml + '</div>';
+
+    return row;
+  }
+
+  function getRandomProducts() {
+    if (productPool.length < 4) return productPool;
+    return shuffle(productPool).slice(0, 8);
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🖱️ DRAG SCROLL (mouse + wheel for product rows)
+  // ═══════════════════════════════════════════════════
+  function enableDragScroll(el) {
+    if (el.dataset.dragEnabled === '1') return;
+    el.dataset.dragEnabled = '1';
+
+    var isDown = false;
+    var startX = 0;
+    var scrollLeft = 0;
+
+    el.addEventListener('mousedown', function(e){
+      isDown = true;
+      el.style.cursor = 'grabbing';
+      startX = e.pageX - el.offsetLeft;
+      scrollLeft = el.scrollLeft;
+    });
+    el.addEventListener('mouseleave', function(){
+      isDown = false;
+      el.style.cursor = 'grab';
+    });
+    el.addEventListener('mouseup', function(){
+      isDown = false;
+      el.style.cursor = 'grab';
+    });
+    el.addEventListener('mousemove', function(e){
+      if (!isDown) return;
+      e.preventDefault();
+      var x = e.pageX - el.offsetLeft;
+      var walk = (x - startX) * 1.8;
+      el.scrollLeft = scrollLeft - walk;
+    });
+
+    el.addEventListener('wheel', function(e){
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      }
+    }, { passive: false });
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 📦 LOAD PRODUCTS (once on init)
+  // ═══════════════════════════════════════════════════
+  function loadProducts() {
+    return fetch('/api/products?limit=50')
+      .then(function(res){ return res.json(); })
+      .then(function(json){
+        if (json.success && json.products) {
+          productPool = shuffle(json.products);
+        }
+      })
+      .catch(function(err){ console.warn('[products]', err.message); });
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎌 FETCH ANIME (Kitsu API)
+  // ═══════════════════════════════════════════════════
+  function fetchAnime() {
+    animePage++;
+    // Rotate category on each page for variety (avoid same anime looping)
+    var cats = ['airing', 'popular', 'top', 'upcoming'];
+    var cat = cats[(animePage - 1) % cats.length];
+    var url = '/api/anime?action=list&category=' + cat + '&page=' + Math.ceil(animePage / cats.length);
+    // Cache-bust every 3rd load
+    if (animePage % 3 === 0) url += '&nocache=1';
+
+    return fetch(url)
+      .then(function(res){ return res.json(); })
+      .then(function(json){
+        if (!json.success || !json.anime) return [];
+        return json.anime.filter(function(a){
+          if (!a.id) return false;
+          var key = 'a_' + a.id + '_' + loopCount;
+          if (seenIds[key]) return false;
+          seenIds[key] = true;
+          return true;
+        });
+      })
+      .catch(function(){ return []; });
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 📺 FETCH SOCIAL VIDEOS
+  // ═══════════════════════════════════════════════════
+  function fetchSocial(type) {
+    // Random page 1-5 for content variety each load
+    var randomPage = Math.floor(Math.random() * 5) + 1;
+    var url = '/api/social-feed?type=' + type + '&page=' + randomPage + '&limit=12';
+
+    return fetch(url)
+      .then(function(res){ return res.json(); })
+      .then(function(json){
+        if (!json.success || !json.videos) return [];
+        return json.videos.filter(function(v){
+          if (!v || !v.id) return false;
+          var key = 'v_' + v.id + '_' + loopCount;
+          if (seenIds[key]) return false;
+          seenIds[key] = true;
+          return true;
+        });
+      })
+      .catch(function(){ return []; });
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 MAIN LOAD FUNCTION
+  // Ratio: Anime 60% + Social 40% (mixed types)
+  // ═══════════════════════════════════════════════════
+  function loadFeed() {
+    if (isLoading) return;
+    isLoading = true;
+
+    if (totalCards > 0 && loadingEl) {
+      loadingEl.style.display = 'flex';
+    }
+
+    var promises = [];
+
+    // ═══ TRENDING TAB: anime + rotating social types ═══
+    if (currentCat === 'trending') {
+      promises.push(fetchAnime());
+      var socialType = TRENDING_TYPES[socialTypeIdx % TRENDING_TYPES.length];
+      socialTypeIdx++;
+      promises.push(fetchSocial(socialType));
+    }
+    // ═══ ANIME TAB: anime data + social anime videos ═══
+    else if (currentCat === 'anime') {
+      promises.push(fetchAnime());
+      promises.push(fetchSocial('anime'));
+    }
+    // ═══ SPECIFIC TABS (K-Drama, Movies, Donghua): social only ═══
+    else {
+      promises.push(fetchSocial(currentCat));
+      promises.push(fetchSocial(currentCat));
+    }
+
+    Promise.all(promises).then(function(results){
+      var animeItems, socialItems;
+
+      if (currentCat === 'trending' || currentCat === 'anime') {
+        animeItems = results[0];
+        socialItems = results[1];
+      } else {
+        animeItems = [];
+        socialItems = [].concat(results[0], results[1]);
+      }
+
+      // Shuffle for fresh feel every load
+      animeItems = shuffle(animeItems);
+      socialItems = shuffle(socialItems);
+
+      // ═══ Retry if both empty ═══
+      if (animeItems.length === 0 && socialItems.length === 0) {
+        loopCount++;
+        animePage = 0;
+        seenIds = {};
+
+        if (totalCards === 0) {
+          if (errMsg) errMsg.style.display = 'block';
+          if (loadingEl) loadingEl.style.display = 'none';
+          isLoading = false;
+        } else {
+          isLoading = false;
+          // Silent retry after 300ms
+          setTimeout(loadFeed, 300);
+        }
+        return;
+      }
+
+      // Clear skeleton on first load
+      if (totalCards === 0) {
+        feed.innerHTML = '';
+        if (errMsg) errMsg.style.display = 'none';
+      }
+
+      // ═══ BUILD BATCH USING DocumentFragment ═══
+      var fragment = document.createDocumentFragment();
+      var socialIdx = 0;
+
+      // Interleave: 2 anime → 1 social (60/40 ratio)
+      animeItems.forEach(function(anime, i){
+        totalCards++;
+        fragment.appendChild(animeCard(anime, totalCards - 1));
+        cardsSinceLastAd++;
+
+        // Insert 1 social card after every 2 anime cards
+        if ((i + 1) % 2 === 0 && socialIdx < socialItems.length) {
+          totalCards++;
+          fragment.appendChild(socialCard(socialItems[socialIdx++], totalCards - 1));
+          cardsSinceLastAd++;
+        }
+
+        // Product ad row every 20 cards
+        if (cardsSinceLastAd >= CARDS_PER_AD_ROW && productPool.length >= 4) {
+          var products = getRandomProducts();
+          var adRow = productRow(products);
+          if (adRow) {
+            fragment.appendChild(adRow);
+            cardsSinceLastAd = 0;
+          }
+        }
+      });
+
+      // Remaining social cards
+      while (socialIdx < socialItems.length) {
+        totalCards++;
+        fragment.appendChild(socialCard(socialItems[socialIdx++], totalCards - 1));
+        cardsSinceLastAd++;
+      }
+
+      // ═══ SINGLE DOM APPEND (fastest) ═══
+      feed.appendChild(fragment);
+
+      // Enable drag scroll for new product rows (idle callback = no jank)
+      if (window.requestIdleCallback) {
+        requestIdleCallback(function(){
+          var rows = feed.querySelectorAll('.product-row-scroll');
+          rows.forEach(enableDragScroll);
+        });
+      } else {
+        setTimeout(function(){
+          var rows = feed.querySelectorAll('.product-row-scroll');
+          rows.forEach(enableDragScroll);
+        }, 100);
+      }
+
+      if (loadingEl) loadingEl.style.display = 'none';
+      isLoading = false;
+    }).catch(function(err){
+      console.warn('[loadFeed]', err.message);
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (totalCards === 0 && errMsg) {
+        errMsg.style.display = 'block';
+      }
+      isLoading = false;
+    });
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🔄 TAB SWITCHING
+  // ═══════════════════════════════════════════════════
+  tabs.forEach(function(tab){
+    tab.addEventListener('click', function(){
+      var newCat = tab.dataset.cat;
+      if (newCat === currentCat) return;
+
+      tabs.forEach(function(t){ t.classList.remove('active'); });
       tab.classList.add('active');
-      renderGrid(tab.dataset.cat);
+
+      currentCat = newCat;
+      totalCards = 0;
+      seenIds = {};
+      animePage = 0;
+      socialTypeIdx = 0;
+      loopCount = 0;
+      cardsSinceLastAd = 0;
+
+      if (errMsg) errMsg.style.display = 'none';
+      showSkeleton();
+
+      // Smooth scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      loadFeed();
     });
   });
-  
-  // Mobile menu
-  const menuBtn=document.getElementById('menuBtn');
-  const mobileMenu=document.getElementById('mobileMenu');
-  const overlay=document.getElementById('overlay');
-  menuBtn?.addEventListener('click',()=>{
-    mobileMenu.classList.toggle('open');
-    overlay.classList.toggle('show');
-  });
-  overlay?.addEventListener('click',()=>{
-    mobileMenu.classList.remove('open');
-    overlay.classList.remove('show');
-  });
-  
-  // Search
-  document.getElementById('searchInput')?.addEventListener('input',e=>{
-    const q=e.target.value.toLowerCase().trim();
-    const grid=document.getElementById('mainGrid');
-    if(!q){renderGrid('all');return}
-    const results=contentPool.filter(x=>x.t.toLowerCase().includes(q));
-    grid.innerHTML='';
-    const frag=document.createDocumentFragment();
-    results.forEach(item=>frag.appendChild(createCard(item)));
-    grid.appendChild(frag);
-    document.getElementById('itemCount').textContent=`${results.length} items`;
-  });
-  
-  // Auto-refresh content every 60 seconds (fresh feel)
-  setInterval(()=>{
-    const activeTab=document.querySelector('#tabs .tab.active');
-    if(activeTab)renderGrid(activeTab.dataset.cat);
-  },60000);
-});
+
+  // ═══════════════════════════════════════════════════
+  // 📜 INFINITE SCROLL (debounced, lag-free)
+  // ═══════════════════════════════════════════════════
+  var scrollTimer = null;
+
+  window.addEventListener('scroll', function(){
+    if (isLoading) return;
+
+    if (scrollTimer) clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function(){
+      var scrollPos = window.scrollY + window.innerHeight;
+      var pageHeight = document.documentElement.scrollHeight;
+      if (scrollPos > pageHeight - 1200) {
+        loadFeed();
+      }
+    }, 200);
+  }, { passive: true });
+
+  // ═══════════════════════════════════════════════════
+  // 🚀 INITIALIZATION
+  // ═══════════════════════════════════════════════════
+  showSkeleton();
+  loadProducts().then(loadFeed);
+
+})();
 </script>
-</body>
-</html>
