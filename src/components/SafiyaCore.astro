@@ -2039,13 +2039,29 @@
   async function checkLinkForAnime(url) {
     try {
       var res = await fetch('/api/link-resolver?url=' + encodeURIComponent(url));
-      if (!res.ok) return null;
       var data = await res.json();
-      if (data && data.success && data.redirectUrl) {
+      
+      // Success - anime found (either direct KV or caption match)
+      if (res.ok && data && data.success && data.redirectUrl) {
         return {
+          found: true,
           title: data.title || 'Anime',
           watchUrl: data.redirectUrl,
-          source: data.source || 'database'
+          source: data.source || 'database',
+          episode: data.match ? data.match.episode : null,
+          season: data.match ? data.match.season : null
+        };
+      }
+      
+      // Not found but we extracted caption - return it for Safiya to use
+      if (data && data.needsManualHelp && data.extracted) {
+        return {
+          found: false,
+          extracted: {
+            caption: data.extracted.caption || '',
+            title: data.extracted.title || '',
+            thumbnail: data.extracted.thumbnail || ''
+          }
         };
       }
     } catch (e) {}
@@ -2053,15 +2069,15 @@
   }
 
   async function checkTextForAnime(text) {
-    // Search KV database for text query
     try {
       var res = await fetch('/api/fb-search?q=' + encodeURIComponent(text.slice(0, 100)) + '&limit=1');
       if (!res.ok) return null;
       var data = await res.json();
       if (data && data.success && data.results && data.results.length > 0) {
         var top = data.results[0];
-        if (top.confidence && top.confidence >= 0.7) {
+        if (top.confidence && top.confidence >= 0.5) {
           return {
+            found: true,
             title: top.title,
             episode: top.episode,
             season: top.season,
@@ -2073,7 +2089,6 @@
     } catch (e) {}
     return null;
   }
-
   // ═══════════════════════════════════════════════════
   // 🎯 SEND MESSAGE
   // ═══════════════════════════════════════════════════
@@ -2104,16 +2119,55 @@
     var animeMatch = null;
     var linkMeta = null;
     
+    var extractedData = null;
+    
     if (url) {
       linkMeta = {
         url: url,
         platform: core.detectPlatform(url)
       };
-      // Try to lookup in KV
-      animeMatch = await checkLinkForAnime(url);
+      // Try to lookup + extract via link-resolver
+      var linkResult = await checkLinkForAnime(url);
+      
+      if (linkResult && linkResult.found) {
+        // Anime found directly
+        animeMatch = {
+          title: linkResult.title,
+          episode: linkResult.episode,
+          season: linkResult.season,
+          thumbnail: linkResult.extracted ? linkResult.extracted.thumbnail : '',
+          watchUrl: linkResult.watchUrl
+        };
+      } else if (linkResult && linkResult.extracted) {
+        // Not found but we got caption - Safiya can use it
+        extractedData = linkResult.extracted;
+        
+        // Try to find anime using extracted caption
+        if (extractedData.caption) {
+          var captionMatch = await checkTextForAnime(extractedData.caption);
+          if (captionMatch && captionMatch.found) {
+            animeMatch = {
+              title: captionMatch.title,
+              episode: captionMatch.episode,
+              season: captionMatch.season,
+              thumbnail: captionMatch.thumbnail,
+              watchUrl: captionMatch.watchUrl
+            };
+          }
+        }
+      }
     } else if (text.length > 3) {
       // Text search — check if it matches known anime
-      animeMatch = await checkTextForAnime(text);
+      var textMatch = await checkTextForAnime(text);
+      if (textMatch && textMatch.found) {
+        animeMatch = {
+          title: textMatch.title,
+          episode: textMatch.episode,
+          season: textMatch.season,
+          thumbnail: textMatch.thumbnail,
+          watchUrl: textMatch.watchUrl
+        };
+      }
     }
     
     // Show typing
@@ -2133,6 +2187,7 @@
       pagesViewed: (memory.behavior.pagesViewed || []).slice(-5).map(function(p) { return p.path; }),
       animeMatch: animeMatch, // Already resolved anime from KV
       linkMeta: linkMeta,     // Raw URL info
+      extractedFromLink: extractedData, // NEW: extracted caption/title from FB
       preferredLanguage: /[\u0980-\u09FF]/.test(text) ? 'bn' : 'en'
     };
     
