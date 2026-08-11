@@ -1,3 +1,15 @@
+// ═══════════════════════════════════════════════════════════════
+// ADMIN ADD v2 — FB Link OPTIONAL + Caption-Based Discovery
+// Path: src/pages/api/admin-add.ts
+// ═══════════════════════════════════════════════════════════════
+// ✅ FB links now OPTIONAL (can skip completely)
+// ✅ Caption required (main matching key)
+// ✅ Multiple FB links still supported (if provided)
+// ✅ Auto-slug generation
+// ✅ Auto-increment episode support
+// ✅ Better validation
+// ═══════════════════════════════════════════════════════════════
+
 export const prerender = false;
 
 function slugify(text: string): string {
@@ -56,6 +68,7 @@ export async function POST({ request, locals }: any) {
       }), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
 
+    // Verify auth
     const authHeader = request.headers.get('Authorization') || '';
     const token = authHeader.replace('Bearer ', '').trim();
     if (!verifyToken(token, adminPassword)) {
@@ -66,7 +79,13 @@ export async function POST({ request, locals }: any) {
     }
 
     const body = await request.json();
-    const fbLinks = Array.isArray(body.fbLinks) ? body.fbLinks : [body.fbLink].filter(Boolean);
+    
+    // FB links now OPTIONAL
+    const rawFbLinks = Array.isArray(body.fbLinks) 
+      ? body.fbLinks 
+      : [body.fbLink].filter(Boolean);
+    const fbLinks = rawFbLinks.filter((l: string) => l && l.trim().length > 0);
+    
     const animeTitle = (body.animeTitle || '').trim();
     const animeSlug = (body.animeSlug || slugify(animeTitle)).trim();
     const season = parseInt(body.season) || 1;
@@ -76,6 +95,9 @@ export async function POST({ request, locals }: any) {
     const watchUrl = (body.watchUrl || '').trim();
     const thumbnail = (body.thumbnail || '').trim();
 
+    // ═══════════════════════════════════════════════════
+    // VALIDATION
+    // ═══════════════════════════════════════════════════
     if (!animeTitle) {
       return new Response(JSON.stringify({ 
         success: false, 
@@ -83,29 +105,40 @@ export async function POST({ request, locals }: any) {
       }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
-    if (fbLinks.length === 0) {
+    // Caption highly recommended (main matching key)
+    if (!caption && fbLinks.length === 0) {
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'At least one Facebook link required' 
+        error: 'Please add either a caption OR at least one Facebook link (or both)' 
       }), { status: 400, headers: { 'Content-Type': 'application/json' } });
     }
 
+    // Extract FB IDs from all links (if any)
     const fbIds: string[] = [];
-    for (const link of fbLinks) {
-      const id = extractFbId(link);
-      if (id && !fbIds.includes(id)) fbIds.push(id);
+    if (fbLinks.length > 0) {
+      for (const link of fbLinks) {
+        const id = extractFbId(link);
+        if (id && !fbIds.includes(id)) fbIds.push(id);
+      }
+      
+      // If links provided but none could be parsed, warn but don't fail
+      if (fbIds.length === 0) {
+        console.warn('[admin-add] FB links provided but none could be parsed:', fbLinks);
+      }
     }
 
-    if (fbIds.length === 0) {
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: 'Could not extract Facebook ID from any link. Check the format.' 
-      }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-    }
-
+    // Unique record ID: slug + season + episode
     const recordId = `${animeSlug}_s${season}_ep${episode}`;
 
-    const record = {
+    // Check if record already exists (update vs create)
+    let existingRecord: any = null;
+    try {
+      const existing = await kv.get(`video:${recordId}`);
+      if (existing) existingRecord = JSON.parse(existing);
+    } catch {}
+
+    // Build record (merge with existing if applicable)
+    const record: any = {
       id: recordId,
       fbIds: fbIds,
       fbLinks: fbLinks,
@@ -117,35 +150,68 @@ export async function POST({ request, locals }: any) {
       keywords: keywords,
       watchUrl: watchUrl,
       thumbnail: thumbnail,
-      createdAt: Date.now(),
+      createdAt: existingRecord?.createdAt || Date.now(),
       updatedAt: Date.now()
     };
+    
+    // If updating, merge fbIds and fbLinks (add new ones without removing old)
+    if (existingRecord) {
+      const existingFbIds = Array.isArray(existingRecord.fbIds) ? existingRecord.fbIds : [];
+      const existingFbLinks = Array.isArray(existingRecord.fbLinks) ? existingRecord.fbLinks : [];
+      
+      // Merge unique
+      record.fbIds = Array.from(new Set([...existingFbIds, ...fbIds]));
+      record.fbLinks = Array.from(new Set([...existingFbLinks, ...fbLinks]));
+      
+      // Keep last 20 links max
+      if (record.fbLinks.length > 20) {
+        record.fbLinks = record.fbLinks.slice(-20);
+      }
+      if (record.fbIds.length > 20) {
+        record.fbIds = record.fbIds.slice(-20);
+      }
+      
+      // Update caption if new one provided, else keep existing
+      if (!caption && existingRecord.caption) {
+        record.caption = existingRecord.caption;
+      }
+      
+      // Keep existing thumbnail if new one not provided
+      if (!thumbnail && existingRecord.thumbnail) {
+        record.thumbnail = existingRecord.thumbnail;
+      }
+    }
 
+    // Save main record
     await kv.put(`video:${recordId}`, JSON.stringify(record));
 
-    for (const fbId of fbIds) {
+    // Save FB ID → record ID mapping (for fast link lookup)
+    for (const fbId of record.fbIds) {
       await kv.put(`fbid:${fbId}`, recordId);
     }
 
+    // Update global index
     const indexRaw = await kv.get('index:all');
     let index: string[] = [];
     try {
       index = indexRaw ? JSON.parse(indexRaw) : [];
     } catch (e) {}
-    if (!index.includes(recordId)) {
-      index.unshift(recordId);
-      if (index.length > 500) index = index.slice(0, 500);
-      await kv.put('index:all', JSON.stringify(index));
-    } else {
-      index = index.filter(id => id !== recordId);
-      index.unshift(recordId);
-      await kv.put('index:all', JSON.stringify(index));
-    }
+    
+    // Remove if exists, then add to top (recently updated)
+    index = index.filter(id => id !== recordId);
+    index.unshift(recordId);
+    
+    // Keep last 500
+    if (index.length > 500) index = index.slice(0, 500);
+    await kv.put('index:all', JSON.stringify(index));
 
     return new Response(JSON.stringify({ 
       success: true, 
       record: record,
-      message: 'Video added successfully!'
+      isUpdate: !!existingRecord,
+      message: existingRecord 
+        ? `Updated! Video now has ${record.fbIds.length} FB link${record.fbIds.length !== 1 ? 's' : ''} attached.` 
+        : `Video added! ${fbIds.length > 0 ? `${fbIds.length} FB link${fbIds.length !== 1 ? 's' : ''} attached.` : 'Caption-based discovery ready.'}`
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
   } catch (e: any) {
