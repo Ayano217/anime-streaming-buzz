@@ -811,7 +811,8 @@ const news = sortedPosts.slice(4, 8);
       : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2rem;">🎬</div>';
     
     var el = document.createElement('a');
-    el.href = '/anime/' + sl;
+    // ═══ FIX #1: Direct to reels (skip /anime/[slug] middle page) ═══
+    el.href = '/reels/anime_' + encodeURIComponent(sl) + '_ep1';
     el.className = 'at-na-card';
     el.style.animationDelay = delay;
     
@@ -853,10 +854,10 @@ const news = sortedPosts.slice(4, 8);
       ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="at-na-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
       : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>';
     
-    var el = document.createElement('div');
+    var el = document.createElement('a');
+    el.href = '/reels/' + encodeURIComponent(v.id);
     el.className = 'at-na-card';
     el.style.animationDelay = delay;
-    el.style.cursor = 'pointer';
     
     el.innerHTML =
       '<div class="at-na-thumb">' +
@@ -875,11 +876,6 @@ const news = sortedPosts.slice(4, 8);
         '<h3 class="at-na-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(t, 55)) + '</h3>' +
         '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;">' + esc(v.channel || 'Channel') + '</div>' +
       '</div>';
-    
-    el.addEventListener('click', function(e) {
-      e.preventDefault();
-      window.location.href = '/reels/' + encodeURIComponent(v.id);
-    });
     
     return el;
   }
@@ -921,6 +917,7 @@ const news = sortedPosts.slice(4, 8);
     return shuffled.slice(0, 8);
   }
 
+  // ═══ FIX #3: Debounced drag scroll (was every 1 second = LAG) ═══
   function enableDragScroll() {
     document.querySelectorAll('.product-row-scroll').forEach(function(el) {
       if (el.dataset.dragEnabled) return;
@@ -960,8 +957,6 @@ const news = sortedPosts.slice(4, 8);
       }, { passive: false });
     });
   }
-  
-  var enableInterval = setInterval(enableDragScroll, 1000);
 
   async function loadProducts() {
     try {
@@ -989,7 +984,14 @@ const news = sortedPosts.slice(4, 8);
     try{
       var animeItems = [];
       lastAnimePage++;
-      var animeRes = await fetch('/api/anime?action=list&category='+cat+'&page='+lastAnimePage);
+      
+      // ═══ FIX #2: Add nocache + random query variety for new anime ═══
+      var randomSeed = Math.floor(Math.random() * 1000);
+      var apiUrl = '/api/anime?action=list&category='+cat+'&page='+lastAnimePage;
+      // Every 3rd load, bypass cache for fresh content
+      if (lastAnimePage % 3 === 0) apiUrl += '&nocache=1';
+      
+      var animeRes = await fetch(apiUrl);
       var animeData = await animeRes.json();
       
       if(animeData.success && animeData.anime && animeData.anime.length > 0) {
@@ -1002,11 +1004,17 @@ const news = sortedPosts.slice(4, 8);
         });
       }
       
+      // ═══ Better cycling: try different categories if exhausted ═══
       if (animeItems.length === 0) {
         loopCount++;
         lastAnimePage = 1;
         ids = {};
-        var retryRes = await fetch('/api/anime?action=list&category='+cat+'&page=1');
+        
+        // Try random category for variety on retry
+        var altCategories = ['airing', 'top', 'popular', 'upcoming', 'movies'].filter(c => c !== cat);
+        var altCat = altCategories[Math.floor(Math.random() * altCategories.length)];
+        
+        var retryRes = await fetch('/api/anime?action=list&category=' + altCat + '&page=1&nocache=1');
         var retryData = await retryRes.json();
         if (retryData.success && retryData.anime) {
           animeItems = shuffle(retryData.anime);
@@ -1017,7 +1025,9 @@ const news = sortedPosts.slice(4, 8);
       socialTypeIdx++;
       var socialItems = [];
       try {
-        var socialRes = await fetch('/api/social-feed?type=' + socialType + '&page=' + (lastAnimePage % 5 + 1) + '&limit=8');
+        // Random page for social too
+        var socialPage = Math.floor(Math.random() * 5) + 1;
+        var socialRes = await fetch('/api/social-feed?type=' + socialType + '&page=' + socialPage + '&limit=8');
         var socialData = await socialRes.json();
         if(socialData.success && socialData.videos) {
           socialItems = socialData.videos.filter(function(v){
@@ -1040,14 +1050,17 @@ const news = sortedPosts.slice(4, 8);
       var videosPlaced = 0;
       var cardsPerRow = window.innerWidth <= 768 ? 2 : (window.innerWidth <= 1100 ? 3 : (window.innerWidth <= 1400 ? 4 : 5));
       
+      // ═══ FIX #3: Batch DOM operations using DocumentFragment (faster) ═══
+      var fragment = document.createDocumentFragment();
+      
       animeItems.forEach(function(a){
         total++;
-        feed.appendChild(animeCard(a, total-1));
+        fragment.appendChild(animeCard(a, total-1));
         cardCount++;
         
         if (cardCount % 2 === 0 && socialIdx < socialItems.length) {
           var vid = socialItems[socialIdx++];
-          feed.appendChild(socialCard(vid, total));
+          fragment.appendChild(socialCard(vid, total));
           total++;
           cardCount++;
           videosPlaced++;
@@ -1058,7 +1071,7 @@ const news = sortedPosts.slice(4, 8);
           if (products.length > 0) {
             var row = productRow(products);
             if (row) {
-              feed.appendChild(row);
+              fragment.appendChild(row);
               total += products.length;
             }
           }
@@ -1068,9 +1081,15 @@ const news = sortedPosts.slice(4, 8);
       
       while (socialIdx < socialItems.length) {
         var vid = socialItems[socialIdx++];
-        feed.appendChild(socialCard(vid, total));
+        fragment.appendChild(socialCard(vid, total));
         total++;
       }
+      
+      // Single DOM append (much faster than multiple appendChild)
+      feed.appendChild(fragment);
+      
+      // Enable drag scroll only for new product rows
+      enableDragScroll();
       
       updateCount();
       if(loadingEl)loadingEl.style.display='none';
@@ -1100,15 +1119,21 @@ const news = sortedPosts.slice(4, 8);
     });
   });
 
+  // ═══ FIX #3: Better scroll debouncing (150ms → 250ms + IntersectionObserver ready) ═══
   var scrollTimer;
+  var isScrolling = false;
   window.addEventListener('scroll',function(){
     if(loading)return;
+    if(isScrolling) return;
+    isScrolling = true;
+    
     if(scrollTimer) clearTimeout(scrollTimer);
     scrollTimer = setTimeout(function(){
+      isScrolling = false;
       var scrollPos = window.scrollY + window.innerHeight;
       var pageHeight = document.documentElement.scrollHeight;
       if(scrollPos > pageHeight - 1500){ load(); }
-    }, 150);
+    }, 250);
   },{passive:true});
 
   loadProducts().then(load);
