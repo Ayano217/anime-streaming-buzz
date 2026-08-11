@@ -129,7 +129,62 @@ const navItems = [
     </nav>
   </div>
 </header>
-
+<!-- ═══ SMART PICKER MODAL (when auto-detect fails) ═══ -->
+<div id="pickerModal" class="picker-modal" style="display:none">
+  <div class="picker-backdrop" id="pickerBackdrop"></div>
+  <div class="picker-panel">
+    <div class="picker-header">
+      <div class="picker-title">
+        <span class="picker-emoji">🤔</span>
+        <div>
+          <div class="picker-title-main">Help us find this anime</div>
+          <div class="picker-title-sub">Auto-detect couldn't find it</div>
+        </div>
+      </div>
+      <button class="picker-close" id="pickerClose" aria-label="Close">✕</button>
+    </div>
+    
+    <div class="picker-body">
+      <!-- Extracted info (if any) -->
+      <div id="pickerExtracted" class="picker-extracted" style="display:none">
+        <div class="picker-extracted-label">📝 We extracted this info:</div>
+        <div id="pickerExtractedThumb" class="picker-extracted-thumb" style="display:none">
+          <img id="pickerExtractedImg" src="" alt="" referrerpolicy="no-referrer" />
+        </div>
+        <div id="pickerExtractedCaption" class="picker-extracted-caption"></div>
+      </div>
+      
+      <!-- Search input -->
+      <div class="picker-field">
+        <label class="picker-label">
+          🔍 Search anime by name or caption
+        </label>
+        <input 
+          type="text" 
+          id="pickerSearch" 
+          class="picker-input" 
+          placeholder="Type anime name, caption, or keywords..."
+          autocomplete="off"
+        />
+      </div>
+      
+      <!-- Search results -->
+      <div id="pickerResults" class="picker-results">
+        <div class="picker-hint">💡 Start typing to see matches</div>
+      </div>
+    </div>
+    
+    <div class="picker-footer">
+      <button class="picker-btn-cancel" id="pickerCancel">Cancel</button>
+      <a href="/admin" target="_blank" class="picker-btn-admin">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        <span>Add manually (Admin)</span>
+      </a>
+    </div>
+  </div>
+</div>
 <!-- URL Resolve Toast -->
 <div id="urlToast" class="url-toast" style="display:none">
   <div class="url-toast-inner">
@@ -577,21 +632,54 @@ const navItems = [
     if (urlResolveCtrl) urlResolveCtrl.abort();
     urlResolveCtrl = new AbortController();
     showUrlToast('Detecting anime...', 'Checking database');
+    
     fetch('/api/link-resolver?url=' + encodeURIComponent(url), { signal: urlResolveCtrl.signal })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
+      .then(function(r) { 
+        return r.json().then(function(data) {
+          return { status: r.status, data: data };
+        });
+      })
+      .then(function(result) {
+        var data = result.data;
+        
+        // ═══ SUCCESS - Auto-detected ═══
         if (data && data.success && data.redirectUrl) {
-          showUrlToast('Found: ' + (data.title || 'Anime'), 'Redirecting...');
-          setTimeout(function() { hideUrlToast(); window.location.href = data.redirectUrl; }, 700);
-        } else {
-          hideUrlToast();
-          alert('Could not detect anime from this link. It might not be in our database yet.');
+          var sourceText = 'Redirecting...';
+          if (data.source === 'kv-direct') sourceText = 'Found instantly!';
+          else if (data.source === 'caption-match') sourceText = 'Matched by caption!';
+          
+          showUrlToast('Found: ' + (data.title || 'Anime'), sourceText);
+          setTimeout(function() { 
+            hideUrlToast(); 
+            window.location.href = data.redirectUrl; 
+          }, 700);
+          return;
         }
+        
+        // ═══ NEEDS MANUAL HELP - Show picker ═══
+        if (data && data.needsManualHelp) {
+          hideUrlToast();
+          showPickerModal({
+            extracted: data.extracted || null,
+            originalUrl: url
+          });
+          return;
+        }
+        
+        // ═══ COMPLETE FAILURE ═══
+        hideUrlToast();
+        showPickerModal({
+          extracted: null,
+          originalUrl: url
+        });
       })
       .catch(function(err) {
         if (err && err.name === 'AbortError') return;
         hideUrlToast();
-        alert('Failed to resolve link');
+        showPickerModal({
+          extracted: null,
+          originalUrl: url
+        });
       });
   }
 
@@ -710,7 +798,175 @@ const navItems = [
       }
     });
   }
-
+  /* ═══════════════════════════════════════
+     🎯 SMART PICKER MODAL LOGIC
+  ═══════════════════════════════════════ */
+  var pickerModal = $('pickerModal');
+  var pickerBackdrop = $('pickerBackdrop');
+  var pickerClose = $('pickerClose');
+  var pickerCancel = $('pickerCancel');
+  var pickerSearch = $('pickerSearch');
+  var pickerResults = $('pickerResults');
+  var pickerExtracted = $('pickerExtracted');
+  var pickerExtractedThumb = $('pickerExtractedThumb');
+  var pickerExtractedImg = $('pickerExtractedImg');
+  var pickerExtractedCaption = $('pickerExtractedCaption');
+  var pickerSearchTimer = null;
+  var pickerContext = null;
+  
+  function showPickerModal(context) {
+    if (!pickerModal) return;
+    pickerContext = context || {};
+    pickerModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Show extracted data if any
+    if (context.extracted && (context.extracted.caption || context.extracted.title || context.extracted.thumbnail)) {
+      pickerExtracted.style.display = 'block';
+      
+      if (context.extracted.thumbnail) {
+        pickerExtractedImg.src = context.extracted.thumbnail;
+        pickerExtractedThumb.style.display = 'block';
+      } else {
+        pickerExtractedThumb.style.display = 'none';
+      }
+      
+      var captionText = context.extracted.caption || context.extracted.title || '';
+      if (captionText) {
+        pickerExtractedCaption.textContent = '"' + captionText.slice(0, 200) + (captionText.length > 200 ? '...' : '') + '"';
+        
+        // Pre-fill search with extracted caption
+        pickerSearch.value = captionText.slice(0, 60);
+        setTimeout(function() { doPickerSearch(); }, 300);
+      } else {
+        pickerExtractedCaption.textContent = '';
+      }
+    } else {
+      pickerExtracted.style.display = 'none';
+    }
+    
+    // Focus search input
+    setTimeout(function() { pickerSearch.focus(); }, 200);
+  }
+  
+  function hidePickerModal() {
+    if (!pickerModal) return;
+    pickerModal.style.display = 'none';
+    document.body.style.overflow = '';
+    pickerSearch.value = '';
+    pickerResults.innerHTML = '<div class="picker-hint">💡 Start typing to see matches</div>';
+    pickerContext = null;
+  }
+  
+  function doPickerSearch() {
+    var q = pickerSearch.value.trim();
+    if (!q || q.length < 2) {
+      pickerResults.innerHTML = '<div class="picker-hint">💡 Type at least 2 characters</div>';
+      return;
+    }
+    
+    pickerResults.innerHTML = '<div class="picker-loading"><div class="picker-spin"></div><span>Searching...</span></div>';
+    
+    fetch('/api/fb-search?q=' + encodeURIComponent(q) + '&limit=10')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.success || !data.results || data.results.length === 0) {
+          pickerResults.innerHTML = '<div class="picker-empty">' +
+            '<div class="picker-empty-icon">🔍</div>' +
+            '<div class="picker-empty-text">No matches found</div>' +
+            '<div class="picker-empty-sub">Try different keywords or add via admin</div>' +
+            '</div>';
+          return;
+        }
+        
+        var html = '';
+        data.results.forEach(function(r) {
+          var thumb = r.thumbnail || '';
+          html += '<div class="picker-result-card" data-watch-url="' + esc(r.watchUrl) + '" data-anime-slug="' + esc(r.anime) + '">';
+          html += '<div class="picker-result-thumb">';
+          if (thumb) {
+            html += '<img src="' + esc(thumb) + '" alt="" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'" />';
+          } else {
+            html += '<span class="picker-result-emoji">🎬</span>';
+          }
+          html += '</div>';
+          html += '<div class="picker-result-info">';
+          html += '<div class="picker-result-title">' + esc(r.title || 'Unknown') + '</div>';
+          html += '<div class="picker-result-meta">';
+          html += '<span class="picker-result-ep">EP ' + r.episode + '</span>';
+          if (r.season && r.season > 1) html += '<span class="picker-result-dot">·</span><span>S' + r.season + '</span>';
+          html += '<span class="picker-result-dot">·</span><span>HD</span>';
+          html += '</div>';
+          if (r.caption) {
+            html += '<div class="picker-result-caption">' + esc(r.caption.slice(0, 100)) + '</div>';
+          }
+          html += '</div>';
+          html += '<div class="picker-result-arrow">→</div>';
+          html += '</div>';
+        });
+        
+        pickerResults.innerHTML = html;
+        
+        // Attach click handlers
+        var cards = pickerResults.querySelectorAll('.picker-result-card');
+        for (var i = 0; i < cards.length; i++) {
+          cards[i].addEventListener('click', function() {
+            var url = this.getAttribute('data-watch-url');
+            if (url) {
+              // Try to save the original FB link to this anime (auto-learn)
+              if (pickerContext && pickerContext.originalUrl) {
+                var animeSlug = this.getAttribute('data-anime-slug');
+                autoLearnLink(pickerContext.originalUrl, animeSlug);
+              }
+              window.location.href = url;
+            }
+          });
+        }
+      })
+      .catch(function() {
+        pickerResults.innerHTML = '<div class="picker-empty">' +
+          '<div class="picker-empty-icon">⚠️</div>' +
+          '<div class="picker-empty-text">Search failed</div>' +
+          '<div class="picker-empty-sub">Try again in a moment</div>' +
+          '</div>';
+      });
+  }
+  
+  // Auto-learn: when user manually picks anime for a failed link
+  function autoLearnLink(fbUrl, animeSlug) {
+    try {
+      // Save to localStorage for now (admin can review later)
+      var learned = JSON.parse(localStorage.getItem('anitube_learned_links') || '[]');
+      learned.unshift({ fbUrl: fbUrl, animeSlug: animeSlug, time: Date.now() });
+      if (learned.length > 50) learned = learned.slice(0, 50);
+      localStorage.setItem('anitube_learned_links', JSON.stringify(learned));
+    } catch(e) {}
+  }
+  
+  if (pickerSearch) {
+    pickerSearch.addEventListener('input', function() {
+      clearTimeout(pickerSearchTimer);
+      pickerSearchTimer = setTimeout(doPickerSearch, 300);
+    });
+    
+    pickerSearch.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        doPickerSearch();
+      }
+    });
+  }
+  
+  if (pickerClose) pickerClose.addEventListener('click', hidePickerModal);
+  if (pickerCancel) pickerCancel.addEventListener('click', hidePickerModal);
+  if (pickerBackdrop) pickerBackdrop.addEventListener('click', hidePickerModal);
+  
+  // Escape key closes picker
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && pickerModal && pickerModal.style.display === 'flex') {
+      hidePickerModal();
+    }
+  });
 })();
 </script>
 
@@ -1348,6 +1604,384 @@ const navItems = [
   @media (max-width: 900px) {
     .search-inline { width: 220px; }
     .sdd { width: 360px; }
+  }
+  /* ═══════════════════════════════════════
+     🎯 SMART PICKER MODAL
+  ═══════════════════════════════════════ */
+  .picker-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: pickerFadeIn 0.2s ease-out;
+  }
+  @keyframes pickerFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .picker-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 5, 23, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .picker-panel {
+    position: relative;
+    background: linear-gradient(180deg, rgba(28, 15, 61, 0.98), rgba(14, 8, 26, 0.99));
+    border: 1px solid rgba(192, 132, 252, 0.3);
+    border-radius: 20px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+    width: 100%;
+    max-width: 520px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: pickerScaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes pickerScaleIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  
+  .picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    background: linear-gradient(135deg, rgba(192, 132, 252, 0.15), rgba(232, 121, 249, 0.1));
+    border-bottom: 1px solid rgba(192, 132, 252, 0.2);
+    flex-shrink: 0;
+  }
+  .picker-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .picker-emoji {
+    font-size: 1.8rem;
+  }
+  .picker-title-main {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+  }
+  .picker-title-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: rgba(232, 121, 249, 0.8);
+    margin-top: 3px;
+  }
+  .picker-close {
+    background: rgba(192, 132, 252, 0.1);
+    border: 1px solid rgba(192, 132, 252, 0.25);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    transition: all 0.15s;
+  }
+  .picker-close:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+  }
+  
+  .picker-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .picker-body::-webkit-scrollbar { width: 5px; }
+  .picker-body::-webkit-scrollbar-thumb {
+    background: rgba(192, 132, 252, 0.3);
+    border-radius: 3px;
+  }
+  
+  .picker-extracted {
+    background: rgba(192, 132, 252, 0.08);
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .picker-extracted-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: rgba(232, 121, 249, 0.9);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .picker-extracted-thumb {
+    width: 100%;
+    max-width: 200px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+  }
+  .picker-extracted-thumb img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .picker-extracted-caption {
+    font-size: 0.85rem;
+    color: rgba(245, 236, 255, 0.85);
+    line-height: 1.4;
+    font-style: italic;
+  }
+  
+  .picker-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .picker-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .picker-input {
+    width: 100%;
+    padding: 11px 14px;
+    background: rgba(10, 5, 23, 0.7);
+    border: 1px solid rgba(192, 132, 252, 0.25);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .picker-input:focus {
+    border-color: rgba(232, 121, 249, 0.6);
+    box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.15);
+  }
+  .picker-input::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+  }
+  
+  .picker-results {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 100px;
+  }
+  .picker-hint {
+    text-align: center;
+    padding: 30px 20px;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.85rem;
+  }
+  .picker-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 30px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.85rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .picker-spin {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(192, 132, 252, 0.25);
+    border-top-color: #e879f9;
+    border-radius: 50%;
+    animation: pickerSpin 0.7s linear infinite;
+  }
+  @keyframes pickerSpin { to { transform: rotate(360deg); } }
+  
+  .picker-empty {
+    text-align: center;
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+  }
+  .picker-empty-icon { font-size: 2rem; }
+  .picker-empty-text {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .picker-empty-sub {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.55);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  
+  .picker-result-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(192, 132, 252, 0.15);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .picker-result-card:hover {
+    background: rgba(192, 132, 252, 0.12);
+    border-color: rgba(232, 121, 249, 0.5);
+    transform: translateY(-1px);
+  }
+  .picker-result-thumb {
+    width: 52px;
+    height: 72px;
+    min-width: 52px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(192, 132, 252, 0.3), rgba(232, 121, 249, 0.2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .picker-result-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .picker-result-emoji {
+    font-size: 1.4rem;
+    opacity: 0.7;
+  }
+  .picker-result-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .picker-result-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+  }
+  .picker-result-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    color: rgba(232, 121, 249, 0.9);
+    font-weight: 600;
+  }
+  .picker-result-ep {
+    padding: 1px 6px;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    color: #fff !important;
+    border-radius: 4px;
+    font-weight: 800;
+  }
+  .picker-result-dot { opacity: 0.4; }
+  .picker-result-caption {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.3;
+    font-style: italic;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .picker-result-arrow {
+    color: rgba(232, 121, 249, 0.7);
+    font-size: 1.2rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+  }
+  .picker-result-card:hover .picker-result-arrow {
+    transform: translateX(3px);
+    color: #e879f9;
+  }
+  
+  .picker-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 14px 20px;
+    background: rgba(10, 5, 23, 0.4);
+    border-top: 1px solid rgba(192, 132, 252, 0.15);
+    flex-shrink: 0;
+  }
+  .picker-btn-cancel {
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.7);
+    border-radius: 100px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .picker-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+  }
+  .picker-btn-admin {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    color: #fff !important;
+    border-radius: 100px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 3px 12px rgba(192, 132, 252, 0.35);
+    transition: transform 0.15s;
+  }
+  .picker-btn-admin:hover {
+    transform: translateY(-1px);
+  }
+  
+  /* Mobile responsive */
+  @media (max-width: 640px) {
+    .picker-modal { padding: 10px; }
+    .picker-panel { max-height: 90vh; }
+    .picker-header { padding: 14px 16px; }
+    .picker-body { padding: 14px 16px; }
+    .picker-footer { padding: 12px 16px; flex-direction: column-reverse; }
+    .picker-btn-admin, .picker-btn-cancel { width: 100%; justify-content: center; }
+    .picker-title-main { font-size: 0.95rem; }
+    .picker-emoji { font-size: 1.5rem; }
   }
   @media (max-width: 768px) {
     .header-nav { display: none; }
