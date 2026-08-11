@@ -1,28 +1,30 @@
 ---
 export const prerender = false;
 ---
-<!DOCTYPE html>
-<html>
+
+<html lang="en">
 <head>
-  <title>AnimePahe Real URL Test</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AnimePahe Iframe Test</title>
   <style>
     body { margin: 0; padding: 20px; background: #0a0517; color: white; font-family: sans-serif; }
-    h1 { color: #c084fc; }
+    h1 { color: #c084fc; margin: 0 0 20px; }
     .test-box { margin: 30px 0; padding: 20px; background: rgba(28, 15, 61, 0.5); border: 1px solid rgba(192, 132, 252, 0.3); border-radius: 12px; }
     .test-box h3 { margin: 0 0 10px; color: #e879f9; }
     .test-box p { margin: 5px 0; font-size: 13px; opacity: 0.8; }
-    iframe { width: 100%; height: 700px; border: 0; border-radius: 8px; background: #000; margin-top: 10px; }
+    iframe { width: 100%; height: 600px; border: 0; border-radius: 8px; background: #000; margin-top: 10px; display: block; }
     .url { font-family: monospace; font-size: 11px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; overflow-wrap: break-word; margin: 8px 0; color: #7dd3fc; }
-    .success { background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.5); }
     .highlight { background: rgba(251, 191, 36, 0.15); border-color: rgba(251, 191, 36, 0.5); }
+    .success { background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.5); }
   </style>
 </head>
 <body>
-  <h1>🎯 AnimePahe REAL URL Test (animepahe.ch)</h1>
-  <p>Testing the actual URL format that works!</p>
+  <h1>🎯 AnimePahe.ch Iframe Test</h1>
+  <p>Checking if AnimePahe embeds work in an iframe.</p>
 
   <div class="test-box highlight">
-    <h3>🔥 Test A: YOUR URL (animepahe.ch - Episode Direct)</h3>
+    <h3>🔥 Test A: YOUR URL (Oblivious Saint - Ep 7)</h3>
     <p>Your provided URL — direct episode page</p>
     <div class="url">https://animepahe.ch/the-oblivious-saint-cant-contain-her-power-episode-7-english-subbed/</div>
     <iframe src="https://animepahe.ch/the-oblivious-saint-cant-contain-her-power-episode-7-english-subbed/" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
@@ -35,14 +37,13 @@ export const prerender = false;
   </div>
 
   <div class="test-box">
-    <h3>Test C: Different Anime — One Piece Episode 1 (guessing URL)</h3>
-    <p>Testing if URL pattern is: /{slug}-episode-{N}-english-subbed/</p>
+    <h3>Test C: One Piece Ep 1 (guessing URL pattern)</h3>
     <div class="url">https://animepahe.ch/one-piece-episode-1-english-subbed/</div>
     <iframe src="https://animepahe.ch/one-piece-episode-1-english-subbed/" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
   </div>
 
   <div class="test-box">
-    <h3>Test D: Popular Anime — Jujutsu Kaisen</h3>
+    <h3>Test D: Jujutsu Kaisen Ep 1</h3>
     <div class="url">https://animepahe.ch/jujutsu-kaisen-episode-1-english-subbed/</div>
     <iframe src="https://animepahe.ch/jujutsu-kaisen-episode-1-english-subbed/" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
   </div>
@@ -50,13 +51,11 @@ export const prerender = false;
   <div class="test-box success">
     <h3>✅ What to Check:</h3>
     <ol>
-      <li><strong>Test A (YOUR URL):</strong> Does the video/page show? <em>Most important!</em></li>
-      <li><strong>Test B (Homepage):</strong> AnimePahe homepage load hocche?</li>
+      <li><strong>Test A (YOUR URL):</strong> Video/page dekhachche? MOST IMPORTANT!</li>
+      <li><strong>Test B (Homepage):</strong> AnimePahe homepage load?</li>
       <li><strong>Test C (One Piece):</strong> URL pattern kaj kore?</li>
       <li><strong>Test D (Jujutsu Kaisen):</strong> Same test</li>
     </ol>
-    <p><strong>Success indicator:</strong> Video player or anime content inside iframe.</p>
-    <p><strong>Failure indicator:</strong> Blank, "Refused to connect", or 404 page.</p>
   </div>
 </body>
 </html>
