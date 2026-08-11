@@ -8,6 +8,15 @@ import Footer from '../../components/Footer.astro';
 const { id } = Astro.params;
 const videoId = id || '';
 
+export const prerender = false;
+
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const { id } = Astro.params;
+const videoId = id || '';
+
 const animeMatch = videoId.match(/^anime_(.+)_ep(\d+)$/);
 const isAnimeExternal = !!animeMatch;
 const animeSlug = animeMatch ? animeMatch[1] : '';
@@ -18,8 +27,56 @@ if (videoId.startsWith('anime_') && !isAnimeExternal) {
   return Astro.redirect(`/reels/anime_${cleanSlug}_ep1`, 302);
 }
 
+// ═══════════════════════════════════════════════════
+// 🎯 FETCH ANIME INFO — Try KV database FIRST
+// ═══════════════════════════════════════════════════
 let externalAnime = null;
+let kvAnimeInfo = null;
+
 if (isAnimeExternal) {
+  // Try KV database (our admin-added anime info)
+  try {
+    const env = (Astro.locals as any)?.runtime?.env || {};
+    const kv = env.ANIME_DB;
+    
+    if (kv) {
+      // Try to find by slug + episode (season 1 default, then any season)
+      const seasonsToTry = [1, 2, 3, 4, 5];
+      for (const s of seasonsToTry) {
+        const recordId = `${animeSlug}_s${s}_ep${animeEpNum}`;
+        const raw = await kv.get(`video:${recordId}`);
+        if (raw) {
+          try {
+            kvAnimeInfo = JSON.parse(raw);
+            break;
+          } catch {}
+        }
+      }
+      
+      // If not found by exact match, search index for slug match
+      if (!kvAnimeInfo) {
+        const indexRaw = await kv.get('index:all');
+        if (indexRaw) {
+          let index: string[] = [];
+          try { index = JSON.parse(indexRaw); } catch {}
+          
+          for (const id of index.slice(0, 100)) {
+            if (id.startsWith(animeSlug + '_s') && id.endsWith('_ep' + animeEpNum)) {
+              const raw = await kv.get(`video:${id}`);
+              if (raw) {
+                try {
+                  kvAnimeInfo = JSON.parse(raw);
+                  break;
+                } catch {}
+              }
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {}
+  
+  // Also try anime-external API (AnimoTV episode data)
   try {
     const url = new URL('/api/anime-external', Astro.url.origin);
     url.searchParams.set('action', 'detail');
@@ -82,30 +139,97 @@ function extractSeriesFromTitle(title) {
   return t.slice(0, 50);
 }
 
+// Auto-format slug to readable title (fallback)
+function slugToTitle(slug) {
+  return String(slug || '')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, l => l.toUpperCase())
+    .trim();
+}
+
 let video = null;
 let allVideos = [];
 
-if (isAnimeExternal && externalAnime) {
+if (isAnimeExternal) {
   const platformData = getPlatformData(videoId);
-  const currentEp = (externalAnime.episodes || []).find(e => e.number === animeEpNum);
-  const heroImage = (currentEp && currentEp.thumbnail) ? currentEp.thumbnail : (externalAnime.poster || '');
-  video = {
-    id: videoId,
-    title: `${externalAnime.title} - Episode ${animeEpNum}`,
-    channel: 'AniTubeBuzz',
-    thumbnail: heroImage,
-    poster: externalAnime.poster || '',
-    embedUrl: platformData.embedUrl,
-    source: 'animotv',
-    aspect: 'landscape',
-    isShort: false,
-    type: 'anime',
-    description: externalAnime.description || '',
-    isAnimeExternal: true,
-    animeSlug: animeSlug,
-    episodeNumber: animeEpNum,
-    totalEpisodes: externalAnime.episodes ? externalAnime.episodes.length : 26,
-  };
+  
+  // ═══ Priority 1: KV database info (our admin data) ═══
+  if (kvAnimeInfo) {
+    const currentEp = (externalAnime && externalAnime.episodes) 
+      ? externalAnime.episodes.find(e => e.number === animeEpNum) 
+      : null;
+    const heroImage = kvAnimeInfo.thumbnail 
+      || (currentEp && currentEp.thumbnail) 
+      || (externalAnime && externalAnime.poster) 
+      || '';
+    
+    video = {
+      id: videoId,
+      title: `${kvAnimeInfo.animeTitle} - Episode ${animeEpNum}${kvAnimeInfo.season > 1 ? ` (Season ${kvAnimeInfo.season})` : ''}`,
+      channel: 'AniTubeBuzz',
+      thumbnail: heroImage,
+      poster: heroImage,
+      embedUrl: platformData.embedUrl,
+      source: 'animotv',
+      aspect: 'landscape',
+      isShort: false,
+      type: 'anime',
+      description: kvAnimeInfo.caption || (externalAnime && externalAnime.description) || '',
+      isAnimeExternal: true,
+      animeSlug: animeSlug,
+      episodeNumber: animeEpNum,
+      totalEpisodes: (externalAnime && externalAnime.episodes) ? externalAnime.episodes.length : 26,
+      seasonNumber: kvAnimeInfo.season || 1,
+      fromDatabase: true, // Flag: we have real info
+    };
+  }
+  // ═══ Priority 2: AnimoTV info (external API) ═══
+  else if (externalAnime) {
+    const currentEp = (externalAnime.episodes || []).find(e => e.number === animeEpNum);
+    const heroImage = (currentEp && currentEp.thumbnail) ? currentEp.thumbnail : (externalAnime.poster || '');
+    video = {
+      id: videoId,
+      title: `${externalAnime.title} - Episode ${animeEpNum}`,
+      channel: 'AniTubeBuzz',
+      thumbnail: heroImage,
+      poster: externalAnime.poster || '',
+      embedUrl: platformData.embedUrl,
+      source: 'animotv',
+      aspect: 'landscape',
+      isShort: false,
+      type: 'anime',
+      description: externalAnime.description || '',
+      isAnimeExternal: true,
+      animeSlug: animeSlug,
+      episodeNumber: animeEpNum,
+      totalEpisodes: externalAnime.episodes ? externalAnime.episodes.length : 26,
+      seasonNumber: 1,
+      fromDatabase: false,
+    };
+  }
+  // ═══ Priority 3: Fallback with slug-based title ═══
+  else {
+    const readableTitle = slugToTitle(animeSlug);
+    video = {
+      id: videoId,
+      title: `${readableTitle} - Episode ${animeEpNum}`,
+      channel: 'AniTubeBuzz',
+      thumbnail: '',
+      poster: '',
+      embedUrl: platformData.embedUrl,
+      source: 'animotv',
+      aspect: 'landscape',
+      isShort: false,
+      type: 'anime',
+      description: '',
+      isAnimeExternal: true,
+      animeSlug: animeSlug,
+      episodeNumber: animeEpNum,
+      totalEpisodes: 26,
+      seasonNumber: 1,
+      fromDatabase: false,
+    };
+  }
 } else {
   try {
     const apiUrl = new URL('/api/social-feed', Astro.url.origin);
@@ -154,12 +278,13 @@ if (video.publishedAt) {
 const description = (video.description || '').trim();
 const hasDescription = description.length > 0;
 const metaParts = ['HD', typeLabel];
+if (video.episodeNumber) metaParts.push(`Episode ${video.episodeNumber}`);
+if (video.seasonNumber && video.seasonNumber > 1) metaParts.push(`Season ${video.seasonNumber}`);
 if (publishText) metaParts.push(publishText);
 const metaText = metaParts.join(' • ');
 
 const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.episodes : [];
 const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
----
 
 <BaseLayout title={`${video.title} | AniTubeBuzz`}>
   <Header slot="header" />
