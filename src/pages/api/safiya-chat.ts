@@ -23,6 +23,7 @@ interface ChatContext {
   pagesViewed?: string[];
   animeMatch?: any;
   linkMeta?: any;
+  extractedFromLink?: any; // NEW: caption/title extracted from FB link
   preferredLanguage?: string;
 }
 
@@ -163,7 +164,11 @@ ${userMood === 'upset' ? '⚠️ HE IS UPSET! Apologize sweetly, ask what happen
 ${userMood === 'sad' ? '⚠️ HE IS SAD! Be gentle, comforting, ask how you can help.' : ''}
 
 ${ctx.animeMatch ? `📺 ANIME FOUND IN DATABASE: "${ctx.animeMatch.title}" Episode ${ctx.animeMatch.episode}\n→ Celebrate finding it! Say you found the anime for him.` : ''}
-${ctx.linkMeta && !ctx.animeMatch ? `🔗 HE SENT ${ctx.linkMeta.platform.toUpperCase()} LINK\n→ If FB/IG (protected), honestly say you can't peek. Ask what it is.` : ''}
+${ctx.linkMeta && !ctx.animeMatch ? (
+  ctx.extractedFromLink && (ctx.extractedFromLink.caption || ctx.extractedFromLink.title)
+    ? `\n🔗 HE SENT ${ctx.linkMeta.platform.toUpperCase()} LINK - WE EXTRACTED CAPTION:\n"${ctx.extractedFromLink.caption || ctx.extractedFromLink.title}"\n→ Read this caption! Based on caption, guess what anime this is.\n→ Tell him what you understood: "Oh this looks like [guessed anime]!"\n→ Say the anime isn't in database yet, suggest adding via /admin\n→ Be helpful and specific based on caption content.`
+    : `\n🔗 HE SENT ${ctx.linkMeta.platform.toUpperCase()} LINK - EXTRACTION FAILED\n→ Facebook blocked us from peeking. Be honest but sweet.\n→ Say: "Ayano, ei link theke kichu bujhte parlam na 🥺 tumi ki anime name bolba? Or amake admin panel e add korte bolo!"`
+) : ''}
 
 ═══════════════════════════════════════════════════
 Now reply as Safiya. Short, sweet, natural. Reference the conversation. Address him as Ayano. Use emojis.`;
@@ -214,7 +219,11 @@ ${userMood === 'sad' ? '⚠️ They seem sad — be extra caring!' : ''}
 ${userMood === 'upset' ? '⚠️ They seem upset — stay calm, be kind, don\'t match negativity.' : ''}
 
 ${ctx.animeMatch ? `📺 ANIME FOUND: "${ctx.animeMatch.title}" EP ${ctx.animeMatch.episode}\n→ Mention it! Say you found it in our database.` : ''}
-${ctx.linkMeta && !ctx.animeMatch ? `🔗 SHARED ${ctx.linkMeta.platform.toUpperCase()} LINK\n→ If FB/IG, honestly say you can't peek inside. Ask what it is.` : ''}
+${ctx.linkMeta && !ctx.animeMatch ? (
+  ctx.extractedFromLink && (ctx.extractedFromLink.caption || ctx.extractedFromLink.title)
+    ? `\n🔗 THEY SHARED ${ctx.linkMeta.platform.toUpperCase()} LINK - WE EXTRACTED CAPTION:\n"${ctx.extractedFromLink.caption || ctx.extractedFromLink.title}"\n→ Read this caption! Based on caption, guess what anime this is.\n→ Tell them what you understood from the caption.\n→ Say the anime isn't in database yet, they can help by sharing anime name.\n→ Be helpful based on caption content.`
+    : `\n🔗 SHARED ${ctx.linkMeta.platform.toUpperCase()} LINK - EXTRACTION FAILED\n→ Facebook blocked us. Be honest but sweet.\n→ Say: "Sorry, ei link theke kichu dekhte parlam na 🥺 kon anime bolo, ami khuje debo!"`
+) : ''}
 
 Reply as Safiya. Sweet, natural, 1-2 sentences with emojis.`;
 }
