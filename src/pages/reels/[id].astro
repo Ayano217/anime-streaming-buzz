@@ -1,5 +1,5 @@
 ---
-export const prerender = false;    ← Keep this (ONLY ONE!)
+export const prerender = false;
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
@@ -19,7 +19,7 @@ if (videoId.startsWith('anime_') && !isAnimeExternal) {
 }
 
 // ═══════════════════════════════════════════════════
-// 🎯 FETCH ANIME INFO — Try KV database FIRST     ← No duplicate export here!
+// 🎯 FETCH ANIME INFO — Try KV database FIRST
 // ═══════════════════════════════════════════════════
 let externalAnime = null;
 let kvAnimeInfo = null;
@@ -130,7 +130,6 @@ function extractSeriesFromTitle(title) {
   return t.slice(0, 50);
 }
 
-// Auto-format slug to readable title (fallback)
 function slugToTitle(slug) {
   return String(slug || '')
     .replace(/-/g, ' ')
@@ -144,7 +143,7 @@ let allVideos = [];
 if (isAnimeExternal) {
   const platformData = getPlatformData(videoId);
   
-  // ═══ Priority 1: KV database info (our admin data) ═══
+  // Priority 1: KV database info
   if (kvAnimeInfo) {
     const currentEp = (externalAnime && externalAnime.episodes) 
       ? externalAnime.episodes.find(e => e.number === animeEpNum) 
@@ -171,10 +170,10 @@ if (isAnimeExternal) {
       episodeNumber: animeEpNum,
       totalEpisodes: (externalAnime && externalAnime.episodes) ? externalAnime.episodes.length : 26,
       seasonNumber: kvAnimeInfo.season || 1,
-      fromDatabase: true, // Flag: we have real info
+      fromDatabase: true,
     };
   }
-  // ═══ Priority 2: AnimoTV info (external API) ═══
+  // Priority 2: AnimoTV info
   else if (externalAnime) {
     const currentEp = (externalAnime.episodes || []).find(e => e.number === animeEpNum);
     const heroImage = (currentEp && currentEp.thumbnail) ? currentEp.thumbnail : (externalAnime.poster || '');
@@ -198,7 +197,7 @@ if (isAnimeExternal) {
       fromDatabase: false,
     };
   }
-  // ═══ Priority 3: Fallback with slug-based title ═══
+  // Priority 3: Fallback with slug-based title
   else {
     const readableTitle = slugToTitle(animeSlug);
     video = {
@@ -276,6 +275,7 @@ const metaText = metaParts.join(' • ');
 
 const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.episodes : [];
 const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
+---
 
 <BaseLayout title={`${video.title} | AniTubeBuzz`}>
   <Header slot="header" />
