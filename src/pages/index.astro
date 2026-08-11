@@ -1,720 +1,574 @@
 ---
-import { getCollection } from 'astro:content';
+// ═══════════════════════════════════════════════════════════════
+// AniTube Buzz — Home Page v2.0 (Full Rewrite)
+// Mixed content: Anime 60% + K-Drama 10% + Movies 10% + Donghua 10% + Series 10%
+// Sources: Dailymotion (heavy) + Bilibili (heavy) + YouTube + Kitsu
+// Performance: Lag-free, no GPU heavy CSS, DocumentFragment batch DOM
+// ═══════════════════════════════════════════════════════════════
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-
-const allPosts = await getCollection('posts', ({ data }) => !data.draft);
-const sortedPosts = allPosts.sort((a, b) =>
-  new Date(b.data.date).getTime() - new Date(a.data.date).getTime()
-);
-
-const novelty = sortedPosts.slice(0, 4);
-const news = sortedPosts.slice(4, 8);
 ---
 
 <BaseLayout>
   <Header slot="header" />
 
-  <section class="section-block arrivals-block">
+  <!-- ═══ MAIN FEED SECTION ═══ -->
+  <section class="at-home">
     <div class="container">
-      <div class="arrivals-header">
-        <div class="arrivals-title-wrap">
-          <div class="arrivals-bar"></div>
-          <div>
-            <div class="arrivals-tag">
-              <span class="arrivals-dot"></span>
-              <span>FRESH · UPDATED DAILY</span>
-            </div>
-            <h2 class="arrivals-title"><span class="grad-text">Discover</span></h2>
-          </div>
+
+      <!-- ═══ CATEGORY TABS ═══ -->
+      <div class="at-tabs" id="atTabs">
+        <button class="at-tab at-tab-active" data-cat="trending">
+          <span class="at-tab-dot"></span>
+          <span>Trending</span>
+        </button>
+        <button class="at-tab" data-cat="anime">Anime</button>
+        <button class="at-tab" data-cat="kdrama">K-Drama</button>
+        <button class="at-tab" data-cat="movies">Movies</button>
+        <button class="at-tab" data-cat="donghua">Donghua</button>
+      </div>
+
+      <!-- ═══ CONTENT GRID ═══ -->
+      <div class="at-grid" id="atGrid"></div>
+
+      <!-- ═══ LOADING INDICATOR ═══ -->
+      <div class="at-loading" id="atLoading" style="display:none;">
+        <div class="at-spinner"></div>
+        <span>Loading more...</span>
+      </div>
+
+      <!-- ═══ ERROR STATE ═══ -->
+      <div class="at-error" id="atError" style="display:none;">
+        <div class="at-error-icon">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 8v4M12 16h.01"/>
+          </svg>
         </div>
-        <div class="arrivals-actions">
-          <div class="arrivals-count">
-            <span class="arrivals-count-num" id="arrivalsCount">0</span>
-            <span class="arrivals-count-lbl">items</span>
-          </div>
-        </div>
+        <h3>Something went wrong</h3>
+        <p>Please try again in a moment.</p>
+        <button class="at-retry-btn" id="atRetry">Retry</button>
       </div>
 
-      <div class="cat-tabs" id="catTabs">
-        <button class="cat-tab active" data-cat="airing"><span class="cat-tab-dot"></span><span>Latest</span></button>
-        <button class="cat-tab" data-cat="top">Top Rated</button>
-        <button class="cat-tab" data-cat="upcoming">Upcoming</button>
-        <button class="cat-tab" data-cat="popular">Popular</button>
-        <button class="cat-tab" data-cat="movies">Movies</button>
+      <!-- ═══ EMPTY STATE ═══ -->
+      <div class="at-empty" id="atEmpty" style="display:none;">
+        <div style="font-size:2.5rem;margin-bottom:0.5rem;">🎬</div>
+        <h3>No content found</h3>
+        <p>Try a different category!</p>
       </div>
 
-      <div id="arrivalsFeed" class="feed-wrap"></div>
-
-      <div class="loading-more" id="loadingMore" style="display:none;">
-        <div class="ld-spinner"></div><span>Loading more...</span>
-      </div>
-
-      <div class="error-msg" id="errorMsg" style="display:none;">
-        <div class="err-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></div>
-        <h3>Loading...</h3>
-        <p>Please wait a moment.</p>
-      </div>
     </div>
   </section>
-
-  <!-- ═══ INSTAGRAM REELS-STYLE PLAYER ═══ -->
-  <div id="reelsPlayer" class="reels-player" style="display:none;">
-    <div class="reels-backdrop" id="reelsBackdrop"></div>
-    
-    <div class="reels-container">
-      <button class="reels-close" id="reelsClose" aria-label="Close">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-      
-      <div class="reels-video-wrap">
-        <div id="reelsVideoFrame" class="reels-video-frame"></div>
-      </div>
-      
-      <div class="reels-info">
-        <div class="reels-avatar">
-          <div class="reels-avatar-icon">▶</div>
-        </div>
-        <div class="reels-info-text">
-          <div id="reelsTitle" class="reels-title">Loading...</div>
-          <div id="reelsChannel" class="reels-channel">Video</div>
-        </div>
-        <button class="reels-like" id="reelsLike" aria-label="Like">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </button>
-      </div>
-      
-      <div class="reels-ads" id="reelsAds"></div>
-    </div>
-  </div>
-
-  {novelty.length > 0 && (
-    <section class="section-block novelty-block">
-      <div class="container">
-        <h2 class="section-title"><span class="grad-text">Latest Articles</span></h2>
-        <div class="novelty-grid">
-          {novelty.map((post) => (
-            <a href={`/posts/${post.slug}`} class="novelty-card">
-              <div class="nc-img">{post.data.image && <img src={post.data.image} alt={post.data.title} loading="lazy" />}<div class="nc-ov"></div></div>
-              <div class="nc-ct"><h3 class="nc-t">{post.data.title}</h3><p class="nc-e">{post.data.excerpt}</p></div>
-            </a>
-          ))}
-        </div>
-      </div>
-    </section>
-  )}
-
-  {news.length > 0 && (
-    <section class="section-block news-block">
-      <div class="container">
-        <h2 class="section-title"><span class="grad-text">News</span></h2>
-        <div class="news-grid">
-          {news.map((post) => (
-            <a href={`/posts/${post.slug}`} class="news-card">
-              <div class="nw-img">{post.data.image && <img src={post.data.image} alt={post.data.title} loading="lazy" />}</div>
-              <div class="nw-ct"><div class="nw-cat">{post.data.category}</div><h3 class="nw-t">{post.data.title}</h3><p class="nw-e">{post.data.excerpt}</p></div>
-            </a>
-          ))}
-        </div>
-      </div>
-    </section>
-  )}
 
   <Footer slot="footer" />
 </BaseLayout>
 
-<style is:global>
-  @keyframes atNaCardIn { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
-  
-  .feed-wrap {
+<style>
+  /* ═══ HOME PAGE LAYOUT ═══ */
+  .at-home {
+    padding: 0.5rem 0 3rem;
+    min-height: 80vh;
+  }
+
+  /* ═══ CATEGORY TABS ═══ */
+  .at-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 0;
+  }
+  .at-tabs::-webkit-scrollbar { display: none; }
+
+  .at-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    background: rgba(28, 15, 61, 0.5);
+    border: 1px solid rgba(192, 132, 252, 0.15);
+    border-radius: 999px;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .at-tab:hover {
+    background: rgba(192, 132, 252, 0.12);
+    border-color: rgba(192, 132, 252, 0.35);
+    color: #fff;
+  }
+  .at-tab-active {
+    background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(192, 132, 252, 0.35);
+  }
+  .at-tab-active:hover {
+    background: linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #7dd3fc 100%);
+    color: #fff;
+  }
+  .at-tab-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 6px #ef4444;
+    animation: atPulse 2s ease infinite;
+  }
+  .at-tab-active .at-tab-dot {
+    background: #fff;
+    box-shadow: 0 0 6px rgba(255,255,255,0.8);
+  }
+  @keyframes atPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* ═══ CONTENT GRID — 5 columns responsive ═══ */
+  .at-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 14px;
-    min-height: 400px;
+    min-height: 300px;
   }
-  
-  @media (max-width: 1400px) { .feed-wrap { grid-template-columns: repeat(4, 1fr); } }
-  @media (max-width: 1100px) { .feed-wrap { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
-  @media (max-width: 768px) { .feed-wrap { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
-  
-  .at-na-card { 
-    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1); 
-    cursor: pointer;
+  @media (max-width: 1400px) { .at-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 1100px) { .at-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; } }
+  @media (max-width: 768px)  { .at-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+
+  /* ═══ VIDEO CARD ═══ */
+  .at-card {
+    display: block;
     text-decoration: none;
     color: inherit;
-    display: block;
-    animation: atNaCardIn 0.4s ease backwards;
+    cursor: pointer;
+    contain: content;
+    transition: transform 0.3s ease;
   }
-  
-  .at-na-card:hover { transform: translateY(-4px); }
-  
-  .at-na-thumb {
+  .at-card:hover { transform: translateY(-4px); }
+  @media (max-width: 768px) { .at-card:hover { transform: translateY(-2px); } }
+
+  /* ═══ THUMBNAIL ═══ */
+  .at-thumb {
     position: relative;
     width: 100%;
     padding-top: 56.25%;
     border-radius: 12px;
     overflow: hidden;
     background: #0d0520;
-    border: 1px solid rgba(232, 121, 249, 0.35);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    transition: all 0.35s ease;
+    border: 1px solid rgba(232, 121, 249, 0.3);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
   }
-  
-  .at-na-card:hover .at-na-thumb {
-    border-color: rgba(232, 121, 249, 0.9);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(192, 132, 252, 0.5);
+  .at-card:hover .at-thumb {
+    border-color: rgba(232, 121, 249, 0.85);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 18px rgba(192, 132, 252, 0.4);
   }
-  
-  .at-na-img {
+
+  .at-img {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.5s ease, filter 0.3s ease;
+    transition: transform 0.45s ease;
   }
-  
-  .at-na-card:hover .at-na-img { 
-    transform: scale(1.08); 
-    filter: brightness(0.65); 
-  }
-  
-  .at-na-shine {
+  .at-card:hover .at-img { transform: scale(1.06); }
+
+  /* ═══ SHINE EFFECT (CSS only, no GPU animation loop) ═══ */
+  .at-shine {
     position: absolute;
     top: 0; left: -80%;
     width: 60%; height: 100%;
-    background: linear-gradient(105deg, transparent, rgba(255,255,255,0.2), transparent);
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,0.15), transparent);
     z-index: 3;
-    transition: left 0.8s ease;
+    transition: left 0.7s ease;
     pointer-events: none;
   }
-  .at-na-card:hover .at-na-shine { left: 120%; }
-  
-  .at-na-overlay {
+  .at-card:hover .at-shine { left: 120%; }
+
+  /* ═══ OVERLAY (on hover only) ═══ */
+  .at-overlay {
     position: absolute; inset: 0;
-    background: linear-gradient(180deg, transparent 40%, rgba(10,5,23,0.85) 100%);
+    background: linear-gradient(180deg, transparent 40%, rgba(10,5,23,0.8) 100%);
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none;
     z-index: 3;
   }
-  .at-na-card:hover .at-na-overlay { opacity: 1; }
-  
-  .at-na-play {
+  .at-card:hover .at-overlay { opacity: 1; }
+
+  /* ═══ PLAY BUTTON ═══ */
+  .at-play {
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%,-50%) scale(0.4);
-    width: 44px; height: 44px;
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
     z-index: 5;
     opacity: 0;
-    transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
     pointer-events: none;
+    box-shadow: 0 6px 20px rgba(192, 132, 252, 0.6);
   }
-  .at-na-card:hover .at-na-play {
+  .at-card:hover .at-play {
     opacity: 1;
     transform: translate(-50%,-50%) scale(1);
   }
-  
-  .at-na-card:hover .at-na-title {
-    background: linear-gradient(135deg,#c084fc,#e879f9,#7dd3fc);
+  @media (max-width: 768px) {
+    .at-play {
+      opacity: 0.7;
+      transform: translate(-50%,-50%) scale(0.7);
+    }
+    .at-card:hover .at-play {
+      opacity: 0.85;
+      transform: translate(-50%,-50%) scale(0.8);
+    }
+  }
+
+  /* ═══ BADGES ═══ */
+  .at-badge {
+    position: absolute;
+    padding: 3px 7px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    border-radius: 4px;
+    z-index: 6;
+    pointer-events: none;
+  }
+  .at-badge-new {
+    top: 6px; left: 6px;
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff;
+  }
+  .at-badge-type {
+    bottom: 6px; left: 6px;
+    background: rgba(10, 5, 23, 0.88);
+    color: #fbbf24;
+  }
+  .at-badge-score {
+    top: 6px; right: 6px;
+    background: rgba(10, 5, 23, 0.88);
+    color: #fbbf24;
+  }
+  .at-badge-hd {
+    bottom: 6px; right: 6px;
+    background: rgba(125, 211, 252, 0.9);
+    color: #0a0517;
+  }
+  .at-badge-src {
+    bottom: 6px; right: 6px;
+    background: rgba(10, 5, 23, 0.88);
+    color: rgba(192, 132, 252, 0.9);
+    font-size: 0.45rem;
+  }
+
+  /* ═══ CARD INFO ═══ */
+  .at-info {
+    padding: 8px 3px 4px;
+  }
+  .at-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-primary, #fff);
+    margin: 0 0 3px;
+    line-height: 1.25;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2em;
+    transition: color 0.3s ease;
+  }
+  .at-card:hover .at-title {
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  
-  .at-ip-thumb {
-    position: relative;
-    width: 100%;
-    padding-top: 75%;
-    border-radius: 12px;
-    overflow: hidden;
-    background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(232,121,249,0.1));
-    border: 1px solid rgba(232, 121, 249, 0.3);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-    transition: all 0.35s ease;
+  .at-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--text-muted, rgba(255,255,255,0.5));
   }
-  
-  .product-row {
+  .at-genre {
+    display: inline-block;
+    margin-top: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.52rem;
+    font-weight: 700;
+    color: #c084fc;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ═══ PRODUCT AD ROW ═══ */
+  .at-adrow {
     grid-column: 1 / -1;
-    margin: 8px 0;
-    padding: 16px;
-    background: linear-gradient(135deg, rgba(28,15,61,0.4), rgba(20,10,45,0.3));
-    border: 1px solid rgba(192,132,252,0.2);
-    border-radius: 16px;
-    position: relative;
-    animation: atNaCardIn 0.5s ease backwards;
+    margin: 6px 0;
+    padding: 14px;
+    background: linear-gradient(135deg, rgba(28,15,61,0.35), rgba(20,10,45,0.25));
+    border: 1px solid rgba(192, 132, 252, 0.18);
+    border-radius: 14px;
   }
-  
-  .product-row-header {
+  .at-adrow-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
-    padding: 0 4px;
+    margin-bottom: 10px;
+    padding: 0 2px;
   }
-  
-  .product-row-title {
+  .at-adrow-title {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 800;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     color: #e879f9;
     text-transform: uppercase;
   }
-  
-  .product-row-title::before {
+  .at-adrow-title::before {
     content: '';
-    width: 3px;
-    height: 14px;
+    width: 3px; height: 13px;
     background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
     border-radius: 2px;
-    box-shadow: 0 0 8px rgba(232,121,249,0.7);
   }
-  
-  .product-row-hint {
+  .at-adrow-hint {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
-    color: rgba(192,132,252,0.6);
-    letter-spacing: 0.05em;
+    font-size: 0.55rem;
+    color: rgba(192, 132, 252, 0.5);
   }
-  
-  .product-row-scroll {
+  .at-adrow-scroll {
     display: flex;
     gap: 10px;
     overflow-x: auto;
     overflow-y: hidden;
     scroll-behavior: smooth;
     scrollbar-width: thin;
-    scrollbar-color: rgba(192, 132, 252, 0.4) transparent;
-    padding: 4px 0 12px;
+    scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
+    padding: 2px 0 10px;
     -webkit-overflow-scrolling: touch;
-    cursor: grab;
-    user-select: none;
   }
-  .product-row-scroll:active { cursor: grabbing; }
-  .product-row-scroll::-webkit-scrollbar { height: 6px; background: transparent; }
-  .product-row-scroll::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.4); border-radius: 3px; }
-  .product-row-scroll::-webkit-scrollbar-thumb:hover { background: rgba(192, 132, 252, 0.7); }
-  .product-row-scroll::-webkit-scrollbar-track { background: transparent; }
-  
-  .product-row-item {
+  .at-adrow-scroll::-webkit-scrollbar { height: 5px; }
+  .at-adrow-scroll::-webkit-scrollbar-thumb { background: rgba(192,132,252,0.3); border-radius: 3px; }
+
+  .at-ad-item {
     flex: 0 0 auto;
-    width: 180px;
-    scroll-snap-align: start;
+    width: 160px;
     text-decoration: none;
     color: inherit;
     display: block;
-    cursor: pointer;
-    transition: transform 0.3s ease;
+    transition: transform 0.25s ease;
   }
-  
-  .product-row-item:hover { transform: translateY(-3px); }
-  
-  .product-row-thumb {
+  .at-ad-item:hover { transform: translateY(-3px); }
+  @media (max-width: 768px) { .at-ad-item { width: 130px; } .at-adrow { padding: 10px; } }
+
+  .at-ad-thumb {
     position: relative;
     width: 100%;
     padding-top: 75%;
-    border-radius: 10px;
+    border-radius: 8px;
     overflow: hidden;
-    background: linear-gradient(135deg, rgba(192,132,252,0.15), rgba(232,121,249,0.1));
-    border: 1px solid rgba(192,132,252,0.25);
-    margin-bottom: 6px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-    transition: all 0.3s ease;
+    background: rgba(192, 132, 252, 0.1);
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    margin-bottom: 5px;
+    transition: border-color 0.25s ease;
   }
-  
-  .product-row-item:hover .product-row-thumb {
-    border-color: rgba(232,121,249,0.7);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4), 0 0 15px rgba(192,132,252,0.3);
+  .at-ad-item:hover .at-ad-thumb {
+    border-color: rgba(232, 121, 249, 0.6);
   }
-  
-  .product-row-img {
+  .at-ad-img {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
     object-fit: cover;
-    transition: transform 0.4s ease;
+    transition: transform 0.35s ease;
   }
-  
-  .product-row-item:hover .product-row-img { transform: scale(1.06); }
-  
-  .product-row-info {
-    padding: 0 2px;
-  }
-  
-  .product-row-item-title {
+  .at-ad-item:hover .at-ad-img { transform: scale(1.05); }
+
+  .at-ad-name {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1.25;
+    color: var(--text-primary, #fff);
+    line-height: 1.2;
     display: -webkit-box;
     -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
     margin-bottom: 2px;
   }
-  
-  .product-row-price {
+  .at-ad-price {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 800;
     color: #7dd3fc;
   }
-  
-  @media (max-width: 768px) {
-    .product-row-item { width: 140px; }
-    .product-row { padding: 12px; }
+
+  /* ═══ SKELETON LOADING (no animation = no GPU waste) ═══ */
+  .at-skel {
+    border-radius: 12px;
   }
-  
-  .at-inline-product:hover .at-ip-thumb {
-    border-color: rgba(232,121,249,0.7);
-    box-shadow: 0 12px 28px rgba(0,0,0,0.5), 0 0 20px rgba(192,132,252,0.4);
-  }
-  
-  .at-ip-img {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    transition: transform 0.5s ease, filter 0.3s ease;
-  }
-  
-  .at-inline-product { 
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    cursor: pointer;
-    animation: atNaCardIn 0.4s ease backwards;
-    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
-  }
-  .at-inline-product:hover { transform: translateY(-4px); }
-  .at-inline-product:hover .at-ip-img { transform: scale(1.08); filter: brightness(0.65); }
-  
-  @media (max-width: 768px) {
-    .at-na-card:hover { transform: translateY(-2px); }
-    .at-na-play { opacity: 0.75 !important; transform: translate(-50%,-50%) scale(0.7) !important; }
-  }
-  
-  /* ═══ INSTAGRAM REELS PLAYER ═══ */
-  .reels-player {
-    position: fixed;
-    inset: 0;
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    animation: reelsFadeIn 0.3s ease;
-  }
-  
-  @keyframes reelsFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  .reels-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: blur(15px);
-    cursor: pointer;
-  }
-  
-  .reels-container {
-    position: relative;
-    width: 100%;
-    max-width: 480px;
-    max-height: 90vh;
-    background: linear-gradient(180deg, #1a0b35, #0d0520);
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8), 0 0 60px rgba(192, 132, 252, 0.3);
-    animation: reelsSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    display: flex;
-    flex-direction: column;
-  }
-  
-  @keyframes reelsSlideUp {
-    from { opacity: 0; transform: translateY(30px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  
-  .reels-close {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    z-index: 20;
-    backdrop-filter: blur(10px);
-  }
-  
-  .reels-close:hover {
-    background: rgba(239, 68, 68, 0.4);
-    transform: rotate(90deg);
-  }
-  
-  .reels-video-wrap {
-    position: relative;
+  .at-skel-thumb {
     width: 100%;
     padding-top: 56.25%;
-    background: #000;
+    border-radius: 12px;
+    background: #1a0e35;
   }
-  
-  .reels-video-frame {
-    position: absolute;
-    inset: 0;
-  }
-  
-  .reels-video-frame iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
-    display: block;
-  }
-  
-  .reels-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 16px;
-    background: linear-gradient(180deg, rgba(28, 15, 61, 0.9), rgba(20, 10, 45, 0.95));
-    border-top: 1px solid rgba(192, 132, 252, 0.15);
-  }
-  
-  .reels-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    padding: 2px;
-    box-shadow: 0 4px 12px rgba(192, 132, 252, 0.4);
-  }
-  
-  .reels-avatar-icon {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: #0d0520;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #e879f9;
-    font-size: 1.2rem;
-    padding-left: 2px;
-  }
-  
-  .reels-info-text {
-    flex: 1;
-    min-width: 0;
-  }
-  
-  .reels-title {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin-bottom: 3px;
-  }
-  
-  .reels-channel {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.6);
-  }
-  
-  .reels-like {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: #fff;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    flex-shrink: 0;
-  }
-  
-  .reels-like:hover, .reels-like.liked {
-    background: rgba(239, 68, 68, 0.3);
-    color: #ef4444;
-    transform: scale(1.1);
-  }
-  
-  .reels-like.liked svg {
-    fill: #ef4444;
-    stroke: #ef4444;
-  }
-  
-  .reels-ads {
-    padding: 8px 12px 12px;
-    background: rgba(10, 5, 23, 0.6);
-    max-height: 200px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(192, 132, 252, 0.3) transparent;
-  }
-  
-  .reels-ads::-webkit-scrollbar { width: 4px; }
-  .reels-ads::-webkit-scrollbar-thumb { background: rgba(192, 132, 252, 0.3); border-radius: 4px; }
-  
-  .reels-ads-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.55rem;
-    font-weight: 700;
-    color: rgba(192, 132, 252, 0.7);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    padding: 0 2px;
-  }
-  
-  .reels-ads-list {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-  }
-  
-  .reels-ad-item {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    transition: transform 0.2s ease;
-  }
-  
-  .reels-ad-item:hover {
-    transform: translateY(-2px);
-  }
-  
-  .reels-ad-thumb {
-    position: relative;
-    width: 100%;
-    padding-top: 75%;
+  .at-skel-title {
+    margin-top: 8px;
+    height: 12px;
+    width: 75%;
     border-radius: 6px;
-    overflow: hidden;
-    background: rgba(192, 132, 252, 0.15);
-    border: 1px solid rgba(192, 132, 252, 0.2);
-    margin-bottom: 4px;
+    background: #1a0e35;
   }
-  
-  .reels-ad-thumb img {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    object-fit: cover;
+  .at-skel-meta {
+    margin-top: 5px;
+    height: 8px;
+    width: 45%;
+    border-radius: 4px;
+    background: #1a0e35;
   }
-  
-  .reels-ad-price {
-    position: absolute;
-    bottom: 3px;
-    right: 3px;
-    padding: 2px 5px;
-    background: rgba(0, 0, 0, 0.8);
-    color: #7dd3fc;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.55rem;
-    font-weight: 800;
-    border-radius: 3px;
-  }
-  
-  .reels-ad-title {
-    font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 0.65rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.85);
-    line-height: 1.2;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  
-  @media (max-width: 480px) {
-    .reels-container { max-width: 100%; max-height: 100vh; border-radius: 0; }
-  }
-  
-  .skel-card { border-radius: 12px; }
-  .skel-thumb { 
-    width: 100%; padding-top: 56.25%; border-radius: 12px; 
-    background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%); 
-    background-size: 200% 100%; 
-    animation: skelShimmer 1.5s ease-in-out infinite; 
-  }
-  .skel-title { margin-top: 8px; height: 12px; width: 80%; border-radius: 6px; background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%); background-size: 200% 100%; animation: skelShimmer 1.5s ease-in-out infinite; animation-delay: 0.1s; }
-  .skel-sub { margin-top: 5px; height: 8px; width: 50%; border-radius: 4px; background: linear-gradient(110deg, #0d0520 30%, #1a0e35 50%, #0d0520 70%); background-size: 200% 100%; animation: skelShimmer 1.5s ease-in-out infinite; animation-delay: 0.2s; }
-  @keyframes skelShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-</style>
 
+  /* ═══ LOADING INDICATOR ═══ */
+  .at-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 2rem 0;
+    color: var(--text-muted, rgba(255,255,255,0.5));
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+  }
+  .at-spinner {
+    width: 20px; height: 20px;
+    border: 2px solid rgba(192, 132, 252, 0.2);
+    border-top-color: #c084fc;
+    border-radius: 50%;
+    animation: atSpin 0.7s linear infinite;
+  }
+  @keyframes atSpin { to { transform: rotate(360deg); } }
+
+  /* ═══ ERROR STATE ═══ */
+  .at-error {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary, rgba(255,255,255,0.75));
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px dashed rgba(239, 68, 68, 0.25);
+    border-radius: 14px;
+    margin-top: 1.5rem;
+  }
+  .at-error-icon {
+    color: #ef4444;
+    margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: center;
+  }
+  .at-error h3 {
+    font-size: 1.1rem;
+    margin: 0 0 0.4rem;
+    color: var(--text-primary, #fff);
+    font-family: 'Bricolage Grotesque', sans-serif;
+  }
+  .at-error p {
+    font-size: 0.85rem;
+    margin: 0 0 1rem;
+  }
+  .at-retry-btn {
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    border: none;
+    border-radius: 999px;
+    color: #fff;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+  .at-retry-btn:hover { opacity: 0.85; }
+
+  /* ═══ EMPTY STATE ═══ */
+  .at-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary, rgba(255,255,255,0.75));
+  }
+  .at-empty h3 {
+    font-size: 1.1rem;
+    margin: 0 0 0.4rem;
+    color: var(--text-primary, #fff);
+    font-family: 'Bricolage Grotesque', sans-serif;
+  }
+  .at-empty p {
+    font-size: 0.85rem;
+    margin: 0;
+  }
+</style>
 <script is:inline>
 (function(){
-  var cat='airing';
-  var loading=false;
-  var total=0;
-  var ids={};
-  var videoRowsInBlock = 0;
-  var productPool = [];
+  'use strict';
 
-  var lastAnimePage = 0;
-  var loopCount = 0;
-  var socialTypeIdx = 0;
-  var SOCIAL_TYPES = ['donghua', 'movies', 'kdrama', 'anime'];
-  var lastKeyword = '';
-  
-  var feed = document.getElementById('arrivalsFeed');
-  var loadingEl = document.getElementById('loadingMore');
-  var errMsg = document.getElementById('errorMsg');
-  var countEl = document.getElementById('arrivalsCount');
-  var tabs = document.querySelectorAll('.cat-tab');
-  
-  var reelsPlayer = document.getElementById('reelsPlayer');
-  var reelsFrame = document.getElementById('reelsVideoFrame');
-  var reelsTitle = document.getElementById('reelsTitle');
-  var reelsChannel = document.getElementById('reelsChannel');
-  var reelsClose = document.getElementById('reelsClose');
-  var reelsBackdrop = document.getElementById('reelsBackdrop');
-  var reelsLike = document.getElementById('reelsLike');
-  var reelsAds = document.getElementById('reelsAds');
+  // ═══════════════════════════════════════════════════
+  // 🎯 STATE MANAGEMENT
+  // ═══════════════════════════════════════════════════
+  var currentCat = 'trending';    // Active tab
+  var isLoading = false;           // Prevent duplicate loads
+  var totalCards = 0;              // Total cards rendered
+  var seenIds = {};                // Dedupe tracker
+  var loopCount = 0;               // For cache-busting on reload
 
-  function showSkeleton() {
-    var count = window.innerWidth <= 768 ? 6 : 10;
-    var html = '';
-    for (var i = 0; i < count; i++) {
-      html += '<div class="skel-card"><div class="skel-thumb"></div><div class="skel-title"></div><div class="skel-sub"></div></div>';
-    }
-    feed.innerHTML = html;
+  var animePage = 0;               // Kitsu anime page counter
+  var socialPage = 0;              // Social feed page counter
+  var socialTypeIdx = 0;           // Rotate through social types
+  var cardsPerAdRow = 20;          // Product ad after every 20 cards
+  var cardsSinceLastAd = 0;        // Counter for ad placement
+  var productPool = [];            // Cached product data
+
+  // Social type rotation for "Trending" tab (mixed content)
+  var TRENDING_TYPES = ['donghua', 'movies', 'kdrama', 'anime'];
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 DOM REFERENCES
+  // ═══════════════════════════════════════════════════
+  var grid = document.getElementById('atGrid');
+  var loadingEl = document.getElementById('atLoading');
+  var errorEl = document.getElementById('atError');
+  var emptyEl = document.getElementById('atEmpty');
+  var retryBtn = document.getElementById('atRetry');
+  var tabs = document.querySelectorAll('.at-tab');
+
+  // ═══════════════════════════════════════════════════
+  // 🛠️ HELPERS
+  // ═══════════════════════════════════════════════════
+  function esc(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
   }
-  
-  showSkeleton();
 
-  function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];})}
-  function trunc(s,n){s=String(s||'');return s.length>n?s.slice(0,n).trim()+'…':s;}
-  
+  function trunc(s, n) {
+    s = String(s || '');
+    return s.length > n ? s.slice(0, n).trim() + '…' : s;
+  }
+
   function shuffle(arr) {
     var a = arr.slice();
     for (var i = a.length - 1; i > 0; i--) {
@@ -724,469 +578,485 @@ const news = sortedPosts.slice(4, 8);
     return a;
   }
 
-  function openReelsPlayer(video) {
-    if (!reelsPlayer) return;
-    
-    reelsTitle.textContent = video.title || 'Video';
-    reelsChannel.textContent = video.channel || 'Channel';
-    reelsFrame.innerHTML = '';
-    
-    var embedUrl = video.embedUrl;
-    if (video.source === 'dailymotion') {
-      embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'ui-logo=0&ui-start-screen-info=0&sharing-enable=0';
-    }
-    if (video.source === 'youtube' && !embedUrl.includes('modestbranding')) {
-      embedUrl += (embedUrl.includes('?') ? '&' : '?') + 'modestbranding=1&showinfo=0&controls=1';
-    }
-    
-    var iframe = document.createElement('iframe');
-    iframe.src = embedUrl;
-    iframe.setAttribute('frameborder', '0');
-    iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen');
-    iframe.setAttribute('allowfullscreen', '');
-    iframe.style.cssText = 'width:100%;height:100%;border:0;position:absolute;top:0;left:0;';
-    reelsFrame.appendChild(iframe);
-    
-    loadRelatedAds(video);
-    
-    reelsPlayer.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+  // Get responsive columns count
+  function getColCount() {
+    var w = window.innerWidth;
+    if (w <= 768) return 2;
+    if (w <= 1100) return 3;
+    if (w <= 1400) return 4;
+    return 5;
   }
-  
-  function closeReelsPlayer() {
-    if (!reelsPlayer) return;
-    reelsPlayer.style.display = 'none';
-    reelsFrame.innerHTML = '';
-    document.body.style.overflow = '';
-    if (reelsLike) reelsLike.classList.remove('liked');
-  }
-  
-  function loadRelatedAds(video) {
-    if (!reelsAds || !productPool.length) {
-      if (reelsAds) reelsAds.innerHTML = '';
-      return;
-    }
-    
-    var relevant = shuffle(productPool).slice(0, 3);
-    
-    var html = '<div class="reels-ads-label">✨ You Might Like</div>' +
-      '<div class="reels-ads-list">' +
-      relevant.map(function(p) {
-        var img = p.image 
-          ? '<img src="' + esc(p.image) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'" />'
-          : '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🛍️</div>';
-        return '<a href="/product/' + esc(p.id) + '" class="reels-ad-item" target="_blank">' +
-          '<div class="reels-ad-thumb">' + img + 
-            '<div class="reels-ad-price">' + esc(p.price) + '</div>' +
-          '</div>' +
-          '<div class="reels-ad-title">' + esc(trunc(p.title, 40)) + '</div>' +
-        '</a>';
-      }).join('') + '</div>';
-    
-    reelsAds.innerHTML = html;
-  }
-  
-  if (reelsClose) reelsClose.addEventListener('click', closeReelsPlayer);
-  if (reelsBackdrop) reelsBackdrop.addEventListener('click', closeReelsPlayer);
-  if (reelsLike) reelsLike.addEventListener('click', function() {
-    reelsLike.classList.toggle('liked');
-  });
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && reelsPlayer && reelsPlayer.style.display !== 'none') closeReelsPlayer();
-  });
 
-  function animeCard(a, i) {
-    var t = a.title || 'Unknown';
+  // ═══════════════════════════════════════════════════
+  // 🎨 SKELETON LOADER (no animation = no GPU waste)
+  // ═══════════════════════════════════════════════════
+  function showSkeleton() {
+    var count = getColCount() * 2;  // 2 rows of skeletons
+    var html = '';
+    for (var i = 0; i < count; i++) {
+      html += '<div class="at-skel">' +
+        '<div class="at-skel-thumb"></div>' +
+        '<div class="at-skel-title"></div>' +
+        '<div class="at-skel-meta"></div>' +
+      '</div>';
+    }
+    grid.innerHTML = html;
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎌 ANIME CARD BUILDER (from Kitsu API)
+  // ═══════════════════════════════════════════════════
+  function buildAnimeCard(a) {
+    var title = a.title || 'Unknown';
     var img = a.image || '';
-    var sl = a.slug || 'anime-' + a.id;
-    var sc = a.score ? Number(a.score).toFixed(1) : '';
-    var yr = a.year || '';
-    var ep = a.episodes && a.episodes > 0 ? a.episodes : '';
-    var g = (a.genres && a.genres.length) ? a.genres[0] : '';
-    var nw = a.status === 'current';
-    var delay = ((i % 8) * 40) + 'ms';
-    
+    var slug = a.slug || 'anime-' + a.id;
+    var score = a.score ? Number(a.score).toFixed(1) : '';
+    var year = a.year || '';
+    var eps = a.episodes && a.episodes > 0 ? a.episodes : '';
+    var genre = (a.genres && a.genres.length) ? a.genres[0] : '';
+    var isNew = a.status === 'current';
+
+    // Image or fallback icon
     var imgHtml = img
-      ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="at-na-img" />'
-      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2rem;">🎬</div>';
-    
-    var el = document.createElement('a');
-    // ═══ FIX #1: Direct to reels (skip /anime/[slug] middle page) ═══
-    el.href = '/reels/anime_' + encodeURIComponent(sl) + '_ep1';
-    el.className = 'at-na-card';
-    el.style.animationDelay = delay;
-    
-    el.innerHTML =
-      '<div class="at-na-thumb">' +
+      ? '<img src="' + esc(img) + '" alt="' + esc(title) + '" loading="lazy" class="at-img" onerror="this.style.display=\'none\'" />'
+      : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.15));display:flex;align-items:center;justify-content:center;font-size:2rem;">🎌</div>';
+
+    var card = document.createElement('a');
+    card.href = '/reels/anime_' + encodeURIComponent(slug) + '_ep1';
+    card.className = 'at-card';
+
+    card.innerHTML =
+      '<div class="at-thumb">' +
         imgHtml +
-        '<div class="at-na-shine"></div>' +
-        '<div class="at-na-overlay"></div>' +
-        '<div class="at-na-play">' +
-          '<div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:2px;box-shadow:0 8px 25px rgba(192,132,252,0.7);z-index:2;">' +
-            '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
-          '</div>' +
+        '<div class="at-shine"></div>' +
+        '<div class="at-overlay"></div>' +
+        '<div class="at-play">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="padding-left:2px;"><path d="M8 5v14l11-7z"/></svg>' +
         '</div>' +
-        (nw ? '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">NEW</div>' : '') +
-        (sc ? '<div style="position:absolute;top:6px;right:6px;padding:3px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.55rem;font-weight:800;border-radius:4px;z-index:6;">★ ' + sc + '</div>' : '') +
-        '<div style="position:absolute;bottom:6px;left:6px;padding:2px 7px;background:rgba(125,211,252,0.9);color:#0a0517;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">HD</div>' +
+        (isNew ? '<div class="at-badge at-badge-new">NEW</div>' : '') +
+        (score ? '<div class="at-badge at-badge-score">★ ' + score + '</div>' : '') +
+        '<div class="at-badge at-badge-hd">HD</div>' +
       '</div>' +
-      '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
-        '<h3 class="at-na-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(t, 55)) + '</h3>' +
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;">' + 
-          (yr ? esc(yr) : '') +
-          (yr && ep ? ' · ' : '') +
-          (ep ? esc(ep) + ' EP' : '') +
+      '<div class="at-info">' +
+        '<h3 class="at-title">' + esc(trunc(title, 55)) + '</h3>' +
+        '<div class="at-meta">' +
+          (year ? esc(year) : '') +
+          (year && eps ? ' · ' : '') +
+          (eps ? esc(eps) + ' EP' : '') +
         '</div>' +
-        (g ? '<div style="display:inline-block;margin-top:3px;font-family:\'JetBrains Mono\',monospace;font-size:0.52rem;font-weight:700;color:#c084fc;letter-spacing:0.05em;text-transform:uppercase;">' + esc(g) + '</div>' : '') +
+        (genre ? '<div class="at-genre">' + esc(genre) + '</div>' : '') +
       '</div>';
-    
-    return el;
+
+    return card;
   }
 
-  function socialCard(v, i) {
-    var t = v.title || 'Video';
+  // ═══════════════════════════════════════════════════
+  // 📺 SOCIAL VIDEO CARD (Dailymotion / Bilibili / YouTube)
+  // ═══════════════════════════════════════════════════
+  function buildSocialCard(v) {
+    var title = v.title || 'Video';
     var img = v.thumbnail || '';
-    var delay = ((i % 8) * 40) + 'ms';
-    
-    var typeLabel = { movies: '🎬 MOVIE', kdrama: '🇰🇷 K-DRAMA', donghua: '🐼 DONGHUA', anime: '🎌 ANIME' }[v.type] || '';
-    
+    var channel = v.channel || 'Channel';
+    var isNew = v.isNew === true;
+
+    // Type label (small badge)
+    var typeMap = {
+      movies:  '🎬 MOVIE',
+      kdrama:  '🇰🇷 K-DRAMA',
+      donghua: '🐼 DONGHUA',
+      anime:   '🎌 ANIME',
+      series:  '📺 SERIES'
+    };
+    var typeLabel = typeMap[v.type] || '🎬 VIDEO';
+
+    // Source-specific info (small platform indicator)
+    var srcIcon = { dailymotion: 'DM', bilibili: 'BILI', youtube: 'YT' }[v.source] || '';
+
     var imgHtml = img
-      ? '<img src="' + esc(img) + '" alt="' + esc(t) + '" loading="lazy" class="at-na-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
+      ? '<img src="' + esc(img) + '" alt="' + esc(title) + '" loading="lazy" class="at-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
       : '<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2));display:flex;align-items:center;justify-content:center;font-size:2rem;">📺</div>';
-    
-    var el = document.createElement('a');
-    el.href = '/reels/' + encodeURIComponent(v.id);
-    el.className = 'at-na-card';
-    el.style.animationDelay = delay;
-    
-    el.innerHTML =
-      '<div class="at-na-thumb">' +
+
+    var card = document.createElement('a');
+    card.href = '/reels/' + encodeURIComponent(v.id);
+    card.className = 'at-card';
+
+    card.innerHTML =
+      '<div class="at-thumb">' +
         imgHtml +
-        '<div class="at-na-shine"></div>' +
-        '<div class="at-na-overlay"></div>' +
-        '<div class="at-na-play">' +
-          '<div style="position:absolute;inset:0;border-radius:50%;background:linear-gradient(135deg,#c084fc 0%,#e879f9 50%,#7dd3fc 100%);display:flex;align-items:center;justify-content:center;color:#fff;padding-left:2px;box-shadow:0 8px 25px rgba(192,132,252,0.7);z-index:2;">' +
-            '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
-          '</div>' +
+        '<div class="at-shine"></div>' +
+        '<div class="at-overlay"></div>' +
+        '<div class="at-play">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="padding-left:2px;"><path d="M8 5v14l11-7z"/></svg>' +
         '</div>' +
-        (v.isNew ? '<div style="position:absolute;top:6px;left:6px;padding:3px 7px;background:linear-gradient(135deg,#ef4444,#f97316);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;letter-spacing:0.08em;border-radius:4px;z-index:6;">NEW</div>' : '') +
-        '<div style="position:absolute;bottom:6px;left:6px;padding:2px 7px;background:rgba(10,5,23,0.9);color:#fbbf24;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:4px;z-index:6;">' + typeLabel + '</div>' +
+        (isNew ? '<div class="at-badge at-badge-new">NEW</div>' : '') +
+        '<div class="at-badge at-badge-type">' + typeLabel + '</div>' +
+        (srcIcon ? '<div class="at-badge at-badge-src">' + srcIcon + '</div>' : '') +
       '</div>' +
-      '<div style="padding:8px 3px 4px;position:relative;z-index:1;">' +
-        '<h3 class="at-na-title" style="font-family:\'Bricolage Grotesque\',sans-serif;font-size:0.78rem;font-weight:700;color:var(--text-primary);margin:0 0 3px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;transition:all 0.3s ease;min-height:2em;">' + esc(trunc(t, 55)) + '</h3>' +
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:0.58rem;color:var(--text-muted);opacity:0.75;">' + esc(v.channel || 'Channel') + '</div>' +
+      '<div class="at-info">' +
+        '<h3 class="at-title">' + esc(trunc(title, 55)) + '</h3>' +
+        '<div class="at-meta">' + esc(trunc(channel, 30)) + '</div>' +
       '</div>';
-    
-    return el;
+
+    return card;
   }
 
-  function productRow(products) {
+  // ═══════════════════════════════════════════════════
+  // 🛍️ PRODUCT AD ROW (horizontal scroll)
+  // ═══════════════════════════════════════════════════
+  function buildProductRow(products) {
     if (!products || products.length === 0) return null;
-    
-    var itemsHtml = products.map(function(p) {
+
+    var itemsHtml = products.map(function(p){
       var img = p.image
-        ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="product-row-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
-        : '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🛍️</div>';
-      
-      var badge = p.badge ? '<div style="position:absolute;top:5px;left:5px;padding:2px 6px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:3px;z-index:2;">' + esc(p.badge) + '</div>' : '';
-      
-      return '<a href="/product/' + esc(p.id) + '" class="product-row-item">' +
-        '<div class="product-row-thumb">' + img + badge + '</div>' +
-        '<div class="product-row-info">' +
-          '<div class="product-row-item-title">' + esc(trunc(p.title, 40)) + '</div>' +
-          '<div class="product-row-price">' + esc(p.price) + '</div>' +
-        '</div>' +
+        ? '<img src="' + esc(p.image) + '" alt="' + esc(p.title) + '" loading="lazy" class="at-ad-img" onerror="this.style.display=\'none\';this.parentElement.style.background=\'linear-gradient(135deg,rgba(192,132,252,0.3),rgba(232,121,249,0.2))\';" />'
+        : '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">🛍️</div>';
+
+      var badgeHtml = p.badge
+        ? '<div style="position:absolute;top:5px;left:5px;padding:2px 6px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;font-family:\'JetBrains Mono\',monospace;font-size:0.5rem;font-weight:800;border-radius:3px;z-index:2;">' + esc(p.badge) + '</div>'
+        : '';
+
+      return '<a href="/product/' + esc(p.id) + '" class="at-ad-item">' +
+        '<div class="at-ad-thumb">' + img + badgeHtml + '</div>' +
+        '<div class="at-ad-name">' + esc(trunc(p.title, 40)) + '</div>' +
+        '<div class="at-ad-price">' + esc(p.price) + '</div>' +
       '</a>';
     }).join('');
-    
+
     var row = document.createElement('div');
-    row.className = 'product-row';
-    row.innerHTML = 
-      '<div class="product-row-header">' +
-        '<div class="product-row-title">✨ Recommended For You</div>' +
-        '<div class="product-row-hint">← Swipe to explore →</div>' +
+    row.className = 'at-adrow';
+    row.innerHTML =
+      '<div class="at-adrow-head">' +
+        '<div class="at-adrow-title">✨ Recommended For You</div>' +
+        '<div class="at-adrow-hint">← Swipe to explore →</div>' +
       '</div>' +
-      '<div class="product-row-scroll">' + itemsHtml + '</div>';
-    
+      '<div class="at-adrow-scroll">' + itemsHtml + '</div>';
+
     return row;
   }
-  
+
+  // Get random product batch (8 items)
   function getRandomProducts() {
     if (productPool.length < 4) return productPool;
-    var shuffled = shuffle(productPool);
-    return shuffled.slice(0, 8);
+    return shuffle(productPool).slice(0, 8);
   }
 
-  // ═══ FIX #3: Debounced drag scroll (was every 1 second = LAG) ═══
-  function enableDragScroll() {
-    document.querySelectorAll('.product-row-scroll').forEach(function(el) {
-      if (el.dataset.dragEnabled) return;
-      el.dataset.dragEnabled = '1';
-      
-      var isDown = false;
-      var startX;
-      var scrollLeft;
-      
-      el.addEventListener('mousedown', function(e) {
-        isDown = true;
-        el.style.cursor = 'grabbing';
-        startX = e.pageX - el.offsetLeft;
-        scrollLeft = el.scrollLeft;
-      });
-      el.addEventListener('mouseleave', function() {
-        isDown = false;
-        el.style.cursor = 'grab';
-      });
-      el.addEventListener('mouseup', function() {
-        isDown = false;
-        el.style.cursor = 'grab';
-      });
-      el.addEventListener('mousemove', function(e) {
-        if (!isDown) return;
+  // ═══════════════════════════════════════════════════
+  // 🖱️ DRAG SCROLL FOR PRODUCT ROWS (mouse + wheel)
+  // ═══════════════════════════════════════════════════
+  function enableDragScroll(el) {
+    if (el.dataset.dragEnabled === '1') return;
+    el.dataset.dragEnabled = '1';
+
+    var isDown = false;
+    var startX = 0;
+    var scrollLeft = 0;
+
+    el.addEventListener('mousedown', function(e){
+      isDown = true;
+      el.style.cursor = 'grabbing';
+      startX = e.pageX - el.offsetLeft;
+      scrollLeft = el.scrollLeft;
+    });
+    el.addEventListener('mouseleave', function(){
+      isDown = false;
+      el.style.cursor = 'grab';
+    });
+    el.addEventListener('mouseup', function(){
+      isDown = false;
+      el.style.cursor = 'grab';
+    });
+    el.addEventListener('mousemove', function(e){
+      if (!isDown) return;
+      e.preventDefault();
+      var x = e.pageX - el.offsetLeft;
+      var walk = (x - startX) * 1.8;
+      el.scrollLeft = scrollLeft - walk;
+    });
+
+    // Mouse wheel horizontal scroll
+    el.addEventListener('wheel', function(e){
+      if (e.deltaY !== 0) {
         e.preventDefault();
-        var x = e.pageX - el.offsetLeft;
-        var walk = (x - startX) * 2;
-        el.scrollLeft = scrollLeft - walk;
-      });
-      
-      el.addEventListener('wheel', function(e) {
-        if (e.deltaY !== 0) {
-          e.preventDefault();
-          el.scrollLeft += e.deltaY;
+        el.scrollLeft += e.deltaY;
+      }
+    }, { passive: false });
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 📦 LOAD PRODUCTS (once on init)
+  // ═══════════════════════════════════════════════════
+  function loadProducts() {
+    return fetch('/api/products?limit=50')
+      .then(function(res){ return res.json(); })
+      .then(function(json){
+        if (json.success && json.products) {
+          productPool = shuffle(json.products);
         }
-      }, { passive: false });
+      })
+      .catch(function(err){
+        console.warn('[products]', err.message);
+      });
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎌 FETCH ANIME (Kitsu / internal API)
+  // ═══════════════════════════════════════════════════
+  function fetchAnime() {
+    animePage++;
+    var url = '/api/anime?action=list&category=airing&page=' + animePage;
+    // Cache-bust every 3rd load for fresh content
+    if (animePage % 3 === 0) url += '&nocache=1';
+
+    return fetch(url)
+      .then(function(res){ return res.json(); })
+      .then(function(json){
+        if (!json.success || !json.anime) return [];
+        return json.anime.filter(function(a){
+          if (!a.id) return false;
+          var key = 'a_' + a.id + '_' + loopCount;
+          if (seenIds[key]) return false;
+          seenIds[key] = true;
+          return true;
+        });
+      })
+      .catch(function(){ return []; });
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 📺 FETCH SOCIAL VIDEOS (Dailymotion / Bilibili / YouTube)
+  // ═══════════════════════════════════════════════════
+  function fetchSocial(type) {
+    socialPage++;
+    // Random page 1-5 for content variety on every load
+    var randomPage = Math.floor(Math.random() * 5) + 1;
+    var url = '/api/social-feed?type=' + type + '&page=' + randomPage + '&limit=12';
+
+    return fetch(url)
+      .then(function(res){ return res.json(); })
+      .then(function(json){
+        if (!json.success || !json.videos) return [];
+        return json.videos.filter(function(v){
+          if (!v || !v.id) return false;
+          var key = 'v_' + v.id + '_' + loopCount;
+          if (seenIds[key]) return false;
+          seenIds[key] = true;
+          return true;
+        });
+      })
+      .catch(function(){ return []; });
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 🎯 MAIN LOAD FUNCTION
+  // Content ratio: Anime 60% + Social 40% (mixed types)
+  // ═══════════════════════════════════════════════════
+  function loadFeed() {
+    if (isLoading) return;
+    isLoading = true;
+
+    if (totalCards > 0) {
+      loadingEl.style.display = 'flex';
+    }
+
+    var promises = [];
+
+    // ═══ TRENDING TAB: mixed content (anime + all social types) ═══
+    if (currentCat === 'trending') {
+      promises.push(fetchAnime());  // 60% anime
+      // Rotate through social types for variety (40% social)
+      var socialType = TRENDING_TYPES[socialTypeIdx % TRENDING_TYPES.length];
+      socialTypeIdx++;
+      promises.push(fetchSocial(socialType));
+    }
+    // ═══ ANIME TAB: Kitsu anime + social anime videos ═══
+    else if (currentCat === 'anime') {
+      promises.push(fetchAnime());
+      promises.push(fetchSocial('anime'));
+    }
+    // ═══ SPECIFIC TABS: only social feed for that type ═══
+    else {
+      promises.push(fetchSocial(currentCat));
+      promises.push(fetchSocial(currentCat));  // Double load for more content
+    }
+
+    Promise.all(promises).then(function(results){
+      var animeItems = (currentCat === 'trending' || currentCat === 'anime') ? results[0] : [];
+      var socialItems = (currentCat === 'trending' || currentCat === 'anime') ? results[1] : [].concat(results[0], results[1]);
+
+      // Shuffle for randomness (fresh feel every load)
+      animeItems = shuffle(animeItems);
+      socialItems = shuffle(socialItems);
+
+      // ═══ Retry with alternate category if exhausted ═══
+      if (animeItems.length === 0 && socialItems.length === 0) {
+        loopCount++;
+        animePage = 0;
+        socialPage = 0;
+        seenIds = {};
+
+        if (totalCards === 0) {
+          errorEl.style.display = 'block';
+          loadingEl.style.display = 'none';
+          isLoading = false;
+        } else {
+          // Silent retry
+          isLoading = false;
+          setTimeout(loadFeed, 100);
+        }
+        return;
+      }
+
+      // Clear skeleton on first load
+      if (totalCards === 0) {
+        grid.innerHTML = '';
+        errorEl.style.display = 'none';
+        emptyEl.style.display = 'none';
+      }
+
+      // ═══ BUILD BATCH USING DocumentFragment (single DOM write = fast) ═══
+      var fragment = document.createDocumentFragment();
+      var socialIdx = 0;
+
+      // Interleave: 2 anime → 1 social (60/40 ratio)
+      animeItems.forEach(function(anime, i){
+        fragment.appendChild(buildAnimeCard(anime));
+        totalCards++;
+        cardsSinceLastAd++;
+
+        // Insert 1 social card after every 2 anime cards
+        if ((i + 1) % 2 === 0 && socialIdx < socialItems.length) {
+          fragment.appendChild(buildSocialCard(socialItems[socialIdx++]));
+          totalCards++;
+          cardsSinceLastAd++;
+        }
+
+        // Insert product ad row every 20 cards
+        if (cardsSinceLastAd >= cardsPerAdRow && productPool.length >= 4) {
+          var products = getRandomProducts();
+          var adRow = buildProductRow(products);
+          if (adRow) {
+            fragment.appendChild(adRow);
+            cardsSinceLastAd = 0;
+          }
+        }
+      });
+
+      // Append remaining social cards
+      while (socialIdx < socialItems.length) {
+        fragment.appendChild(buildSocialCard(socialItems[socialIdx++]));
+        totalCards++;
+        cardsSinceLastAd++;
+      }
+
+      // ═══ SINGLE DOM APPEND (much faster than multiple appendChild) ═══
+      grid.appendChild(fragment);
+
+      // Enable drag scroll for any new product rows (idle callback = no jank)
+      if (window.requestIdleCallback) {
+        requestIdleCallback(function(){
+          var newRows = grid.querySelectorAll('.at-adrow-scroll');
+          newRows.forEach(enableDragScroll);
+        });
+      } else {
+        setTimeout(function(){
+          var newRows = grid.querySelectorAll('.at-adrow-scroll');
+          newRows.forEach(enableDragScroll);
+        }, 100);
+      }
+
+      loadingEl.style.display = 'none';
+      isLoading = false;
+    }).catch(function(err){
+      console.warn('[loadFeed]', err.message);
+      loadingEl.style.display = 'none';
+      if (totalCards === 0) {
+        errorEl.style.display = 'block';
+      }
+      isLoading = false;
     });
   }
 
-  async function loadProducts() {
-    try {
-      var res = await fetch('/api/products?limit=50');
-      var j = await res.json();
-      if (j.success && j.products) {
-        productPool = shuffle(j.products);
-      }
-    } catch(e) { console.warn('[products]', e.message); }
-  }
-  
-  function updateCount(){
-    if(!countEl)return;
-    var c=parseInt(countEl.textContent)||0,t=total;
-    if(c===t)return;
-    var step=Math.max(1,Math.ceil((t-c)/12));
-    (function f(){c=Math.min(c+step,t);countEl.textContent=c;if(c<t)requestAnimationFrame(f);})();
-  }
-
-  async function load(){
-    if(loading)return;
-    loading=true;
-    if(total > 0){ if(loadingEl)loadingEl.style.display='flex'; }
-
-    try{
-      var animeItems = [];
-      lastAnimePage++;
-      
-      // ═══ FIX #2: Add nocache + random query variety for new anime ═══
-      var randomSeed = Math.floor(Math.random() * 1000);
-      var apiUrl = '/api/anime?action=list&category='+cat+'&page='+lastAnimePage;
-      // Every 3rd load, bypass cache for fresh content
-      if (lastAnimePage % 3 === 0) apiUrl += '&nocache=1';
-      
-      var animeRes = await fetch(apiUrl);
-      var animeData = await animeRes.json();
-      
-      if(animeData.success && animeData.anime && animeData.anime.length > 0) {
-        animeItems = animeData.anime.filter(function(a){
-          if(!a.id) return false;
-          var key = 'a_' + a.id + '_' + loopCount;
-          if(ids[key]) return false;
-          ids[key] = true;
-          return true;
-        });
-      }
-      
-      // ═══ Better cycling: try different categories if exhausted ═══
-      if (animeItems.length === 0) {
-        loopCount++;
-        lastAnimePage = 1;
-        ids = {};
-        
-        // Try random category for variety on retry
-        var altCategories = ['airing', 'top', 'popular', 'upcoming', 'movies'].filter(c => c !== cat);
-        var altCat = altCategories[Math.floor(Math.random() * altCategories.length)];
-        
-        var retryRes = await fetch('/api/anime?action=list&category=' + altCat + '&page=1&nocache=1');
-        var retryData = await retryRes.json();
-        if (retryData.success && retryData.anime) {
-          animeItems = shuffle(retryData.anime);
-        }
-      }
-      
-      var socialType = SOCIAL_TYPES[socialTypeIdx % SOCIAL_TYPES.length];
-      socialTypeIdx++;
-      var socialItems = [];
-      try {
-        // Random page for social too
-        var socialPage = Math.floor(Math.random() * 5) + 1;
-        var socialRes = await fetch('/api/social-feed?type=' + socialType + '&page=' + socialPage + '&limit=8');
-        var socialData = await socialRes.json();
-        if(socialData.success && socialData.videos) {
-          socialItems = socialData.videos.filter(function(v){
-            var key = 'v_' + v.id + '_' + loopCount;
-            if(ids[key]) return false;
-            ids[key] = true;
-            return true;
-          });
-        }
-      } catch(e) { console.warn('social fail', e); }
-      
-      animeItems = shuffle(animeItems);
-      socialItems = shuffle(socialItems);
-      
-      if(total === 0) feed.innerHTML='';
-      if(errMsg)errMsg.style.display='none';
-      
-      var socialIdx = 0;
-      var cardCount = 0;
-      var videosPlaced = 0;
-      var cardsPerRow = window.innerWidth <= 768 ? 2 : (window.innerWidth <= 1100 ? 3 : (window.innerWidth <= 1400 ? 4 : 5));
-      
-      // ═══ FIX #3: Batch DOM operations using DocumentFragment (faster) ═══
-      var fragment = document.createDocumentFragment();
-      
-      animeItems.forEach(function(a){
-        total++;
-        fragment.appendChild(animeCard(a, total-1));
-        cardCount++;
-        
-        if (cardCount % 2 === 0 && socialIdx < socialItems.length) {
-          var vid = socialItems[socialIdx++];
-          fragment.appendChild(socialCard(vid, total));
-          total++;
-          cardCount++;
-          videosPlaced++;
-        }
-        
-        if (cardCount >= (cardsPerRow * 4) && productPool.length > 0) {
-          var products = getRandomProducts();
-          if (products.length > 0) {
-            var row = productRow(products);
-            if (row) {
-              fragment.appendChild(row);
-              total += products.length;
-            }
-          }
-          cardCount = 0;
-        }
-      });
-      
-      while (socialIdx < socialItems.length) {
-        var vid = socialItems[socialIdx++];
-        fragment.appendChild(socialCard(vid, total));
-        total++;
-      }
-      
-      // Single DOM append (much faster than multiple appendChild)
-      feed.appendChild(fragment);
-      
-      // Enable drag scroll only for new product rows
-      enableDragScroll();
-      
-      updateCount();
-      if(loadingEl)loadingEl.style.display='none';
-    }catch(e){
-      console.warn('[feed]',e.message);
-      if(loadingEl)loadingEl.style.display='none';
-      if(total===0){
-        feed.innerHTML='';
-        if(errMsg) errMsg.style.display='block';
-      }
-    }
-    loading=false;
-  }
-
+  // ═══════════════════════════════════════════════════
+  // 🔄 TAB SWITCHING
+  // ═══════════════════════════════════════════════════
   tabs.forEach(function(tab){
-    tab.addEventListener('click',function(){
-      var c2=tab.dataset.cat;
-      if(c2===cat)return;
-      tabs.forEach(function(t){t.classList.remove('active');});
-      tab.classList.add('active');
-      cat=c2; total=0; ids={}; lastAnimePage=0; loopCount=0;
-      videoRowsInBlock=0; socialTypeIdx=0;
-      if(countEl)countEl.textContent='0';
-      if(errMsg)errMsg.style.display='none';
+    tab.addEventListener('click', function(){
+      var newCat = tab.dataset.cat;
+      if (newCat === currentCat) return;
+
+      // Update active state
+      tabs.forEach(function(t){ t.classList.remove('at-tab-active'); });
+      tab.classList.add('at-tab-active');
+
+      // Reset state
+      currentCat = newCat;
+      totalCards = 0;
+      seenIds = {};
+      animePage = 0;
+      socialPage = 0;
+      socialTypeIdx = 0;
+      loopCount = 0;
+      cardsSinceLastAd = 0;
+
+      // Hide states
+      errorEl.style.display = 'none';
+      emptyEl.style.display = 'none';
+
+      // Show skeleton and load
       showSkeleton();
-      load();
+
+      // Scroll to top smoothly
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      loadFeed();
     });
   });
 
-  // ═══ FIX #3: Better scroll debouncing (150ms → 250ms + IntersectionObserver ready) ═══
-  var scrollTimer;
-  var isScrolling = false;
-  window.addEventListener('scroll',function(){
-    if(loading)return;
-    if(isScrolling) return;
-    isScrolling = true;
-    
-    if(scrollTimer) clearTimeout(scrollTimer);
+  // ═══════════════════════════════════════════════════
+  // 🔄 RETRY BUTTON
+  // ═══════════════════════════════════════════════════
+  if (retryBtn) {
+    retryBtn.addEventListener('click', function(){
+      errorEl.style.display = 'none';
+      totalCards = 0;
+      seenIds = {};
+      animePage = 0;
+      socialPage = 0;
+      loopCount = 0;
+      showSkeleton();
+      loadFeed();
+    });
+  }
+
+  // ═══════════════════════════════════════════════════
+  // 📜 INFINITE SCROLL (debounced, lag-free)
+  // ═══════════════════════════════════════════════════
+  var scrollTimer = null;
+  var scrollListening = true;
+
+  window.addEventListener('scroll', function(){
+    if (!scrollListening || isLoading) return;
+
+    if (scrollTimer) clearTimeout(scrollTimer);
     scrollTimer = setTimeout(function(){
-      isScrolling = false;
       var scrollPos = window.scrollY + window.innerHeight;
       var pageHeight = document.documentElement.scrollHeight;
-      if(scrollPos > pageHeight - 1500){ load(); }
-    }, 250);
-  },{passive:true});
+      // Trigger 1200px before page end
+      if (scrollPos > pageHeight - 1200) {
+        loadFeed();
+      }
+    }, 200);
+  }, { passive: true });
 
-  loadProducts().then(load);
+  // ═══════════════════════════════════════════════════
+  // 🚀 INITIALIZATION
+  // ═══════════════════════════════════════════════════
+  showSkeleton();
+
+  // Load products first (for ad rows), then start feed
+  loadProducts().then(function(){
+    loadFeed();
+  });
+
 })();
 </script>
-
-<style>
-  .arrivals-block{position:relative}
-  .arrivals-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;gap:1.25rem;flex-wrap:wrap}
-  .arrivals-title-wrap{display:flex;align-items:center;gap:1rem}
-  .arrivals-bar{width:4px;height:44px;background:linear-gradient(180deg,#c084fc,#e879f9,#7dd3fc);border-radius:3px;box-shadow:0 0 15px rgba(192,132,252,.6);animation:bg 3s ease infinite}
-  @keyframes bg{0%,100%{box-shadow:0 0 15px rgba(192,132,252,.6)}50%{box-shadow:0 0 25px rgba(232,121,249,.8)}}
-  .arrivals-tag{display:inline-flex;align-items:center;gap:.4rem;font-family:'JetBrains Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.15em;color:#c084fc;margin-bottom:4px}
-  .arrivals-dot{width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;animation:lb 1.5s ease infinite}
-  @keyframes lb{0%,100%{opacity:1}50%{opacity:.4}}
-  .arrivals-title{font-family:'Bricolage Grotesque',sans-serif;font-size:clamp(1.5rem,2.8vw,2.2rem);font-weight:800;margin:0;letter-spacing:-.03em;line-height:1}
-  .arrivals-actions{display:flex;align-items:center;gap:12px}
-  .arrivals-count{display:flex;align-items:baseline;gap:6px;padding:7px 14px;background:rgba(192,132,252,.1);border:1px solid rgba(192,132,252,.25);border-radius:999px;backdrop-filter:blur(10px)}
-  .arrivals-count-num{font-family:'JetBrains Mono',monospace;font-size:1.1rem;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;min-width:22px;display:inline-block;text-align:center}
-  .arrivals-count-lbl{font-family:'JetBrains Mono',monospace;font-size:.62rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
-  .cat-tabs{display:flex;gap:8px;margin-bottom:1.5rem;overflow-x:auto;scrollbar-width:none}
-  .cat-tabs::-webkit-scrollbar{display:none}
-  .cat-tab{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(28,15,61,.5);border:1px solid var(--border-color);border-radius:999px;color:var(--text-secondary);font-family:'Bricolage Grotesque',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .25s ease;white-space:nowrap;backdrop-filter:blur(10px)}
-  .cat-tab:hover{background:rgba(192,132,252,.15);border-color:rgba(192,132,252,.4);color:var(--text-primary);transform:translateY(-1px)}
-  .cat-tab.active{background:var(--grad);border-color:transparent;color:#fff;box-shadow:0 6px 20px rgba(192,132,252,.4)}
-  .cat-tab-dot{width:6px;height:6px;border-radius:50%;background:#ef4444;box-shadow:0 0 6px #ef4444;animation:lb 1.5s ease infinite}
-  .cat-tab.active .cat-tab-dot{background:#fff;box-shadow:0 0 6px #fff}
-  .loading-more{display:flex;align-items:center;justify-content:center;gap:12px;padding:2rem 0;color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:.85rem}
-  .ld-spinner{width:22px;height:22px;border:2px solid rgba(192,132,252,.2);border-top-color:#c084fc;border-radius:50%;animation:sp .8s linear infinite}
-  @keyframes sp{to{transform:rotate(360deg)}}
-  .error-msg{text-align:center;padding:3rem 1rem;color:var(--text-secondary);background:rgba(239,68,68,.06);border:1px dashed rgba(239,68,68,.3);border-radius:16px;margin-top:2rem}
-  .err-icon{color:#ef4444;margin-bottom:1rem;display:flex;justify-content:center}
-  .error-msg h3{font-size:1.2rem;margin:0 0 .5rem;color:var(--text-primary);font-family:'Bricolage Grotesque',sans-serif}
-  .error-msg p{font-size:.88rem;margin:0}
-  .novelty-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem}
-  .novelty-card{display:block;background:var(--bg-card);border-radius:20px;overflow:hidden;transition:transform .4s ease,box-shadow .4s ease;text-decoration:none;color:inherit}
-  .novelty-card:hover{transform:translateY(-8px);box-shadow:0 20px 40px rgba(192,132,252,.15)}
-  .nc-img{position:relative;aspect-ratio:3/4;overflow:hidden}
-  .nc-img img{width:100%;height:100%;object-fit:cover;transition:transform .6s ease}
-  .novelty-card:hover .nc-img img{transform:scale(1.08)}
-  .nc-ov{position:absolute;inset:0;background:linear-gradient(180deg,transparent 30%,rgba(0,0,0,.5) 70%,rgba(0,0,0,.85) 100%)}
-  .nc-ct{padding:1rem 1.1rem 1.2rem}
-  .nc-t{font-family:'Bricolage Grotesque',sans-serif;font-size:1rem;font-weight:700;color:var(--text-primary);margin:0 0 .4rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .nc-e{font-size:.78rem;color:var(--text-muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-  .news-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.25rem}
-  .news-card{display:flex;gap:1rem;background:var(--bg-card);border-radius:16px;overflow:hidden;padding:1rem;transition:transform .3s ease;text-decoration:none;color:inherit}
-  .news-card:hover{transform:translateY(-3px);background:var(--bg-card-hover)}
-  .nw-img{width:120px;min-width:120px;aspect-ratio:1;border-radius:12px;overflow:hidden}
-  .nw-img img{width:100%;height:100%;object-fit:cover}
-  .nw-ct{flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0}
-  .nw-cat{font-family:'Bricolage Grotesque',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.4rem}
-  .nw-t{font-family:'Bricolage Grotesque',sans-serif;font-size:.95rem;font-weight:700;color:var(--text-primary);margin:0 0 .4rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .nw-e{font-size:.78rem;color:var(--text-muted);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  @media(max-width:1024px){.novelty-grid{grid-template-columns:repeat(2,1fr)}.news-grid{grid-template-columns:1fr}}
-  @media(max-width:640px){.arrivals-header{flex-direction:column;align-items:flex-start}.arrivals-actions{width:100%}.novelty-grid{grid-template-columns:repeat(2,1fr);gap:.75rem}.news-card{padding:.75rem}.nw-img{width:90px;min-width:90px}}
-</style>
