@@ -1,14 +1,5 @@
 ---
-export const prerender = false;
-
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-
-const { id } = Astro.params;
-const videoId = id || '';
-
-export const prerender = false;
+export const prerender = false;    ← Keep this (ONLY ONE!)
 
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
@@ -28,7 +19,7 @@ if (videoId.startsWith('anime_') && !isAnimeExternal) {
 }
 
 // ═══════════════════════════════════════════════════
-// 🎯 FETCH ANIME INFO — Try KV database FIRST
+// 🎯 FETCH ANIME INFO — Try KV database FIRST     ← No duplicate export here!
 // ═══════════════════════════════════════════════════
 let externalAnime = null;
 let kvAnimeInfo = null;
