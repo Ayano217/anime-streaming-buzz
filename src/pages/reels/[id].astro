@@ -320,16 +320,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
               <div class="rp-player rp-player-external" id="videoCard">
                 <div class="rp-player-frame">
                   <div class="rp-external-wrap" id="externalWrap">
-                    <div class="rp-ext-placeholder" id="extPlaceholder">
-                      {video.thumbnail && (
-                        <img 
-                          src={String(video.thumbnail)} 
-                          alt={String(video.title || 'Video')} 
-                          class="rp-ext-placeholder-img" 
-                          loading="eager" 
-                          referrerpolicy="no-referrer"
-                        />
-                      )}
+                    <div class="rp-ext-placeholder" id="extPlaceholder" data-poster={video.thumbnail || ''} data-alt={video.title || 'Video'}>
                       <div class="rp-ext-placeholder-overlay"></div>
                       <div class="rp-ext-placeholder-content">
                         <div class="rp-orbit">
@@ -2267,6 +2258,20 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         var serverBtns = document.getElementById('serverBtns');
         if (!root || !wrap) return;
 
+        // Inject poster image safely via JS (avoids Astro parser bugs)
+        if (placeholder) {
+          var posterUrl = placeholder.getAttribute('data-poster');
+          var posterAlt = placeholder.getAttribute('data-alt') || 'Video';
+          if (posterUrl && posterUrl.trim()) {
+            var img = document.createElement('img');
+            img.src = posterUrl;
+            img.alt = posterAlt;
+            img.className = 'rp-ext-placeholder-img';
+            img.loading = 'eager';
+            img.referrerPolicy = 'no-referrer';
+            placeholder.insertBefore(img, placeholder.firstChild);
+          }
+        }
         // Build server list
         var servers = [];
 
