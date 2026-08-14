@@ -749,6 +749,27 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
       aspect-ratio: 16 / 9;
     }
+    /* Popup ad blocker overlay - prevents Vidsrc redirect clicks */
+    .rp-click-shield {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 45px;
+      z-index: 20;
+      background: transparent;
+      cursor: default;
+    }
+    .rp-click-shield-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 45px;
+      z-index: 20;
+      background: transparent;
+      cursor: default;
+    }
     .rp-ext-iframe {
       position: absolute;
       left: 0;
@@ -2422,6 +2443,44 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
 
           wrap.appendChild(iframe);
 
+          // ═══ POPUP AD BLOCKER ═══
+          // Add invisible click shields at top and bottom edges to block Vidsrc redirect popups
+          if (server.type === 'clean') {
+            if (!wrap.querySelector('.rp-click-shield')) {
+              var shieldTop = document.createElement('div');
+              shieldTop.className = 'rp-click-shield';
+              wrap.appendChild(shieldTop);
+
+              var shieldBottom = document.createElement('div');
+              shieldBottom.className = 'rp-click-shield-bottom';
+              wrap.appendChild(shieldBottom);
+            }
+          }
+
+          // ═══ WINDOW.OPEN OVERRIDE — Block popup redirects ═══
+          try {
+            var originalOpen = window.open;
+            window.open = function(url, name, features) {
+              // Block ads/popups from iframe
+              if (url && typeof url === 'string') {
+                var blockedDomains = [
+                  'phaseganging', 'tabup', 'popads', 'popcash', 
+                  'propellerads', 'adsterra', 'clicksor', 'exoclick',
+                  'juicyads', 'trafficjunky', 'plugrush', 'ero-advertising',
+                  'ads.', 'popup', 'redirect', 'track.', 'clk.',
+                   'onclickcash', 'popmyads'
+                ];
+                for (var i = 0; i < blockedDomains.length; i++) {
+                  if (url.indexOf(blockedDomains[i]) !== -1) {
+                    console.log('[AniTube] Blocked popup:', url.substring(0, 60));
+                    return null;
+                  }
+                }
+              }
+              return originalOpen.call(window, url, name, features);
+            };
+          } catch (e) {}
+
           // If iframe doesn't fire load event in 7s, try next server
           loadTimeout = setTimeout(function() {
             if (!iframeLoaded && idx < servers.length - 1) {
@@ -2516,6 +2575,16 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       }
 
       function init() {
+        // Inject Monetag ad script if not already loaded
+        if (!document.querySelector('script[src*="quge5.com"]')) {
+          var monetag = document.createElement('script');
+          monetag.src = 'https://quge5.com/88/tag.min.js';
+          monetag.setAttribute('data-zone', '261500');
+          monetag.setAttribute('data-cfasync', 'false');
+          monetag.async = true;
+          document.head.appendChild(monetag);
+        }
+        
         saveToHistory();
         updateLikeBtn();
         updateSaveBtn();
