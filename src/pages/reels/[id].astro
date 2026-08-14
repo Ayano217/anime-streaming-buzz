@@ -2330,9 +2330,16 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
             type: 'crop',
           });
         }
-
         if (servers.length === 0) {
-          if (placeholderText) placeholderText.textContent = 'No servers available';
+          if (placeholderText) {
+            placeholderText.innerHTML = 
+              '<div style="text-align:center;">' +
+                '<div style="font-size:14px;margin-bottom:8px;color:#e879f9;font-weight:700;">⚠️ Video source not available</div>' +
+                '<div style="font-size:11px;opacity:0.7;">This anime could not be found on any server.</div>' +
+                '<div style="font-size:11px;opacity:0.7;margin-top:4px;">Try searching a different title or check back later.</div>' +
+              '</div>';
+          }
+          if (placeholder) placeholder.style.opacity = '1';
           return;
         }
 
