@@ -293,6 +293,8 @@ const metaText = metaParts.join(' • ');
 
 const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.episodes : [];
 const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).length;
+---
+
 <BaseLayout title={`${video.title} | AniTubeBuzz`}>
   <Header slot="header" />
 
