@@ -21,17 +21,16 @@ if (videoId.startsWith('anime_') && !isAnimeExternal) {
 // ═══════════════════════════════════════════════════
 // 🎯 FETCH ANIME INFO — Try KV database FIRST
 // ═══════════════════════════════════════════════════
-let externalAnime = null;
-let kvAnimeInfo = null;
+let externalAnime: any = null;
+let kvAnimeInfo: any = null;
 
 if (isAnimeExternal) {
   // Try KV database (our admin-added anime info)
   try {
     const env = (Astro.locals as any)?.runtime?.env || {};
     const kv = env.ANIME_DB;
-    
+
     if (kv) {
-      // Try to find by slug + episode (season 1 default, then any season)
       const seasonsToTry = [1, 2, 3, 4, 5];
       for (const s of seasonsToTry) {
         const recordId = `${animeSlug}_s${s}_ep${animeEpNum}`;
@@ -43,17 +42,16 @@ if (isAnimeExternal) {
           } catch {}
         }
       }
-      
-      // If not found by exact match, search index for slug match
+
       if (!kvAnimeInfo) {
         const indexRaw = await kv.get('index:all');
         if (indexRaw) {
           let index: string[] = [];
           try { index = JSON.parse(indexRaw); } catch {}
-          
-          for (const id of index.slice(0, 100)) {
-            if (id.startsWith(animeSlug + '_s') && id.endsWith('_ep' + animeEpNum)) {
-              const raw = await kv.get(`video:${id}`);
+
+          for (const idKey of index.slice(0, 100)) {
+            if (idKey.startsWith(animeSlug + '_s') && idKey.endsWith('_ep' + animeEpNum)) {
+              const raw = await kv.get(`video:${idKey}`);
               if (raw) {
                 try {
                   kvAnimeInfo = JSON.parse(raw);
@@ -66,8 +64,8 @@ if (isAnimeExternal) {
       }
     }
   } catch (e) {}
-  
-  // Also try anime-external API (AnimoTV episode data)
+
+  // Also try anime-external API (AnimoTV + TMDB data)
   try {
     const url = new URL('/api/anime-external', Astro.url.origin);
     url.searchParams.set('action', 'detail');
@@ -80,40 +78,43 @@ if (isAnimeExternal) {
   } catch (e) {}
 }
 
-function getPlatformData(vid, tmdbIdParam = null, seasonParam = 1) {
+// ═══════════════════════════════════════════════════
+// 🎯 TMDB DATA (from external API response) — for multi-source streaming
+// ═══════════════════════════════════════════════════
+const tmdbId: number | null = externalAnime?.tmdb_id ?? null;
+const seasonNum: number = externalAnime?.season_number ?? 1;
+
+// ═══════════════════════════════════════════════════
+// 🎯 PLATFORM URL BUILDER — multi-source with TMDB priority
+// ═══════════════════════════════════════════════════
+function getPlatformData(vid: string, tmdbIdParam: number | null = null, seasonParam: number = 1): any {
   if (vid.startsWith('anime_')) {
     const m = vid.match(/^anime_(.+)_ep(\d+)$/);
     if (m) {
       const slugPart = m[1];
       const epNum = m[2];
-      
-      // Priority 1: Use TMDB-based sources (best quality, most reliable, iframe-friendly)
+
+      // If TMDB ID available → use best-quality iframe-friendly sources
       if (tmdbIdParam) {
-        return { 
-          source: 'multi', 
+        return {
+          source: 'multi',
           embedUrl: `https://vidsrc.to/embed/tv/${tmdbIdParam}/${seasonParam}/${epNum}`,
-          fallbackUrls: [
-            `https://vidsrc.to/embed/tv/${tmdbIdParam}/${seasonParam}/${epNum}`,
-            `https://vidsrc.xyz/embed/tv?tmdb=${tmdbIdParam}&season=${seasonParam}&episode=${epNum}`,
-            `https://www.2embed.cc/embedtv/${tmdbIdParam}&s=${seasonParam}&e=${epNum}`,
-            `https://multiembed.mov/directstream.php?video_id=${tmdbIdParam}&tmdb=1&s=${seasonParam}&e=${epNum}`,
-            `https://animotvslash.org/${slugPart}-episode-${epNum}/`, // AnimoTV final fallback
-          ],
-          aspect: 'landscape', 
+          aspect: 'landscape',
           isShort: false,
           tmdbId: tmdbIdParam,
           season: seasonParam,
-          episode: epNum
+          episode: parseInt(epNum, 10),
+          hasMultiSource: true,
         };
       }
-      
-      // Fallback: AnimoTV (if no TMDB ID available)
-      return { 
-        source: 'animotv', 
+
+      // Fallback: AnimoTV (with crop)
+      return {
+        source: 'animotv',
         embedUrl: `https://animotvslash.org/${slugPart}-episode-${epNum}/`,
-        fallbackUrls: [`https://animotvslash.org/${slugPart}-episode-${epNum}/`],
-        aspect: 'landscape', 
-        isShort: false 
+        aspect: 'landscape',
+        isShort: false,
+        hasMultiSource: false,
       };
     }
   }
@@ -136,7 +137,7 @@ function getPlatformData(vid, tmdbIdParam = null, seasonParam = 1) {
   return null;
 }
 
-function generateThumbnail(vid, apiThumbnail = '') {
+function generateThumbnail(vid: string, apiThumbnail = '') {
   if (apiThumbnail && apiThumbnail.trim()) return apiThumbnail;
   if (vid.startsWith('yts_') || vid.startsWith('yt_')) {
     return `https://i.ytimg.com/vi/${vid.replace(/^(yts_|yt_)/, '')}/hqdefault.jpg`;
@@ -147,7 +148,7 @@ function generateThumbnail(vid, apiThumbnail = '') {
   return '';
 }
 
-function extractSeriesFromTitle(title) {
+function extractSeriesFromTitle(title: string) {
   let t = (title || '').toLowerCase();
   t = t.replace(/\bep(?:isode)?\s*\d+.*/i, '');
   t = t.replace(/\bseason\s\d+.*/i, '');
@@ -160,29 +161,29 @@ function extractSeriesFromTitle(title) {
   return t.slice(0, 50);
 }
 
-function slugToTitle(slug) {
+function slugToTitle(slug: string) {
   return String(slug || '')
     .replace(/-/g, ' ')
     .replace(/\b\w/g, l => l.toUpperCase())
     .trim();
 }
 
-let video = null;
-let allVideos = [];
+let video: any = null;
+let allVideos: any[] = [];
 
 if (isAnimeExternal) {
   const platformData = getPlatformData(videoId, tmdbId, seasonNum);
-  
+
   // Priority 1: KV database info
   if (kvAnimeInfo) {
-    const currentEp = (externalAnime && externalAnime.episodes) 
-      ? externalAnime.episodes.find(e => e.number === animeEpNum) 
+    const currentEp = (externalAnime && externalAnime.episodes)
+      ? externalAnime.episodes.find((e: any) => e.number === animeEpNum)
       : null;
-    const heroImage = kvAnimeInfo.thumbnail 
-      || (currentEp && currentEp.thumbnail) 
-      || (externalAnime && externalAnime.poster) 
+    const heroImage = kvAnimeInfo.thumbnail
+      || (currentEp && currentEp.thumbnail)
+      || (externalAnime && externalAnime.poster)
       || '';
-    
+
     video = {
       id: videoId,
       title: `${kvAnimeInfo.animeTitle} - Episode ${animeEpNum}${kvAnimeInfo.season > 1 ? ` (Season ${kvAnimeInfo.season})` : ''}`,
@@ -190,7 +191,7 @@ if (isAnimeExternal) {
       thumbnail: heroImage,
       poster: heroImage,
       embedUrl: platformData.embedUrl,
-      source: 'animotv',
+      source: platformData.source,
       aspect: 'landscape',
       isShort: false,
       type: 'anime',
@@ -199,13 +200,16 @@ if (isAnimeExternal) {
       animeSlug: animeSlug,
       episodeNumber: animeEpNum,
       totalEpisodes: (externalAnime && externalAnime.episodes) ? externalAnime.episodes.length : 26,
-      seasonNumber: kvAnimeInfo.season || 1,
+      seasonNumber: kvAnimeInfo.season || seasonNum,
       fromDatabase: true,
+      hasMultiSource: platformData.hasMultiSource,
+      tmdbId: platformData.tmdbId,
+      season: platformData.season,
     };
   }
-  // Priority 2: AnimoTV info
+  // Priority 2: AnimoTV/TMDB info
   else if (externalAnime) {
-    const currentEp = (externalAnime.episodes || []).find(e => e.number === animeEpNum);
+    const currentEp = (externalAnime.episodes || []).find((e: any) => e.number === animeEpNum);
     const heroImage = (currentEp && currentEp.thumbnail) ? currentEp.thumbnail : (externalAnime.poster || '');
     video = {
       id: videoId,
@@ -214,7 +218,7 @@ if (isAnimeExternal) {
       thumbnail: heroImage,
       poster: externalAnime.poster || '',
       embedUrl: platformData.embedUrl,
-      source: 'animotv',
+      source: platformData.source,
       aspect: 'landscape',
       isShort: false,
       type: 'anime',
@@ -223,8 +227,11 @@ if (isAnimeExternal) {
       animeSlug: animeSlug,
       episodeNumber: animeEpNum,
       totalEpisodes: externalAnime.episodes ? externalAnime.episodes.length : 26,
-      seasonNumber: 1,
+      seasonNumber: seasonNum,
       fromDatabase: false,
+      hasMultiSource: platformData.hasMultiSource,
+      tmdbId: platformData.tmdbId,
+      season: platformData.season,
     };
   }
   // Priority 3: Fallback with slug-based title
@@ -237,7 +244,7 @@ if (isAnimeExternal) {
       thumbnail: '',
       poster: '',
       embedUrl: platformData.embedUrl,
-      source: 'animotv',
+      source: platformData.source,
       aspect: 'landscape',
       isShort: false,
       type: 'anime',
@@ -248,6 +255,7 @@ if (isAnimeExternal) {
       totalEpisodes: 26,
       seasonNumber: 1,
       fromDatabase: false,
+      hasMultiSource: false,
     };
   }
 } else {
@@ -259,7 +267,7 @@ if (isAnimeExternal) {
     if (response.ok) {
       const data = await response.json();
       allVideos = data.videos || [];
-      video = allVideos.find(v => v.id === videoId);
+      video = allVideos.find((v: any) => v.id === videoId);
     }
   } catch (e) {}
 
@@ -279,7 +287,7 @@ if (isAnimeExternal) {
 const seriesName = extractSeriesFromTitle(video.title);
 const displayChannel = (video.channel || 'AniTube').trim();
 const videoAspect = video.aspect || (video.isShort ? 'portrait' : 'landscape');
-const typeLabels = { anime: 'Anime', kdrama: 'K-Drama', donghua: 'Donghua', movies: 'Movie' };
+const typeLabels: Record<string, string> = { anime: 'Anime', kdrama: 'K-Drama', donghua: 'Donghua', movies: 'Movie' };
 const typeLabel = typeLabels[video.type] || 'Video';
 
 let publishText = '';
@@ -304,6 +312,8 @@ if (publishText) metaParts.push(publishText);
 const metaText = metaParts.join(' • ');
 
 const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.episodes : [];
+const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).length;
+---
 
 // ═══ NEW: TMDB ID for multi-source streaming ═══
 const tmdbId = externalAnime?.tmdb_id || null;
@@ -1710,14 +1720,10 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
     IS_EXTERNAL: isAnimeExternal,
     EXT_EPISODES: externalEpisodes,
     EXT_CURRENT_EP: animeEpNum,
-    FALLBACK_URLS: (isAnimeExternal && video.embedUrl) ? [
-      video.embedUrl,
-      // If TMDB available in embedUrl, these are all set from getPlatformData
-    ] : [],
-    TMDB_ID: (typeof tmdbId !== 'undefined' ? tmdbId : null),
-    SEASON_NUM: (typeof seasonNum !== 'undefined' ? seasonNum : 1),
+    TMDB_ID: tmdbId,
+    SEASON_NUM: seasonNum,
     ANIME_SLUG: animeSlug,
-    EP_NUM: animeEpNum
+    HAS_MULTI: (video && video.hasMultiSource) ? true : false
   }}>
     (function() {
       var currentVideo = INITIAL_VIDEO;
