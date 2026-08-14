@@ -18,14 +18,10 @@ if (videoId.startsWith('anime_') && !isAnimeExternal) {
   return Astro.redirect(`/reels/anime_${cleanSlug}_ep1`, 302);
 }
 
-// ═══════════════════════════════════════════════════
-// 🎯 FETCH ANIME INFO — Try KV database FIRST
-// ═══════════════════════════════════════════════════
 let externalAnime: any = null;
 let kvAnimeInfo: any = null;
 
 if (isAnimeExternal) {
-  // Try KV database (our admin-added anime info)
   try {
     const env = (Astro.locals as any)?.runtime?.env || {};
     const kv = env.ANIME_DB;
@@ -65,7 +61,6 @@ if (isAnimeExternal) {
     }
   } catch (e) {}
 
-  // Also try anime-external API (AnimoTV + TMDB data)
   try {
     const url = new URL('/api/anime-external', Astro.url.origin);
     url.searchParams.set('action', 'detail');
@@ -78,15 +73,9 @@ if (isAnimeExternal) {
   } catch (e) {}
 }
 
-// ═══════════════════════════════════════════════════
-// 🎯 TMDB DATA (from external API response) — for multi-source streaming
-// ═══════════════════════════════════════════════════
 const tmdbId: number | null = externalAnime?.tmdb_id ?? null;
 const seasonNum: number = externalAnime?.season_number ?? 1;
 
-// ═══════════════════════════════════════════════════
-// 🎯 PLATFORM URL BUILDER — multi-source with TMDB priority
-// ═══════════════════════════════════════════════════
 function getPlatformData(vid: string, tmdbIdParam: number | null = null, seasonParam: number = 1): any {
   if (vid.startsWith('anime_')) {
     const m = vid.match(/^anime_(.+)_ep(\d+)$/);
@@ -94,7 +83,6 @@ function getPlatformData(vid: string, tmdbIdParam: number | null = null, seasonP
       const slugPart = m[1];
       const epNum = m[2];
 
-      // If TMDB ID available → use best-quality iframe-friendly sources
       if (tmdbIdParam) {
         return {
           source: 'multi',
@@ -108,7 +96,6 @@ function getPlatformData(vid: string, tmdbIdParam: number | null = null, seasonP
         };
       }
 
-      // Fallback: AnimoTV (with crop)
       return {
         source: 'animotv',
         embedUrl: `https://animotvslash.org/${slugPart}-episode-${epNum}/`,
@@ -174,7 +161,6 @@ let allVideos: any[] = [];
 if (isAnimeExternal) {
   const platformData = getPlatformData(videoId, tmdbId, seasonNum);
 
-  // Priority 1: KV database info
   if (kvAnimeInfo) {
     const currentEp = (externalAnime && externalAnime.episodes)
       ? externalAnime.episodes.find((e: any) => e.number === animeEpNum)
@@ -202,12 +188,9 @@ if (isAnimeExternal) {
       totalEpisodes: (externalAnime && externalAnime.episodes) ? externalAnime.episodes.length : 26,
       seasonNumber: kvAnimeInfo.season || seasonNum,
       fromDatabase: true,
-      hasMultiSource: platformData.hasMultiSource,
-      tmdbId: platformData.tmdbId,
-      season: platformData.season,
+      hasMultiSource: platformData.hasMultiSource || false,
     };
   }
-  // Priority 2: AnimoTV/TMDB info
   else if (externalAnime) {
     const currentEp = (externalAnime.episodes || []).find((e: any) => e.number === animeEpNum);
     const heroImage = (currentEp && currentEp.thumbnail) ? currentEp.thumbnail : (externalAnime.poster || '');
@@ -229,12 +212,9 @@ if (isAnimeExternal) {
       totalEpisodes: externalAnime.episodes ? externalAnime.episodes.length : 26,
       seasonNumber: seasonNum,
       fromDatabase: false,
-      hasMultiSource: platformData.hasMultiSource,
-      tmdbId: platformData.tmdbId,
-      season: platformData.season,
+      hasMultiSource: platformData.hasMultiSource || false,
     };
   }
-  // Priority 3: Fallback with slug-based title
   else {
     const readableTitle = slugToTitle(animeSlug);
     video = {
@@ -313,14 +293,6 @@ const metaText = metaParts.join(' • ');
 
 const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.episodes : [];
 const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).length;
----
-
-// ═══ NEW: TMDB ID for multi-source streaming ═══
-const tmdbId = externalAnime?.tmdb_id || null;
-const seasonNum = externalAnime?.season_number || 1;
-const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
----
-
 <BaseLayout title={`${video.title} | AniTubeBuzz`}>
   <Header slot="header" />
 
@@ -336,12 +308,14 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
            data-anime-slug={animeSlug}
            data-ep-num={animeEpNum}
            data-embed-url={video.embedUrl}
-           data-poster={video.thumbnail}>
+           data-poster={video.thumbnail}
+           data-tmdb-id={tmdbId || ''}
+           data-season={seasonNum}
+           data-has-multi={video.hasMultiSource ? 'true' : 'false'}>
         <div class="rp-grid">
 
           <div class="rp-main">
 
-            <!-- VIDEO PLAYER -->
             {isAnimeExternal ? (
               <div class="rp-player rp-player-external" id="videoCard">
                 <div class="rp-player-frame">
@@ -356,7 +330,7 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
                           <div class="rp-dot rp-d3"></div>
                         </div>
                         <div class="rp-brand">AniTubeBuzz</div>
-                        <div class="rp-ext-placeholder-text" id="extPlaceholderText">Finding best server...</div>
+                        <div class="rp-ext-placeholder-text" id="extPlaceholderText">Loading player...</div>
                       </div>
                     </div>
                     <div class="rp-ext-brand">
@@ -365,8 +339,7 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
                     </div>
                   </div>
                 </div>
-                
-                <!-- NEW: Server switcher (auto-shows if multiple sources) -->
+
                 <div class="rp-server-switcher" id="serverSwitcher" style="display:none;">
                   <div class="rp-server-label">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
@@ -445,7 +418,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
               </div>
             </div>
 
-            <!-- MOBILE EPISODES BOX -->
             {isAnimeExternal && externalEpisodes.length > 0 && (
               <div class="rp-ep-box rp-ep-mobile collapsed" id="epBoxMobile">
                 <button class="rp-ep-header" id="epHeaderMobile" aria-expanded="false" type="button">
@@ -482,7 +454,7 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
 
                 <div class="rp-ep-body">
                   <div class="rp-ep-scroll">
-                    {externalEpisodes.map(ep => (
+                    {externalEpisodes.map((ep: any) => (
                       <a class={`rp-ext-ep-card ${ep.number === animeEpNum ? 'active' : ''}`} 
                          href={`/reels/${ep.embedId}`}
                          data-ep-num={ep.number}>
@@ -622,7 +594,7 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
 
                 <div class="rp-ep-body">
                   <div class="rp-ep-scroll" id="externalEpisodes">
-                    {externalEpisodes.map(ep => (
+                    {externalEpisodes.map((ep: any) => (
                       <a class={`rp-ext-ep-card ${ep.number === animeEpNum ? 'active' : ''}`} 
                          href={`/reels/${ep.embedId}`}
                          data-ep-num={ep.number}>
@@ -688,8 +660,8 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
   </section>
 
   <Footer slot="footer" />
+
   <style is:global>
-    /* ============ BASE (FORCED DARK BACKGROUND & NO WHITE GAPS) ============ */
     html, body {
       background-color: #0a0517 !important;
       color: #ffffff !important;
@@ -725,7 +697,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
     .rp-ep-mobile { display: none; }
     .rp-ep-desktop { display: flex; flex-direction: column; }
 
-    /* ============ NORMAL PLAYER ============ */
     .rp-player {
       width: 100%;
       background: #000;
@@ -754,7 +725,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
       border: 0;
     }
 
-    /* ============ EXTERNAL IFRAME ============ */
     .rp-player-external {
       background: transparent;
       border: 0;
@@ -787,9 +757,13 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
       background: #000;
       display: block;
     }
+    .rp-ext-iframe.clean {
+      width: 100% !important;
+      height: 100% !important;
+      transform: none !important;
+    }
     .rp-external-wrap:fullscreen { background: #000; width: 100vw; height: 100vh; border-radius: 0; }
 
-    /* Placeholder while iframe loads */
     .rp-ext-placeholder {
       position: absolute;
       inset: 0;
@@ -871,7 +845,55 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
       border-radius: 4px;
     }
 
-    /* ============ VIDEO LOADER ============ */
+    .rp-server-switcher {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: rgba(28, 15, 61, 0.6);
+      border: 1px solid rgba(192, 132, 252, 0.2);
+      border-radius: 10px;
+      flex-wrap: wrap;
+    }
+    .rp-server-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255, 255, 255, 0.5);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .rp-server-label svg { color: #c084fc; }
+    .rp-server-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .rp-server-btn {
+      padding: 5px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(192, 132, 252, 0.25);
+      background: rgba(192, 132, 252, 0.06);
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      font-family: inherit;
+    }
+    .rp-server-btn:hover {
+      background: rgba(192, 132, 252, 0.15);
+      border-color: rgba(192, 132, 252, 0.5);
+      color: #fff;
+    }
+    .rp-server-btn.active {
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      border-color: transparent;
+      color: #fff;
+    }
+    .rp-server-btn.checking { opacity: 0.6; cursor: wait; }
+    .rp-server-btn.dead { opacity: 0.35; text-decoration: line-through; }
+
     .rp-vloader {
       position: absolute;
       inset: 0;
@@ -935,7 +957,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
       100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
     }
 
-    /* ============ TITLE ============ */
     .rp-title {
       font-family: 'Bricolage Grotesque', sans-serif;
       font-size: 22px;
@@ -987,7 +1008,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
     }
     @keyframes rpPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-    /* ============ ACTIONS ============ */
     .rp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .rp-btn {
       display: inline-flex;
@@ -1022,7 +1042,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
     }
     .rp-btn-next:hover { background: linear-gradient(135deg, #d8b4fe, #f0abfc); }
 
-    /* ============ EPISODE BOX ============ */
     .rp-ep-box {
       background: #1a0f3d;
       border: 1px solid rgba(192, 132, 252, 0.22);
@@ -1170,7 +1189,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
       border-radius: 3px;
     }
 
-    /* ============ EPISODE CARD ============ */
     .rp-ext-ep-card {
       display: grid;
       grid-template-columns: 140px 1fr;
@@ -1312,7 +1330,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
       animation: rpPulse 1.5s ease-in-out infinite;
     }
 
-    /* ============ DESCRIPTION ============ */
     .rp-desc {
       margin-top: 16px;
       background: rgba(28, 15, 61, 0.5);
@@ -1355,7 +1372,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
     .rp-desc-body.expanded { max-height: 1000px; }
     .rp-desc-body p { margin: 0; white-space: pre-wrap; }
 
-    /* ============ COMMENTS ============ */
     .rp-comments { margin-top: 28px; padding-top: 24px; border-top: 1px solid rgba(192, 132, 252, 0.12); }
     .rp-comments-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
     .rp-comments-title { font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 700; color: #fff; margin: 0; }
@@ -1508,7 +1524,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
     .rp-c-reply-input:focus { border-bottom-color: #c084fc; }
     .rp-c-reply-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 
-    /* ============ MORE LIKE THIS ============ */
     .rp-more-section { margin-top: 40px; padding-top: 24px; border-top: 1px solid rgba(192, 132, 252, 0.12); }
     .rp-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
     .rp-section-title { display: flex; align-items: center; gap: 10px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px; font-weight: 700; color: #fff; }
@@ -1547,7 +1562,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
     }
     @keyframes rpSpin { to { transform: rotate(360deg); } }
 
-    /* ============ SIDEBAR (Non-anime) ============ */
     .rp-sidebar-head {
       display: flex;
       align-items: center;
@@ -1599,7 +1613,6 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
     .rp-side-ad .rp-side-badge { background: linear-gradient(135deg, #fbbf24, #f97316); }
     .rp-side-ad-price { font-size: 13px; font-weight: 800; color: #fbbf24; font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
 
-    /* ============ FEED CARDS ============ */
     .at-na-card { display: block; cursor: pointer; text-decoration: none; color: inherit; transition: transform 0.25s ease; }
     .at-na-card:hover { transform: translateY(-3px); }
     .at-na-thumb { position: relative; width: 100%; padding-top: 56.25%; border-radius: 12px; overflow: hidden; background: #1a0f3d; border: 1px solid rgba(192, 132, 252, 0.15); }
@@ -1621,59 +1634,7 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
     .at-na-ad .at-na-thumb { border-color: rgba(251, 191, 36, 0.3); }
     .at-na-ad .at-na-badge { background: linear-gradient(135deg, #fbbf24, #f97316); }
     .at-na-ad-price { font-size: 14px; font-weight: 800; color: #fbbf24; font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
-    /* ============ SERVER SWITCHER ============ */
-    .rp-server-switcher {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 10px;
-      padding: 8px 12px;
-      background: rgba(28, 15, 61, 0.6);
-      border: 1px solid rgba(192, 132, 252, 0.2);
-      border-radius: 10px;
-      flex-wrap: wrap;
-    }
-    .rp-server-label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: rgba(255, 255, 255, 0.5);
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .rp-server-label svg { color: #c084fc; }
-    .rp-server-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-    .rp-server-btn {
-      padding: 5px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(192, 132, 252, 0.25);
-      background: rgba(192, 132, 252, 0.06);
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s, color 0.15s;
-      font-family: inherit;
-    }
-    .rp-server-btn:hover {
-      background: rgba(192, 132, 252, 0.15);
-      border-color: rgba(192, 132, 252, 0.5);
-      color: #fff;
-    }
-    .rp-server-btn.active {
-      background: linear-gradient(135deg, #c084fc, #e879f9);
-      border-color: transparent;
-      color: #fff;
-    }
-    .rp-server-btn.checking { opacity: 0.5; cursor: wait; }
-    @media (max-width: 480px) {
-      .rp-server-switcher { padding: 6px 10px; gap: 6px; }
-      .rp-server-btn { padding: 4px 10px; font-size: 10px; }
-    }
-    /* ============ RESPONSIVE ============ */
+
     @media (max-width: 1280px) {
       .rp-grid { grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; }
     }
@@ -1699,6 +1660,8 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
       .rp-ep-mobile { max-height: 500px; }
       .rp-ep-mobile.collapsed { max-height: 76px; }
       .rp-title { font-size: 17px; margin: 12px 0 10px; }
+      .rp-server-switcher { padding: 6px 10px; gap: 6px; }
+      .rp-server-btn { padding: 4px 10px; font-size: 10px; }
     }
     @media (max-width: 380px) {
       .rp-ext-ep-card { grid-template-columns: 100px 1fr; }
@@ -1734,6 +1697,10 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
       var isExternal = IS_EXTERNAL;
       var extEpisodes = EXT_EPISODES || [];
       var extCurrentEp = EXT_CURRENT_EP || 0;
+      var tmdbId = TMDB_ID;
+      var seasonNum = SEASON_NUM || 1;
+      var animeSlug = ANIME_SLUG || '';
+      var hasMulti = HAS_MULTI;
       var sidebarItems = [];
       var moreItems = [];
       var productPool = [];
@@ -2178,6 +2145,23 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
           });
       }
       function initFeeds() {
+        // For anime pages we still want to fetch social feed for "More Like This" section
+        if (isExternal && (!allFeed || allFeed.length === 0)) {
+          // Fetch social feed on client side
+          fetch('/api/social-feed?limit=50&format=all')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              if (data.success && data.videos) {
+                allFeed = data.videos;
+                buildFeeds();
+              }
+            })
+            .catch(function() {});
+          return;
+        }
+        buildFeeds();
+      }
+      function buildFeeds() {
         var seen = {};
         seen[currentId] = true;
         var priority = [];
@@ -2263,9 +2247,10 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
       }
 
       // ═══════════════════════════════════════════════════════════
-      // MULTI-SOURCE EXTERNAL PLAYER (Vidsrc → 2embed → AnimoTV)
+      // MULTI-SOURCE EXTERNAL PLAYER
+      // Vidsrc.to → 2embed → Vidsrc.xyz → MultiEmbed → AnimoTV
       // ═══════════════════════════════════════════════════════════
-      function setupExternalIframe() {
+      function setupExternalPlayer() {
         var root = document.getElementById('reels-root');
         var wrap = document.getElementById('externalWrap');
         var placeholder = document.getElementById('extPlaceholder');
@@ -2274,39 +2259,39 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
         var serverBtns = document.getElementById('serverBtns');
         if (!root || !wrap) return;
 
-        // Build server list based on available data
+        // Build server list
         var servers = [];
-        
-        if (TMDB_ID) {
-          // TMDB-based servers (best — iframe friendly, high quality)
+
+        if (tmdbId && hasMulti) {
+          // Best: TMDB-based clean iframes (no crop needed)
           servers.push({
             name: 'Server 1',
-            url: 'https://vidsrc.to/embed/tv/' + TMDB_ID + '/' + SEASON_NUM + '/' + EP_NUM,
-            type: 'clean', // full iframe fit
+            url: 'https://vidsrc.to/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp,
+            type: 'clean',
           });
           servers.push({
             name: 'Server 2',
-            url: 'https://vidsrc.xyz/embed/tv?tmdb=' + TMDB_ID + '&season=' + SEASON_NUM + '&episode=' + EP_NUM,
+            url: 'https://vidsrc.xyz/embed/tv?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp,
             type: 'clean',
           });
           servers.push({
             name: 'Server 3',
-            url: 'https://www.2embed.cc/embedtv/' + TMDB_ID + '&s=' + SEASON_NUM + '&e=' + EP_NUM,
+            url: 'https://www.2embed.cc/embedtv/' + tmdbId + '&s=' + seasonNum + '&e=' + extCurrentEp,
             type: 'clean',
           });
           servers.push({
             name: 'Server 4',
-            url: 'https://multiembed.mov/directstream.php?video_id=' + TMDB_ID + '&tmdb=1&s=' + SEASON_NUM + '&e=' + EP_NUM,
+            url: 'https://multiembed.mov/directstream.php?video_id=' + tmdbId + '&tmdb=1&s=' + seasonNum + '&e=' + extCurrentEp,
             type: 'clean',
           });
         }
-        
-        // AnimoTV as final fallback (with crop)
-        if (ANIME_SLUG) {
+
+        // AnimoTV as last fallback
+        if (animeSlug) {
           servers.push({
             name: 'Server ' + (servers.length + 1),
-            url: 'https://animotvslash.org/' + ANIME_SLUG + '-episode-' + EP_NUM + '/',
-            type: 'crop', // needs iframe crop
+            url: 'https://animotvslash.org/' + animeSlug + '-episode-' + extCurrentEp + '/',
+            type: 'crop',
           });
         }
 
@@ -2319,9 +2304,10 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
         var currentServerIdx = 0;
         var loadTimeout = null;
         var iframeLoaded = false;
+        var safetyTimeout = null;
 
-        // Crop config for AnimoTV
-        var CROP_CONFIG = {
+        // Crop config (AnimoTV only)
+        var CROP = {
           viewportW: 1121,
           videoW: 950,
           videoH: 513,
@@ -2332,84 +2318,82 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
 
         function clearIframe() {
           if (currentIframe && currentIframe.parentNode) {
-            currentIframe.parentNode.removeChild(currentIframe);
+            try { currentIframe.parentNode.removeChild(currentIframe); } catch(e) {}
           }
           currentIframe = null;
           iframeLoaded = false;
         }
 
-        function applyCropIfNeeded(server) {
-          if (!currentIframe || server.type !== 'crop') return;
-          var containerWidth = wrap.clientWidth;
-          if (containerWidth < 10) return;
-          var s = containerWidth / CROP_CONFIG.videoW;
+        function applyCrop() {
+          if (!currentIframe) return;
+          var cw = wrap.clientWidth;
+          if (cw < 10) return;
+          var s = cw / CROP.videoW;
           if (s < 0.25) s = 0.25;
           if (s > 2.0) s = 2.0;
-          var tx = -CROP_CONFIG.videoLeft * s;
-          var ty = -CROP_CONFIG.videoTop * s;
+          var tx = -CROP.videoLeft * s;
+          var ty = -CROP.videoTop * s;
           currentIframe.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + s + ')';
-          var h = Math.ceil(CROP_CONFIG.videoH * s);
+          var h = Math.ceil(CROP.videoH * s);
           wrap.style.aspectRatio = 'auto';
           wrap.style.height = h + 'px';
         }
 
-        function resetToNormal() {
+        function resetToClean() {
           wrap.style.aspectRatio = '16 / 9';
           wrap.style.height = '';
         }
 
+        function updateActiveButton(idx) {
+          if (!serverBtns) return;
+          var btns = serverBtns.querySelectorAll('.rp-server-btn');
+          for (var i = 0; i < btns.length; i++) {
+            if (parseInt(btns[i].getAttribute('data-idx')) === idx) {
+              btns[i].classList.add('active');
+              btns[i].classList.remove('checking');
+            } else {
+              btns[i].classList.remove('active');
+            }
+          }
+        }
+
         function loadServer(idx) {
           if (idx >= servers.length) {
-            if (placeholderText) placeholderText.textContent = 'All servers failed. Try refreshing.';
+            if (placeholderText) placeholderText.textContent = 'All servers unavailable. Refresh to retry.';
             return;
           }
-          
+
           currentServerIdx = idx;
           var server = servers[idx];
           clearIframe();
-          
+
           if (loadTimeout) clearTimeout(loadTimeout);
-          
+          if (safetyTimeout) clearTimeout(safetyTimeout);
+
           if (placeholder) placeholder.classList.remove('hidden');
           if (placeholderText) placeholderText.textContent = 'Loading ' + server.name + '...';
-          
-          // Update active button
-          if (serverBtns) {
-            var btns = serverBtns.querySelectorAll('.rp-server-btn');
-            for (var i = 0; i < btns.length; i++) {
-              if (parseInt(btns[i].getAttribute('data-idx')) === idx) {
-                btns[i].classList.add('active');
-              } else {
-                btns[i].classList.remove('active');
-              }
-            }
-          }
+
+          updateActiveButton(idx);
 
           var iframe = document.createElement('iframe');
-          iframe.className = 'rp-ext-iframe';
+          iframe.className = 'rp-ext-iframe' + (server.type === 'clean' ? ' clean' : '');
           iframe.setAttribute('src', server.url);
           iframe.setAttribute('frameborder', '0');
           iframe.setAttribute('scrolling', 'no');
           iframe.setAttribute('allow', 'accelerometer; autoplay; encrypted-media; picture-in-picture; fullscreen');
           iframe.setAttribute('allowfullscreen', '');
           iframe.setAttribute('referrerpolicy', 'no-referrer');
-          
+
           if (server.type === 'crop') {
-            iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
-            iframe.style.width = CROP_CONFIG.viewportW + 'px';
-            iframe.style.height = CROP_CONFIG.pageHeight + 'px';
+            iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
+            iframe.style.width = CROP.viewportW + 'px';
+            iframe.style.height = CROP.pageHeight + 'px';
           } else {
-            // Clean embed — full iframe
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-            iframe.style.position = 'absolute';
-            iframe.style.inset = '0';
-            iframe.style.transform = 'none';
-            resetToNormal();
+            resetToClean();
           }
-          
+
           currentIframe = iframe;
-          
+
           iframe.addEventListener('load', function() {
             iframeLoaded = true;
             if (loadTimeout) clearTimeout(loadTimeout);
@@ -2417,35 +2401,28 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
               if (placeholder) placeholder.classList.add('hidden');
             }, 400);
             if (server.type === 'crop') {
-              requestAnimationFrame(applyCropIfNeeded.bind(null, server));
+              requestAnimationFrame(applyCrop);
             }
           });
-          
-          iframe.addEventListener('error', function() {
-            if (!iframeLoaded && idx < servers.length - 1) {
-              loadServer(idx + 1);
-            }
-          });
-          
+
           wrap.appendChild(iframe);
-          
-          // Timeout: if iframe doesn't load in 8s, try next server
+
+          // If iframe doesn't fire load event in 7s, try next server
           loadTimeout = setTimeout(function() {
             if (!iframeLoaded && idx < servers.length - 1) {
+              var btn = serverBtns ? serverBtns.querySelector('.rp-server-btn[data-idx="' + idx + '"]') : null;
+              if (btn) btn.classList.add('dead');
               loadServer(idx + 1);
-            } else if (!iframeLoaded) {
-              // Last server — just hide placeholder anyway
-              if (placeholder) placeholder.classList.add('hidden');
             }
-          }, 8000);
-          
-          // Safety: always hide placeholder after 12s
-          setTimeout(function() {
+          }, 7000);
+
+          // Safety: hide placeholder anyway after 10s
+          safetyTimeout = setTimeout(function() {
             if (placeholder) placeholder.classList.add('hidden');
-          }, 12000);
+          }, 10000);
         }
 
-        // Render server switcher buttons
+        // Render server buttons
         if (servers.length > 1 && switcher && serverBtns) {
           switcher.style.display = 'flex';
           var btnsHtml = '';
@@ -2453,41 +2430,38 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
             btnsHtml += '<button class="rp-server-btn' + (i === 0 ? ' active' : '') + '" data-idx="' + i + '">' + servers[i].name + '</button>';
           }
           serverBtns.innerHTML = btnsHtml;
-          
+
           var btns = serverBtns.querySelectorAll('.rp-server-btn');
           for (var j = 0; j < btns.length; j++) {
             btns[j].addEventListener('click', function() {
               var idx = parseInt(this.getAttribute('data-idx'));
-              if (idx !== currentServerIdx) loadServer(idx);
+              if (idx !== currentServerIdx) {
+                this.classList.remove('dead');
+                loadServer(idx);
+              }
             });
           }
         }
 
-        // Handle resize for crop mode
+        // Resize handler (only matters for crop mode)
         var resizeTimer = null;
-        window.addEventListener('resize', function() {
+        function onResize() {
           if (resizeTimer) clearTimeout(resizeTimer);
           resizeTimer = setTimeout(function() {
             var server = servers[currentServerIdx];
-            if (server && server.type === 'crop') applyCropIfNeeded(server);
+            if (server && server.type === 'crop') applyCrop();
           }, 300);
-        }, { passive: true });
-        
-        window.addEventListener('orientationchange', function() {
-          setTimeout(function() {
-            var server = servers[currentServerIdx];
-            if (server && server.type === 'crop') applyCropIfNeeded(server);
-          }, 400);
-        }, { passive: true });
-        
+        }
+        window.addEventListener('resize', onResize, { passive: true });
+        window.addEventListener('orientationchange', onResize, { passive: true });
         wrap.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
-        // Start loading — small delay for smoother initial render on mobile
+        // Start loading first server (small delay for smoother initial render)
         var startLoad = function() {
-          setTimeout(function() { loadServer(0); }, 300);
+          setTimeout(function() { loadServer(0); }, 200);
         };
         if ('requestIdleCallback' in window) {
-          requestIdleCallback(startLoad, { timeout: 600 });
+          requestIdleCallback(startLoad, { timeout: 500 });
         } else {
           startLoad();
         }
@@ -2539,7 +2513,7 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
         initFeeds();
         loadProducts();
         if (isExternal) {
-          setupExternalIframe();
+          setupExternalPlayer();
           setupMobileAccordion();
           scrollActiveEpisode();
         }
