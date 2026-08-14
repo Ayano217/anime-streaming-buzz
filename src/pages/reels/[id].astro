@@ -321,7 +321,15 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
                 <div class="rp-player-frame">
                   <div class="rp-external-wrap" id="externalWrap">
                     <div class="rp-ext-placeholder" id="extPlaceholder">
-                      <img src={video.thumbnail} alt={video.title} class="rp-ext-placeholder-img" loading="eager" referrerpolicy="no-referrer" />
+                      {video.thumbnail && (
+                        <img 
+                          src={String(video.thumbnail)} 
+                          alt={String(video.title || 'Video')} 
+                          class="rp-ext-placeholder-img" 
+                          loading="eager" 
+                          referrerpolicy="no-referrer"
+                        />
+                      )}
                       <div class="rp-ext-placeholder-overlay"></div>
                       <div class="rp-ext-placeholder-content">
                         <div class="rp-orbit">
@@ -354,7 +362,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
                   <iframe
                     id="videoFrame"
                     src={video.embedUrl}
-                    title={video.title}
+                    title={String(video.title || 'Video')}
                     frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowfullscreen
