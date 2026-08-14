@@ -1,12 +1,840 @@
 ---
+// ═══════════════════════════════════════════════════════════════
+// AniTube Buzz — Anime Detail + Multi-Server Streaming Page
+// Path: src/pages/anime/[slug].astro
+//
+// FEATURES:
+//   ✅ Existing AnimoTV + TMDB metadata (UNCHANGED)
+//   ✅ NEW: 8-server stream race (GogoAnime, AniWaves, Yomi, etc.)
+//   ✅ NEW: Server switcher — user picks server if auto fails
+//   ✅ NEW: Nyaa torrent download button
+//   ✅ No source branding — looks like AniTube's own player
+//   ✅ Phone-optimized — lazy loads, battery friendly
+//   ✅ Resume from where you left off
+//   ✅ Smooth animations matching home page style
+// ═══════════════════════════════════════════════════════════════
+
 export const prerender = false;
 
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
 const { slug } = Astro.params;
-const cleanSlug = (slug || '').replace(/\/+$/, '');
-
-if (!cleanSlug) {
-  return Astro.redirect('/', 302);
-}
-
-return Astro.redirect(`/reels/anime_${cleanSlug}_ep1`, 302);
 ---
+
+<BaseLayout
+  title={`Watch Anime`}
+  description="Stream anime episodes in HD on AniTube Buzz"
+  showAds={true}
+>
+  <Header slot="header" />
+
+  <div class="ap-wrap">
+
+    <!-- LOADING -->
+    <div id="apLoader" class="ap-loader">
+      <div class="lo-orb"><div class="lo-ring"></div><div class="lo-core"></div></div>
+      <p>Loading anime...</p>
+    </div>
+
+    <!-- NOT FOUND -->
+    <div id="apNotFound" class="ap-nf" style="display:none;">
+      <div class="nf-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/>
+        </svg>
+      </div>
+      <h1>Anime Not Found</h1>
+      <p>We couldn't find this anime. Try searching for it.</p>
+      <a href="/" class="btn btn-grad">← Back to Home</a>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="apContent" style="display:none;">
+
+      <!-- HERO SECTION -->
+      <div class="ap-hero">
+        <div class="ap-hero-bg" id="apHeroBg"></div>
+        <div class="ap-hero-fade"></div>
+        <div class="container">
+          <div class="ap-hero-grid">
+            <div class="ap-poster-wrap">
+              <img id="apPoster" class="ap-poster" alt="" />
+            </div>
+            <div class="ap-hero-info">
+              <h1 class="ap-title" id="apTitle">Loading...</h1>
+              <p class="ap-desc" id="apDesc"></p>
+              <div class="ap-hero-actions">
+                <button class="btn btn-grad ap-watch-first" id="apWatchFirst">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  Watch Episode 1
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PLAYER SECTION (hidden until episode selected) -->
+      <section id="apPlayerSection" class="section-block" style="display:none;">
+        <div class="container">
+          <div class="ap-player-head">
+            <h2 class="section-title">
+              <span class="grad-text">Now Playing</span>
+              <span id="apPlayerEpLabel" class="ap-ep-label"></span>
+            </h2>
+            <button class="ap-close-player" id="apClosePlayer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Server Switcher -->
+          <div class="ap-servers" id="apServers" style="display:none;">
+            <span class="ap-servers-label">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              Server:
+            </span>
+            <div class="ap-server-btns" id="apServerBtns"></div>
+          </div>
+
+          <!-- Player Frame -->
+          <div class="ap-player-wrap">
+            <div id="apPlayerFrame" class="ap-player-frame">
+              <div class="ap-player-loading">
+                <div class="lo-orb sm"><div class="lo-ring"></div><div class="lo-core"></div></div>
+                <span>Finding best server...</span>
+              </div>
+            </div>
+            <!-- AniTube branding overlay (hides source) -->
+            <div class="ap-player-brand">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/></svg>
+              <span>AniTube Player</span>
+            </div>
+          </div>
+
+          <!-- Torrent download (if available) -->
+          <div id="apTorrent" class="ap-torrent" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            <span>Download available:</span>
+            <a id="apTorrentLink" href="#" target="_blank" rel="noopener noreferrer" class="ap-torrent-dl">Download HD</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- EPISODES GRID -->
+      <section class="section-block">
+        <div class="container">
+          <div class="arrivals-title-wrap" style="margin-bottom:1.5rem;">
+            <div class="arrivals-bar"></div>
+            <div>
+              <div class="arrivals-tag">
+                <span class="arrivals-dot"></span>
+                <span>ALL EPISODES</span>
+              </div>
+              <h2 class="arrivals-title"><span class="grad-text">Episodes</span></h2>
+            </div>
+          </div>
+
+          <div id="apEpisodesGrid" class="ap-episodes-grid">
+            <div class="ap-ep-loading">Loading episodes...</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <Footer slot="footer" />
+</BaseLayout>
+
+<script is:inline define:vars={{ slug }}>
+(function() {
+  'use strict';
+
+  // ═══ DOM REFS ═══
+  var loader = document.getElementById('apLoader');
+  var notFound = document.getElementById('apNotFound');
+  var content = document.getElementById('apContent');
+  var heroBg = document.getElementById('apHeroBg');
+  var posterImg = document.getElementById('apPoster');
+  var titleEl = document.getElementById('apTitle');
+  var descEl = document.getElementById('apDesc');
+  var watchFirstBtn = document.getElementById('apWatchFirst');
+  var playerSection = document.getElementById('apPlayerSection');
+  var playerFrame = document.getElementById('apPlayerFrame');
+  var playerEpLabel = document.getElementById('apPlayerEpLabel');
+  var closePlayerBtn = document.getElementById('apClosePlayer');
+  var serversWrap = document.getElementById('apServers');
+  var serverBtns = document.getElementById('apServerBtns');
+  var torrentWrap = document.getElementById('apTorrent');
+  var torrentLink = document.getElementById('apTorrentLink');
+  var episodesGrid = document.getElementById('apEpisodesGrid');
+
+  var animeData = null;
+  var currentEp = 0;
+  var currentSources = [];
+
+  // ═══ HELPERS ═══
+  function esc(s) { return String(s || '').replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function trunc(s, n) { s = String(s || ''); return s.length > n ? s.slice(0, n).trim() + '…' : s; }
+
+  // ═══ FETCH ANIME DATA (from existing anime-external API) ═══
+  async function fetchAnimeData() {
+    try {
+      var res = await fetch('/api/anime-external?action=detail&slug=' + encodeURIComponent(slug));
+      if (!res.ok) throw new Error('Fetch failed');
+      var data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Not found');
+      return data;
+    } catch (e) {
+      // Fallback: try find action
+      try {
+        var res2 = await fetch('/api/anime-external?action=find&q=' + encodeURIComponent(slug.replace(/-/g, ' ')));
+        if (!res2.ok) throw new Error('Find failed');
+        var data2 = await res2.json();
+        if (data2.success && data2.found) {
+          // Re-fetch detail with found slug
+          var res3 = await fetch('/api/anime-external?action=detail&slug=' + encodeURIComponent(data2.anime.slug));
+          if (res3.ok) {
+            var data3 = await res3.json();
+            if (data3.success) return data3;
+          }
+        }
+      } catch (e2) {}
+      return null;
+    }
+  }
+
+  // ═══ RENDER ANIME INFO ═══
+  function renderInfo(data) {
+    animeData = data;
+
+    if (data.poster) {
+      heroBg.style.backgroundImage = 'url(' + data.poster + ')';
+      posterImg.src = data.poster;
+      posterImg.alt = data.title || '';
+    }
+
+    titleEl.textContent = data.title || 'Unknown Anime';
+    descEl.textContent = trunc(data.description || 'Watch this anime on AniTube Buzz.', 300);
+
+    try { document.title = (data.title || 'Anime') + ' | AniTube Buzz'; } catch (e) {}
+  }
+
+  // ═══ RENDER EPISODES ═══
+  function renderEpisodes(episodes) {
+    if (!episodes || episodes.length === 0) {
+      episodesGrid.innerHTML = '<div class="ap-ep-loading">No episodes found.</div>';
+      return;
+    }
+
+    episodesGrid.innerHTML = '';
+
+    episodes.forEach(function(ep, idx) {
+      var card = document.createElement('div');
+      card.className = 'ap-ep-card';
+      card.style.animationDelay = (idx * 30) + 'ms';
+      card.dataset.episode = String(ep.number);
+
+      var thumbHtml = ep.thumbnail
+        ? '<img src="' + esc(ep.thumbnail) + '" alt="Episode ' + ep.number + '" loading="lazy" class="ap-ep-thumb-img" onerror="this.style.display=\'none\'" />'
+        : '';
+
+      card.innerHTML =
+        '<div class="ap-ep-thumb">' +
+          thumbHtml +
+          '<div class="ap-ep-play-overlay">' +
+            '<div class="ap-ep-play-btn">' +
+              '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+            '</div>' +
+          '</div>' +
+          '<div class="ap-ep-number">EP ' + ep.number + '</div>' +
+          (ep.hasRealThumb ? '<div class="ap-ep-hd-badge">HD</div>' : '') +
+        '</div>' +
+        '<div class="ap-ep-info">' +
+          '<h4 class="ap-ep-title">' + esc(ep.title || 'Episode ' + ep.number) + '</h4>' +
+        '</div>';
+
+      card.addEventListener('click', function() {
+        playEpisode(ep.number);
+      });
+
+      episodesGrid.appendChild(card);
+    });
+  }
+
+  // ═══ PLAY EPISODE (stream-race) ═══
+  async function playEpisode(epNum) {
+    currentEp = epNum;
+
+    // Show player section
+    playerSection.style.display = 'block';
+    playerEpLabel.textContent = ' — Episode ' + epNum;
+
+    // Show loading
+    playerFrame.innerHTML =
+      '<div class="ap-player-loading">' +
+        '<div class="lo-orb sm"><div class="lo-ring"></div><div class="lo-core"></div></div>' +
+        '<span>Finding best server...</span>' +
+      '</div>';
+
+    // Scroll to player
+    setTimeout(function() {
+      playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+
+    // Highlight active episode
+    var allCards = episodesGrid.querySelectorAll('.ap-ep-card');
+    allCards.forEach(function(c) {
+      c.classList.toggle('active', parseInt(c.dataset.episode) === epNum);
+    });
+
+    // Hide torrent
+    torrentWrap.style.display = 'none';
+
+    // ═══ STREAM RACE — find fastest working server ═══
+    try {
+      var raceSlug = animeData ? animeData.baseSlug || animeData.slug || slug : slug;
+      var raceUrl = '/api/stream-race?slug=' + encodeURIComponent(raceSlug) + '&ep=' + epNum;
+
+      var res = await fetch(raceUrl);
+      var data = await res.json();
+
+      if (data.success && data.found && data.primary) {
+        currentSources = data.sources || [];
+
+        // Render server switcher
+        renderServerSwitcher(data.sources, 0);
+
+        // Load primary source
+        loadStream(data.primary);
+
+        // Show torrent if available
+        if (data.torrent && data.torrent.link) {
+          torrentWrap.style.display = 'flex';
+          torrentLink.href = data.torrent.link;
+          torrentLink.textContent = 'Download (' + (data.torrent.size || 'HD') + ')';
+        }
+
+        // Save resume data
+        saveResume(raceSlug, epNum);
+
+      } else {
+        // No stream source found — show error with retry
+        playerFrame.innerHTML =
+          '<div class="ap-player-error">' +
+            '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(192,132,252,0.5)" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>' +
+            '<p>No servers available right now</p>' +
+            '<button class="btn btn-outline" onclick="location.reload()">Try Again</button>' +
+          '</div>';
+
+        // Show torrent as fallback
+        if (data.torrent && data.torrent.link) {
+          torrentWrap.style.display = 'flex';
+          torrentLink.href = data.torrent.link;
+          torrentLink.textContent = 'Download instead (' + (data.torrent.size || 'HD') + ')';
+        }
+      }
+
+    } catch (err) {
+      console.error('[anime-play]', err);
+      playerFrame.innerHTML =
+        '<div class="ap-player-error">' +
+          '<p>Connection error. Please try again.</p>' +
+          '<button class="btn btn-outline" onclick="location.reload()">Retry</button>' +
+        '</div>';
+    }
+  }
+
+  // ═══ LOAD STREAM INTO PLAYER ═══
+  function loadStream(source) {
+    var crop = source.crop || {};
+    var viewportW = crop.viewportW || 1200;
+    var videoW = crop.videoW || 900;
+    var videoH = crop.videoH || 506;
+    var videoLeft = crop.videoLeft || 150;
+    var videoTop = crop.videoTop || 250;
+    var pageHeight = crop.pageHeight || 1800;
+
+    // Calculate scale
+    var containerW = playerFrame.offsetWidth || 900;
+    var scale = containerW / videoW;
+    var containerH = videoH * scale;
+
+    playerFrame.style.height = containerH + 'px';
+    playerFrame.style.paddingTop = '0';
+
+    var iframe = document.createElement('iframe');
+    iframe.src = source.embedUrl;
+    iframe.setAttribute('frameborder', '0');
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('allow', 'autoplay; fullscreen; picture-in-picture; encrypted-media');
+    iframe.setAttribute('scrolling', 'no');
+    iframe.setAttribute('loading', 'lazy');
+    iframe.setAttribute('referrerpolicy', 'no-referrer');
+
+    // Crop: position the iframe to show only the video player area
+    iframe.style.cssText =
+      'position:absolute;border:0;' +
+      'width:' + viewportW + 'px;' +
+      'height:' + pageHeight + 'px;' +
+      'transform-origin:' + videoLeft + 'px ' + videoTop + 'px;' +
+      'transform:translate(-' + videoLeft + 'px,-' + videoTop + 'px) scale(' + scale + ');' +
+      'top:0;left:0;';
+
+    playerFrame.innerHTML = '';
+    playerFrame.style.position = 'relative';
+    playerFrame.style.overflow = 'hidden';
+    playerFrame.appendChild(iframe);
+  }
+
+  // ═══ SERVER SWITCHER ═══
+  function renderServerSwitcher(sources, activeIdx) {
+    if (!sources || sources.length <= 1) {
+      serversWrap.style.display = 'none';
+      return;
+    }
+
+    serversWrap.style.display = 'flex';
+    serverBtns.innerHTML = '';
+
+    sources.forEach(function(src, idx) {
+      var btn = document.createElement('button');
+      btn.className = 'ap-server-btn' + (idx === activeIdx ? ' active' : '');
+      btn.textContent = src.name; // "Server 1", "Server 2" etc
+      btn.dataset.idx = String(idx);
+
+      // Show response time as tooltip
+      if (src.responseTime) {
+        btn.title = src.responseTime + 'ms';
+      }
+
+      btn.addEventListener('click', function() {
+        // Switch active server
+        serverBtns.querySelectorAll('.ap-server-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+
+        // Load this server's stream
+        loadStream(src);
+      });
+
+      serverBtns.appendChild(btn);
+    });
+  }
+
+  // ═══ RESUME SAVE ═══
+  function saveResume(animeSlug, ep) {
+    try {
+      localStorage.setItem('anitube_resume_anime', animeSlug);
+      localStorage.setItem('anitube_resume_ep', String(ep));
+      localStorage.setItem('anitube_resume_time', String(Date.now()));
+
+      // History
+      var hist = JSON.parse(localStorage.getItem('anitube_anime_history') || '[]');
+      var entry = { slug: animeSlug, ep: ep, title: animeData ? animeData.title : slug, ts: Date.now() };
+      var idx = hist.findIndex(function(h) { return h.slug === animeSlug; });
+      if (idx >= 0) hist[idx] = entry; else hist.unshift(entry);
+      localStorage.setItem('anitube_anime_history', JSON.stringify(hist.slice(0, 30)));
+    } catch (e) {}
+  }
+
+  // ═══ CLOSE PLAYER ═══
+  closePlayerBtn.addEventListener('click', function() {
+    playerSection.style.display = 'none';
+    playerFrame.innerHTML = '';
+    serversWrap.style.display = 'none';
+    torrentWrap.style.display = 'none';
+
+    // Remove active highlight
+    episodesGrid.querySelectorAll('.ap-ep-card').forEach(function(c) {
+      c.classList.remove('active');
+    });
+  });
+
+  // ═══ WATCH FIRST BUTTON ═══
+  watchFirstBtn.addEventListener('click', function() {
+    playEpisode(1);
+  });
+
+  // ═══ SAFIYA NOTIFICATION ═══
+  function notifySafiya(title, ep) {
+    try {
+      if (window.Safiya && typeof window.Safiya.say === 'function') {
+        var msgs = [
+          'episode ' + ep + '? lets gooo',
+          'ooh this one is good 👀',
+          'watching ' + (title || 'anime') + '? elite taste ✨',
+          'i love this one! 💜',
+        ];
+        setTimeout(function() {
+          window.Safiya.say(msgs[Math.floor(Math.random() * msgs.length)], 4000);
+        }, 2000);
+      }
+    } catch (e) {}
+  }
+
+  // ═══ INIT ═══
+  async function init() {
+    var data = await fetchAnimeData();
+
+    if (!data) {
+      loader.style.display = 'none';
+      notFound.style.display = 'flex';
+      return;
+    }
+
+    loader.style.display = 'none';
+    content.style.display = 'block';
+
+    renderInfo(data);
+    renderEpisodes(data.episodes || []);
+
+    // Check URL for auto-play episode
+    var urlParams = new URLSearchParams(window.location.search);
+    var autoEp = parseInt(urlParams.get('ep') || '0');
+    if (autoEp > 0) {
+      playEpisode(autoEp);
+    }
+
+    // Check resume
+    try {
+      var resumeSlug = localStorage.getItem('anitube_resume_anime');
+      var resumeEp = parseInt(localStorage.getItem('anitube_resume_ep') || '0');
+      var resumeTime = parseInt(localStorage.getItem('anitube_resume_time') || '0');
+      if (resumeSlug === slug && resumeEp > 0 && (Date.now() - resumeTime) < 3600000 && !autoEp) {
+        // Show resume prompt
+        watchFirstBtn.innerHTML =
+          '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+          'Resume Episode ' + resumeEp;
+        watchFirstBtn.onclick = function() { playEpisode(resumeEp); };
+      }
+    } catch (e) {}
+  }
+
+  init();
+})();
+</script>
+
+<style>
+  /* ═══ ANIME PAGE STYLES ═══ */
+  .ap-wrap { min-height: 100vh; }
+
+  /* Loader + Not Found (same as watch page) */
+  .ap-loader, .ap-nf {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 6rem 1rem;
+    text-align: center; min-height: 60vh;
+  }
+  .ap-loader p {
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .85rem;
+  }
+  .ap-nf h1 {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 2rem;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: .5rem;
+  }
+  .ap-nf p { color: var(--text-secondary); margin-bottom: 1.5rem; }
+  .nf-icon { color: #c084fc; margin-bottom: 1rem; }
+
+  /* Shared loader orb */
+  .lo-orb { position: relative; width: 50px; height: 50px; margin-bottom: 1rem; }
+  .lo-orb.sm { width: 32px; height: 32px; margin-bottom: 0; }
+  .lo-core {
+    position: absolute; inset: 15%; border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    box-shadow: 0 0 20px rgba(192,132,252,.6);
+    animation: loPu 1s ease infinite;
+  }
+  .lo-ring {
+    position: absolute; inset: 0; border-radius: 50%;
+    border: 2px solid rgba(192,132,252,.6);
+    animation: loEx 1.2s ease-out infinite;
+  }
+  @keyframes loEx { 0%{transform:scale(.5);opacity:1} 100%{transform:scale(1.5);opacity:0} }
+  @keyframes loPu { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+
+  /* ═══ HERO ═══ */
+  .ap-hero {
+    position: relative; padding: 3rem 0; overflow: hidden; min-height: 420px;
+  }
+  .ap-hero-bg {
+    position: absolute; inset: 0; background-size: cover;
+    background-position: center; filter: blur(30px) brightness(.3) saturate(1.3);
+    transform: scale(1.15); opacity: .7; z-index: 0;
+  }
+  .ap-hero-fade {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(10,5,23,.5) 0%, rgba(10,5,23,.7) 60%, var(--bg-base) 100%);
+    z-index: 1;
+  }
+  .ap-hero-grid {
+    position: relative; z-index: 2;
+    display: grid; grid-template-columns: 240px 1fr; gap: 2.5rem; align-items: center;
+  }
+  .ap-poster-wrap {
+    border-radius: 16px; overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5), 0 0 0 1px rgba(192,132,252,.3);
+  }
+  .ap-poster { width: 100%; display: block; }
+  .ap-hero-info { color: #fff; }
+  .ap-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 800;
+    margin: 0 0 1rem; line-height: 1.15;
+    text-shadow: 0 4px 20px rgba(0,0,0,.8);
+  }
+  .ap-desc {
+    color: rgba(255,255,255,.8); font-size: .95rem;
+    line-height: 1.65; margin: 0 0 1.5rem; max-width: 600px;
+  }
+  .ap-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ═══ PLAYER ═══ */
+  .ap-player-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .ap-ep-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .85rem; color: var(--text-muted); font-weight: 500;
+  }
+  .ap-close-player {
+    background: rgba(192,132,252,.1); border: 1px solid rgba(192,132,252,.3);
+    color: var(--text-primary); width: 38px; height: 38px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all .2s;
+  }
+  .ap-close-player:hover { background: rgba(239,68,68,.2); color: #ef4444; transform: rotate(90deg); }
+
+  /* Server Switcher */
+  .ap-servers {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .6rem 1rem; margin-bottom: .75rem;
+    background: rgba(10,5,23,.7); border: 1px solid rgba(192,132,252,.15);
+    border-radius: 12px; flex-wrap: wrap;
+  }
+  .ap-servers-label {
+    display: flex; align-items: center; gap: 4px;
+    font-size: .7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .08em; color: rgba(255,255,255,.45);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .ap-server-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ap-server-btn {
+    padding: .35rem .75rem; border-radius: 999px;
+    border: 1px solid rgba(192,132,252,.25);
+    background: rgba(192,132,252,.06);
+    color: rgba(255,255,255,.65);
+    font-size: .75rem; font-weight: 600; cursor: pointer;
+    transition: all .2s; font-family: inherit;
+  }
+  .ap-server-btn:hover {
+    border-color: rgba(192,132,252,.5); color: #fff;
+    background: rgba(192,132,252,.15);
+  }
+  .ap-server-btn.active {
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    border-color: transparent; color: #fff;
+    box-shadow: 0 2px 12px rgba(192,132,252,.4);
+  }
+
+  /* Player Frame */
+  .ap-player-wrap {
+    position: relative; width: 100%;
+    border-radius: 20px; overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,.5), 0 0 0 1px rgba(192,132,252,.2);
+    background: #000;
+  }
+  .ap-player-frame {
+    position: relative; width: 100%; padding-top: 56.25%;
+    background: #000; overflow: hidden;
+  }
+  .ap-player-frame iframe {
+    position: absolute; top: 0; left: 0;
+    border: 0; display: block;
+  }
+  .ap-player-loading, .ap-player-error {
+    position: absolute; inset: 0; display: flex;
+    flex-direction: column; align-items: center;
+    justify-content: center; gap: .75rem;
+    color: rgba(255,255,255,.7);
+    font-family: 'JetBrains Mono', monospace; font-size: .85rem;
+    background: #000;
+  }
+  .ap-player-error { gap: 1rem; }
+  .ap-player-error p { color: rgba(255,255,255,.5); margin: 0; }
+
+  /* Branding overlay */
+  .ap-player-brand {
+    position: absolute; top: 10px; left: 10px;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px;
+    background: rgba(10,5,23,.85);
+    border: 1px solid rgba(192,132,252,.3);
+    border-radius: 999px;
+    color: #e879f9;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem; font-weight: 700;
+    z-index: 10; pointer-events: none; opacity: .85;
+  }
+  .ap-player-brand span { color: #fff; }
+
+  /* Torrent download bar */
+  .ap-torrent {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .6rem 1rem; margin-top: .75rem;
+    background: rgba(28,15,61,.5);
+    border: 1px solid rgba(192,132,252,.15);
+    border-radius: 10px;
+    font-size: .8rem; color: var(--text-muted);
+  }
+  .ap-torrent-dl {
+    color: #c084fc; font-weight: 700; text-decoration: none;
+    transition: color .2s;
+  }
+  .ap-torrent-dl:hover { color: #e879f9; text-decoration: underline; }
+
+  /* ═══ EPISODES GRID ═══ */
+  .ap-episodes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .ap-ep-loading {
+    grid-column: 1 / -1; text-align: center;
+    padding: 2rem; color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace; font-size: .85rem;
+  }
+
+  @keyframes epCardIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .ap-ep-card {
+    cursor: pointer; border-radius: 12px; overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    transition: all .3s ease;
+    animation: epCardIn .4s ease backwards;
+  }
+  .ap-ep-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(232,121,249,.5);
+    box-shadow: 0 8px 25px rgba(0,0,0,.3), 0 0 15px rgba(192,132,252,.3);
+  }
+  .ap-ep-card.active {
+    border-color: #e879f9;
+    box-shadow: 0 0 0 2px rgba(232,121,249,.5), 0 8px 25px rgba(232,121,249,.3);
+  }
+
+  .ap-ep-thumb {
+    position: relative; width: 100%; padding-top: 56.25%;
+    background: #0d0520; overflow: hidden;
+  }
+  .ap-ep-thumb-img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; transition: transform .4s ease;
+  }
+  .ap-ep-card:hover .ap-ep-thumb-img { transform: scale(1.08); }
+
+  .ap-ep-play-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.4);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity .3s;
+  }
+  .ap-ep-card:hover .ap-ep-play-overlay { opacity: 1; }
+
+  .ap-ep-play-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc, #e879f9, #7dd3fc);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; padding-left: 2px;
+    box-shadow: 0 4px 15px rgba(192,132,252,.6);
+    transform: scale(.7); transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .ap-ep-card:hover .ap-ep-play-btn { transform: scale(1); }
+
+  .ap-ep-number {
+    position: absolute; bottom: 6px; right: 6px;
+    padding: 2px 8px;
+    background: rgba(10,5,23,.9);
+    color: #c084fc;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .65rem; font-weight: 800;
+    border-radius: 4px; z-index: 2;
+  }
+  .ap-ep-hd-badge {
+    position: absolute; top: 6px; right: 6px;
+    padding: 2px 6px;
+    background: rgba(125,211,252,.9); color: #0a0517;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .55rem; font-weight: 800;
+    border-radius: 3px; z-index: 2;
+  }
+  .ap-ep-info { padding: 8px 10px 10px; }
+  .ap-ep-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: .78rem; font-weight: 700;
+    color: var(--text-primary); margin: 0;
+    line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .ap-ep-card:hover .ap-ep-title {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Arrivals shared styles (from home page) */
+  .arrivals-title-wrap { display: flex; align-items: center; gap: 1rem; }
+  .arrivals-bar {
+    width: 4px; height: 44px;
+    background: linear-gradient(180deg, #c084fc, #e879f9, #7dd3fc);
+    border-radius: 3px;
+    box-shadow: 0 0 15px rgba(192,132,252,.6);
+  }
+  .arrivals-tag {
+    display: inline-flex; align-items: center; gap: .4rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: .6rem; font-weight: 700;
+    letter-spacing: .15em; color: #c084fc; margin-bottom: 4px;
+  }
+  .arrivals-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #10b981; box-shadow: 0 0 8px #10b981;
+    animation: lb 1.5s ease infinite;
+  }
+  @keyframes lb { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .arrivals-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: clamp(1.5rem, 2.8vw, 2.2rem);
+    font-weight: 800; margin: 0;
+    letter-spacing: -.03em; line-height: 1;
+  }
+
+  /* ═══ RESPONSIVE ═══ */
+  @media (max-width: 768px) {
+    .ap-hero { padding: 2rem 0; min-height: auto; }
+    .ap-hero-grid { grid-template-columns: 1fr; gap: 1.5rem; text-align: center; }
+    .ap-poster-wrap { max-width: 200px; margin: 0 auto; }
+    .ap-hero-actions { justify-content: center; }
+    .ap-episodes-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+    .ap-ep-play-overlay { opacity: .7; }
+    .ap-ep-play-btn { transform: scale(.75); }
+    .ap-server-btn { padding: .3rem .6rem; font-size: .7rem; }
+  }
+
+  @media (max-width: 480px) {
+    .ap-episodes-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
