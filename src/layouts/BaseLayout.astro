@@ -54,8 +54,24 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
     })();
   </script>
 
-  <!-- Monetag Multitag -->
-  <script src="https://quge5.com/88/tag.min.js" data-zone="261500" async data-cfasync="false"></script>
+  <!-- Monetag Multitag - Disabled on video/watch pages -->
+  {(() => {
+    const path = Astro.url.pathname.toLowerCase();
+    const isVideoPage = 
+      path.includes('/watch') ||
+      path.includes('/reels/') ||
+      path.includes('/episode') ||
+      path.includes('/anime/') ||
+      path.includes('/play') ||
+      path.includes('/stream') ||
+      path.includes('/embed') ||
+      path.includes('/movie/') ||
+      path.includes('/drama/') ||
+      path.includes('/video/');
+    return !isVideoPage;
+  })() && (
+    <script src="https://quge5.com/88/tag.min.js" data-zone="261500" async data-cfasync="false"></script>
+  )}
 </head>
 
 <body>
