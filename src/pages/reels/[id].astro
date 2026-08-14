@@ -80,11 +80,41 @@ if (isAnimeExternal) {
   } catch (e) {}
 }
 
-function getPlatformData(vid) {
+function getPlatformData(vid, tmdbIdParam = null, seasonParam = 1) {
   if (vid.startsWith('anime_')) {
     const m = vid.match(/^anime_(.+)_ep(\d+)$/);
     if (m) {
-      return { source: 'animotv', embedUrl: `https://animotvslash.org/${m[1]}-episode-${m[2]}/`, aspect: 'landscape', isShort: false };
+      const slugPart = m[1];
+      const epNum = m[2];
+      
+      // Priority 1: Use TMDB-based sources (best quality, most reliable, iframe-friendly)
+      if (tmdbIdParam) {
+        return { 
+          source: 'multi', 
+          embedUrl: `https://vidsrc.to/embed/tv/${tmdbIdParam}/${seasonParam}/${epNum}`,
+          fallbackUrls: [
+            `https://vidsrc.to/embed/tv/${tmdbIdParam}/${seasonParam}/${epNum}`,
+            `https://vidsrc.xyz/embed/tv?tmdb=${tmdbIdParam}&season=${seasonParam}&episode=${epNum}`,
+            `https://www.2embed.cc/embedtv/${tmdbIdParam}&s=${seasonParam}&e=${epNum}`,
+            `https://multiembed.mov/directstream.php?video_id=${tmdbIdParam}&tmdb=1&s=${seasonParam}&e=${epNum}`,
+            `https://animotvslash.org/${slugPart}-episode-${epNum}/`, // AnimoTV final fallback
+          ],
+          aspect: 'landscape', 
+          isShort: false,
+          tmdbId: tmdbIdParam,
+          season: seasonParam,
+          episode: epNum
+        };
+      }
+      
+      // Fallback: AnimoTV (if no TMDB ID available)
+      return { 
+        source: 'animotv', 
+        embedUrl: `https://animotvslash.org/${slugPart}-episode-${epNum}/`,
+        fallbackUrls: [`https://animotvslash.org/${slugPart}-episode-${epNum}/`],
+        aspect: 'landscape', 
+        isShort: false 
+      };
     }
   }
   if (vid.startsWith('yts_')) {
@@ -141,7 +171,7 @@ let video = null;
 let allVideos = [];
 
 if (isAnimeExternal) {
-  const platformData = getPlatformData(videoId);
+  const platformData = getPlatformData(videoId, tmdbId, seasonNum);
   
   // Priority 1: KV database info
   if (kvAnimeInfo) {
@@ -274,6 +304,10 @@ if (publishText) metaParts.push(publishText);
 const metaText = metaParts.join(' • ');
 
 const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.episodes : [];
+
+// ═══ NEW: TMDB ID for multi-source streaming ═══
+const tmdbId = externalAnime?.tmdb_id || null;
+const seasonNum = externalAnime?.season_number || 1;
 const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
 ---
 
@@ -312,7 +346,7 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
                           <div class="rp-dot rp-d3"></div>
                         </div>
                         <div class="rp-brand">AniTubeBuzz</div>
-                        <div class="rp-ext-placeholder-text">Loading player...</div>
+                        <div class="rp-ext-placeholder-text" id="extPlaceholderText">Finding best server...</div>
                       </div>
                     </div>
                     <div class="rp-ext-brand">
@@ -320,6 +354,15 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
                       <span class="rp-ext-live">HD</span>
                     </div>
                   </div>
+                </div>
+                
+                <!-- NEW: Server switcher (auto-shows if multiple sources) -->
+                <div class="rp-server-switcher" id="serverSwitcher" style="display:none;">
+                  <div class="rp-server-label">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    <span>Server:</span>
+                  </div>
+                  <div class="rp-server-btns" id="serverBtns"></div>
                 </div>
               </div>
             ) : (
@@ -1568,7 +1611,58 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
     .at-na-ad .at-na-thumb { border-color: rgba(251, 191, 36, 0.3); }
     .at-na-ad .at-na-badge { background: linear-gradient(135deg, #fbbf24, #f97316); }
     .at-na-ad-price { font-size: 14px; font-weight: 800; color: #fbbf24; font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
-
+    /* ============ SERVER SWITCHER ============ */
+    .rp-server-switcher {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: rgba(28, 15, 61, 0.6);
+      border: 1px solid rgba(192, 132, 252, 0.2);
+      border-radius: 10px;
+      flex-wrap: wrap;
+    }
+    .rp-server-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: rgba(255, 255, 255, 0.5);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .rp-server-label svg { color: #c084fc; }
+    .rp-server-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .rp-server-btn {
+      padding: 5px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(192, 132, 252, 0.25);
+      background: rgba(192, 132, 252, 0.06);
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      font-family: inherit;
+    }
+    .rp-server-btn:hover {
+      background: rgba(192, 132, 252, 0.15);
+      border-color: rgba(192, 132, 252, 0.5);
+      color: #fff;
+    }
+    .rp-server-btn.active {
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      border-color: transparent;
+      color: #fff;
+    }
+    .rp-server-btn.checking { opacity: 0.5; cursor: wait; }
+    @media (max-width: 480px) {
+      .rp-server-switcher { padding: 6px 10px; gap: 6px; }
+      .rp-server-btn { padding: 4px 10px; font-size: 10px; }
+    }
     /* ============ RESPONSIVE ============ */
     @media (max-width: 1280px) {
       .rp-grid { grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; }
@@ -1615,7 +1709,15 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
     CHANNEL_NAME: displayChannel,
     IS_EXTERNAL: isAnimeExternal,
     EXT_EPISODES: externalEpisodes,
-    EXT_CURRENT_EP: animeEpNum
+    EXT_CURRENT_EP: animeEpNum,
+    FALLBACK_URLS: (isAnimeExternal && video.embedUrl) ? [
+      video.embedUrl,
+      // If TMDB available in embedUrl, these are all set from getPlatformData
+    ] : [],
+    TMDB_ID: (typeof tmdbId !== 'undefined' ? tmdbId : null),
+    SEASON_NUM: (typeof seasonNum !== 'undefined' ? seasonNum : 1),
+    ANIME_SLUG: animeSlug,
+    EP_NUM: animeEpNum
   }}>
     (function() {
       var currentVideo = INITIAL_VIDEO;
@@ -2154,85 +2256,232 @@ const totalRealThumbs = externalEpisodes.filter(e => e.hasRealThumb).length;
         setTimeout(hideVideoLoader, 3500);
       }
 
+      // ═══════════════════════════════════════════════════════════
+      // MULTI-SOURCE EXTERNAL PLAYER (Vidsrc → 2embed → AnimoTV)
+      // ═══════════════════════════════════════════════════════════
       function setupExternalIframe() {
         var root = document.getElementById('reels-root');
         var wrap = document.getElementById('externalWrap');
         var placeholder = document.getElementById('extPlaceholder');
+        var placeholderText = document.getElementById('extPlaceholderText');
+        var switcher = document.getElementById('serverSwitcher');
+        var serverBtns = document.getElementById('serverBtns');
         if (!root || !wrap) return;
 
-        var embedUrl = root.getAttribute('data-embed-url');
-        if (!embedUrl) return;
+        // Build server list based on available data
+        var servers = [];
+        
+        if (TMDB_ID) {
+          // TMDB-based servers (best — iframe friendly, high quality)
+          servers.push({
+            name: 'Server 1',
+            url: 'https://vidsrc.to/embed/tv/' + TMDB_ID + '/' + SEASON_NUM + '/' + EP_NUM,
+            type: 'clean', // full iframe fit
+          });
+          servers.push({
+            name: 'Server 2',
+            url: 'https://vidsrc.xyz/embed/tv?tmdb=' + TMDB_ID + '&season=' + SEASON_NUM + '&episode=' + EP_NUM,
+            type: 'clean',
+          });
+          servers.push({
+            name: 'Server 3',
+            url: 'https://www.2embed.cc/embedtv/' + TMDB_ID + '&s=' + SEASON_NUM + '&e=' + EP_NUM,
+            type: 'clean',
+          });
+          servers.push({
+            name: 'Server 4',
+            url: 'https://multiembed.mov/directstream.php?video_id=' + TMDB_ID + '&tmdb=1&s=' + SEASON_NUM + '&e=' + EP_NUM,
+            type: 'clean',
+          });
+        }
+        
+        // AnimoTV as final fallback (with crop)
+        if (ANIME_SLUG) {
+          servers.push({
+            name: 'Server ' + (servers.length + 1),
+            url: 'https://animotvslash.org/' + ANIME_SLUG + '-episode-' + EP_NUM + '/',
+            type: 'crop', // needs iframe crop
+          });
+        }
 
-        var PAGE_VIEWPORT_W = 1121;
-        var VIDEO_W = 950;
-        var VIDEO_H = 513;
-        var VIDEO_LEFT = 86;
-        var VIDEO_TOP = 320;
-        var PAGE_HEIGHT = 2000; // Optimized height for lower mobile RAM usage
+        if (servers.length === 0) {
+          if (placeholderText) placeholderText.textContent = 'No servers available';
+          return;
+        }
 
-        var iframe = null;
-        var lastCropWidth = 0;
+        var currentIframe = null;
+        var currentServerIdx = 0;
+        var loadTimeout = null;
+        var iframeLoaded = false;
 
-        function applyCrop() {
-          if (!iframe) return;
+        // Crop config for AnimoTV
+        var CROP_CONFIG = {
+          viewportW: 1121,
+          videoW: 950,
+          videoH: 513,
+          videoLeft: 86,
+          videoTop: 320,
+          pageHeight: 2000,
+        };
+
+        function clearIframe() {
+          if (currentIframe && currentIframe.parentNode) {
+            currentIframe.parentNode.removeChild(currentIframe);
+          }
+          currentIframe = null;
+          iframeLoaded = false;
+        }
+
+        function applyCropIfNeeded(server) {
+          if (!currentIframe || server.type !== 'crop') return;
           var containerWidth = wrap.clientWidth;
           if (containerWidth < 10) return;
-          if (Math.abs(containerWidth - lastCropWidth) < 5) return;
-          lastCropWidth = containerWidth;
-          var s = containerWidth / VIDEO_W;
+          var s = containerWidth / CROP_CONFIG.videoW;
           if (s < 0.25) s = 0.25;
           if (s > 2.0) s = 2.0;
-          var tx = -VIDEO_LEFT * s;
-          var ty = -VIDEO_TOP * s;
-          iframe.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + s + ')';
-          var h = Math.ceil(VIDEO_H * s);
+          var tx = -CROP_CONFIG.videoLeft * s;
+          var ty = -CROP_CONFIG.videoTop * s;
+          currentIframe.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + s + ')';
+          var h = Math.ceil(CROP_CONFIG.videoH * s);
           wrap.style.aspectRatio = 'auto';
           wrap.style.height = h + 'px';
         }
 
-        function loadIframe() {
-          iframe = document.createElement('iframe');
+        function resetToNormal() {
+          wrap.style.aspectRatio = '16 / 9';
+          wrap.style.height = '';
+        }
+
+        function loadServer(idx) {
+          if (idx >= servers.length) {
+            if (placeholderText) placeholderText.textContent = 'All servers failed. Try refreshing.';
+            return;
+          }
+          
+          currentServerIdx = idx;
+          var server = servers[idx];
+          clearIframe();
+          
+          if (loadTimeout) clearTimeout(loadTimeout);
+          
+          if (placeholder) placeholder.classList.remove('hidden');
+          if (placeholderText) placeholderText.textContent = 'Loading ' + server.name + '...';
+          
+          // Update active button
+          if (serverBtns) {
+            var btns = serverBtns.querySelectorAll('.rp-server-btn');
+            for (var i = 0; i < btns.length; i++) {
+              if (parseInt(btns[i].getAttribute('data-idx')) === idx) {
+                btns[i].classList.add('active');
+              } else {
+                btns[i].classList.remove('active');
+              }
+            }
+          }
+
+          var iframe = document.createElement('iframe');
           iframe.className = 'rp-ext-iframe';
-          iframe.setAttribute('src', embedUrl);
+          iframe.setAttribute('src', server.url);
           iframe.setAttribute('frameborder', '0');
           iframe.setAttribute('scrolling', 'no');
-          iframe.setAttribute('allow', 'accelerometer; autoplay; encrypted-media; picture-in-picture');
+          iframe.setAttribute('allow', 'accelerometer; autoplay; encrypted-media; picture-in-picture; fullscreen');
           iframe.setAttribute('allowfullscreen', '');
-          iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
-          iframe.style.width = PAGE_VIEWPORT_W + 'px';
-          iframe.style.height = PAGE_HEIGHT + 'px';
-          wrap.appendChild(iframe);
-
-          requestAnimationFrame(function() {
-            applyCrop();
-            iframe.addEventListener('load', function() {
-              setTimeout(function() {
-                if (placeholder) placeholder.classList.add('hidden');
-              }, 300);
-              applyCrop();
-            });
+          iframe.setAttribute('referrerpolicy', 'no-referrer');
+          
+          if (server.type === 'crop') {
+            iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms');
+            iframe.style.width = CROP_CONFIG.viewportW + 'px';
+            iframe.style.height = CROP_CONFIG.pageHeight + 'px';
+          } else {
+            // Clean embed — full iframe
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.position = 'absolute';
+            iframe.style.inset = '0';
+            iframe.style.transform = 'none';
+            resetToNormal();
+          }
+          
+          currentIframe = iframe;
+          
+          iframe.addEventListener('load', function() {
+            iframeLoaded = true;
+            if (loadTimeout) clearTimeout(loadTimeout);
             setTimeout(function() {
               if (placeholder) placeholder.classList.add('hidden');
-            }, 4000);
+            }, 400);
+            if (server.type === 'crop') {
+              requestAnimationFrame(applyCropIfNeeded.bind(null, server));
+            }
           });
+          
+          iframe.addEventListener('error', function() {
+            if (!iframeLoaded && idx < servers.length - 1) {
+              loadServer(idx + 1);
+            }
+          });
+          
+          wrap.appendChild(iframe);
+          
+          // Timeout: if iframe doesn't load in 8s, try next server
+          loadTimeout = setTimeout(function() {
+            if (!iframeLoaded && idx < servers.length - 1) {
+              loadServer(idx + 1);
+            } else if (!iframeLoaded) {
+              // Last server — just hide placeholder anyway
+              if (placeholder) placeholder.classList.add('hidden');
+            }
+          }, 8000);
+          
+          // Safety: always hide placeholder after 12s
+          setTimeout(function() {
+            if (placeholder) placeholder.classList.add('hidden');
+          }, 12000);
         }
 
+        // Render server switcher buttons
+        if (servers.length > 1 && switcher && serverBtns) {
+          switcher.style.display = 'flex';
+          var btnsHtml = '';
+          for (var i = 0; i < servers.length; i++) {
+            btnsHtml += '<button class="rp-server-btn' + (i === 0 ? ' active' : '') + '" data-idx="' + i + '">' + servers[i].name + '</button>';
+          }
+          serverBtns.innerHTML = btnsHtml;
+          
+          var btns = serverBtns.querySelectorAll('.rp-server-btn');
+          for (var j = 0; j < btns.length; j++) {
+            btns[j].addEventListener('click', function() {
+              var idx = parseInt(this.getAttribute('data-idx'));
+              if (idx !== currentServerIdx) loadServer(idx);
+            });
+          }
+        }
+
+        // Handle resize for crop mode
         var resizeTimer = null;
-        function onResize() {
+        window.addEventListener('resize', function() {
           if (resizeTimer) clearTimeout(resizeTimer);
           resizeTimer = setTimeout(function() {
-            applyCrop();
+            var server = servers[currentServerIdx];
+            if (server && server.type === 'crop') applyCropIfNeeded(server);
           }, 300);
-        }
-        window.addEventListener('resize', onResize, { passive: true });
-        window.addEventListener('orientationchange', onResize, { passive: true });
+        }, { passive: true });
+        
+        window.addEventListener('orientationchange', function() {
+          setTimeout(function() {
+            var server = servers[currentServerIdx];
+            if (server && server.type === 'crop') applyCropIfNeeded(server);
+          }, 400);
+        }, { passive: true });
+        
         wrap.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
+        // Start loading — small delay for smoother initial render on mobile
         var startLoad = function() {
-          setTimeout(loadIframe, 500);
+          setTimeout(function() { loadServer(0); }, 300);
         };
         if ('requestIdleCallback' in window) {
-          requestIdleCallback(startLoad, { timeout: 800 });
+          requestIdleCallback(startLoad, { timeout: 600 });
         } else {
           startLoad();
         }
