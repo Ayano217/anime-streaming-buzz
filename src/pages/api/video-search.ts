@@ -1,369 +1,297 @@
-export const prerender = false;
-
+// src/pages/api/video-search.ts
+// Multi-source anime video search — GogoAnime, AniWaves, Yomi, KickAss, Nyaa
 import type { APIRoute } from 'astro';
 
-const CACHE: Record<string, { data: any; time: number }> = {};
-const CACHE_TTL = 60 * 60 * 1000;
+const CONSUMET = 'https://api.consumet.org';
+const JIKAN    = 'https://api.jikan.moe/v4';
+const TIMEOUT  = 6000;
 
-function jsonRes(data: any, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=3600',
-      'Access-Control-Allow-Origin': '*'
-    }
-  });
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function slugify(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
 }
 
-// Extract episode number from title
-function extractEpNumber(title: string): number | null {
-  const patterns = [
-    /episode[\s.-]*(\d+)/i,
-    /\bep[\s.-]*(\d+)\b/i,
-    /\bE(\d+)\b/,
-    /\bS\d+E(\d+)\b/i,
-    /#(\d+)\b/,
-    /\bpart[\s.-]*(\d+)/i
-  ];
-  for (const p of patterns) {
-    const m = title.match(p);
-    if (m) return parseInt(m[1]);
-  }
-  return null;
-}
-
-// Check if title contains keywords from episode title
-function matchesEpTitle(videoTitle: string, epTitle: string): boolean {
-  if (!epTitle) return false;
-  const vt = videoTitle.toLowerCase();
-  const et = epTitle.toLowerCase();
-  
-  // Direct match
-  if (vt.includes(et)) return true;
-  
-  // Check if 60%+ words from ep title are in video title
-  const epWords = et.split(/\s+/).filter(w => w.length > 3);
-  if (epWords.length === 0) return false;
-  const matchCount = epWords.filter(w => vt.includes(w)).length;
-  return matchCount / epWords.length >= 0.6;
-}
-
-// ═══ YOUTUBE SEARCH ═══
-async function searchYouTube(
-  query: string, 
-  targetEp: number | null, 
-  apiKey: string, 
-  epTitle?: string, 
-  seasonHint?: string
-): Promise<any[]> {
-  if (!apiKey) return [];
-  
-  // Build smarter query with episode title if available
-  let searchQuery: string;
-  
-  if (targetEp) {
-    if (epTitle && epTitle !== `Episode ${targetEp}` && epTitle.length > 3) {
-      // Use episode title for precise match
-      searchQuery = `${query} "${epTitle}" episode ${targetEp} english`;
-    } else {
-      searchQuery = `"${query}" "episode ${targetEp}" english sub full`;
-    }
-    // Add season hint if provided
-    if (seasonHint) {
-      searchQuery = seasonHint + ' ' + searchQuery;
-    }
-  } else {
-    searchQuery = `${query} anime`;
-  }
-  
+async function fetchWithTimeout(
+  url: string,
+  opts: RequestInit = {},
+  ms = TIMEOUT
+): Promise<Response> {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), ms);
   try {
-    const params = new URLSearchParams({
-      part: 'snippet',
-      q: searchQuery,
-      type: 'video',
-      maxResults: '10',
-      videoEmbeddable: 'true',
-      videoSyndicated: 'true',
-      safeSearch: 'moderate',
-      key: apiKey
-    });
-    if (targetEp) params.set('videoDuration', 'long');
-
-    const res = await fetch(`https://www.googleapis.com/youtube/v3/search?${params.toString()}`);
-    if (!res.ok) return [];
-    const json: any = await res.json();
-    
-    return (json.items || []).map((item: any) => {
-      const title = item.snippet.title || '';
-      const description = item.snippet.description || '';
-      const detectedEp = extractEpNumber(title);
-      let score = 10;
-      
-      // Boost official channels
-      const channel = (item.snippet.channelTitle || '').toLowerCase();
-      const isOfficial = /muse asia|ani-one|aniplex|crunchyroll|bandai namco|medialink|toei/i.test(channel);
-      if (isOfficial) score += 20;
-      
-      // Episode number match (critical)
-      if (targetEp !== null) {
-        if (detectedEp === targetEp) score += 30;
-        else if (detectedEp !== null) score -= 25; // Wrong episode number penalty
-        
-        // Episode title match (HUGE boost — most important for correct season)
-        if (epTitle && matchesEpTitle(title, epTitle)) {
-          score += 50; // Massive boost for correct episode title
-        }
-        if (epTitle && matchesEpTitle(description, epTitle)) {
-          score += 20; // Also check description
-        }
-        
-        // Content indicators
-        if (/full episode|full ep/i.test(title)) score += 10;
-        if (/english sub|subbed/i.test(title)) score += 5;
-        if (/english dub|dubbed/i.test(title)) score += 5;
-      }
-      
-      // Penalize junk content
-      if (/reaction|review|analysis|amv|edit|compilation|shorts|explained/i.test(title)) score -= 25;
-      if (/trailer|preview/i.test(title) && targetEp) score -= 10;
-      if (/top 10|ranked|best of/i.test(title)) score -= 15;
-      
-      return {
-        source: 'youtube',
-        sourceLabel: 'YouTube',
-        videoId: item.id.videoId,
-        embedUrl: `https://www.youtube.com/embed/${item.id.videoId}?autoplay=1&rel=0&modestbranding=1`,
-        title,
-        channel: item.snippet.channelTitle,
-        thumbnail: item.snippet.thumbnails?.high?.url || item.snippet.thumbnails?.medium?.url || '',
-        publishedAt: item.snippet.publishedAt,
-        detectedEp,
-        score,
-        isOfficial
-      };
-    }).filter((v: any) => v.score > 0);
-  } catch (e) {
-    console.warn('YouTube search failed:', e);
-    return [];
+    const res = await fetch(url, { ...opts, signal: ctrl.signal });
+    return res;
+  } finally {
+    clearTimeout(id);
   }
 }
 
-// ═══ DAILYMOTION SEARCH ═══
-async function searchDailymotion(
-  query: string, 
-  targetEp: number | null, 
-  epTitle?: string
-): Promise<any[]> {
-  let searchQuery: string;
-  
-  if (targetEp) {
-    if (epTitle && epTitle !== `Episode ${targetEp}` && epTitle.length > 3) {
-      searchQuery = `${query} ${epTitle} episode ${targetEp}`;
-    } else {
-      searchQuery = `${query} episode ${targetEp} english sub`;
-    }
-  } else {
-    searchQuery = query;
-  }
-  
+// ── Source: Consumet → GogoAnime ─────────────────────────────────────────────
+
+async function searchConsumetGogo(query: string, episode: number) {
   try {
-    const url = `https://api.dailymotion.com/videos?search=${encodeURIComponent(searchQuery)}&fields=id,title,thumbnail_720_url,duration,owner.screenname,views_total,created_time,allow_embed&limit=10`;
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const json: any = await res.json();
-    
-    return (json.list || []).filter((v: any) => v.allow_embed !== false).map((v: any) => {
-      const title = v.title || '';
-      const detectedEp = extractEpNumber(title);
-      let score = 8;
-      
-      if (targetEp !== null) {
-        if (detectedEp === targetEp) score += 30;
-        else if (detectedEp !== null) score -= 20;
-        
-        // Episode title match boost
-        if (epTitle && matchesEpTitle(title, epTitle)) {
-          score += 40;
-        }
-        
-        if (/full episode|full ep/i.test(title)) score += 8;
-        if (/english sub|subbed|dubbed|eng dub/i.test(title)) score += 5;
-      }
-      
-      if (/reaction|review|amv|edit/i.test(title)) score -= 15;
-      if (/trailer/i.test(title) && targetEp) score -= 8;
-      
-      // Duration check
-      if (targetEp && v.duration >= 900) score += 10;
-      if (targetEp && v.duration < 300) score -= 15;
-      
-      return {
-        source: 'dailymotion',
-        sourceLabel: 'Dailymotion',
-        videoId: v.id,
-        embedUrl: `https://www.dailymotion.com/embed/video/${v.id}?autoplay=1`,
-        title,
-        channel: v['owner.screenname'] || 'Unknown',
-        thumbnail: v.thumbnail_720_url || '',
-        duration: v.duration,
-        views: v.views_total,
-        detectedEp,
-        score,
-        isOfficial: false
-      };
-    }).filter((v: any) => v.score > 0);
-  } catch (e) {
-    console.warn('Dailymotion search failed:', e);
-    return [];
-  }
-}
+    const url = `${CONSUMET}/anime/gogoanime/${encodeURIComponent(query)}`;
+    const res = await fetchWithTimeout(url);
+    if (!res.ok) return null;
+    const data = await res.json();
 
-// ═══ ODYSEE SEARCH ═══
-async function searchOdysee(query: string, targetEp: number | null, epTitle?: string): Promise<any[]> {
-  let searchQuery: string;
-  
-  if (targetEp) {
-    if (epTitle && epTitle.length > 3) {
-      searchQuery = `${query} ${epTitle} episode ${targetEp}`;
-    } else {
-      searchQuery = `${query} episode ${targetEp}`;
-    }
-  } else {
-    searchQuery = query;
-  }
-  
-  try {
-    const url = `https://lighthouse.odysee.com/search?s=${encodeURIComponent(searchQuery)}&size=10&from=0&mediaType=video`;
-    const res = await fetch(url);
-    if (!res.ok) return [];
-    const results: any = await res.json();
-    if (!Array.isArray(results)) return [];
-    
-    return results.map((v: any) => {
-      const title = v.title || v.name || '';
-      const detectedEp = extractEpNumber(title);
-      let score = 6;
-      
-      if (targetEp !== null) {
-        if (detectedEp === targetEp) score += 30;
-        else if (detectedEp !== null) score -= 15;
-        
-        // Episode title match boost
-        if (epTitle && matchesEpTitle(title, epTitle)) {
-          score += 35;
-        }
-      }
-      
-      if (/reaction|review|amv/i.test(title)) score -= 10;
-      
-      const claimId = v.claimId || v.claim_id;
-      const name = v.name;
-      if (!claimId || !name) return null;
-      
-      return {
-        source: 'odysee',
-        sourceLabel: 'Odysee',
-        videoId: claimId,
-        embedUrl: `https://odysee.com/$/embed/${name}/${claimId}?autoplay=1`,
-        title,
-        channel: v.channel || 'Odysee',
-        thumbnail: v.thumbnail_url || '',
-        detectedEp,
-        score,
-        isOfficial: false
-      };
-    }).filter((v: any) => v && v.score > 0);
-  } catch (e) {
-    console.warn('Odysee search failed:', e);
-    return [];
-  }
-}
+    const results = data?.results ?? [];
+    if (!results.length) return null;
 
-// ═══ MAIN HANDLER ═══
-export const GET: APIRoute = async ({ url, locals }) => {
-  const query = (url.searchParams.get('q') || '').trim();
-  const epParam = url.searchParams.get('ep');
-  const targetEp = epParam ? parseInt(epParam) : null;
-  const epTitle = url.searchParams.get('epTitle') || '';
-  const seasonHint = url.searchParams.get('season') || '';
-  const sourcesParam = url.searchParams.get('sources') || 'all';
+    // Pick best match
+    const best = results.find((r: any) =>
+      r.title?.toLowerCase().includes(query.toLowerCase())
+    ) ?? results[0];
 
-  if (!query) {
-    return jsonRes({ success: false, error: 'Query required' }, 400);
-  }
+    // Fetch episode stream info
+    const epId = `${best.id}-episode-${episode}`;
+    const streamUrl = `${CONSUMET}/anime/gogoanime/watch/${encodeURIComponent(epId)}`;
+    const sRes = await fetchWithTimeout(streamUrl);
+    if (!sRes.ok) return null;
+    const sData = await sRes.json();
 
-  const env = (locals as any)?.runtime?.env || {};
-  const YT_KEY = env.YOUTUBE_API_KEY || (globalThis as any).YOUTUBE_API_KEY || '';
+    const sources: any[] = sData?.sources ?? [];
+    // Prefer 1080p → 720p → default
+    const best_src =
+      sources.find((s: any) => s.quality === '1080p') ||
+      sources.find((s: any) => s.quality === '720p') ||
+      sources[0];
 
-  // Cache key includes epTitle for accurate cache hits
-  const cacheKey = `multi:${query}:${targetEp}:${epTitle}:${sourcesParam}`;
-  const hit = CACHE[cacheKey];
-  if (hit && Date.now() - hit.time < CACHE_TTL) {
-    return jsonRes({ success: true, source: 'cache', ...hit.data });
-  }
+    if (!best_src?.url) return null;
 
-  const sources = sourcesParam === 'all' 
-    ? ['youtube', 'dailymotion', 'odysee']
-    : sourcesParam.split(',');
-
-  try {
-    // Parallel search all sources — MUCH faster than sequential
-    const promises: Promise<any[]>[] = [];
-    if (sources.includes('youtube')) {
-      promises.push(searchYouTube(query, targetEp, YT_KEY, epTitle, seasonHint));
-    }
-    if (sources.includes('dailymotion')) {
-      promises.push(searchDailymotion(query, targetEp, epTitle));
-    }
-    if (sources.includes('odysee')) {
-      promises.push(searchOdysee(query, targetEp, epTitle));
-    }
-
-    const results = await Promise.all(promises);
-    const allVideos = results.flat();
-
-    // Sort by score descending
-    allVideos.sort((a, b) => b.score - a.score);
-
-    // Filter for strict episode matches when targetEp provided
-    let filtered = allVideos;
-    if (targetEp !== null) {
-      // Prioritize videos with correct ep number OR high score matching
-      const strictMatches = allVideos.filter(v => 
-        v.detectedEp === targetEp || 
-        (v.detectedEp === null && v.score > 20) ||
-        v.score > 40  // Very high score = probably correct
-      );
-      if (strictMatches.length > 0) filtered = strictMatches;
-    }
-
-    // Take top 10 across all sources
-    const top = filtered.slice(0, 10);
-
-    // Group by source for stats
-    const bySource: Record<string, number> = {};
-    top.forEach(v => { bySource[v.source] = (bySource[v.source] || 0) + 1; });
-
-    const result = {
-      videos: top,
-      primary: top[0] || null,
-      totalFound: allVideos.length,
-      sources: bySource,
-      query,
-      targetEp,
-      epTitle: epTitle || null
+    return {
+      source: 'gogoanime',
+      label: 'GogoAnime',
+      type: 'hls',
+      url: best_src.url,
+      quality: best_src.quality ?? 'auto',
+      subtitles: sData?.subtitles ?? [],
+      intro: sData?.intro ?? null,
+      direct: true,
+      priority: 1,
     };
+  } catch {
+    return null;
+  }
+}
 
-    CACHE[cacheKey] = { data: result, time: Date.now() };
-    return jsonRes({ success: true, source: 'multi', ...result });
+// ── Source: AniWaves ─────────────────────────────────────────────────────────
 
-  } catch (err: any) {
-    console.error('Multi-search error:', err);
-    return jsonRes({ 
-      success: false, 
-      error: err.message,
-      fallback: `https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}`
-    }, 500);
+async function searchAniWaves(malId: string | null, query: string, episode: number) {
+  try {
+    // AniWaves uses MAL ID in URL: /watch/{mal_id}/ep-{ep}
+    if (!malId) return null;
+    return {
+      source: 'aniwaves',
+      label: 'AniWaves',
+      type: 'embed',
+      url: `https://aniwaves.ru/watch/${malId}/ep-${episode}`,
+      embedUrl: `https://aniwaves.ru/watch/${malId}/ep-${episode}`,
+      direct: false,
+      priority: 2,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ── Source: Yomi ─────────────────────────────────────────────────────────────
+
+async function searchYomi(malId: string | null, episode: number) {
+  try {
+    if (!malId) return null;
+    return {
+      source: 'yomi',
+      label: 'Yomi',
+      type: 'embed',
+      url: `https://yomi.to/watch/${malId}/${episode}`,
+      embedUrl: `https://yomi.to/watch/${malId}/${episode}`,
+      direct: false,
+      priority: 3,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ── Source: KickAssAnime ─────────────────────────────────────────────────────
+
+async function searchKickAss(query: string, episode: number) {
+  try {
+    const slug = slugify(query);
+    return {
+      source: 'kickassanime',
+      label: 'KickAssAnime',
+      type: 'embed',
+      url: `https://kickassanime.com.es/${slug}-episode-${episode}-english-subbed/`,
+      embedUrl: `https://kickassanime.com.es/${slug}-episode-${episode}-english-subbed/`,
+      direct: false,
+      priority: 4,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ── Source: Nyaa Torrent RSS ──────────────────────────────────────────────────
+
+async function searchNyaa(query: string, episode: number) {
+  try {
+    const ep = String(episode).padStart(2, '0');
+    const q  = encodeURIComponent(`${query} ${ep}`);
+    const rssUrl = `https://nyaa.si/?page=rss&q=${q}&c=1_0&f=0`;
+    const res = await fetchWithTimeout(rssUrl, {}, 5000);
+    if (!res.ok) return null;
+    const text = await res.text();
+
+    // Parse RSS items
+    const items: any[] = [];
+    const itemRx = /<item>([\s\S]*?)<\/item>/g;
+    let m: RegExpExecArray | null;
+    while ((m = itemRx.exec(text)) !== null && items.length < 5) {
+      const block = m[1];
+      const titleM = /<title><!\[CDATA\[(.*?)\]\]><\/title>/.exec(block);
+      const linkM  = /<link>(.*?)<\/link>/.exec(block)
+                  || /<guid[^>]*>(.*?)<\/guid>/.exec(block);
+      const sizeM  = /nyaa:size>(.*?)<\//.exec(block);
+      const seedM  = /nyaa:seeders>(.*?)<\//.exec(block);
+
+      if (titleM && linkM) {
+        items.push({
+          title: titleM[1].trim(),
+          link:  linkM[1].trim(),
+          size:  sizeM?.[1]?.trim() ?? 'N/A',
+          seeds: parseInt(seedM?.[1] ?? '0', 10),
+        });
+      }
+    }
+
+    // Best: most seeded
+    items.sort((a, b) => b.seeds - a.seeds);
+    const best = items[0];
+    if (!best) return null;
+
+    return {
+      source: 'nyaa',
+      label: 'Nyaa Torrent',
+      type: 'torrent',
+      url: best.link,
+      title: best.title,
+      size: best.size,
+      seeds: best.seeds,
+      allResults: items,
+      direct: false,
+      priority: 5,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ── MAL ID lookup via Jikan ───────────────────────────────────────────────────
+
+async function getMalId(query: string): Promise<string | null> {
+  try {
+    const url = `${JIKAN}/anime?q=${encodeURIComponent(query)}&limit=1`;
+    const res = await fetchWithTimeout(url, {}, 5000);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const id = data?.data?.[0]?.mal_id;
+    return id ? String(id) : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Main Handler ──────────────────────────────────────────────────────────────
+
+export const GET: APIRoute = async ({ url }) => {
+  const params  = url.searchParams;
+  const query   = params.get('q') ?? params.get('query') ?? '';
+  const episode = parseInt(params.get('ep') ?? params.get('episode') ?? '1', 10);
+  const malId   = params.get('mal_id') ?? null;
+  const source  = params.get('source') ?? 'all'; // 'all' | specific source id
+
+  if (!query && !malId) {
+    return new Response(
+      JSON.stringify({ error: 'query (q) or mal_id required' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
+    'Access-Control-Allow-Origin': '*',
+  };
+
+  // Get MAL ID if not provided
+  const resolvedMalId = malId ?? (query ? await getMalId(query) : null);
+
+  // Parallel fetch from all sources
+  const [gogo, waves, yomi, kick, nyaa] = await Promise.allSettled([
+    source === 'all' || source === 'gogoanime'
+      ? searchConsumetGogo(query, episode)
+      : Promise.resolve(null),
+    source === 'all' || source === 'aniwaves'
+      ? searchAniWaves(resolvedMalId, query, episode)
+      : Promise.resolve(null),
+    source === 'all' || source === 'yomi'
+      ? searchYomi(resolvedMalId, episode)
+      : Promise.resolve(null),
+    source === 'all' || source === 'kickassanime'
+      ? searchKickAss(query, episode)
+      : Promise.resolve(null),
+    source === 'all' || source === 'nyaa'
+      ? searchNyaa(query, episode)
+      : Promise.resolve(null),
+  ]);
+
+  const extract = (r: PromiseSettledResult<any>) =>
+    r.status === 'fulfilled' && r.value ? r.value : null;
+
+  const sources = [
+    extract(gogo),
+    extract(waves),
+    extract(yomi),
+    extract(kick),
+    extract(nyaa),
+  ].filter(Boolean);
+
+  // Sort by priority
+  sources.sort((a: any, b: any) => (a.priority ?? 99) - (b.priority ?? 99));
+
+  return new Response(
+    JSON.stringify({
+      query,
+      episode,
+      mal_id: resolvedMalId,
+      total: sources.length,
+      sources,
+      recommended: sources[0] ?? null,
+      timestamp: Date.now(),
+    }),
+    { status: 200, headers }
+  );
+};
+
+export const POST: APIRoute = async ({ request }) => {
+  try {
+    const body  = await request.json();
+    const reqUrl = new URL(
+      `/api/video-search?q=${encodeURIComponent(body.query ?? '')}&ep=${body.episode ?? 1}&mal_id=${body.mal_id ?? ''}`,
+      'http://localhost'
+    );
+    return GET({ url: reqUrl } as any);
+  } catch {
+    return new Response(
+      JSON.stringify({ error: 'Invalid JSON body' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
   }
 };
