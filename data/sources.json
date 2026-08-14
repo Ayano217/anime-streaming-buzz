@@ -1,39 +1,79 @@
 {
-  "rss_feeds": [
+  "version": "2.0",
+  "primary_sources": [
     {
-      "name": "Anime News Network",
-      "url": "https://www.animenewsnetwork.com/all/rss.xml?ann-edition=us",
-      "category": "News",
-      "tags": ["anime", "news"]
+      "id": "gogoanime",
+      "name": "GogoAnime",
+      "base_url": "https://gogoanime.by",
+      "search_url": "https://gogoanime.by/search.html?keyword={query}",
+      "embed_domains": ["gogocdn.net", "gogoanime.by"],
+      "priority": 1,
+      "active": true
     },
     {
-      "name": "Crunchyroll News",
-      "url": "https://cr-news-api-service.prd.crunchyrollsvc.com/v1/en-US/rss",
-      "category": "Streaming",
-      "tags": ["crunchyroll", "streaming", "anime"]
+      "id": "aniwaves",
+      "name": "AniWaves",
+      "base_url": "https://aniwaves.ru",
+      "search_url": "https://aniwaves.ru/search?q={query}",
+      "embed_domains": ["aniwaves.ru"],
+      "priority": 2,
+      "active": true
     },
     {
-      "name": "MyAnimeList News",
-      "url": "https://myanimelist.net/rss/news.xml",
-      "category": "News",
-      "tags": ["anime", "manga"]
+      "id": "yomi",
+      "name": "Yomi",
+      "base_url": "https://yomi.to",
+      "search_url": "https://yomi.to/search?q={query}",
+      "embed_domains": ["yomi.to"],
+      "priority": 3,
+      "active": true
     },
     {
-      "name": "Anime Corner",
-      "url": "https://animecorner.me/feed/",
-      "category": "News",
-      "tags": ["anime", "rankings"]
-    },
-    {
-      "name": "ComicBook Anime",
-      "url": "https://comicbook.com/category/anime/feed/",
-      "category": "Anime Recap",
-      "tags": ["anime", "recap"]
+      "id": "kickassanime",
+      "name": "KickAssAnime",
+      "base_url": "https://kickassanime.com.es",
+      "search_url": "https://kickassanime.com.es/search?q={query}",
+      "embed_domains": ["kickassanime.com.es"],
+      "priority": 4,
+      "active": true
     }
   ],
+  "torrent_sources": [
+    {
+      "id": "nyaa",
+      "name": "Nyaa",
+      "base_url": "https://nyaa.si",
+      "api_url": "https://nyaa.si/?page=rss&q={query}&c=1_0&f=0",
+      "type": "rss",
+      "priority": 5,
+      "active": true
+    }
+  ],
+  "embed_resolvers": {
+    "gogoanime": {
+      "pattern": "/watch/{slug}-episode-{ep}",
+      "iframe_selector": "iframe#playerframe",
+      "backup_api": "https://api.consumet.org/anime/gogoanime/watch/{id}"
+    },
+    "aniwaves": {
+      "pattern": "/watch/{mal_id}/ep-{ep}",
+      "direct": true
+    },
+    "yomi": {
+      "pattern": "/watch/{mal_id}/{ep}",
+      "direct": true
+    },
+    "kickassanime": {
+      "pattern": "/{slug}-episode-{ep}-english-subbed/",
+      "direct": true
+    }
+  },
+  "consumet_api": "https://api.consumet.org",
+  "jikan_api": "https://api.jikan.moe/v4",
   "settings": {
-    "max_articles_per_run": 3,
-    "min_content_length": 80,
-    "language": "en"
+    "timeout_ms": 5000,
+    "race_timeout_ms": 8000,
+    "max_retries": 2,
+    "cache_ttl_seconds": 300
   }
 }
