@@ -187,7 +187,7 @@ async function fetchFbCaption(fbUrl: string, origin: string): Promise<any> {
 // ═══════════════════════════════════════════════════
 // 🎯 FUZZY MATCH AGAINST DATABASE
 // ═══════════════════════════════════════════════════
-async function fuzzyMatchDatabase(kv: any, query: string, minScore = 70): Promise<any> {
+async function fuzzyMatchDatabase(kv: any, query: string, minScore = 75): Promise<any> {
   if (!query || query.length < 5) return null;
   
   try {
