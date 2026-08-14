@@ -1,79 +1,153 @@
 {
   "version": "2.0",
-  "primary_sources": [
+  "updated": "2025-01-01",
+  "anime_sources": [
     {
       "id": "gogoanime",
-      "name": "GogoAnime",
+      "name": "Server 1",
       "base_url": "https://gogoanime.by",
-      "search_url": "https://gogoanime.by/search.html?keyword={query}",
-      "embed_domains": ["gogocdn.net", "gogoanime.by"],
+      "url_pattern": "/{slug}-episode-{ep}",
       "priority": 1,
-      "active": true
+      "active": true,
+      "crop": {
+        "viewportW": 1200,
+        "videoW": 900,
+        "videoH": 506,
+        "videoLeft": 150,
+        "videoTop": 250,
+        "pageHeight": 1800
+      }
     },
     {
       "id": "aniwaves",
-      "name": "AniWaves",
+      "name": "Server 2",
       "base_url": "https://aniwaves.ru",
-      "search_url": "https://aniwaves.ru/search?q={query}",
-      "embed_domains": ["aniwaves.ru"],
+      "url_pattern": "/watch/{mal_id}/ep-{ep}",
       "priority": 2,
-      "active": true
+      "active": true,
+      "crop": {
+        "viewportW": 1200,
+        "videoW": 950,
+        "videoH": 534,
+        "videoLeft": 125,
+        "videoTop": 200,
+        "pageHeight": 1900
+      }
     },
     {
       "id": "yomi",
-      "name": "Yomi",
+      "name": "Server 3",
       "base_url": "https://yomi.to",
-      "search_url": "https://yomi.to/search?q={query}",
-      "embed_domains": ["yomi.to"],
+      "url_pattern": "/watch/{mal_id}/{ep}",
       "priority": 3,
-      "active": true
+      "active": true,
+      "crop": {
+        "viewportW": 1200,
+        "videoW": 940,
+        "videoH": 529,
+        "videoLeft": 130,
+        "videoTop": 220,
+        "pageHeight": 1850
+      }
     },
     {
       "id": "kickassanime",
-      "name": "KickAssAnime",
+      "name": "Server 4",
       "base_url": "https://kickassanime.com.es",
-      "search_url": "https://kickassanime.com.es/search?q={query}",
-      "embed_domains": ["kickassanime.com.es"],
+      "url_pattern": "/{slug}-episode-{ep}-english-subbed/",
       "priority": 4,
-      "active": true
+      "active": true,
+      "crop": {
+        "viewportW": 1200,
+        "videoW": 930,
+        "videoH": 523,
+        "videoLeft": 135,
+        "videoTop": 230,
+        "pageHeight": 1800
+      }
+    },
+    {
+      "id": "animotv",
+      "name": "Server 5",
+      "base_url": "https://animotvslash.org",
+      "url_pattern": "/{slug}-episode-{ep}/",
+      "priority": 5,
+      "active": true,
+      "crop": {
+        "viewportW": 1121,
+        "videoW": 950,
+        "videoH": 513,
+        "videoLeft": 86,
+        "videoTop": 320,
+        "pageHeight": 2000
+      }
+    },
+    {
+      "id": "gogoanime_alt",
+      "name": "Server 6",
+      "base_url": "https://gogoanime.or.at",
+      "url_pattern": "/{slug}-episode-{ep}/",
+      "priority": 6,
+      "active": true,
+      "crop": {
+        "viewportW": 1200,
+        "videoW": 900,
+        "videoH": 506,
+        "videoLeft": 150,
+        "videoTop": 250,
+        "pageHeight": 1800
+      }
+    },
+    {
+      "id": "anix",
+      "name": "Server 7",
+      "base_url": "https://anix.to",
+      "url_pattern": "/watch/{slug}/ep-{ep}",
+      "priority": 7,
+      "active": true,
+      "crop": {
+        "viewportW": 1200,
+        "videoW": 950,
+        "videoH": 534,
+        "videoLeft": 125,
+        "videoTop": 200,
+        "pageHeight": 1900
+      }
+    },
+    {
+      "id": "animesuge",
+      "name": "Server 8",
+      "base_url": "https://animesuge.cz",
+      "url_pattern": "/watch/{slug}/ep-{ep}",
+      "priority": 8,
+      "active": true,
+      "crop": {
+        "viewportW": 1200,
+        "videoW": 940,
+        "videoH": 529,
+        "videoLeft": 130,
+        "videoTop": 220,
+        "pageHeight": 1850
+      }
     }
   ],
   "torrent_sources": [
     {
       "id": "nyaa",
-      "name": "Nyaa",
+      "name": "Download",
       "base_url": "https://nyaa.si",
-      "api_url": "https://nyaa.si/?page=rss&q={query}&c=1_0&f=0",
-      "type": "rss",
-      "priority": 5,
+      "rss_pattern": "/?page=rss&q={query}+{ep}&c=1_0&f=0",
+      "priority": 99,
       "active": true
     }
   ],
-  "embed_resolvers": {
-    "gogoanime": {
-      "pattern": "/watch/{slug}-episode-{ep}",
-      "iframe_selector": "iframe#playerframe",
-      "backup_api": "https://api.consumet.org/anime/gogoanime/watch/{id}"
-    },
-    "aniwaves": {
-      "pattern": "/watch/{mal_id}/ep-{ep}",
-      "direct": true
-    },
-    "yomi": {
-      "pattern": "/watch/{mal_id}/{ep}",
-      "direct": true
-    },
-    "kickassanime": {
-      "pattern": "/{slug}-episode-{ep}-english-subbed/",
-      "direct": true
-    }
-  },
-  "consumet_api": "https://api.consumet.org",
-  "jikan_api": "https://api.jikan.moe/v4",
   "settings": {
-    "timeout_ms": 5000,
-    "race_timeout_ms": 8000,
-    "max_retries": 2,
-    "cache_ttl_seconds": 300
+    "race_timeout_ms": 4000,
+    "check_timeout_ms": 3000,
+    "max_concurrent_checks": 4,
+    "cache_ttl_minutes": 30,
+    "hide_source_branding": true,
+    "prefer_hls": true,
+    "fallback_to_embed": true
   }
 }
