@@ -4,7 +4,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 <BaseLayout
   title="Search — AniTube Buzz"
-  description="Search all anime news, recaps, streaming guides, manhwa, and gaming content on AniTube Buzz."
+  description="Search anime, movies, K-Drama, videos, or paste any Facebook/YouTube/Dailymotion link to watch instantly."
 >
   <div class="search-page">
 
@@ -15,7 +15,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <span class="search-icon-big">🔍</span>
           <span class="glow-text">Search AniTube Buzz</span>
         </h1>
-        <p class="search-subtitle">Find anime news, recaps, streaming guides, manhwa, and more</p>
+        <p class="search-subtitle">Search anime, movies, K-Drama — or paste any video link (Facebook, YouTube, Dailymotion, Bilibili)</p>
 
         <!-- Search Input -->
         <div class="search-input-wrapper">
@@ -23,7 +23,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
             type="text"
             id="search-input"
             class="search-input"
-            placeholder="Search anime, manhwa, streaming..."
+            placeholder="Search anime, or paste video link..."
             autocomplete="off"
             autofocus
             aria-label="Search all content"
@@ -36,14 +36,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </button>
         </div>
 
+        <!-- Link paste hint -->
+        <div class="link-hint" id="linkHint" style="display:none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+          <span id="linkHintText">Video link detected — press Enter to open</span>
+        </div>
+
         <!-- Category filter pills -->
         <div class="search-filters">
           <button class="filter-pill active" data-filter="all">All</button>
+          <button class="filter-pill" data-filter="anime">Anime</button>
+          <button class="filter-pill" data-filter="movies">Movies</button>
+          <button class="filter-pill" data-filter="kdrama">K-Drama</button>
+          <button class="filter-pill" data-filter="donghua">Donghua</button>
           <button class="filter-pill" data-filter="news">News</button>
-          <button class="filter-pill" data-filter="anime-recap">Anime Recap</button>
-          <button class="filter-pill" data-filter="manhwa">Manhwa</button>
-          <button class="filter-pill" data-filter="streaming">Streaming</button>
-          <button class="filter-pill" data-filter="gaming">Gaming</button>
         </div>
       </div>
     </section>
@@ -53,17 +62,44 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
       <!-- Status bar -->
       <div class="search-status" id="search-status" aria-live="polite">
-        <span id="status-text">Enter a keyword above to search all articles</span>
+        <span id="status-text">Enter a keyword above to search — or paste a video link</span>
       </div>
 
-      <!-- Results grid -->
-      <div class="search-results" id="search-results" role="list"></div>
+      <!-- Link resolving state -->
+      <div class="link-resolving" id="linkResolving" style="display:none;">
+        <div class="link-orbit">
+          <div class="link-dot"></div>
+          <div class="link-dot"></div>
+          <div class="link-dot"></div>
+        </div>
+        <p>Detecting your video...</p>
+      </div>
+
+      <!-- Video results section (from social-feed API) -->
+      <div class="video-results-section" id="videoResultsSection" style="display:none;">
+        <h2 class="results-heading">
+          <span class="results-heading-icon">🎬</span>
+          Videos
+          <span class="results-count" id="videoResultsCount">0</span>
+        </h2>
+        <div class="video-results-grid" id="videoResults"></div>
+      </div>
+
+      <!-- Article results section (existing search-index) -->
+      <div class="article-results-section" id="articleResultsSection" style="display:none;">
+        <h2 class="results-heading">
+          <span class="results-heading-icon">📰</span>
+          Articles
+          <span class="results-count" id="articleResultsCount">0</span>
+        </h2>
+        <div class="search-results" id="search-results" role="list"></div>
+      </div>
 
       <!-- Empty / No results state -->
       <div class="no-results" id="no-results" style="display:none;">
         <div class="no-results-icon">😢</div>
         <h2 id="no-results-title">No results found</h2>
-        <p id="no-results-msg">We couldn't find anything matching your search on AniTube Buzz.</p>
+        <p id="no-results-msg">We couldn't find anything matching your search.</p>
         <div class="no-results-actions">
           <a
             id="google-fallback-link"
@@ -76,35 +112,39 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           </a>
           <a href="/" class="btn-home">← Back to Homepage</a>
         </div>
-        <p class="no-results-tip">
-          Tip: Try shorter keywords, check spelling, or browse by
-          <a href="/category/news">category</a>.
-        </p>
       </div>
 
       <!-- Initial / Welcome state -->
       <div class="search-welcome" id="search-welcome">
+        <h3 class="welcome-heading">Browse Categories</h3>
         <div class="welcome-grid">
+          <a href="/category/anime" class="welcome-card">
+            <span class="welcome-emoji">🎌</span>
+            <span class="welcome-label">Anime</span>
+          </a>
+          <a href="/category/movies" class="welcome-card">
+            <span class="welcome-emoji">🎬</span>
+            <span class="welcome-label">Movies</span>
+          </a>
+          <a href="/category/kdrama" class="welcome-card">
+            <span class="welcome-emoji">🎭</span>
+            <span class="welcome-label">K-Drama</span>
+          </a>
+          <a href="/category/donghua" class="welcome-card">
+            <span class="welcome-emoji">🐉</span>
+            <span class="welcome-label">Donghua</span>
+          </a>
           <a href="/category/news" class="welcome-card">
             <span class="welcome-emoji">📰</span>
             <span class="welcome-label">News</span>
           </a>
-          <a href="/category/anime-recap" class="welcome-card">
-            <span class="welcome-emoji">🎌</span>
-            <span class="welcome-label">Anime Recap</span>
-          </a>
-          <a href="/category/manhwa" class="welcome-card">
-            <span class="welcome-emoji">📖</span>
-            <span class="welcome-label">Manhwa</span>
-          </a>
-          <a href="/category/streaming" class="welcome-card">
-            <span class="welcome-emoji">▶️</span>
-            <span class="welcome-label">Streaming</span>
-          </a>
-          <a href="/category/gaming" class="welcome-card">
-            <span class="welcome-emoji">🎮</span>
-            <span class="welcome-label">Gaming</span>
-          </a>
+        </div>
+
+        <div class="paste-tip">
+          <div class="paste-tip-icon">💡</div>
+          <div class="paste-tip-content">
+            <strong>Pro Tip:</strong> Paste any Facebook, YouTube, Dailymotion, or Bilibili video link — we'll open it instantly!
+          </div>
         </div>
       </div>
 
@@ -118,18 +158,38 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   // ── State ──────────────────────────────────────────────
   let searchIndex = [];
+  let allVideos = [];
   let currentFilter = 'all';
   let searchTimeout = null;
   let indexLoaded = false;
+  let videosLoaded = false;
 
   // ── DOM refs ───────────────────────────────────────────
   const input       = document.getElementById('search-input');
   const statusText  = document.getElementById('status-text');
   const resultsEl   = document.getElementById('search-results');
+  const videoResults = document.getElementById('videoResults');
+  const videoResultsSection = document.getElementById('videoResultsSection');
+  const videoResultsCount = document.getElementById('videoResultsCount');
+  const articleResultsSection = document.getElementById('articleResultsSection');
+  const articleResultsCount = document.getElementById('articleResultsCount');
   const noResults   = document.getElementById('no-results');
   const welcome     = document.getElementById('search-welcome');
   const googleLink  = document.getElementById('google-fallback-link');
   const filterPills = document.querySelectorAll('.filter-pill');
+  const linkHint    = document.getElementById('linkHint');
+  const linkHintText = document.getElementById('linkHintText');
+  const linkResolving = document.getElementById('linkResolving');
+
+  // ── Detect if input is a URL ───────────────────────────
+  function detectUrlType(text) {
+    const t = text.trim();
+    if (/facebook\.com|fb\.watch/i.test(t)) return 'facebook';
+    if (/youtube\.com|youtu\.be/i.test(t)) return 'youtube';
+    if (/dailymotion\.com|dai\.ly/i.test(t)) return 'dailymotion';
+    if (/bilibili\.com/i.test(t)) return 'bilibili';
+    return null;
+  }
 
   // ── Load search index ──────────────────────────────────
   async function loadIndex() {
@@ -138,11 +198,57 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       const res = await fetch('/search-index.json');
       if (!res.ok) throw new Error('Index fetch failed');
       searchIndex = await res.json();
-      indexLoaded = true;
     } catch (err) {
       console.warn('Search index could not be loaded:', err);
       searchIndex = [];
-      indexLoaded = true;
+    }
+    indexLoaded = true;
+  }
+
+  // ── Load videos from social-feed API ───────────────────
+  async function loadVideos() {
+    if (videosLoaded) return;
+    try {
+      const res = await fetch('/api/social-feed?limit=200&format=all');
+      if (!res.ok) throw new Error('Feed failed');
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.videos)) {
+        allVideos = data.videos;
+      }
+    } catch (err) {
+      console.warn('Videos could not be loaded:', err);
+      allVideos = [];
+    }
+    videosLoaded = true;
+  }
+
+  // ── Resolve video link ─────────────────────────────────
+  async function resolveVideoLink(url) {
+    hideAll();
+    linkResolving.style.display = 'flex';
+    statusText.textContent = 'Detecting video from link...';
+    try {
+      const res = await fetch('/api/link-resolver?url=' + encodeURIComponent(url));
+      const data = await res.json();
+      if (data && data.success && data.redirectUrl) {
+        statusText.textContent = 'Found! Opening video...';
+        setTimeout(function() {
+          window.location.href = data.redirectUrl;
+        }, 500);
+        return;
+      }
+      // Not detected
+      linkResolving.style.display = 'none';
+      noResults.style.display = 'flex';
+      document.getElementById('no-results-title').textContent = "Couldn't detect this video";
+      document.getElementById('no-results-msg').textContent = 'The video link was received but we could not identify it. Try searching by name.';
+      statusText.textContent = 'Link not detected — try searching by name';
+    } catch (err) {
+      linkResolving.style.display = 'none';
+      noResults.style.display = 'flex';
+      document.getElementById('no-results-title').textContent = 'Link error';
+      document.getElementById('no-results-msg').textContent = 'Could not resolve the video link. Please try again.';
+      statusText.textContent = 'Link resolve failed';
     }
   }
 
@@ -150,158 +256,270 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   function highlight(text, query) {
     if (!query || !text) return text || '';
     const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const regex = new RegExp(`(${escaped})`, 'gi');
+    const regex = new RegExp('(' + escaped + ')', 'gi');
     return text.replace(regex, '<mark class="hl">$1</mark>');
   }
 
-  // ── Format date nicely ─────────────────────────────────
+  // ── Format date ────────────────────────────────────────
   function formatDate(dateStr) {
     if (!dateStr) return '';
     try {
       return new Date(dateStr).toLocaleDateString('en-US', {
         year: 'numeric', month: 'short', day: 'numeric'
       });
-    } catch {
-      return dateStr;
+    } catch { return dateStr; }
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, function(c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // ── Hide all result sections ───────────────────────────
+  function hideAll() {
+    welcome.style.display = 'none';
+    videoResultsSection.style.display = 'none';
+    articleResultsSection.style.display = 'none';
+    noResults.style.display = 'none';
+    linkResolving.style.display = 'none';
+  }
+
+  // ── Search videos ──────────────────────────────────────
+  function searchVideos(query) {
+    if (!query || !allVideos.length) return [];
+    const q = query.toLowerCase();
+    const words = q.split(/\s+/).filter(w => w.length > 1);
+    
+    return allVideos
+      .map(v => {
+        let score = 0;
+        const title = (v.title || '').toLowerCase();
+        const channel = (v.channel || '').toLowerCase();
+        const desc = (v.description || '').toLowerCase();
+        const type = (v.type || '').toLowerCase();
+        
+        // Type filter
+        if (currentFilter !== 'all') {
+          if (currentFilter === 'anime' && type !== 'anime') return { video: v, score: 0 };
+          if (currentFilter === 'movies' && type !== 'movies') return { video: v, score: 0 };
+          if (currentFilter === 'kdrama' && type !== 'kdrama') return { video: v, score: 0 };
+          if (currentFilter === 'donghua' && type !== 'donghua') return { video: v, score: 0 };
+          if (currentFilter === 'news') return { video: v, score: 0 };
+        }
+        
+        if (title.includes(q)) score += 15;
+        if (title.startsWith(q)) score += 8;
+        if (channel.includes(q)) score += 6;
+        if (desc.includes(q)) score += 3;
+        
+        for (const word of words) {
+          if (title.includes(word)) score += 3;
+          if (channel.includes(word)) score += 2;
+          if (desc.includes(word)) score += 1;
+        }
+        
+        return { video: v, score: score };
+      })
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 24);
+  }
+
+  // ── Search articles ────────────────────────────────────
+  function searchArticles(query) {
+    if (!query || !searchIndex.length) return [];
+    const q = query.toLowerCase();
+    const words = q.split(/\s+/).filter(w => w.length > 2);
+    
+    let pool = searchIndex;
+    if (currentFilter === 'news') {
+      pool = searchIndex.filter(p => {
+        const cat = (p.category || '').toLowerCase().replace(/\s+/g, '-');
+        return cat === 'news';
+      });
+    } else if (currentFilter !== 'all') {
+      // For anime/movies/kdrama filters, skip articles unless they match category
+      pool = searchIndex.filter(p => {
+        const cat = (p.category || '').toLowerCase();
+        return cat.includes(currentFilter);
+      });
     }
+    
+    return pool
+      .map(post => {
+        let score = 0;
+        const title = (post.title || '').toLowerCase();
+        const excerpt = (post.excerpt || '').toLowerCase();
+        const cat = (post.category || '').toLowerCase();
+        const tags = (post.tags || []).join(' ').toLowerCase();
+        
+        if (title.includes(q)) score += 10;
+        if (title.startsWith(q)) score += 5;
+        if (excerpt.includes(q)) score += 4;
+        if (cat.includes(q)) score += 3;
+        if (tags.includes(q)) score += 2;
+        
+        for (const word of words) {
+          if (title.includes(word)) score += 2;
+          if (excerpt.includes(word)) score += 1;
+        }
+        
+        return { post: post, score: score };
+      })
+      .filter(x => x.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 20);
+  }
+
+  // ── Render video card ──────────────────────────────────
+  function typeLabel(t) {
+    return ({ anime: '🎌 ANIME', kdrama: '🎭 K-DRAMA', donghua: '🐉 DONGHUA', movies: '🎬 MOVIE' })[t] || '📺 VIDEO';
+  }
+  
+  function renderVideoCard(v) {
+    const t = v.title || 'Video';
+    const img = v.thumbnail || '';
+    const channel = v.channel || 'AniTube';
+    
+    const imgHtml = img
+      ? '<img src="' + escapeHtml(img) + '" alt="" loading="lazy" class="vr-thumb-img" onerror="this.style.opacity=0.3" />'
+      : '<div class="vr-thumb-fallback">📺</div>';
+    
+    return '<a href="/reels/' + encodeURIComponent(v.id) + '" class="vr-card">' +
+      '<div class="vr-thumb">' +
+        imgHtml +
+        '<div class="vr-overlay"></div>' +
+        '<div class="vr-play">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+        '</div>' +
+        '<div class="vr-type">' + typeLabel(v.type) + '</div>' +
+        (v.isNew ? '<div class="vr-new">NEW</div>' : '') +
+      '</div>' +
+      '<div class="vr-info">' +
+        '<h3 class="vr-title">' + escapeHtml(t) + '</h3>' +
+        '<p class="vr-channel">' + escapeHtml(channel) + '</p>' +
+      '</div>' +
+    '</a>';
   }
 
   // ── Run search ─────────────────────────────────────────
   async function runSearch() {
-    await loadIndex();
-
     const rawQuery = input.value.trim();
-    const query = rawQuery.toLowerCase();
-
-    // Nothing typed — show welcome
+    
     if (!rawQuery) {
-      resultsEl.innerHTML = '';
-      noResults.style.display = 'none';
+      hideAll();
       welcome.style.display = 'block';
-      statusText.textContent = 'Enter a keyword above to search all articles';
+      statusText.textContent = 'Enter a keyword above to search — or paste a video link';
       return;
     }
-
-    welcome.style.display = 'none';
-
-    // Filter by category first
-    let pool = currentFilter === 'all'
-      ? searchIndex
-      : searchIndex.filter(p => {
-          const cat = (p.category || '').toLowerCase().replace(/\s+/g, '-');
-          return cat === currentFilter;
-        });
-
-    // Score each post
-    const scored = pool
-      .map((post) => {
-        let score = 0;
-        const title   = (post.title   || '').toLowerCase();
-        const excerpt = (post.excerpt || '').toLowerCase();
-        const cat     = (post.category || '').toLowerCase();
-        const tags    = (post.tags    || []).join(' ').toLowerCase();
-
-        if (title.includes(query))   score += 10;
-        if (title.startsWith(query)) score += 5;
-        if (excerpt.includes(query)) score += 4;
-        if (cat.includes(query))     score += 3;
-        if (tags.includes(query))    score += 2;
-
-        // Word-by-word fallback
-        const words = query.split(/\s+/).filter(w => w.length > 2);
-        for (const word of words) {
-          if (title.includes(word))   score += 2;
-          if (excerpt.includes(word)) score += 1;
-        }
-
-        return { post, score };
-      })
-      .filter(({ score }) => score > 0)
-      .sort((a, b) => b.score - a.score);
-
-    // Update Google fallback link CORRECTLY (not "#")
-    const encodedQ = encodeURIComponent(rawQuery + ' site:anime-streaming-buzz.pages.dev');
-    googleLink.href = `https://www.google.com/search?q=${encodedQ}`;
-
-    // No results
-    if (scored.length === 0) {
-      resultsEl.innerHTML = '';
+    
+    // Check if it's a URL
+    const urlType = detectUrlType(rawQuery);
+    if (urlType) {
+      linkHint.style.display = 'none';
+      await resolveVideoLink(rawQuery);
+      return;
+    }
+    
+    // Load both data sources
+    await Promise.all([loadIndex(), loadVideos()]);
+    
+    hideAll();
+    
+    const videoMatches = searchVideos(rawQuery);
+    const articleMatches = searchArticles(rawQuery);
+    const totalCount = videoMatches.length + articleMatches.length;
+    
+    // Update Google fallback
+    const encodedQ = encodeURIComponent(rawQuery + ' anime');
+    googleLink.href = 'https://www.google.com/search?q=' + encodedQ;
+    
+    if (totalCount === 0) {
       noResults.style.display = 'flex';
-      document.getElementById('no-results-title').textContent =
-        `No results for "${rawQuery}"`;
-      document.getElementById('no-results-msg').textContent =
-        currentFilter === 'all'
-          ? `We couldn't find anything matching "${rawQuery}" on AniTube Buzz.`
-          : `No results in the "${currentFilter}" category for "${rawQuery}". Try "All" categories.`;
-      statusText.textContent = `0 results for "${rawQuery}"`;
+      document.getElementById('no-results-title').textContent = 'No results for "' + rawQuery + '"';
+      document.getElementById('no-results-msg').textContent = 'Try different keywords, or paste a Facebook/YouTube/Dailymotion video link.';
+      statusText.textContent = '0 results for "' + rawQuery + '"';
       return;
     }
-
-    // Show results
-    noResults.style.display = 'none';
-    statusText.textContent = `${scored.length} result${scored.length !== 1 ? 's' : ''} for "${rawQuery}"`;
-
-    resultsEl.innerHTML = scored.map(({ post }) => {
-      const safeTitle   = highlight(post.title   || 'Untitled', rawQuery);
-      const safeExcerpt = highlight(
-        (post.excerpt || '').substring(0, 180) + ((post.excerpt || '').length > 180 ? '...' : ''),
-        rawQuery
-      );
-      const catDisplay = (post.category || 'General');
-      const catSlug    = catDisplay.toLowerCase().replace(/\s+/g, '-');
-      const imgSrc     = post.image || '/placeholder.jpg';
-      const dateStr    = formatDate(post.date);
-
-      return `
-        <article class="result-card" role="listitem">
-          <a href="/posts/${post.slug}" class="result-link">
-            <div class="result-image-wrap">
-              <img
-                src="${imgSrc}"
-                alt="${(post.imageAlt || post.title || '').replace(/"/g, '&quot;')}"
-                class="result-image"
-                loading="lazy"
-                onerror="this.src='/placeholder.jpg'"
-              />
-              <span class="result-category-badge">${catDisplay}</span>
-            </div>
-            <div class="result-body">
-              <h3 class="result-title">${safeTitle}</h3>
-              <p class="result-excerpt">${safeExcerpt}</p>
-              <div class="result-meta">
-                <span class="result-date">${dateStr}</span>
-                <span class="result-read">Read article →</span>
-              </div>
-            </div>
-          </a>
-        </article>
-      `;
-    }).join('');
+    
+    statusText.textContent = totalCount + ' result' + (totalCount !== 1 ? 's' : '') + ' for "' + rawQuery + '"';
+    
+    // Show video results
+    if (videoMatches.length > 0) {
+      videoResultsSection.style.display = 'block';
+      videoResultsCount.textContent = videoMatches.length;
+      videoResults.innerHTML = videoMatches.map(x => renderVideoCard(x.video)).join('');
+    }
+    
+    // Show article results
+    if (articleMatches.length > 0) {
+      articleResultsSection.style.display = 'block';
+      articleResultsCount.textContent = articleMatches.length;
+      resultsEl.innerHTML = articleMatches.map(x => {
+        const post = x.post;
+        const safeTitle = highlight(post.title || 'Untitled', rawQuery);
+        const safeExcerpt = highlight(
+          (post.excerpt || '').substring(0, 180) + ((post.excerpt || '').length > 180 ? '...' : ''),
+          rawQuery
+        );
+        const catDisplay = post.category || 'General';
+        const imgSrc = post.image || '/placeholder.jpg';
+        const dateStr = formatDate(post.date);
+        
+        return '<article class="result-card" role="listitem">' +
+          '<a href="/posts/' + post.slug + '" class="result-link">' +
+            '<div class="result-image-wrap">' +
+              '<img src="' + escapeHtml(imgSrc) + '" alt="" class="result-image" loading="lazy" onerror="this.src=\'/placeholder.jpg\'" />' +
+              '<span class="result-category-badge">' + escapeHtml(catDisplay) + '</span>' +
+            '</div>' +
+            '<div class="result-body">' +
+              '<h3 class="result-title">' + safeTitle + '</h3>' +
+              '<p class="result-excerpt">' + safeExcerpt + '</p>' +
+              '<div class="result-meta">' +
+                '<span class="result-date">' + dateStr + '</span>' +
+                '<span class="result-read">Read →</span>' +
+              '</div>' +
+            '</div>' +
+          '</a>' +
+        '</article>';
+      }).join('');
+    }
   }
 
-  // ── Event: input (debounced) ───────────────────────────
-  input.addEventListener('input', () => {
+  // ── Input event (with URL detection) ───────────────────
+  input.addEventListener('input', function() {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(runSearch, 250);
+    const val = input.value.trim();
+    const urlType = detectUrlType(val);
+    
+    if (urlType) {
+      linkHint.style.display = 'flex';
+      linkHintText.textContent = urlType.charAt(0).toUpperCase() + urlType.slice(1) + ' link detected — press Enter to open';
+    } else {
+      linkHint.style.display = 'none';
+    }
+    
+    searchTimeout = setTimeout(runSearch, 300);
   });
 
-  // ── Event: Enter key ───────────────────────────────────
-  input.addEventListener('keydown', (e) => {
+  // ── Enter key ──────────────────────────────────────────
+  input.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
       clearTimeout(searchTimeout);
       runSearch();
     }
   });
 
-  // ── Event: Search button ───────────────────────────────
-  document.getElementById('search-btn').addEventListener('click', () => {
+  // ── Search button ──────────────────────────────────────
+  document.getElementById('search-btn').addEventListener('click', function() {
     clearTimeout(searchTimeout);
     runSearch();
   });
 
-  // ── Event: Filter pills ────────────────────────────────
-  filterPills.forEach((pill) => {
-    pill.addEventListener('click', () => {
+  // ── Filter pills ───────────────────────────────────────
+  filterPills.forEach(function(pill) {
+    pill.addEventListener('click', function() {
       filterPills.forEach(p => p.classList.remove('active'));
       pill.classList.add('active');
       currentFilter = pill.dataset.filter;
@@ -309,44 +527,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     });
   });
 
-  // ── Check for ?q= in URL ───────────────────────────────
+  // ── Check ?q= in URL ───────────────────────────────────
   const urlParams = new URLSearchParams(window.location.search);
-  const preQuery  = urlParams.get('q');
+  const preQuery = urlParams.get('q');
   if (preQuery) {
     input.value = preQuery;
     runSearch();
   }
 
-  // ── Pre-load index on page load ───────────────────────
+  // ── Pre-load ───────────────────────────────────────────
   loadIndex();
+  loadVideos();
 
 })();
 </script>
 
 <style>
-  /* ── Page Container ── */
-  .search-page {
-    min-height: 100vh;
-  }
+  .search-page { min-height: 100vh; }
 
-  /* ── Search Hero ── */
   .search-hero {
-    background: linear-gradient(
-      135deg,
-      rgba(0, 212, 255, 0.08) 0%,
-      rgba(139, 0, 255, 0.12) 50%,
-      rgba(255, 0, 128, 0.06) 100%
-    );
+    background: linear-gradient(135deg, rgba(0, 212, 255, 0.08) 0%, rgba(139, 0, 255, 0.12) 50%, rgba(255, 0, 128, 0.06) 100%);
     border-bottom: 1px solid rgba(139, 0, 255, 0.2);
     padding: 3rem 1.5rem 2.5rem;
     text-align: center;
   }
-
-  .search-hero-inner {
-    max-width: 680px;
-    margin: 0 auto;
-  }
-
+  .search-hero-inner { max-width: 720px; margin: 0 auto; }
   .search-title {
     font-size: clamp(1.8rem, 4vw, 3rem);
     font-weight: 800;
@@ -357,11 +562,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     gap: 0.5rem;
     flex-wrap: wrap;
   }
-
-  .search-icon-big {
-    font-size: 0.8em;
-  }
-
+  .search-icon-big { font-size: 0.8em; }
   .glow-text {
     background: linear-gradient(135deg, #fff 0%, #c084fc 50%, #00d4ff 100%);
     -webkit-background-clip: text;
@@ -369,14 +570,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     background-clip: text;
     filter: drop-shadow(0 0 15px rgba(139, 0, 255, 0.4));
   }
-
   .search-subtitle {
-    color: rgba(255, 255, 255, 0.55);
-    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
     margin: 0 0 1.5rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  /* ── Search Input ── */
   .search-input-wrapper {
     display: flex;
     gap: 0;
@@ -385,15 +587,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     border: 1.5px solid rgba(139, 0, 255, 0.5);
     background: rgba(10, 10, 20, 0.8);
     box-shadow: 0 0 20px rgba(139, 0, 255, 0.15);
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     transition: border-color 0.2s, box-shadow 0.2s;
   }
-
   .search-input-wrapper:focus-within {
     border-color: rgba(139, 0, 255, 0.9);
     box-shadow: 0 0 30px rgba(139, 0, 255, 0.3);
   }
-
   .search-input {
     flex: 1;
     background: transparent;
@@ -404,11 +604,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     padding: 0.9rem 1.2rem;
     font-family: inherit;
   }
-
-  .search-input::placeholder {
-    color: rgba(255, 255, 255, 0.3);
-  }
-
+  .search-input::placeholder { color: rgba(255, 255, 255, 0.3); }
   .search-btn {
     background: linear-gradient(135deg, #8b00ff, #5500cc);
     border: none;
@@ -421,19 +617,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     transition: background 0.2s;
     min-width: 52px;
   }
+  .search-btn:hover { background: linear-gradient(135deg, #9f1fff, #6600ff); }
 
-  .search-btn:hover {
-    background: linear-gradient(135deg, #9f1fff, #6600ff);
+  /* Link hint */
+  .link-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 1rem;
+    padding: 6px 14px;
+    background: rgba(0, 200, 100, 0.12);
+    border: 1px solid rgba(0, 200, 100, 0.35);
+    border-radius: 999px;
+    color: #4ade80;
+    font-size: 0.75rem;
+    font-weight: 600;
+    animation: linkHintFade 0.3s ease;
   }
+  @keyframes linkHintFade { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* ── Filter Pills ── */
   .search-filters {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
     justify-content: center;
   }
-
   .filter-pill {
     background: rgba(139, 0, 255, 0.08);
     border: 1px solid rgba(139, 0, 255, 0.3);
@@ -446,12 +654,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     transition: all 0.2s;
     font-family: inherit;
   }
-
-  .filter-pill:hover {
-    background: rgba(139, 0, 255, 0.2);
-    color: #fff;
-  }
-
+  .filter-pill:hover { background: rgba(139, 0, 255, 0.2); color: #fff; }
   .filter-pill.active {
     background: linear-gradient(135deg, #8b00ff, #5500cc);
     border-color: #8b00ff;
@@ -459,31 +662,183 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     box-shadow: 0 0 12px rgba(139, 0, 255, 0.35);
   }
 
-  /* ── Content Area ── */
-  .search-content {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 2rem 1.5rem;
-  }
+  .search-content { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .search-status { margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(139, 0, 255, 0.15); }
+  #status-text { color: rgba(255, 255, 255, 0.55); font-size: 0.85rem; }
 
-  /* ── Status Bar ── */
-  .search-status {
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid rgba(139, 0, 255, 0.15);
-  }
-
-  #status-text {
-    color: rgba(255, 255, 255, 0.45);
-    font-size: 0.85rem;
-  }
-
-  /* ── Results Grid ── */
-  .search-results {
-    display: grid;
+  /* Link resolving loader */
+  .link-resolving {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 3rem 1rem;
     gap: 1rem;
   }
+  .link-orbit { position: relative; width: 60px; height: 60px; }
+  .link-dot {
+    position: absolute;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    top: 50%; left: 50%;
+    transform-origin: 0 0;
+    animation: linkOrbit 1.4s linear infinite;
+  }
+  .link-dot:nth-child(2) { animation-delay: -0.47s; background: linear-gradient(135deg, #e879f9, #7dd3fc); }
+  .link-dot:nth-child(3) { animation-delay: -0.94s; background: linear-gradient(135deg, #7dd3fc, #c084fc); }
+  @keyframes linkOrbit {
+    0% { transform: rotate(0deg) translateX(24px) rotate(0deg); }
+    100% { transform: rotate(360deg) translateX(24px) rotate(-360deg); }
+  }
+  .link-resolving p { color: rgba(255,255,255,0.7); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
 
+  /* Results section headers */
+  .results-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(192, 132, 252, 0.15);
+  }
+  .results-heading-icon { font-size: 1.2rem; }
+  .results-count {
+    margin-left: auto;
+    padding: 2px 10px;
+    background: rgba(192, 132, 252, 0.2);
+    color: #c084fc;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+  }
+
+  /* Video results grid */
+  .video-results-section { margin-bottom: 2.5rem; }
+  .video-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .vr-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s;
+  }
+  .vr-card:hover { transform: translateY(-3px); }
+  .vr-thumb {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #1a0f3d;
+    border: 1px solid rgba(192, 132, 252, 0.2);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .vr-card:hover .vr-thumb {
+    border-color: rgba(192, 132, 252, 0.6);
+    box-shadow: 0 6px 20px rgba(192, 132, 252, 0.25);
+  }
+  .vr-thumb-img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s;
+  }
+  .vr-card:hover .vr-thumb-img { transform: scale(1.06); }
+  .vr-thumb-fallback {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem;
+  }
+  .vr-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.7) 100%);
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .vr-card:hover .vr-overlay { opacity: 1; }
+  .vr-play {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%) scale(0.7);
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    opacity: 0;
+    z-index: 3;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .vr-play svg { margin-left: 2px; }
+  .vr-card:hover .vr-play {
+    opacity: 1;
+    transform: translate(-50%,-50%) scale(1);
+  }
+  .vr-type {
+    position: absolute;
+    bottom: 6px; left: 6px;
+    padding: 2px 7px;
+    background: rgba(0,0,0,0.85);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    border-radius: 4px;
+    z-index: 4;
+  }
+  .vr-new {
+    position: absolute;
+    top: 6px; left: 6px;
+    padding: 2px 6px;
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    border-radius: 3px;
+    z-index: 4;
+  }
+  .vr-info { padding: 8px 4px 0; }
+  .vr-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+    margin: 0 0 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    transition: color 0.2s;
+  }
+  .vr-card:hover .vr-title {
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .vr-channel {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    font-family: 'JetBrains Mono', monospace;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Article results */
+  .article-results-section { margin-bottom: 2rem; }
+  .search-results { display: grid; gap: 1rem; }
   .result-card {
     background: rgba(10, 10, 20, 0.6);
     border: 1px solid rgba(139, 0, 255, 0.15);
@@ -491,20 +846,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     overflow: hidden;
     transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
   }
-
   .result-card:hover {
     border-color: rgba(139, 0, 255, 0.45);
     transform: translateY(-2px);
     box-shadow: 0 6px 25px rgba(139, 0, 255, 0.15);
   }
-
-  .result-link {
-    display: flex;
-    gap: 0;
-    text-decoration: none;
-    color: inherit;
-  }
-
+  .result-link { display: flex; gap: 0; text-decoration: none; color: inherit; }
   .result-image-wrap {
     position: relative;
     width: 160px;
@@ -512,23 +859,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     flex-shrink: 0;
     overflow: hidden;
   }
-
   .result-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    transition: transform 0.3s ease;
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
+    transition: transform 0.3s;
   }
-
-  .result-card:hover .result-image {
-    transform: scale(1.05);
-  }
-
+  .result-card:hover .result-image { transform: scale(1.05); }
   .result-category-badge {
     position: absolute;
-    top: 8px;
-    left: 8px;
+    top: 8px; left: 8px;
     background: rgba(139, 0, 255, 0.85);
     color: #fff;
     font-size: 0.65rem;
@@ -539,7 +878,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     letter-spacing: 0.05em;
     backdrop-filter: blur(4px);
   }
-
   .result-body {
     padding: 1rem 1.25rem;
     flex: 1;
@@ -548,7 +886,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     justify-content: space-between;
     min-width: 0;
   }
-
   .result-title {
     font-size: 1rem;
     font-weight: 700;
@@ -560,36 +897,20 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-
   .result-excerpt {
-    color: rgba(255, 255, 255, 0.55);
+    color: rgba(255,255,255,0.55);
     font-size: 0.83rem;
     line-height: 1.5;
     margin: 0 0 0.75rem;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+  .result-meta { display: flex; justify-content: space-between; align-items: center; }
+  .result-date { color: rgba(255,255,255,0.35); font-size: 0.75rem; }
+  .result-read { color: rgba(139, 0, 255, 0.8); font-size: 0.78rem; font-weight: 600; }
 
-  .result-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .result-date {
-    color: rgba(255, 255, 255, 0.35);
-    font-size: 0.75rem;
-  }
-
-  .result-read {
-    color: rgba(139, 0, 255, 0.8);
-    font-size: 0.78rem;
-    font-weight: 600;
-  }
-
-  /* ── Highlight mark ── */
   :global(.hl) {
     background: rgba(139, 0, 255, 0.35);
     color: #fff;
@@ -597,7 +918,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     padding: 0 2px;
   }
 
-  /* ── No Results State ── */
+  /* No results */
   .no-results {
     display: flex;
     flex-direction: column;
@@ -608,37 +929,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     border: 1px solid rgba(139, 0, 255, 0.12);
     border-radius: 16px;
   }
-
-  .no-results-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-  }
-
-  .no-results h2 {
-    color: rgba(255, 255, 255, 0.85);
-    margin-bottom: 0.5rem;
-    font-size: 1.3rem;
-  }
-
+  .no-results-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .no-results h2 { color: rgba(255,255,255,0.85); margin-bottom: 0.5rem; font-size: 1.3rem; }
   .no-results p {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255,255,255,0.5);
     margin-bottom: 1.5rem;
     max-width: 420px;
     line-height: 1.5;
   }
-
-  .no-results-actions {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    justify-content: center;
-    margin-bottom: 1rem;
-  }
-
+  .no-results-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; margin-bottom: 1rem; }
   .btn-google {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
+    display: inline-flex; align-items: center; gap: 0.4rem;
     padding: 0.6rem 1.3rem;
     background: linear-gradient(135deg, #1a73e8, #0d47a1);
     color: #fff;
@@ -647,61 +948,38 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-weight: 600;
     font-size: 0.88rem;
     transition: all 0.2s;
-    border: 1px solid rgba(26, 115, 232, 0.4);
   }
-
-  .btn-google:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(26, 115, 232, 0.35);
-  }
-
+  .btn-google:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(26, 115, 232, 0.35); }
   .btn-home {
-    display: inline-flex;
-    align-items: center;
+    display: inline-flex; align-items: center;
     padding: 0.6rem 1.3rem;
     background: rgba(139, 0, 255, 0.12);
     border: 1px solid rgba(139, 0, 255, 0.3);
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255,255,255,0.8);
     border-radius: 8px;
     text-decoration: none;
     font-weight: 600;
     font-size: 0.88rem;
     transition: all 0.2s;
   }
+  .btn-home:hover { background: rgba(139, 0, 255, 0.22); color: #fff; }
 
-  .btn-home:hover {
-    background: rgba(139, 0, 255, 0.22);
-    color: #fff;
+  /* Welcome */
+  .search-welcome { text-align: center; }
+  .welcome-heading {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1rem;
+    color: rgba(255,255,255,0.6);
+    margin: 0 0 1rem;
+    font-weight: 600;
   }
-
-  .no-results-tip {
-    font-size: 0.78rem;
-    color: rgba(255, 255, 255, 0.35);
-  }
-
-  .no-results-tip a {
-    color: rgba(139, 0, 255, 0.7);
-    text-decoration: none;
-  }
-
-  .no-results-tip a:hover {
-    color: #8b00ff;
-    text-decoration: underline;
-  }
-
-  /* ── Welcome Grid ── */
-  .search-welcome {
-    text-align: center;
-  }
-
   .welcome-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
     justify-content: center;
-    margin-top: 0.5rem;
+    margin-bottom: 2rem;
   }
-
   .welcome-card {
     display: flex;
     flex-direction: column;
@@ -712,13 +990,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     border: 1px solid rgba(139, 0, 255, 0.2);
     border-radius: 12px;
     text-decoration: none;
-    color: rgba(255, 255, 255, 0.75);
+    color: rgba(255,255,255,0.75);
     font-weight: 600;
     font-size: 0.85rem;
     transition: all 0.2s;
-    min-width: 120px;
+    min-width: 110px;
   }
-
   .welcome-card:hover {
     background: rgba(139, 0, 255, 0.18);
     border-color: rgba(139, 0, 255, 0.5);
@@ -726,31 +1003,29 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     transform: translateY(-3px);
     box-shadow: 0 6px 20px rgba(139, 0, 255, 0.2);
   }
+  .welcome-emoji { font-size: 1.75rem; }
 
-  .welcome-emoji {
-    font-size: 1.75rem;
+  .paste-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 14px 18px;
+    background: rgba(0, 200, 100, 0.08);
+    border: 1px solid rgba(0, 200, 100, 0.25);
+    border-radius: 12px;
+    text-align: left;
   }
+  .paste-tip-icon { font-size: 1.5rem; flex-shrink: 0; }
+  .paste-tip-content { color: rgba(255,255,255,0.75); font-size: 0.85rem; line-height: 1.5; }
+  .paste-tip-content strong { color: #4ade80; }
 
-  /* ── Responsive ── */
   @media (max-width: 640px) {
-    .result-link {
-      flex-direction: column;
-    }
-
-    .result-image-wrap {
-      width: 100%;
-      min-width: unset;
-      height: 160px;
-    }
-
-    .search-title {
-      flex-direction: column;
-      gap: 0.2rem;
-    }
-
-    .no-results-actions {
-      flex-direction: column;
-      align-items: center;
-    }
+    .result-link { flex-direction: column; }
+    .result-image-wrap { width: 100%; min-width: unset; height: 160px; }
+    .search-title { flex-direction: column; gap: 0.2rem; }
+    .no-results-actions { flex-direction: column; align-items: center; }
+    .video-results-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   }
 </style>
