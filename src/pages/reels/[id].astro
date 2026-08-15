@@ -75,6 +75,7 @@ if (isAnimeExternal) {
 
 const tmdbId: number | null = externalAnime?.tmdb_id ?? null;
 const seasonNum: number = externalAnime?.season_number ?? 1;
+const mediaType: string = externalAnime?.media_type ?? 'tv';
 
 function getPlatformData(vid: string, tmdbIdParam: number | null = null, seasonParam: number = 1): any {
   if (vid.startsWith('anime_')) {
@@ -1709,6 +1710,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
     EXT_CURRENT_EP: animeEpNum,
     TMDB_ID: tmdbId,
     SEASON_NUM: seasonNum,
+    MEDIA_TYPE: mediaType,
     ANIME_SLUG: animeSlug,
     HAS_MULTI: (video && video.hasMultiSource) ? true : false
   }}>
@@ -1723,6 +1725,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       var extCurrentEp = EXT_CURRENT_EP || 0;
       var tmdbId = TMDB_ID;
       var seasonNum = SEASON_NUM || 1;
+      var mediaType = MEDIA_TYPE || 'tv';
       var animeSlug = ANIME_SLUG || '';
       var hasMulti = HAS_MULTI;
       var sidebarItems = [];
@@ -2301,42 +2304,81 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         var servers = [];
 
         if (tmdbId && hasMulti) {
-          // All iframe-friendly TMDB-based servers
-          servers.push({
-            name: 'Server 1',
-            url: 'https://vidsrc.to/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp,
-            type: 'clean',
-          });
-          servers.push({
-            name: 'Server 2',
-            url: 'https://vidsrc.xyz/embed/tv?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp,
-            type: 'clean',
-          });
-          servers.push({
-            name: 'Server 3',
-            url: 'https://www.2embed.cc/embedtv/' + tmdbId + '&s=' + seasonNum + '&e=' + extCurrentEp,
-            type: 'clean',
-          });
-          servers.push({
-            name: 'Server 4',
-            url: 'https://multiembed.mov/directstream.php?video_id=' + tmdbId + '&tmdb=1&s=' + seasonNum + '&e=' + extCurrentEp,
-            type: 'clean',
-          });
-          servers.push({
-            name: 'Server 5',
-            url: 'https://vidsrc.pro/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp,
-            type: 'clean',
-          });
-          servers.push({
-            name: 'Server 6',
-            url: 'https://autoembed.co/tv/tmdb/' + tmdbId + '-' + seasonNum + '-' + extCurrentEp,
-            type: 'clean',
-          });
-          servers.push({
-            name: 'Server 7',
-            url: 'https://embed.smashystream.com/playere.php?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp,
-            type: 'clean',
-          });
+          if (mediaType === 'movie') {
+            // MOVIE URLs — different endpoints
+            servers.push({
+              name: 'Server 1',
+              url: 'https://vidsrc.to/embed/movie/' + tmdbId,
+              type: 'clean',
+            });
+            servers.push({
+              name: 'Server 2',
+              url: 'https://vidsrc.xyz/embed/movie?tmdb=' + tmdbId,
+              type: 'clean',
+            });
+            servers.push({
+              name: 'Server 3',
+              url: 'https://www.2embed.cc/embed/' + tmdbId,
+              type: 'clean',
+            });
+            servers.push({
+              name: 'Server 4',
+              url: 'https://multiembed.mov/directstream.php?video_id=' + tmdbId + '&tmdb=1',
+              type: 'clean',
+            });
+            servers.push({
+              name: 'Server 5',
+              url: 'https://vidsrc.pro/embed/movie/' + tmdbId,
+              type: 'clean',
+            });
+            servers.push({
+              name: 'Server 6',
+              url: 'https://autoembed.co/movie/tmdb/' + tmdbId,
+              type: 'clean',
+            });
+            servers.push({
+              name: 'Server 7',
+              url: 'https://embed.smashystream.com/playere.php?tmdb=' + tmdbId,
+              type: 'clean',
+            });
+          } else {
+            // TV SHOW URLs
+            servers.push({
+              name: 'Server 1',
+              url: 'https://vidsrc.to/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp,
+              type: 'clean',
+            });
+            servers.push({
+              name: 'Server 2',
+              url: 'https://vidsrc.xyz/embed/tv?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp,
+              type: 'clean',
+            });
+            servers.push({
+              name: 'Server 3',
+              url: 'https://www.2embed.cc/embedtv/' + tmdbId + '&s=' + seasonNum + '&e=' + extCurrentEp,
+              type: 'clean',
+            });
+            servers.push({
+              name: 'Server 4',
+              url: 'https://multiembed.mov/directstream.php?video_id=' + tmdbId + '&tmdb=1&s=' + seasonNum + '&e=' + extCurrentEp,
+              type: 'clean',
+            });
+            servers.push({
+              name: 'Server 5',
+              url: 'https://vidsrc.pro/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp,
+              type: 'clean',
+            });
+            servers.push({
+              name: 'Server 6',
+              url: 'https://autoembed.co/tv/tmdb/' + tmdbId + '-' + seasonNum + '-' + extCurrentEp,
+              type: 'clean',
+            });
+            servers.push({
+              name: 'Server 7',
+              url: 'https://embed.smashystream.com/playere.php?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp,
+              type: 'clean',
+            });
+          }
         }
 
         // AnimoTV as last fallback
