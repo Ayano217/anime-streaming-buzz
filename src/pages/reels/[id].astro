@@ -749,26 +749,28 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
       aspect-ratio: 16 / 9;
     }
-    /* Popup ad blocker overlay - prevents Vidsrc redirect clicks */
-    .rp-click-shield {
+    /* Popup ad blocker overlays - only cover edge zones (not controls) */
+    .rp-click-shield-tl {
       position: absolute;
       top: 0;
       left: 0;
-      right: 0;
-      height: 45px;
+      width: 60px;
+      height: 60px;
       z-index: 20;
       background: transparent;
       cursor: default;
+      pointer-events: auto;
     }
-    .rp-click-shield-bottom {
+    .rp-click-shield-tr {
       position: absolute;
-      bottom: 0;
-      left: 0;
+      top: 0;
       right: 0;
-      height: 45px;
+      width: 60px;
+      height: 60px;
       z-index: 20;
       background: transparent;
       cursor: default;
+      pointer-events: auto;
     }
     .rp-ext-iframe {
       position: absolute;
@@ -2299,7 +2301,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         var servers = [];
 
         if (tmdbId && hasMulti) {
-          // Best: TMDB-based clean iframes (no crop needed)
+          // All iframe-friendly TMDB-based servers
           servers.push({
             name: 'Server 1',
             url: 'https://vidsrc.to/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp,
@@ -2318,6 +2320,21 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
           servers.push({
             name: 'Server 4',
             url: 'https://multiembed.mov/directstream.php?video_id=' + tmdbId + '&tmdb=1&s=' + seasonNum + '&e=' + extCurrentEp,
+            type: 'clean',
+          });
+          servers.push({
+            name: 'Server 5',
+            url: 'https://vidsrc.pro/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp,
+            type: 'clean',
+          });
+          servers.push({
+            name: 'Server 6',
+            url: 'https://autoembed.co/tv/tmdb/' + tmdbId + '-' + seasonNum + '-' + extCurrentEp,
+            type: 'clean',
+          });
+          servers.push({
+            name: 'Server 7',
+            url: 'https://embed.smashystream.com/playere.php?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp,
             type: 'clean',
           });
         }
@@ -2451,16 +2468,16 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
           wrap.appendChild(iframe);
 
           // ═══ POPUP AD BLOCKER ═══
-          // Add invisible click shields at top and bottom edges to block Vidsrc redirect popups
+          // Small corner shields ONLY (don't block video controls at bottom)
           if (server.type === 'clean') {
-            if (!wrap.querySelector('.rp-click-shield')) {
-              var shieldTop = document.createElement('div');
-              shieldTop.className = 'rp-click-shield';
-              wrap.appendChild(shieldTop);
+            if (!wrap.querySelector('.rp-click-shield-tl')) {
+              var shieldTL = document.createElement('div');
+              shieldTL.className = 'rp-click-shield-tl';
+              wrap.appendChild(shieldTL);
 
-              var shieldBottom = document.createElement('div');
-              shieldBottom.className = 'rp-click-shield-bottom';
-              wrap.appendChild(shieldBottom);
+              var shieldTR = document.createElement('div');
+              shieldTR.className = 'rp-click-shield-tr';
+              wrap.appendChild(shieldTR);
             }
           }
 
