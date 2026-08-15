@@ -2554,22 +2554,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         var serverBtns = document.getElementById('serverBtns');
         if (!root || !wrap) return;
 
-        // ═══ TORRENT: Button always visible, fetch on click ═══
-        var torrentsData = null;
-        var torrentFetchInProgress = false;
-        var torrentFetchDone = false;
-        
-        // Show download button AFTER servers are rendered
-        function tryShowDownloadBtn() {
-          var btnsContainer = document.getElementById('serverBtns');
-          if (btnsContainer && btnsContainer.querySelectorAll('.rp-server-btn').length > 0) {
-            showTorrentBadge();
-          } else {
-            setTimeout(tryShowDownloadBtn, 500);
-          }
-        }
-        
-        setTimeout(tryShowDownloadBtn, 1000);
+
         
         async function fetchTorrents() {
           if (torrentFetchInProgress || torrentFetchDone) return;
@@ -3142,7 +3127,12 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
           }, 10000);
         }
 
-        // Render server buttons — ALWAYS show switcher
+        // Torrent state
+        var torrentsData = null;
+        var torrentFetchInProgress = false;
+        var torrentFetchDone = false;
+
+        // Render server buttons + Download button (all at once, no timing issues)
         if (switcher && serverBtns) {
           switcher.style.display = 'flex';
           var btnsHtml = '';
@@ -3151,8 +3141,17 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
               btnsHtml += '<button class="rp-server-btn' + (i === 0 ? ' active' : '') + '" data-idx="' + i + '">' + servers[i].name + '</button>';
             }
           }
+          // Add Download HD button at the end (always)
+          btnsHtml += '<button id="torrentBadge" type="button" class="rp-download-btn">' +
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
+              '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>' +
+            '</svg>' +
+            '<span>Download HD</span>' +
+          '</button>';
+          
           serverBtns.innerHTML = btnsHtml;
 
+          // Wire up server buttons
           var btns = serverBtns.querySelectorAll('.rp-server-btn');
           for (var j = 0; j < btns.length; j++) {
             btns[j].addEventListener('click', function() {
@@ -3163,6 +3162,137 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
               }
             });
           }
+          
+          // Wire up download button
+          var dlBtn = document.getElementById('torrentBadge');
+          if (dlBtn) {
+            dlBtn.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDownloadClick(dlBtn);
+            });
+          }
+        }
+
+        // Torrent fetch function
+        async function fetchTorrents() {
+          if (torrentFetchInProgress || torrentFetchDone) return;
+          torrentFetchInProgress = true;
+          
+          try {
+            var q = animeSlug ? animeSlug.replace(/-/g, ' ') : '';
+            if (!q) { torrentFetchDone = true; return; }
+            
+            var searchQueries = [
+              q,
+              q.split(/\s+/).slice(0, 3).join(' '),
+            ];
+            
+            for (var i = 0; i < searchQueries.length; i++) {
+              try {
+                var controller = new AbortController();
+                var timer = setTimeout(function() { controller.abort(); }, 8000);
+                
+                var res = await fetch('/api/stream-race?q=' + encodeURIComponent(searchQueries[i]) + '&ep=' + extCurrentEp, {
+                  signal: controller.signal
+                });
+                clearTimeout(timer);
+                
+                var data = await res.json();
+                if (data.success && data.found && data.torrents && data.torrents.length > 0) {
+                  torrentsData = data;
+                  torrentFetchDone = true;
+                  return;
+                }
+              } catch (e) { continue; }
+            }
+            
+            torrentFetchDone = true;
+          } catch (e) {
+            torrentFetchDone = true;
+          } finally {
+            torrentFetchInProgress = false;
+          }
+        }
+
+        // Download button click handler
+        async function handleDownloadClick(btn) {
+          if (torrentsData && torrentsData.torrents && torrentsData.torrents.length > 0) {
+            showTorrentModal();
+            return;
+          }
+          
+          var originalHtml = btn.innerHTML;
+          btn.innerHTML = '<span>Searching...</span>';
+          btn.disabled = true;
+          btn.style.opacity = '0.7';
+          
+          await fetchTorrents();
+          
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          
+          if (torrentsData && torrentsData.torrents && torrentsData.torrents.length > 0) {
+            btn.innerHTML = originalHtml;
+            showTorrentModal();
+          } else {
+            btn.innerHTML = '<span>No downloads found</span>';
+            btn.style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
+            btn.style.cursor = 'default';
+            btn.onclick = null;
+          }
+        }
+
+        // Escape HTML
+        function escapeHtmlTor(s) {
+          return String(s || '').replace(/[&<>"']/g, function(c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+          });
+        }
+
+        // Show torrent modal
+        function showTorrentModal() {
+          if (!torrentsData || !torrentsData.torrents) return;
+          var existing = document.getElementById('torrentModal');
+          if (existing) existing.remove();
+          
+          var modal = document.createElement('div');
+          modal.id = 'torrentModal';
+          modal.className = 'rp-torrent-modal';
+          
+          var itemsHtml = torrentsData.torrents.map(function(t) {
+            return '<div class="rp-torrent-item">' +
+              '<div class="rp-torrent-item-title">' + escapeHtmlTor(t.title) + '</div>' +
+              '<div class="rp-torrent-item-meta">' +
+                '<span class="rp-torrent-quality">' + t.quality + '</span>' +
+                '<span class="rp-torrent-size">📦 ' + t.size + '</span>' +
+                '<span class="rp-torrent-seeds">🌐 ' + t.seeders + ' seeds</span>' +
+              '</div>' +
+              '<div class="rp-torrent-item-actions">' +
+                (t.magnet ? '<a href="' + t.magnet + '" class="rp-torrent-btn rp-torrent-btn-magnet">🧲 Magnet</a>' : '') +
+                (t.torrentUrl ? '<a href="' + t.torrentUrl + '" target="_blank" class="rp-torrent-btn rp-torrent-btn-download" download>⬇ .torrent</a>' : '') +
+              '</div>' +
+            '</div>';
+          }).join('');
+          
+          modal.innerHTML = 
+            '<div class="rp-torrent-modal-backdrop"></div>' +
+            '<div class="rp-torrent-modal-content">' +
+              '<div class="rp-torrent-modal-head">' +
+                '<h3>📥 Download Options</h3>' +
+                '<button class="rp-torrent-close" id="closeTorrentModal">×</button>' +
+              '</div>' +
+              '<div class="rp-torrent-hint">💡 <strong>Magnet:</strong> Open in µTorrent, qBittorrent.<br>' +
+                '<strong>Play online:</strong> ' +
+                '<a href="https://webtorrent.io/desktop/" target="_blank" style="color:#c084fc;">WebTorrent</a> or ' +
+                '<a href="https://instant.io/" target="_blank" style="color:#c084fc;">Instant.io</a></div>' +
+              '<div class="rp-torrent-list">' + itemsHtml + '</div>' +
+            '</div>';
+          
+          document.body.appendChild(modal);
+          
+          document.getElementById('closeTorrentModal').addEventListener('click', function() { modal.remove(); });
+          modal.querySelector('.rp-torrent-modal-backdrop').addEventListener('click', function() { modal.remove(); });
         }
 
         // Resize handler (only matters for crop mode)
