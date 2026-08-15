@@ -1,13 +1,13 @@
 // ═══════════════════════════════════════════════════════════════
-// AniTube Buzz — Stream Race API v4 (Multi-Source Torrent)
+// AniTube Buzz — Stream Race API v5 (Smart TMDB Multi-Query)
 // Path: src/pages/api/stream-race.ts
 //
-// v4 CHANGES:
-//   ✅ Multiple torrent sources (Nyaa direct + AnimeTosho + fallback API)
-//   ✅ Better parsing with error handling
-//   ✅ AnimeTosho as primary (more reliable, Cloudflare-friendly)
-//   ✅ Nyaa.land mirror as backup
-//   ✅ Test URL support (?test=1 shows raw data)
+// v5 CHANGES:
+//   ✅ TMDB integration for original Japanese/romaji titles
+//   ✅ Multi-query search (tries English + Japanese + alt titles)
+//   ✅ AnimeTosho + Nyaa combined
+//   ✅ Deduplication by magnet hash
+//   ✅ Clean syntax — no bracket errors
 // ═══════════════════════════════════════════════════════════════
 
 export const prerender = false;
@@ -91,7 +91,6 @@ function buildMagnet(hash: string, title: string): string {
     'udp://exodus.desync.com:6969/announce',
     'udp://tracker.moeking.me:6969/announce',
     'http://nyaa.tracker.wf:7777/announce',
-    'udp://tracker.opentrackr.org:1337/announce',
     'wss://tracker.openwebtorrent.com',
     'wss://tracker.btorrent.xyz',
   ];
@@ -99,16 +98,22 @@ function buildMagnet(hash: string, title: string): string {
   return `magnet:?xt=urn:btih:${hash}&dn=${encodeURIComponent(title)}${trackerStr}`;
 }
 
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  if (bytes < 1073741824) return (bytes / 1048576).toFixed(0) + ' MB';
+  return (bytes / 1073741824).toFixed(2) + ' GB';
+}
+
 // ═══════════════════════════════════════════════════════════════
-// SOURCE 1: AnimeTosho (RELIABLE — better for Cloudflare Workers)
+// AnimeTosho JSON API (primary — reliable)
 // ═══════════════════════════════════════════════════════════════
 async function searchAnimeTosho(query: string, episode: number): Promise<TorrentResult[]> {
   const results: TorrentResult[] = [];
   try {
     const epStr = String(episode).padStart(2, '0');
     const searchQ = `${query} ${epStr}`;
-    // AnimeTosho JSON API
-    const url = `https://feed.animetosho.org/json?q=${encodeURIComponent(searchQ)}&qx=1&filter[0][t]=nyaa_class&filter[0][v]=trusted`;
+    const url = `https://feed.animetosho.org/json?q=${encodeURIComponent(searchQ)}&qx=1`;
     
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 6000);
@@ -121,7 +126,6 @@ async function searchAnimeTosho(query: string, episode: number): Promise<Torrent
     
     if (!res.ok) return results;
     const data = await res.json();
-    
     if (!Array.isArray(data)) return results;
     
     for (const item of data.slice(0, 15)) {
@@ -130,7 +134,7 @@ async function searchAnimeTosho(query: string, episode: number): Promise<Torrent
         if (!title) continue;
         
         const sizeBytes = item.total_size || 0;
-        if (sizeBytes < 50000000 || sizeBytes > 3000000000) continue; // 50MB - 3GB
+        if (sizeBytes < 50000000 || sizeBytes > 3000000000) continue;
         
         const sizeStr = formatBytes(sizeBytes);
         const seeders = item.seeders || 0;
@@ -144,15 +148,9 @@ async function searchAnimeTosho(query: string, episode: number): Promise<Torrent
         const torrentUrl = item.torrent_url || '';
         
         results.push({
-          title,
-          magnet,
-          torrentUrl,
-          size: sizeStr,
-          sizeBytes,
-          seeders,
-          leechers,
-          quality: quality.label,
-          quality_priority: quality.priority,
+          title, magnet, torrentUrl, size: sizeStr, sizeBytes,
+          seeders, leechers,
+          quality: quality.label, quality_priority: quality.priority,
           source: 'AnimeTosho',
         });
       } catch (e) { continue; }
@@ -163,15 +161,8 @@ async function searchAnimeTosho(query: string, episode: number): Promise<Torrent
   return results;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-  if (bytes < 1073741824) return (bytes / 1048576).toFixed(0) + ' MB';
-  return (bytes / 1073741824).toFixed(2) + ' GB';
-}
-
 // ═══════════════════════════════════════════════════════════════
-// SOURCE 2: Nyaa.si direct RSS (may fail from CF Workers)
+// Nyaa.si RSS (backup)
 // ═══════════════════════════════════════════════════════════════
 async function searchNyaaDirect(query: string, episode: number): Promise<TorrentResult[]> {
   const results: TorrentResult[] = [];
@@ -222,15 +213,9 @@ async function searchNyaaDirect(query: string, episode: number): Promise<Torrent
         const torrentUrl = linkMatch ? linkMatch[1].trim() : '';
         
         results.push({
-          title,
-          magnet,
-          torrentUrl,
-          size: sizeStr,
-          sizeBytes,
-          seeders,
-          leechers: leechersMatch ? parseInt(leechersMatch[1]) : 0,
-          quality: quality.label,
-          quality_priority: quality.priority,
+          title, magnet, torrentUrl, size: sizeStr, sizeBytes,
+          seeders, leechers: leechersMatch ? parseInt(leechersMatch[1]) : 0,
+          quality: quality.label, quality_priority: quality.priority,
           source: 'Nyaa',
         });
       } catch (e) { continue; }
@@ -242,170 +227,141 @@ async function searchNyaaDirect(query: string, episode: number): Promise<Torrent
 }
 
 // ═══════════════════════════════════════════════════════════════
-// COMBINE + SORT results from all sources
+// TMDB helper — fetches original + alt titles for smart search
 // ═══════════════════════════════════════════════════════════════
-async function searchAllTorrents(query: string, episode: number, tmdbId?: number, tmdbKey?: string): Promise<{ results: TorrentResult[], debug: any }> {
-  const debug: any = {
-    query,
-    episode,
-    sources: {},
-    triedQueries: [],
-  };
+async function fetchTmdbTitles(tmdbId: number, tmdbKey: string): Promise<string[]> {
+  const titles: string[] = [];
+  if (!tmdbId || !tmdbKey) return titles;
   
-  // Build multiple query variations for smart search
+  try {
+    const isBearer = tmdbKey.length > 40;
+    const headers: Record<string, string> = { 'Accept': 'application/json' };
+    if (isBearer) headers['Authorization'] = `Bearer ${tmdbKey}`;
+    
+    // Main details
+    const url = isBearer
+      ? `https://api.themoviedb.org/3/tv/${tmdbId}?language=en-US`
+      : `https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${tmdbKey}&language=en-US`;
+    
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch(url, { headers, signal: controller.signal });
+    clearTimeout(timer);
+    
+    if (res.ok) {
+      const data: any = await res.json();
+      if (data.original_name && data.original_name !== data.name) {
+        titles.push(data.original_name);
+      }
+      if (data.name) {
+        titles.push(data.name);
+      }
+    }
+    
+    // Alternative titles
+    const altUrl = isBearer
+      ? `https://api.themoviedb.org/3/tv/${tmdbId}/alternative_titles`
+      : `https://api.themoviedb.org/3/tv/${tmdbId}/alternative_titles?api_key=${tmdbKey}`;
+    
+    const altController = new AbortController();
+    const altTimer = setTimeout(() => altController.abort(), 3000);
+    const altRes = await fetch(altUrl, { headers, signal: altController.signal });
+    clearTimeout(altTimer);
+    
+    if (altRes.ok) {
+      const altData: any = await altRes.json();
+      if (altData.results && Array.isArray(altData.results)) {
+        for (const alt of altData.results.slice(0, 5)) {
+          if (alt.title && alt.title.length > 3 && alt.title.length < 60) {
+            titles.push(alt.title);
+          }
+        }
+      }
+    }
+  } catch (e) {}
+  
+  return titles;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Smart multi-query search
+// ═══════════════════════════════════════════════════════════════
+async function searchAllTorrents(
+  query: string,
+  episode: number,
+  tmdbId?: number,
+  tmdbKey?: string
+): Promise<{ results: TorrentResult[]; debug: any }> {
+  const debug: any = { query, episode, tried: [], sources: {} };
+  
+  // Build query set
   const queries = new Set<string>();
-  
-  // Original query
   queries.add(query);
   
-  // First 3 words only (shorter = better for Nyaa)
   const words = query.split(/\s+/).filter(w => w.length > 2);
-  if (words.length > 3) {
-    queries.add(words.slice(0, 3).join(' '));
-  }
-  if (words.length > 2) {
-    queries.add(words.slice(0, 2).join(' '));
-  }
+  if (words.length > 3) queries.add(words.slice(0, 3).join(' '));
+  if (words.length > 2) queries.add(words.slice(0, 2).join(' '));
   
-  // Try to fetch TMDB original title (usually Japanese, works better on Nyaa)
+  // Add TMDB titles if available
   if (tmdbId && tmdbKey) {
-    try {
-      const isBearer = tmdbKey.length > 40;
-      const url = isBearer
-        ? `https://api.themoviedb.org/3/tv/${tmdbId}?language=en-US`
-        : `https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${tmdbKey}&language=en-US`;
-      const headers: Record<string, string> = { 'Accept': 'application/json' };
-      if (isBearer) headers['Authorization'] = `Bearer ${tmdbKey}`;
-      
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 4000);
-      
-      const res = await fetch(url, { headers, signal: controller.signal });
-      clearTimeout(timer);
-      
-      if (res.ok) {
-        const data: any = await res.json();
-        // Original name (Japanese, e.g., "無職の英雄")
-        if (data.original_name && data.original_name !== data.name) {
-          queries.add(data.original_name);
-        }
-        // Alternative titles (romaji, English, etc.)
-        if (data.name) {
-          queries.add(data.name);
-          // Add first 3 words of English name
-          const nameWords = data.name.split(/\s+/).filter((w: string) => w.length > 2);
-          if (nameWords.length > 3) {
-            queries.add(nameWords.slice(0, 3).join(' '));
-          }
-        }
-      }
-      
-      // Also fetch alternative titles endpoint
-      const altUrl = isBearer
-        ? `https://api.themoviedb.org/3/tv/${tmdbId}/alternative_titles`
-        : `https://api.themoviedb.org/3/tv/${tmdbId}/alternative_titles?api_key=${tmdbKey}`;
-      const altRes = await fetch(altUrl, { headers, signal: AbortSignal.timeout(3000) });
-      if (altRes.ok) {
-        const altData: any = await altRes.json();
-        if (altData.results && Array.isArray(altData.results)) {
-          // Prioritize Japanese romaji titles
-          for (const alt of altData.results.slice(0, 5)) {
-            if (alt.title && alt.title.length > 3 && alt.title.length < 60) {
-              queries.add(alt.title);
-            }
-          }
-        }
-      }
-    } catch (e) {}
+    const tmdbTitles = await fetchTmdbTitles(tmdbId, tmdbKey);
+    for (const t of tmdbTitles) {
+      queries.add(t);
+      const tWords = t.split(/\s+/).filter(w => w.length > 2);
+      if (tWords.length > 3) queries.add(tWords.slice(0, 3).join(' '));
+    }
   }
   
-  debug.triedQueries = Array.from(queries);
+  debug.tried = Array.from(queries);
   
   const allResults: TorrentResult[] = [];
   const seenHashes = new Set<string>();
   
-  // Try each query in sequence (stop when we get good results)
+  // Try each query until we get enough results
   for (const q of queries) {
-    if (allResults.length >= 5) break; // Enough results
+    if (allResults.length >= 6) break;
     
-    const [toshoResults, nyaaResults] = await Promise.allSettled([
+    const [toshoRes, nyaaRes] = await Promise.allSettled([
       searchAnimeTosho(q, episode),
       searchNyaaDirect(q, episode),
     ]);
     
-    const tosho = toshoResults.status === 'fulfilled' ? toshoResults.value : [];
-    const nyaa = nyaaResults.status === 'fulfilled' ? nyaaResults.value : [];
+    const tosho = toshoRes.status === 'fulfilled' ? toshoRes.value : [];
+    const nyaa = nyaaRes.status === 'fulfilled' ? nyaaRes.value : [];
     
     debug.sources[q] = { animetosho: tosho.length, nyaa: nyaa.length };
     
-    // Add unique results
     for (const t of [...tosho, ...nyaa]) {
-      const hash = t.magnet.match(/btih:([a-zA-Z0-9]+)/)?.[1]?.toLowerCase() || t.title.toLowerCase().slice(0, 50);
+      const hashMatch = t.magnet.match(/btih:([a-zA-Z0-9]+)/);
+      const hash = hashMatch ? hashMatch[1].toLowerCase() : t.title.toLowerCase().slice(0, 60);
       if (seenHashes.has(hash)) continue;
       seenHashes.add(hash);
       allResults.push(t);
     }
     
-    // If we got 3+ results from first query, that's enough
     if (allResults.length >= 3) break;
   }
   
-  // Sort: quality DESC → seeders DESC → smaller size preferred
+  // Sort: quality > seeders > smaller size
   allResults.sort((a, b) => {
-    if (a.quality_priority !== b.quality_priority) {
-      return b.quality_priority - a.quality_priority;
-    }
-    if (b.seeders !== a.seeders) {
-      return b.seeders - a.seeders;
-    }
+    if (a.quality_priority !== b.quality_priority) return b.quality_priority - a.quality_priority;
+    if (b.seeders !== a.seeders) return b.seeders - a.seeders;
     return a.sizeBytes - b.sizeBytes;
   });
   
   return { results: allResults.slice(0, 8), debug };
 }
-  
-  const tosho = toshoResults.status === 'fulfilled' ? toshoResults.value : [];
-  const nyaa = nyaaResults.status === 'fulfilled' ? nyaaResults.value : [];
-  
-  debug.sources.animetosho = tosho.length;
-  debug.sources.nyaa = nyaa.length;
-  
-  // Combine + dedupe by title
-  const all = [...tosho, ...nyaa];
-  const seen = new Set<string>();
-  const unique: TorrentResult[] = [];
-  
-  for (const t of all) {
-    const key = t.title.toLowerCase().slice(0, 80);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    unique.push(t);
-  }
-  
-  // Sort: quality DESC → seeders DESC → smaller size preferred
-  unique.sort((a, b) => {
-    if (a.quality_priority !== b.quality_priority) {
-      return b.quality_priority - a.quality_priority;
-    }
-    if (b.seeders !== a.seeders) {
-      return b.seeders - a.seeders;
-    }
-    return a.sizeBytes - b.sizeBytes;
-  });
-  
-  return { results: unique.slice(0, 8), debug };
-}
 
 // ═══════════════════════════════════════════════════════════════
 // MAIN HANDLER
 // ═══════════════════════════════════════════════════════════════
-
 export const GET: APIRoute = async ({ url, locals }) => {
   const params = url.searchParams;
   const slug = (params.get('slug') || '').trim().toLowerCase();
   const episode = parseInt(params.get('ep') || '1') || 1;
   let query = params.get('q') || slug.replace(/-/g, ' ');
-  const tmdbId = parseInt(params.get('tmdb') || '0') || undefined;
+  const tmdbIdParam = params.get('tmdb');
+  const tmdbId = tmdbIdParam ? parseInt(tmdbIdParam) : undefined;
   const noCache = params.get('nocache') === '1';
   const debugMode = params.get('debug') === '1';
   
@@ -416,7 +372,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     return jsonRes({ success: false, error: 'Missing slug or query' }, 400);
   }
   
-  // Clean query — remove common words that mess up search
+  // Clean query
   query = query
     .replace(/season\s*\d+/gi, '')
     .replace(/part\s*\d+/gi, '')
@@ -425,7 +381,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     .replace(/\s+/g, ' ')
     .trim();
   
-  const cacheKey = `race_v4:${query}:${episode}`;
+  const cacheKey = `race_v5:${query}:${episode}:${tmdbId || 0}`;
   
   if (!noCache) {
     const hit = cached(cacheKey);
@@ -441,7 +397,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
       const response: any = {
         success: true,
         found: false,
-        message: 'No torrents found. Try a shorter/different search query.',
+        message: 'No torrents found across all queries.',
         torrents: [],
       };
       if (debugMode) response.debug = debug;
@@ -449,7 +405,6 @@ export const GET: APIRoute = async ({ url, locals }) => {
     }
     
     const best = results[0];
-    
     const result: any = {
       found: true,
       query,
@@ -483,7 +438,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     return jsonRes({ success: true, ...result });
     
   } catch (err: any) {
-    console.error('[stream-race-v4]', err);
+    console.error('[stream-race-v5]', err);
     return jsonRes({
       success: false,
       error: err.message || 'Search failed',
