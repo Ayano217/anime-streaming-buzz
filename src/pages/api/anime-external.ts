@@ -1,17 +1,12 @@
 // ═══════════════════════════════════════════════════════════════
-// AniTube Buzz — External Anime API v5 (AnimoTVSlash + TMDB + Fallback)
+// AniTube Buzz — External Anime API v6 (TV + Movie + TMDB Fallback)
 // Path: src/pages/api/anime-external.ts
 //
-// v5 CHANGES from v4:
-//   ✅ NEW: TMDB-only lookup when AnimoTV doesn't have the anime
-//   ✅ NEW: 'detail' action falls back to TMDB search if AnimoTV fails
-//   ✅ NEW: 'find' action falls back to TMDB if AnimoTV has no match
-//   ✅ Works for ANY anime that's on TMDB (huge library)
-//   ✅ All v4 features preserved
-//
-// USED BY:
-//   - src/pages/reels/[id].astro
-//   - src/pages/api/link-resolver.ts (via 'find' action)
+// v6 CHANGES:
+//   ✅ Movie vs TV auto-detection via TMDB
+//   ✅ TMDB-only lookup when AnimoTV doesn't have anime
+//   ✅ Returns media_type: 'tv' | 'movie' for player URL routing
+//   ✅ Clean syntax — no bracket errors
 // ═══════════════════════════════════════════════════════════════
 
 export const prerender = false;
@@ -55,12 +50,8 @@ function cleanQuery(q: string): string {
   return q.replace(/[:\|]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-// Convert slug back to searchable title
 function slugToSearchable(slug: string): string {
-  return String(slug || '')
-    .replace(/-/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return String(slug || '').replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
 async function fetchMediaUrl(mediaId: number): Promise<string> {
@@ -83,10 +74,6 @@ function matchScore(title: string, query: string): number {
   for (const w of words) if (t.includes(w)) matched++;
   return matched / words.length;
 }
-
-// ═══════════════════════════════════════════════════════════════
-// TMDB HELPERS
-// ═══════════════════════════════════════════════════════════════
 
 function cleanAnimeTitle(title: string): string {
   return title
@@ -122,31 +109,29 @@ async function tmdbSearchTv(title: string, apiKey: string): Promise<any | null> 
   try {
     const clean = cleanAnimeTitle(title);
     const isBearer = apiKey.length > 40;
-    
-    // Step 1: Try TV search
+
+    // Step 1: TV search
     const tvUrl = isBearer
       ? `${TMDB_BASE}/search/tv?query=${encodeURIComponent(clean)}&language=en-US&include_adult=false`
       : `${TMDB_BASE}/search/tv?api_key=${apiKey}&query=${encodeURIComponent(clean)}&language=en-US&include_adult=false`;
     const headers: Record<string, string> = { 'Accept': 'application/json' };
     if (isBearer) headers['Authorization'] = `Bearer ${apiKey}`;
-    
+
     const tvRes = await fetch(tvUrl, { headers });
     if (tvRes.ok) {
       const tvData: any = await tvRes.json();
       if (tvData.results && tvData.results.length > 0) {
-        // Prefer anime TV shows
         const animeMatch = tvData.results.find((r: any) =>
           r.genre_ids && r.genre_ids.includes(16) && r.origin_country && r.origin_country.includes('JP')
         );
         if (animeMatch) return { ...animeMatch, media_type: 'tv' };
         const animeAny = tvData.results.find((r: any) => r.genre_ids && r.genre_ids.includes(16));
         if (animeAny) return { ...animeAny, media_type: 'tv' };
-        // Non-anime TV
         return { ...tvData.results[0], media_type: 'tv' };
       }
     }
 
-    // Step 2: Try Movie search as fallback
+    // Step 2: Movie fallback
     const movieUrl = isBearer
       ? `${TMDB_BASE}/search/movie?query=${encodeURIComponent(clean)}&language=en-US&include_adult=false`
       : `${TMDB_BASE}/search/movie?api_key=${apiKey}&query=${encodeURIComponent(clean)}&language=en-US&include_adult=false`;
@@ -154,7 +139,6 @@ async function tmdbSearchTv(title: string, apiKey: string): Promise<any | null> 
     if (movieRes.ok) {
       const movieData: any = await movieRes.json();
       if (movieData.results && movieData.results.length > 0) {
-        // Prefer anime movies
         const animeMovie = movieData.results.find((r: any) =>
           r.genre_ids && r.genre_ids.includes(16)
         );
@@ -164,30 +148,6 @@ async function tmdbSearchTv(title: string, apiKey: string): Promise<any | null> 
     }
 
     return null;
-  } catch (e) {
-    return null;
-  }
-}
-  try {
-    const clean = cleanAnimeTitle(title);
-    const isBearer = apiKey.length > 40;
-    const url = isBearer
-      ? `${TMDB_BASE}/search/tv?query=${encodeURIComponent(clean)}&language=en-US&include_adult=false`
-      : `${TMDB_BASE}/search/tv?api_key=${apiKey}&query=${encodeURIComponent(clean)}&language=en-US&include_adult=false`;
-    const headers: Record<string, string> = { 'Accept': 'application/json' };
-    if (isBearer) headers['Authorization'] = `Bearer ${apiKey}`;
-    const res = await fetch(url, { headers });
-    if (!res.ok) return null;
-    const data: any = await res.json();
-    if (!data.results || data.results.length === 0) return null;
-    // Prefer anime (animation genre + Japan origin)
-    const animeMatch = data.results.find((r: any) =>
-      r.genre_ids && r.genre_ids.includes(16) && r.origin_country && r.origin_country.includes('JP')
-    );
-    if (animeMatch) return animeMatch;
-    const animeAny = data.results.find((r: any) => r.genre_ids && r.genre_ids.includes(16));
-    if (animeAny) return animeAny;
-    return data.results[0];
   } catch (e) {
     return null;
   }
@@ -231,10 +191,7 @@ async function tmdbFetchTvDetails(tvId: number, apiKey: string): Promise<any> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// NEW v5: TMDB-only lookup (works when AnimoTV doesn't have anime)
-// ═══════════════════════════════════════════════════════════════
-
+// TMDB-only lookup — handles both TV and Movie
 async function tmdbOnlyLookup(query: string, apiKey: string, keepSlug?: string): Promise<any | null> {
   if (!apiKey) return null;
   try {
@@ -245,7 +202,6 @@ async function tmdbOnlyLookup(query: string, apiKey: string, keepSlug?: string):
     const mediaType = tmdbShow.media_type || 'tv';
     const seasonNum = detectSeasonNumber(query);
 
-    // Build slug
     const titleForSlug = tmdbShow.name || tmdbShow.title || tmdbShow.original_name || tmdbShow.original_title || query;
     const slug = keepSlug || String(titleForSlug)
       .toLowerCase()
@@ -256,7 +212,7 @@ async function tmdbOnlyLookup(query: string, apiKey: string, keepSlug?: string):
     const poster = tmdbShow.poster_path ? `${TMDB_IMG}${tmdbShow.poster_path}` : '';
     const description = tmdbShow.overview || '';
 
-    // MOVIE — single "episode" (the movie itself)
+    // MOVIE
     if (mediaType === 'movie') {
       return {
         id: tvId,
@@ -279,18 +235,18 @@ async function tmdbOnlyLookup(query: string, apiKey: string, keepSlug?: string):
         hasTmdbThumbs: !!poster,
         tmdb_id: tvId,
         season_number: 1,
-        media_type: 'movie',  // ← IMPORTANT
+        media_type: 'movie',
         source: 'tmdb-only',
       };
     }
 
-    // TV SHOW — full episodes list
+    // TV
     const episodeThumbs = await tmdbFetchSeasonEpisodes(tvId, seasonNum, apiKey);
     const details = await tmdbFetchTvDetails(tvId, apiKey);
     let epCount = 12;
-    if (details?.seasons) {
+    if (details && details.seasons) {
       const seasonInfo = details.seasons.find((s: any) => s.season_number === seasonNum);
-      if (seasonInfo?.episode_count > 0) {
+      if (seasonInfo && seasonInfo.episode_count > 0) {
         epCount = Math.max(seasonInfo.episode_count, Object.keys(episodeThumbs).length);
       }
     }
@@ -322,70 +278,7 @@ async function tmdbOnlyLookup(query: string, apiKey: string, keepSlug?: string):
       hasTmdbThumbs: episodes.some(e => e.hasRealThumb),
       tmdb_id: tvId,
       season_number: seasonNum,
-      media_type: 'tv',  // ← IMPORTANT
-      source: 'tmdb-only',
-    };
-  } catch (e) {
-    return null;
-  }
-}
-  if (!apiKey) return null;
-  try {
-    const tmdbShow = await tmdbSearchTv(query, apiKey);
-    if (!tmdbShow) return null;
-
-    const tvId = tmdbShow.id;
-    const seasonNum = detectSeasonNumber(query);
-
-    // Fetch episode thumbs
-    const episodeThumbs = await tmdbFetchSeasonEpisodes(tvId, seasonNum, apiKey);
-    const details = await tmdbFetchTvDetails(tvId, apiKey);
-
-    let epCount = 12;
-    if (details?.seasons) {
-      const seasonInfo = details.seasons.find((s: any) => s.season_number === seasonNum);
-      if (seasonInfo?.episode_count > 0) {
-        epCount = Math.max(seasonInfo.episode_count, Object.keys(episodeThumbs).length);
-      }
-    }
-    epCount = Math.min(Math.max(epCount, Object.keys(episodeThumbs).length, 12), 50);
-
-    // Build slug from TMDB title (or use provided slug)
-    const titleForSlug = tmdbShow.name || tmdbShow.original_name || query;
-    const slug = keepSlug || String(titleForSlug)
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .slice(0, 60);
-
-    const poster = tmdbShow.poster_path ? `${TMDB_IMG}${tmdbShow.poster_path}` : '';
-
-    const episodes = [];
-    for (let i = 1; i <= epCount; i++) {
-      episodes.push({
-        number: i,
-        url: '', // no AnimoTV URL
-        embedId: `anime_${slug}_ep${i}`,
-        thumbnail: episodeThumbs[i] || poster,
-        hasRealThumb: !!episodeThumbs[i],
-        title: `Episode ${i}`,
-      });
-    }
-
-    return {
-      id: tvId,
-      slug: slug,
-      title: tmdbShow.name || tmdbShow.original_name || query,
-      link: '',
-      poster: poster,
-      description: tmdbShow.overview || '',
-      classList: [],
-      episodes,
-      episodeUrlPattern: '',
-      baseSlug: slug,
-      hasTmdbThumbs: episodes.some(e => e.hasRealThumb),
-      tmdb_id: tvId,
-      season_number: seasonNum,
+      media_type: 'tv',
       source: 'tmdb-only',
     };
   } catch (e) {
@@ -393,7 +286,7 @@ async function tmdbOnlyLookup(query: string, apiKey: string, keepSlug?: string):
   }
 }
 
-// Build episode list — TMDB thumbnails with poster fallback (for AnimoTV results)
+// Build episodes for AnimoTV anime (with TMDB thumbs + media type detection)
 async function buildEpisodes(
   slug: string,
   poster: string,
@@ -413,27 +306,29 @@ async function buildEpisodes(
       if (tmdbShow) {
         tmdbId = tmdbShow.id;
         mediaType = tmdbShow.media_type || 'tv';
-        
+
         if (mediaType === 'movie') {
-          // Movie — 1 "episode"
+          const posterForMovie = tmdbShow.poster_path ? `${TMDB_IMG}${tmdbShow.poster_path}` : poster;
           const episodes = [{
             number: 1,
             url: `${BASE}/${slug}-episode-1/`,
             embedId: `anime_${slug}_ep1`,
-            thumbnail: tmdbShow.poster_path ? `${TMDB_IMG}${tmdbShow.poster_path}` : poster,
+            thumbnail: posterForMovie,
             hasRealThumb: !!tmdbShow.poster_path,
             title: 'Full Movie',
           }];
           return { episodes, tmdbId, seasonNum: 1, mediaType: 'movie' };
         }
-        
+
         seasonNum = detectSeasonNumber(title);
-        tmdbThumbnails = await tmdbFetchSeasonEpisodes(tmdbId!, seasonNum, apiKey);
-        const details = await tmdbFetchTvDetails(tmdbId!, apiKey);
-        if (details && details.seasons) {
-          const seasonInfo = details.seasons.find((s: any) => s.season_number === seasonNum);
-          if (seasonInfo && seasonInfo.episode_count > 0) {
-            realEpisodeCount = Math.max(seasonInfo.episode_count, Object.keys(tmdbThumbnails).length);
+        if (tmdbId) {
+          tmdbThumbnails = await tmdbFetchSeasonEpisodes(tmdbId, seasonNum, apiKey);
+          const details = await tmdbFetchTvDetails(tmdbId, apiKey);
+          if (details && details.seasons) {
+            const seasonInfo = details.seasons.find((s: any) => s.season_number === seasonNum);
+            if (seasonInfo && seasonInfo.episode_count > 0) {
+              realEpisodeCount = Math.max(seasonInfo.episode_count, Object.keys(tmdbThumbnails).length);
+            }
           }
         }
       }
@@ -455,44 +350,6 @@ async function buildEpisodes(
   }
   return { episodes, tmdbId, seasonNum, mediaType };
 }
-  let tmdbThumbnails: Record<number, string> = {};
-  let realEpisodeCount = maxEp;
-  let tmdbId: number | null = null;
-  let seasonNum = 1;
-
-  if (apiKey) {
-    try {
-      const tmdbShow = await tmdbSearchTv(title, apiKey);
-      if (tmdbShow) {
-        tmdbId = tmdbShow.id;
-        seasonNum = detectSeasonNumber(title);
-        tmdbThumbnails = await tmdbFetchSeasonEpisodes(tmdbId!, seasonNum, apiKey);
-        const details = await tmdbFetchTvDetails(tmdbId!, apiKey);
-        if (details && details.seasons) {
-          const seasonInfo = details.seasons.find((s: any) => s.season_number === seasonNum);
-          if (seasonInfo && seasonInfo.episode_count > 0) {
-            realEpisodeCount = Math.max(seasonInfo.episode_count, Object.keys(tmdbThumbnails).length);
-          }
-        }
-      }
-    } catch (e) {}
-  }
-
-  const totalEps = Math.min(Math.max(realEpisodeCount, Object.keys(tmdbThumbnails).length, 12), 50);
-
-  const episodes = [];
-  for (let i = 1; i <= totalEps; i++) {
-    episodes.push({
-      number: i,
-      url: `${BASE}/${slug}-episode-${i}/`,
-      embedId: `anime_${slug}_ep${i}`,
-      thumbnail: tmdbThumbnails[i] || poster,
-      hasRealThumb: !!tmdbThumbnails[i],
-      title: `Episode ${i}`,
-    });
-  }
-  return { episodes, tmdbId, seasonNum };
-}
 
 // ═══════════════════════════════════════════════════════════════
 // MAIN HANDLER
@@ -510,7 +367,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
 
   // ═══ ACTION: SEARCH ═══
   if (action === 'search' && query) {
-    const cacheKey = `ext_search_v5:${query.toLowerCase()}`;
+    const cacheKey = `ext_search_v6:${query.toLowerCase()}`;
     if (!noCache) {
       const hit = cached(cacheKey);
       if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
@@ -545,18 +402,17 @@ export const GET: APIRoute = async ({ url, locals }) => {
     }
   }
 
-  // ═══ ACTION: DETAIL (full info with episodes) ═══
+  // ═══ ACTION: DETAIL ═══
   if (action === 'detail' && slug) {
-    const cacheKey = `ext_detail_v5:${slug}`;
+    const cacheKey = `ext_detail_v6:${slug}`;
     if (!noCache) {
       const hit = cached(cacheKey);
       if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
     }
     try {
-      // Step 1: Try AnimoTV
+      // Try AnimoTV first
       const detailUrl = `${BASE}/wp-json/wp/v2/anime?slug=${encodeURIComponent(slug)}`;
       const res = await fetch(detailUrl);
-      
       let anime: any = null;
       if (res.ok) {
         const raw: any = await res.json();
@@ -565,7 +421,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
         }
       }
 
-      // Step 2: If AnimoTV has it, use it (with TMDB thumbs)
+      // AnimoTV has it
       if (anime) {
         let poster = '';
         if (anime.featured_media) poster = await fetchMediaUrl(anime.featured_media);
@@ -587,13 +443,13 @@ export const GET: APIRoute = async ({ url, locals }) => {
           hasTmdbThumbs: episodes.some((e: any) => e.hasRealThumb),
           tmdb_id: tmdbId,
           season_number: seasonNum,
-          media_type: mediaType,  // ← NEW
+          media_type: mediaType,
         };
         setCache(cacheKey, result);
         return jsonRes({ success: true, ...result });
       }
 
-      // Step 3: FALLBACK — AnimoTV doesn't have it, try TMDB directly
+      // Fallback: TMDB direct
       if (tmdbKey) {
         const searchable = slugToSearchable(slug);
         const tmdbResult = await tmdbOnlyLookup(searchable, tmdbKey, slug);
@@ -603,27 +459,25 @@ export const GET: APIRoute = async ({ url, locals }) => {
         }
       }
 
-      // Step 4: Nothing found anywhere
       return jsonRes({ success: false, error: 'Anime not found on any source' }, 200);
     } catch (err: any) {
       return jsonRes({ success: false, error: err.message }, 500);
     }
   }
 
-  // ═══ ACTION: FIND (search + auto-pick best match with full details) ═══
+  // ═══ ACTION: FIND ═══
   if (action === 'find' && query) {
-    const cacheKey = `ext_find_v5:${query.toLowerCase()}`;
+    const cacheKey = `ext_find_v6:${query.toLowerCase()}`;
     if (!noCache) {
       const hit = cached(cacheKey);
       if (hit) return jsonRes({ success: true, source: 'cache', ...hit });
     }
     try {
       const cleanQ = cleanQuery(query);
-      
-      // Step 1: Try AnimoTV
+
+      // Try AnimoTV
       const searchUrl = `${BASE}/wp-json/wp/v2/anime?search=${encodeURIComponent(cleanQ)}&per_page=10`;
       const res = await fetch(searchUrl);
-      
       let bestAnimoTv: any = null;
       if (res.ok) {
         const raw: any = await res.json();
@@ -643,12 +497,11 @@ export const GET: APIRoute = async ({ url, locals }) => {
         }
       }
 
-      // Step 2: If AnimoTV found a good match, use it
       if (bestAnimoTv) {
         let poster = '';
         if (bestAnimoTv.featured_media) poster = await fetchMediaUrl(bestAnimoTv.featured_media);
         const { episodes, tmdbId, seasonNum, mediaType } = await buildEpisodes(bestAnimoTv.slug, poster, bestAnimoTv.title, tmdbKey, 26);
-        
+
         const result = {
           found: true,
           anime: {
@@ -660,18 +513,20 @@ export const GET: APIRoute = async ({ url, locals }) => {
             matchScore: bestAnimoTv.matchScore,
             tmdb_id: tmdbId,
             season_number: seasonNum,
+            media_type: mediaType,
           },
           episodes,
           firstEpisodeUrl: `${BASE}/${bestAnimoTv.slug}-episode-1/`,
           firstEpisodeId: `anime_${bestAnimoTv.slug}_ep1`,
           tmdb_id: tmdbId,
           season_number: seasonNum,
+          media_type: mediaType,
         };
         setCache(cacheKey, result);
         return jsonRes({ success: true, ...result });
       }
 
-      // Step 3: FALLBACK — Not on AnimoTV, search TMDB directly
+      // Fallback: TMDB
       if (tmdbKey) {
         const tmdbResult = await tmdbOnlyLookup(cleanQ, tmdbKey);
         if (tmdbResult) {
@@ -686,12 +541,14 @@ export const GET: APIRoute = async ({ url, locals }) => {
               matchScore: 1,
               tmdb_id: tmdbResult.tmdb_id,
               season_number: tmdbResult.season_number,
+              media_type: tmdbResult.media_type,
             },
             episodes: tmdbResult.episodes,
             firstEpisodeUrl: '',
             firstEpisodeId: `anime_${tmdbResult.slug}_ep1`,
             tmdb_id: tmdbResult.tmdb_id,
             season_number: tmdbResult.season_number,
+            media_type: tmdbResult.media_type,
             source: 'tmdb-fallback',
           };
           setCache(cacheKey, result);
@@ -699,7 +556,6 @@ export const GET: APIRoute = async ({ url, locals }) => {
         }
       }
 
-      // Step 4: No match anywhere
       return jsonRes({ success: false, message: 'No good match found on any source' });
     } catch (err: any) {
       return jsonRes({ success: false, error: err.message }, 500);
