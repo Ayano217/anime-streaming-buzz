@@ -844,17 +844,23 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       transform-origin: 0 0;
       background: #000;
       display: block;
-      /* Ensure iframe gets full pointer events for controls */
       pointer-events: auto;
-    }
-    /* Fix mobile controls auto-hide — remove any interfering overlays */
-    .rp-external-wrap:not(:hover) .rp-ext-placeholder.hidden {
-      pointer-events: none;
     }
     .rp-ext-iframe.clean {
       width: 100% !important;
       height: 100% !important;
       transform: none !important;
+    }
+    
+    /* Force proper video aspect ratio on mobile — helps caption positioning */
+    @media (max-width: 768px) {
+      .rp-external-wrap {
+        aspect-ratio: 16 / 9 !important;
+        height: auto !important;
+      }
+      .rp-external-wrap .rp-ext-iframe.clean {
+        object-fit: contain;
+      }
     }
     .rp-external-wrap:fullscreen { background: #000; width: 100vw; height: 100vh; border-radius: 0; }
 
@@ -2834,7 +2840,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
             // MOVIE URLs — different endpoints
             servers.push({
               name: 'Server 1',
-              url: 'https://vidsrc.to/embed/movie/' + tmdbId,
+              url: 'https://vidsrc.to/embed/movie/' + tmdbId + '?ds_lang=en',
               type: 'clean',
             });
             servers.push({
@@ -2871,7 +2877,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
             // TV SHOW URLs
             servers.push({
               name: 'Server 1',
-              url: 'https://vidsrc.to/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp,
+              url: 'https://vidsrc.to/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp + '?ds_lang=en',
               type: 'clean',
             });
             servers.push({
