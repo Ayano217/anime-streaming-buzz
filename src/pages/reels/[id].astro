@@ -981,7 +981,186 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
     }
     .rp-server-btn.checking { opacity: 0.6; cursor: wait; }
     .rp-server-btn.dead { opacity: 0.35; text-decoration: line-through; }
+    .rp-server-btn.dead { opacity: 0.35; text-decoration: line-through; }
 
+    /* ═══ TORRENT BADGE ═══ */
+    .rp-torrent-badge {
+      position: absolute;
+      top: 55px;
+      right: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(16, 185, 129, 0.9));
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      border-radius: 20px;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      cursor: pointer;
+      z-index: 16;
+      transition: transform 0.2s;
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+      animation: torrentBadgeIn 0.5s ease;
+    }
+    .rp-torrent-badge:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(34, 197, 94, 0.6); }
+    @keyframes torrentBadgeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ═══ TORRENT MODAL ═══ */
+    .rp-torrent-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      animation: modalFadeIn 0.2s ease;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .rp-torrent-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+    }
+    .rp-torrent-modal-content {
+      position: relative;
+      max-width: 600px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: #1a0f3d;
+      border: 1px solid rgba(192, 132, 252, 0.4);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+      animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .rp-torrent-modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(192, 132, 252, 0.2);
+    }
+    .rp-torrent-modal-head h3 {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 18px;
+      color: #fff;
+      margin: 0;
+    }
+    .rp-torrent-close {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .rp-torrent-close:hover { background: rgba(239, 68, 68, 0.3); }
+    .rp-torrent-hint {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.65);
+      background: rgba(192, 132, 252, 0.08);
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+    .rp-torrent-hint strong { color: #e879f9; }
+    .rp-torrent-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .rp-torrent-item {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(192, 132, 252, 0.15);
+      border-radius: 10px;
+      padding: 12px;
+      transition: border-color 0.2s;
+    }
+    .rp-torrent-item:hover { border-color: rgba(192, 132, 252, 0.4); }
+    .rp-torrent-item-title {
+      font-size: 13px;
+      color: #fff;
+      font-weight: 600;
+      margin-bottom: 6px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .rp-torrent-item-meta {
+      display: flex;
+      gap: 10px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      font-family: 'JetBrains Mono', monospace;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .rp-torrent-quality {
+      color: #fff;
+      background: linear-gradient(135deg, #10b981, #059669);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 800;
+    }
+    .rp-torrent-size { color: #fbbf24; }
+    .rp-torrent-seeds { color: #34d399; }
+    .rp-torrent-item-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .rp-torrent-btn {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.15s;
+      font-family: inherit;
+      text-align: center;
+      min-width: 120px;
+    }
+    .rp-torrent-btn:hover { transform: translateY(-2px); }
+    .rp-torrent-btn-magnet {
+      background: linear-gradient(135deg, #c084fc, #e879f9);
+      color: #fff;
+    }
+    .rp-torrent-btn-download {
+      background: rgba(59, 130, 246, 0.2);
+      color: #7dd3fc;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+    }
+    @media (max-width: 640px) {
+      .rp-torrent-badge { top: 50px; right: 8px; padding: 5px 10px; font-size: 10px; }
+      .rp-torrent-modal-content { padding: 16px; }
+      .rp-torrent-item-actions { flex-direction: column; }
+      .rp-torrent-btn { min-width: 100%; }
+    }
     .rp-vloader {
       position: absolute;
       inset: 0;
@@ -2349,6 +2528,99 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         var serverBtns = document.getElementById('serverBtns');
         if (!root || !wrap) return;
 
+        // ═══ TORRENT FETCH — runs in background, shows if servers fail ═══
+        var torrentsData = null;
+        var torrentsPromise = fetchTorrents();
+        
+        async function fetchTorrents() {
+          try {
+            var q = animeSlug ? animeSlug.replace(/-/g, ' ') : '';
+            if (!q) return;
+            var res = await fetch('/api/stream-race?q=' + encodeURIComponent(q) + '&ep=' + extCurrentEp + '&torrent=1');
+            var data = await res.json();
+            if (data.success && data.found && data.torrents && data.torrents.length > 0) {
+              torrentsData = data;
+              showTorrentBadge();
+            }
+          } catch (e) {}
+        }
+        
+        function showTorrentBadge() {
+          if (!torrentsData) return;
+          // Add small badge showing "Download available"
+          var existing = document.getElementById('torrentBadge');
+          if (existing) return;
+          
+          var badge = document.createElement('div');
+          badge.id = 'torrentBadge';
+          badge.className = 'rp-torrent-badge';
+          badge.innerHTML = 
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
+              '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>' +
+            '</svg>' +
+            '<span>Download HD</span>';
+          badge.addEventListener('click', showTorrentModal);
+          wrap.appendChild(badge);
+        }
+        
+        function showTorrentModal() {
+          if (!torrentsData || !torrentsData.torrents) return;
+          
+          // Remove existing modal
+          var existing = document.getElementById('torrentModal');
+          if (existing) existing.remove();
+          
+          var modal = document.createElement('div');
+          modal.id = 'torrentModal';
+          modal.className = 'rp-torrent-modal';
+          
+          var itemsHtml = torrentsData.torrents.map(function(t, i) {
+            return '<div class="rp-torrent-item">' +
+              '<div class="rp-torrent-item-info">' +
+                '<div class="rp-torrent-item-title">' + escapeHtml(t.title) + '</div>' +
+                '<div class="rp-torrent-item-meta">' +
+                  '<span class="rp-torrent-quality">' + t.quality + '</span>' +
+                  '<span class="rp-torrent-size">📦 ' + t.size + '</span>' +
+                  '<span class="rp-torrent-seeds">🌐 ' + t.seeders + ' seeds</span>' +
+                '</div>' +
+              '</div>' +
+              '<div class="rp-torrent-item-actions">' +
+                (t.magnet ? '<a href="' + t.magnet + '" class="rp-torrent-btn rp-torrent-btn-magnet" title="Open in torrent client">🧲 Magnet</a>' : '') +
+                (t.torrentUrl ? '<a href="' + t.torrentUrl + '" target="_blank" class="rp-torrent-btn rp-torrent-btn-download" download>⬇ .torrent</a>' : '') +
+              '</div>' +
+            '</div>';
+          }).join('');
+          
+          modal.innerHTML = 
+            '<div class="rp-torrent-modal-backdrop"></div>' +
+            '<div class="rp-torrent-modal-content">' +
+              '<div class="rp-torrent-modal-head">' +
+                '<h3>📥 Download Options</h3>' +
+                '<button class="rp-torrent-close" id="closeTorrentModal">×</button>' +
+              '</div>' +
+              '<div class="rp-torrent-hint">💡 <strong>Magnet:</strong> Open in µTorrent, qBittorrent, Vuze, etc. <br><strong>Or play online:</strong> ' +
+                '<a href="https://webtorrent.io/desktop/" target="_blank" style="color:#c084fc;">WebTorrent</a>, ' +
+                '<a href="https://www.bytesized.tech/" target="_blank" style="color:#c084fc;">Bytesized</a></div>' +
+              '<div class="rp-torrent-list">' + itemsHtml + '</div>' +
+            '</div>';
+          
+          document.body.appendChild(modal);
+          
+          // Close handlers
+          document.getElementById('closeTorrentModal').addEventListener('click', function() {
+            modal.remove();
+          });
+          modal.querySelector('.rp-torrent-modal-backdrop').addEventListener('click', function() {
+            modal.remove();
+          });
+        }
+        
+        function escapeHtml(s) {
+          return String(s || '').replace(/[&<>"']/g, function(c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+          });
+        }
+
         // Inject poster image safely via JS (avoids Astro parser bugs)
         if (placeholder) {
           var posterUrl = placeholder.getAttribute('data-poster');
@@ -2524,7 +2796,25 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
 
         function loadServer(idx) {
           if (idx >= servers.length) {
-            if (placeholderText) placeholderText.textContent = 'All servers unavailable. Refresh to retry.';
+            // All streaming servers failed — show torrent option
+            if (placeholderText) {
+              var hasTorrents = torrentsData && torrentsData.torrents && torrentsData.torrents.length > 0;
+              placeholderText.innerHTML = 
+                '<div style="text-align:center;padding:20px;">' +
+                  '<div style="font-size:14px;margin-bottom:8px;color:#e879f9;font-weight:700;">⚠️ No streaming servers available</div>' +
+                  '<div style="font-size:11px;opacity:0.7;margin-bottom:15px;">All servers are currently down or blocked.</div>' +
+                  (hasTorrents 
+                    ? '<button id="showTorrentBtn" style="padding:10px 20px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;border:none;border-radius:20px;font-weight:700;cursor:pointer;font-family:inherit;">📥 Download ' + torrentsData.torrents.length + ' HD options</button>' 
+                    : '<div style="font-size:11px;opacity:0.5;">Try refreshing the page in a few minutes.</div>') +
+                '</div>';
+              if (hasTorrents) {
+                setTimeout(function() {
+                  var btn = document.getElementById('showTorrentBtn');
+                  if (btn) btn.addEventListener('click', showTorrentModal);
+                }, 100);
+              }
+            }
+            if (placeholder) placeholder.style.opacity = '1';
             return;
           }
 
