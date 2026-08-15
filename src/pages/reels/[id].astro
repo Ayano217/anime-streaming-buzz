@@ -2528,6 +2528,92 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         var serverBtns = document.getElementById('serverBtns');
         if (!root || !wrap) return;
 
+        // ═══ TORRENT FETCH — runs in background, always shows if found ═══
+        var torrentsData = null;
+        fetchTorrents();
+        
+        async function fetchTorrents() {
+          try {
+            var q = animeSlug ? animeSlug.replace(/-/g, ' ') : '';
+            if (!q) return;
+            var res = await fetch('/api/stream-race?q=' + encodeURIComponent(q) + '&ep=' + extCurrentEp);
+            var data = await res.json();
+            if (data.success && data.found && data.torrents && data.torrents.length > 0) {
+              torrentsData = data;
+              showTorrentBadge();
+            }
+          } catch (e) {}
+        }
+        
+        function showTorrentBadge() {
+          if (!torrentsData) return;
+          var existing = document.getElementById('torrentBadge');
+          if (existing) return;
+          
+          var badge = document.createElement('div');
+          badge.id = 'torrentBadge';
+          badge.className = 'rp-torrent-badge';
+          badge.innerHTML = 
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
+              '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>' +
+            '</svg>' +
+            '<span>Download HD</span>';
+          badge.addEventListener('click', showTorrentModal);
+          wrap.appendChild(badge);
+        }
+        
+        function escapeHtmlTor(s) {
+          return String(s || '').replace(/[&<>"']/g, function(c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+          });
+        }
+        
+        function showTorrentModal() {
+          if (!torrentsData || !torrentsData.torrents) return;
+          var existing = document.getElementById('torrentModal');
+          if (existing) existing.remove();
+          
+          var modal = document.createElement('div');
+          modal.id = 'torrentModal';
+          modal.className = 'rp-torrent-modal';
+          
+          var itemsHtml = torrentsData.torrents.map(function(t) {
+            return '<div class="rp-torrent-item">' +
+              '<div class="rp-torrent-item-title">' + escapeHtmlTor(t.title) + '</div>' +
+              '<div class="rp-torrent-item-meta">' +
+                '<span class="rp-torrent-quality">' + t.quality + '</span>' +
+                '<span class="rp-torrent-size">📦 ' + t.size + '</span>' +
+                '<span class="rp-torrent-seeds">🌐 ' + t.seeders + ' seeds</span>' +
+              '</div>' +
+              '<div class="rp-torrent-item-actions">' +
+                (t.magnet ? '<a href="' + t.magnet + '" class="rp-torrent-btn rp-torrent-btn-magnet" title="Open in torrent client">🧲 Magnet</a>' : '') +
+                (t.torrentUrl ? '<a href="' + t.torrentUrl + '" target="_blank" class="rp-torrent-btn rp-torrent-btn-download" download>⬇ .torrent</a>' : '') +
+              '</div>' +
+            '</div>';
+          }).join('');
+          
+          modal.innerHTML = 
+            '<div class="rp-torrent-modal-backdrop"></div>' +
+            '<div class="rp-torrent-modal-content">' +
+              '<div class="rp-torrent-modal-head">' +
+                '<h3>📥 Download Options</h3>' +
+                '<button class="rp-torrent-close" id="closeTorrentModal">×</button>' +
+              '</div>' +
+              '<div class="rp-torrent-hint">💡 <strong>Magnet:</strong> Open in µTorrent, qBittorrent, or any torrent app.<br>' +
+                '<strong>Play online:</strong> ' +
+                '<a href="https://webtorrent.io/desktop/" target="_blank" style="color:#c084fc;">WebTorrent Desktop</a> or ' +
+                '<a href="https://instant.io/" target="_blank" style="color:#c084fc;">Instant.io</a></div>' +
+              '<div class="rp-torrent-list">' + itemsHtml + '</div>' +
+            '</div>';
+          
+          document.body.appendChild(modal);
+          
+          document.getElementById('closeTorrentModal').addEventListener('click', function() { modal.remove(); });
+          modal.querySelector('.rp-torrent-modal-backdrop').addEventListener('click', function() { modal.remove(); });
+        }
+
+        // Inject poster image safely via JS (avoids Astro parser bugs)
+
         // ═══ TORRENT FETCH — runs in background, shows if servers fail ═══
         var torrentsData = null;
         var torrentsPromise = fetchTorrents();
@@ -2796,15 +2882,14 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
 
         function loadServer(idx) {
           if (idx >= servers.length) {
-            // All streaming servers failed — show torrent option
             if (placeholderText) {
               var hasTorrents = torrentsData && torrentsData.torrents && torrentsData.torrents.length > 0;
               placeholderText.innerHTML = 
                 '<div style="text-align:center;padding:20px;">' +
-                  '<div style="font-size:14px;margin-bottom:8px;color:#e879f9;font-weight:700;">⚠️ No streaming servers available</div>' +
-                  '<div style="font-size:11px;opacity:0.7;margin-bottom:15px;">All servers are currently down or blocked.</div>' +
+                  '<div style="font-size:14px;margin-bottom:8px;color:#e879f9;font-weight:700;">⚠️ Streaming not available right now</div>' +
+                  '<div style="font-size:11px;opacity:0.7;margin-bottom:15px;">All streaming servers are down or blocked.</div>' +
                   (hasTorrents 
-                    ? '<button id="showTorrentBtn" style="padding:10px 20px;background:linear-gradient(135deg,#c084fc,#e879f9);color:#fff;border:none;border-radius:20px;font-weight:700;cursor:pointer;font-family:inherit;">📥 Download ' + torrentsData.torrents.length + ' HD options</button>' 
+                    ? '<button id="showTorrentBtn" style="padding:12px 24px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:20px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;box-shadow:0 4px 15px rgba(16,185,129,0.4);">📥 Download ' + torrentsData.torrents.length + ' HD Options Available</button>' 
                     : '<div style="font-size:11px;opacity:0.5;">Try refreshing the page in a few minutes.</div>') +
                 '</div>';
               if (hasTorrents) {
