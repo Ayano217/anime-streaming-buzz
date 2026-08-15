@@ -244,18 +244,125 @@ async function searchNyaaDirect(query: string, episode: number): Promise<Torrent
 // ═══════════════════════════════════════════════════════════════
 // COMBINE + SORT results from all sources
 // ═══════════════════════════════════════════════════════════════
-async function searchAllTorrents(query: string, episode: number): Promise<{ results: TorrentResult[], debug: any }> {
+async function searchAllTorrents(query: string, episode: number, tmdbId?: number, tmdbKey?: string): Promise<{ results: TorrentResult[], debug: any }> {
   const debug: any = {
     query,
     episode,
     sources: {},
+    triedQueries: [],
   };
   
-  // Try both sources in parallel
-  const [toshoResults, nyaaResults] = await Promise.allSettled([
-    searchAnimeTosho(query, episode),
-    searchNyaaDirect(query, episode),
-  ]);
+  // Build multiple query variations for smart search
+  const queries = new Set<string>();
+  
+  // Original query
+  queries.add(query);
+  
+  // First 3 words only (shorter = better for Nyaa)
+  const words = query.split(/\s+/).filter(w => w.length > 2);
+  if (words.length > 3) {
+    queries.add(words.slice(0, 3).join(' '));
+  }
+  if (words.length > 2) {
+    queries.add(words.slice(0, 2).join(' '));
+  }
+  
+  // Try to fetch TMDB original title (usually Japanese, works better on Nyaa)
+  if (tmdbId && tmdbKey) {
+    try {
+      const isBearer = tmdbKey.length > 40;
+      const url = isBearer
+        ? `https://api.themoviedb.org/3/tv/${tmdbId}?language=en-US`
+        : `https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${tmdbKey}&language=en-US`;
+      const headers: Record<string, string> = { 'Accept': 'application/json' };
+      if (isBearer) headers['Authorization'] = `Bearer ${tmdbKey}`;
+      
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 4000);
+      
+      const res = await fetch(url, { headers, signal: controller.signal });
+      clearTimeout(timer);
+      
+      if (res.ok) {
+        const data: any = await res.json();
+        // Original name (Japanese, e.g., "無職の英雄")
+        if (data.original_name && data.original_name !== data.name) {
+          queries.add(data.original_name);
+        }
+        // Alternative titles (romaji, English, etc.)
+        if (data.name) {
+          queries.add(data.name);
+          // Add first 3 words of English name
+          const nameWords = data.name.split(/\s+/).filter((w: string) => w.length > 2);
+          if (nameWords.length > 3) {
+            queries.add(nameWords.slice(0, 3).join(' '));
+          }
+        }
+      }
+      
+      // Also fetch alternative titles endpoint
+      const altUrl = isBearer
+        ? `https://api.themoviedb.org/3/tv/${tmdbId}/alternative_titles`
+        : `https://api.themoviedb.org/3/tv/${tmdbId}/alternative_titles?api_key=${tmdbKey}`;
+      const altRes = await fetch(altUrl, { headers, signal: AbortSignal.timeout(3000) });
+      if (altRes.ok) {
+        const altData: any = await altRes.json();
+        if (altData.results && Array.isArray(altData.results)) {
+          // Prioritize Japanese romaji titles
+          for (const alt of altData.results.slice(0, 5)) {
+            if (alt.title && alt.title.length > 3 && alt.title.length < 60) {
+              queries.add(alt.title);
+            }
+          }
+        }
+      }
+    } catch (e) {}
+  }
+  
+  debug.triedQueries = Array.from(queries);
+  
+  const allResults: TorrentResult[] = [];
+  const seenHashes = new Set<string>();
+  
+  // Try each query in sequence (stop when we get good results)
+  for (const q of queries) {
+    if (allResults.length >= 5) break; // Enough results
+    
+    const [toshoResults, nyaaResults] = await Promise.allSettled([
+      searchAnimeTosho(q, episode),
+      searchNyaaDirect(q, episode),
+    ]);
+    
+    const tosho = toshoResults.status === 'fulfilled' ? toshoResults.value : [];
+    const nyaa = nyaaResults.status === 'fulfilled' ? nyaaResults.value : [];
+    
+    debug.sources[q] = { animetosho: tosho.length, nyaa: nyaa.length };
+    
+    // Add unique results
+    for (const t of [...tosho, ...nyaa]) {
+      const hash = t.magnet.match(/btih:([a-zA-Z0-9]+)/)?.[1]?.toLowerCase() || t.title.toLowerCase().slice(0, 50);
+      if (seenHashes.has(hash)) continue;
+      seenHashes.add(hash);
+      allResults.push(t);
+    }
+    
+    // If we got 3+ results from first query, that's enough
+    if (allResults.length >= 3) break;
+  }
+  
+  // Sort: quality DESC → seeders DESC → smaller size preferred
+  allResults.sort((a, b) => {
+    if (a.quality_priority !== b.quality_priority) {
+      return b.quality_priority - a.quality_priority;
+    }
+    if (b.seeders !== a.seeders) {
+      return b.seeders - a.seeders;
+    }
+    return a.sizeBytes - b.sizeBytes;
+  });
+  
+  return { results: allResults.slice(0, 8), debug };
+}
   
   const tosho = toshoResults.status === 'fulfilled' ? toshoResults.value : [];
   const nyaa = nyaaResults.status === 'fulfilled' ? nyaaResults.value : [];
@@ -293,13 +400,17 @@ async function searchAllTorrents(query: string, episode: number): Promise<{ resu
 // MAIN HANDLER
 // ═══════════════════════════════════════════════════════════════
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ url, locals }) => {
   const params = url.searchParams;
   const slug = (params.get('slug') || '').trim().toLowerCase();
   const episode = parseInt(params.get('ep') || '1') || 1;
   let query = params.get('q') || slug.replace(/-/g, ' ');
+  const tmdbId = parseInt(params.get('tmdb') || '0') || undefined;
   const noCache = params.get('nocache') === '1';
   const debugMode = params.get('debug') === '1';
+  
+  const env: any = (locals as any)?.runtime?.env || {};
+  const tmdbKey = env.TMDB_API_KEY || '';
   
   if (!slug && !query) {
     return jsonRes({ success: false, error: 'Missing slug or query' }, 400);
@@ -324,7 +435,7 @@ export const GET: APIRoute = async ({ url }) => {
   }
   
   try {
-    const { results, debug } = await searchAllTorrents(query, episode);
+    const { results, debug } = await searchAllTorrents(query, episode, tmdbId, tmdbKey);
     
     if (results.length === 0) {
       const response: any = {
