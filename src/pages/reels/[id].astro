@@ -940,7 +940,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
     }
 
     .rp-server-switcher {
-      display: flex;
+      display: flex !important;
       align-items: center;
       gap: 10px;
       margin-top: 10px;
@@ -949,11 +949,13 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       border: 1px solid rgba(192, 132, 252, 0.2);
       border-radius: 10px;
       flex-wrap: wrap;
+      min-height: 42px;
     }
     .rp-server-btns {
       display: flex;
       gap: 6px;
       flex-wrap: wrap;
+      align-items: center;
       flex: 1;
       min-width: 0;
     }
@@ -2557,10 +2559,20 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         var torrentFetchInProgress = false;
         var torrentFetchDone = false;
         
-        // Show button immediately (after 2s to let page settle)
-        setTimeout(function() {
-          if (animeSlug) showTorrentBadge();
-        }, 2000);
+        // Show download button AFTER servers are rendered
+        function tryShowDownloadBtn() {
+          var btnsContainer = document.getElementById('serverBtns');
+          if (btnsContainer && btnsContainer.querySelectorAll('.rp-server-btn').length > 0) {
+            // Servers are rendered, add download button now
+            showTorrentBadge();
+          } else {
+            // Servers not ready yet, try again in 500ms
+            setTimeout(tryShowDownloadBtn, 500);
+          }
+        }
+        
+        // Start trying after 1 second (give servers time to render)
+        setTimeout(tryShowDownloadBtn, 1000);
         
         async function fetchTorrents() {
           if (torrentFetchInProgress || torrentFetchDone) return;
@@ -2607,31 +2619,40 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         scheduleTorrentFetch();
         
         function showTorrentBadge() {
-          var existing = document.getElementById('torrentBadge');
-          if (existing) return;
+          // Already added?
+          if (document.getElementById('torrentBadge')) return;
           
-          // Force show server switcher
+          var btnsContainer = document.getElementById('serverBtns');
+          if (!btnsContainer) {
+            console.warn('[TorrentBadge] serverBtns container not found');
+            return;
+          }
+          
+          // Make sure server switcher is visible
           var switcherEl = document.getElementById('serverSwitcher');
-          if (switcherEl) {
+          if (switcherEl && switcherEl.style.display === 'none') {
             switcherEl.style.display = 'flex';
           }
           
-          var btnsContainer = document.getElementById('serverBtns');
-          if (!btnsContainer) return;
-          
-          var btn = document.createElement('button');
-          btn.id = 'torrentBadge';
-          btn.type = 'button';
-          btn.className = 'rp-download-btn';
-          btn.innerHTML = 
-            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
-              '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>' +
-            '</svg>' +
-            '<span>Download HD</span>';
-          btn.addEventListener('click', function() {
-            handleDownloadClick(btn);
-          });
-          btnsContainer.appendChild(btn);
+          try {
+            var btn = document.createElement('button');
+            btn.id = 'torrentBadge';
+            btn.type = 'button';
+            btn.className = 'rp-download-btn';
+            btn.innerHTML = 
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
+                '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>' +
+              '</svg>' +
+              '<span>Download HD</span>';
+            btn.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDownloadClick(btn);
+            });
+            btnsContainer.appendChild(btn);
+          } catch (e) {
+            console.error('[TorrentBadge] Failed to add button:', e);
+          }
         }
         
         async function handleDownloadClick(btn) {
@@ -3125,12 +3146,14 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
           }, 10000);
         }
 
-        // Render server buttons
-        if (servers.length > 1 && switcher && serverBtns) {
+        // Render server buttons — ALWAYS show switcher
+        if (switcher && serverBtns) {
           switcher.style.display = 'flex';
           var btnsHtml = '';
-          for (var i = 0; i < servers.length; i++) {
-            btnsHtml += '<button class="rp-server-btn' + (i === 0 ? ' active' : '') + '" data-idx="' + i + '">' + servers[i].name + '</button>';
+          if (servers.length > 0) {
+            for (var i = 0; i < servers.length; i++) {
+              btnsHtml += '<button class="rp-server-btn' + (i === 0 ? ' active' : '') + '" data-idx="' + i + '">' + servers[i].name + '</button>';
+            }
           }
           serverBtns.innerHTML = btnsHtml;
 
