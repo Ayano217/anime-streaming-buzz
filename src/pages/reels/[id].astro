@@ -2562,32 +2562,24 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
           
           try {
             var q = animeSlug ? animeSlug.replace(/-/g, ' ') : '';
-            if (!q) return;
+            if (!q) { torrentFetchDone = true; return; }
             
-            var searchQueries = [
-              q,
-              q.split(/\s+/).slice(0, 3).join(' '),
-            ];
-            
-            for (var i = 0; i < searchQueries.length; i++) {
-              try {
-                var controller = new AbortController();
-                var timer = setTimeout(function() { controller.abort(); }, 8000);
-                
-                var res = await fetch('/api/stream-race?q=' + encodeURIComponent(searchQueries[i]) + '&ep=' + extCurrentEp, {
-                  signal: controller.signal
-                });
-                clearTimeout(timer);
-                
-                var data = await res.json();
-                if (data.success && data.found && data.torrents && data.torrents.length > 0) {
-                  torrentsData = data;
-                  torrentFetchDone = true;
-                  return;
-                }
-              } catch (e) { continue; }
+            // Build URL with TMDB ID for smart search (uses Japanese title on Nyaa)
+            var apiUrl = '/api/stream-race?q=' + encodeURIComponent(q) + '&ep=' + extCurrentEp;
+            if (tmdbId) {
+              apiUrl += '&tmdb=' + tmdbId;
             }
             
+            var controller = new AbortController();
+            var timer = setTimeout(function() { controller.abort(); }, 15000); // 15s for multi-query search
+            
+            var res = await fetch(apiUrl, { signal: controller.signal });
+            clearTimeout(timer);
+            
+            var data = await res.json();
+            if (data.success && data.found && data.torrents && data.torrents.length > 0) {
+              torrentsData = data;
+            }
             torrentFetchDone = true;
           } catch (e) {
             torrentFetchDone = true;
