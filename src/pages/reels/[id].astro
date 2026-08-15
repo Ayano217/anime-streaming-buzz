@@ -2563,15 +2563,12 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         function tryShowDownloadBtn() {
           var btnsContainer = document.getElementById('serverBtns');
           if (btnsContainer && btnsContainer.querySelectorAll('.rp-server-btn').length > 0) {
-            // Servers are rendered, add download button now
             showTorrentBadge();
           } else {
-            // Servers not ready yet, try again in 500ms
             setTimeout(tryShowDownloadBtn, 500);
           }
         }
         
-        // Start trying after 1 second (give servers time to render)
         setTimeout(tryShowDownloadBtn, 1000);
         
         async function fetchTorrents() {
@@ -2582,10 +2579,9 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
             var q = animeSlug ? animeSlug.replace(/-/g, ' ') : '';
             if (!q) return;
             
-            // Try multiple query variations for better results
             var searchQueries = [
-              q,                                          // Full slug as words
-              q.split(/\s+/).slice(0, 3).join(' '),      // First 3 words only (shorter query works better)
+              q,
+              q.split(/\s+/).slice(0, 3).join(' '),
             ];
             
             for (var i = 0; i < searchQueries.length; i++) {
@@ -2616,7 +2612,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         }
         
         // Schedule fetch after page settles (not immediately)
-        scheduleTorrentFetch();
+        // Torrent button will be shown by tryShowDownloadBtn (see above)
         
         function showTorrentBadge() {
           // Already added?
