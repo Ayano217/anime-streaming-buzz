@@ -1031,7 +1031,10 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       from { opacity: 0; transform: translateY(-10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
     /* ═══ TORRENT MODAL ═══ */
     .rp-torrent-modal {
       position: fixed;
@@ -2549,61 +2552,70 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         var serverBtns = document.getElementById('serverBtns');
         if (!root || !wrap) return;
 
-        // ═══ TORRENT FETCH — DELAYED, non-blocking ═══
-        // Don't fetch immediately (causes lag). Wait until page settles + video starts.
+        // ═══ TORRENT: Button always visible, fetch on click ═══
         var torrentsData = null;
-        var torrentFetchStarted = false;
+        var torrentFetchInProgress = false;
+        var torrentFetchDone = false;
         
-        function scheduleTorrentFetch() {
-          if (torrentFetchStarted) return;
-          torrentFetchStarted = true;
-          
-          // Wait 4 seconds after video starts loading, then fetch during idle time
-          setTimeout(function() {
-            if ('requestIdleCallback' in window) {
-              requestIdleCallback(fetchTorrents, { timeout: 3000 });
-            } else {
-              fetchTorrents();
-            }
-          }, 4000);
-        }
+        // Show button immediately (after 2s to let page settle)
+        setTimeout(function() {
+          if (animeSlug) showTorrentBadge();
+        }, 2000);
         
         async function fetchTorrents() {
+          if (torrentFetchInProgress || torrentFetchDone) return;
+          torrentFetchInProgress = true;
+          
           try {
             var q = animeSlug ? animeSlug.replace(/-/g, ' ') : '';
             if (!q) return;
             
-            var controller = new AbortController();
-            var timer = setTimeout(function() { controller.abort(); }, 8000);
+            // Try multiple query variations for better results
+            var searchQueries = [
+              q,                                          // Full slug as words
+              q.split(/\s+/).slice(0, 3).join(' '),      // First 3 words only (shorter query works better)
+            ];
             
-            var res = await fetch('/api/stream-race?q=' + encodeURIComponent(q) + '&ep=' + extCurrentEp, {
-              signal: controller.signal
-            });
-            clearTimeout(timer);
-            
-            var data = await res.json();
-            if (data.success && data.found && data.torrents && data.torrents.length > 0) {
-              torrentsData = data;
-              showTorrentBadge();
+            for (var i = 0; i < searchQueries.length; i++) {
+              try {
+                var controller = new AbortController();
+                var timer = setTimeout(function() { controller.abort(); }, 8000);
+                
+                var res = await fetch('/api/stream-race?q=' + encodeURIComponent(searchQueries[i]) + '&ep=' + extCurrentEp, {
+                  signal: controller.signal
+                });
+                clearTimeout(timer);
+                
+                var data = await res.json();
+                if (data.success && data.found && data.torrents && data.torrents.length > 0) {
+                  torrentsData = data;
+                  torrentFetchDone = true;
+                  return;
+                }
+              } catch (e) { continue; }
             }
-          } catch (e) {}
+            
+            torrentFetchDone = true;
+          } catch (e) {
+            torrentFetchDone = true;
+          } finally {
+            torrentFetchInProgress = false;
+          }
         }
         
         // Schedule fetch after page settles (not immediately)
         scheduleTorrentFetch();
         
         function showTorrentBadge() {
-          if (!torrentsData) return;
           var existing = document.getElementById('torrentBadge');
           if (existing) return;
           
-          // Force show the server switcher (even if it was hidden)
+          // Force show server switcher
           var switcherEl = document.getElementById('serverSwitcher');
           if (switcherEl) {
             switcherEl.style.display = 'flex';
           }
           
-          // Add download button INSIDE the buttons container (next to servers)
           var btnsContainer = document.getElementById('serverBtns');
           if (!btnsContainer) return;
           
@@ -2616,8 +2628,49 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
               '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>' +
             '</svg>' +
             '<span>Download HD</span>';
-          btn.addEventListener('click', showTorrentModal);
+          btn.addEventListener('click', function() {
+            handleDownloadClick(btn);
+          });
           btnsContainer.appendChild(btn);
+        }
+        
+        async function handleDownloadClick(btn) {
+          // If already have data, just show modal
+          if (torrentsData && torrentsData.torrents && torrentsData.torrents.length > 0) {
+            showTorrentModal();
+            return;
+          }
+          
+          // Show loading state on button
+          var originalHtml = btn.innerHTML;
+          btn.innerHTML = 
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite;">' +
+              '<path d="M21 12a9 9 0 11-6.219-8.56"/>' +
+            '</svg>' +
+            '<span>Searching...</span>';
+          btn.disabled = true;
+          btn.style.opacity = '0.7';
+          
+          // Fetch torrents now
+          await fetchTorrents();
+          
+          // Restore button
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          
+          if (torrentsData && torrentsData.torrents && torrentsData.torrents.length > 0) {
+            btn.innerHTML = originalHtml;
+            showTorrentModal();
+          } else {
+            btn.innerHTML = 
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
+                '<path d="M12 9v2m0 4h.01M5.07 19H19a2 2 0 002-2V7a2 2 0 00-2-2H5.07A2 2 0 003 7v10a2 2 0 002.07 2z"/>' +
+              '</svg>' +
+              '<span>No downloads</span>';
+            btn.style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
+            btn.style.cursor = 'default';
+            btn.onclick = null;
+          }
         }
         
         function escapeHtmlTor(s) {
