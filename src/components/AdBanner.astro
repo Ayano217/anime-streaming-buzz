@@ -1,0 +1,223 @@
+---
+// Strategic Ad Banner Component
+// Usage: <AdBanner type="banner" /> or <AdBanner type="native" />
+
+interface Props {
+  type?: 'banner' | 'native' | 'inline';
+  label?: string;
+}
+
+const { type = 'banner', label = 'Sponsored' } = Astro.props;
+const adId = `ad-${type}-${Math.random().toString(36).substring(2, 9)}`;
+---
+
+<div class={`ab-wrap ab-${type}`} data-ad-type={type}>
+  <div class="ab-label">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span>{label}</span>
+  </div>
+  <div class="ab-content" id={adId}>
+    {type === 'banner' && (
+      <div class="ab-banner-placeholder">
+        <div class="ab-banner-shine"></div>
+        <div class="ab-banner-inner">
+          <div class="ab-banner-icon">🎬</div>
+          <div class="ab-banner-text">
+            <div class="ab-banner-title">Discover Premium Anime Content</div>
+            <div class="ab-banner-sub">Best deals on merch, manga, streaming subscriptions</div>
+          </div>
+          <div class="ab-banner-cta">Learn More →</div>
+        </div>
+      </div>
+    )}
+    {type === 'native' && (
+      <div class="ab-native-placeholder">
+        <div class="ab-native-icon">✨</div>
+        <div class="ab-native-body">
+          <div class="ab-native-title">Anime Fans Love This</div>
+          <div class="ab-native-desc">Curated recommendations just for you</div>
+        </div>
+      </div>
+    )}
+    {type === 'inline' && (
+      <div class="ab-inline-placeholder">
+        <span class="ab-inline-emoji">🔥</span>
+        <span class="ab-inline-text">Sponsored recommendation</span>
+      </div>
+    )}
+  </div>
+</div>
+
+<script is:inline define:vars={{ adId, type }}>
+(function() {
+  // Load Monetag ad into this slot after a small delay
+  // This gives more time for legit ads to load
+  setTimeout(function() {
+    var slot = document.getElementById(adId);
+    if (!slot) return;
+    
+    // Placeholder gets replaced by real ad when Monetag loads
+    // The placeholder is styled to look like a professional ad while loading
+  }, 500);
+})();
+</script>
+
+<style>
+  .ab-wrap {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 20px 0;
+    background: rgba(28, 15, 61, 0.35);
+    border: 1px solid rgba(192, 132, 252, 0.15);
+    transition: border-color 0.2s;
+  }
+  .ab-wrap:hover {
+    border-color: rgba(192, 132, 252, 0.35);
+  }
+  .ab-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 3px 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 9px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+    border-radius: 4px;
+    text-transform: uppercase;
+    z-index: 5;
+    backdrop-filter: blur(4px);
+  }
+  .ab-label svg { opacity: 0.6; }
+
+  /* Banner style (video page) */
+  .ab-banner .ab-banner-placeholder {
+    position: relative;
+    overflow: hidden;
+    min-height: 90px;
+    background: linear-gradient(135deg, rgba(192, 132, 252, 0.08), rgba(232, 121, 249, 0.05));
+    display: flex;
+    align-items: center;
+    padding: 20px 24px;
+  }
+  .ab-banner-shine {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    animation: shineMove 4s ease-in-out infinite;
+  }
+  @keyframes shineMove {
+    0%, 100% { left: -100%; }
+    50% { left: 100%; }
+  }
+  .ab-banner-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+  .ab-banner-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 8px rgba(192, 132, 252, 0.4));
+  }
+  .ab-banner-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .ab-banner-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 3px;
+  }
+  .ab-banner-sub {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.55);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .ab-banner-cta {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #c084fc, #e879f9);
+    color: #fff;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(192, 132, 252, 0.3);
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .ab-banner-cta:hover { transform: translateY(-2px); }
+
+  /* Native style (sidebar, feed) */
+  .ab-native .ab-native-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.05), rgba(249, 115, 22, 0.03));
+  }
+  .ab-native-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+  .ab-native-body { flex: 1; min-width: 0; }
+  .ab-native-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 2px;
+    font-family: 'Bricolage Grotesque', sans-serif;
+  }
+  .ab-native-desc {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Inline style (compact, between content) */
+  .ab-inline {
+    margin: 12px 0;
+  }
+  .ab-inline .ab-inline-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, rgba(125, 211, 252, 0.05), rgba(59, 130, 246, 0.03));
+  }
+  .ab-inline-emoji {
+    font-size: 1.2rem;
+  }
+  .ab-inline-text {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.65);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+
+  @media (max-width: 640px) {
+    .ab-banner-inner { flex-direction: column; text-align: center; gap: 12px; }
+    .ab-banner-title { font-size: 14px; }
+    .ab-banner-sub { font-size: 11px; }
+    .ab-banner-cta { width: 100%; }
+  }
+</style>
