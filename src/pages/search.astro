@@ -102,6 +102,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <p id="no-results-msg">We couldn't find anything matching your search.</p>
         <div class="no-results-actions">
           <a
+            href="https://omg10.com/4/11594510"
+            target="_blank"
+            rel="noopener sponsored"
+            class="btn-premium-search"
+          >
+            ⚡ Premium Search Results
+          </a>
+          <a
             id="google-fallback-link"
             href="#"
             target="_blank"
@@ -561,6 +569,25 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     justify-content: center;
     gap: 0.5rem;
     flex-wrap: wrap;
+  }
+  .btn-premium-search {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1.3rem;
+    background: linear-gradient(135deg, #f59e0b, #ea580c);
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.88rem;
+    transition: all 0.2s;
+    border: 1px solid rgba(245, 158, 11, 0.5);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+  }
+  .btn-premium-search:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5);
   }
   .search-icon-big { font-size: 0.8em; }
   .glow-text {
