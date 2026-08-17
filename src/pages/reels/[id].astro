@@ -483,22 +483,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
               </div>
             </div>
 
-            <!-- Strategic Ad: Banner below video (high visibility) -->
-            <div class="rp-ad-slot-banner" id="adSlot1">
-              <script is:inline>
-                document.getElementById('adSlot1').innerHTML = 
-                  '<div style="position:relative;overflow:hidden;border-radius:12px;background:linear-gradient(135deg,rgba(192,132,252,0.08),rgba(232,121,249,0.05));border:1px solid rgba(192,132,252,0.15);padding:16px 20px;margin:16px 0;">' +
-                    '<div style="position:absolute;top:6px;right:8px;padding:3px 8px;background:rgba(0,0,0,0.7);color:rgba(255,255,255,0.5);font-size:9px;font-weight:700;font-family:JetBrains Mono,monospace;letter-spacing:0.05em;border-radius:4px;text-transform:uppercase;">Sponsored</div>' +
-                    '<div style="display:flex;align-items:center;gap:14px;">' +
-                      '<div style="font-size:1.8rem;flex-shrink:0;">🎬</div>' +
-                      '<div style="flex:1;min-width:0;">' +
-                        '<div style="font-family:Bricolage Grotesque,sans-serif;font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;">Premium Anime Merch & More</div>' +
-                        '<div style="font-size:11px;color:rgba(255,255,255,0.55);font-family:JetBrains Mono,monospace;">Discover trending anime products</div>' +
-                      '</div>' +
-                    '</div>' +
-                  '</div>';
-              </script>
-            </div>
+
 
             {isAnimeExternal && externalEpisodes.length > 0 && (
               <div class="rp-ep-box rp-ep-mobile collapsed" id="epBoxMobile">
@@ -596,20 +581,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
               </div>
             )}
 
-            <!-- Strategic Ad: Native above comments (engagement zone) -->
-            <div class="rp-ad-slot-native" id="adSlot2">
-              <script is:inline>
-                document.getElementById('adSlot2').innerHTML = 
-                  '<div style="position:relative;display:flex;align-items:center;gap:12px;padding:14px 16px;background:linear-gradient(135deg,rgba(251,191,36,0.06),rgba(249,115,22,0.04));border:1px solid rgba(251,191,36,0.2);border-radius:12px;margin:24px 0 20px;overflow:hidden;">' +
-                    '<div style="position:absolute;top:6px;right:8px;padding:3px 8px;background:rgba(0,0,0,0.7);color:rgba(255,255,255,0.5);font-size:9px;font-weight:700;font-family:JetBrains Mono,monospace;letter-spacing:0.05em;border-radius:4px;text-transform:uppercase;">Ad</div>' +
-                    '<div style="font-size:1.5rem;flex-shrink:0;">✨</div>' +
-                    '<div style="flex:1;min-width:0;">' +
-                      '<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;font-family:Bricolage Grotesque,sans-serif;">Recommended for Anime Fans</div>' +
-                      '<div style="font-size:11px;color:rgba(255,255,255,0.5);font-family:JetBrains Mono,monospace;">Curated picks just for you</div>' +
-                    '</div>' +
-                  '</div>';
-              </script>
-            </div>
+
 
             <section class="rp-comments">
               <div class="rp-comments-head">
@@ -733,20 +705,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
               </div>
             )}
 
-            <!-- Strategic Ad: Sidebar native (desktop only) -->
-            <div class="rp-ad-slot-sidebar" id="adSlot3">
-              <script is:inline>
-                document.getElementById('adSlot3').innerHTML = 
-                  '<div style="position:relative;display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,rgba(125,211,252,0.06),rgba(59,130,246,0.03));border:1px solid rgba(125,211,252,0.2);border-radius:10px;margin:16px 0;overflow:hidden;">' +
-                    '<div style="position:absolute;top:5px;right:6px;padding:2px 6px;background:rgba(0,0,0,0.7);color:rgba(255,255,255,0.5);font-size:8px;font-weight:700;font-family:JetBrains Mono,monospace;letter-spacing:0.05em;border-radius:3px;text-transform:uppercase;">Ad</div>' +
-                    '<div style="font-size:1.3rem;flex-shrink:0;">💎</div>' +
-                    '<div style="flex:1;min-width:0;">' +
-                      '<div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:2px;font-family:Bricolage Grotesque,sans-serif;">Anime Deals</div>' +
-                      '<div style="font-size:10px;color:rgba(255,255,255,0.5);font-family:JetBrains Mono,monospace;">Best prices today</div>' +
-                    '</div>' +
-                  '</div>';
-              </script>
-            </div>
+
 
             {!isAnimeExternal && (
               <>
