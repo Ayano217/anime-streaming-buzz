@@ -47,92 +47,55 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
   {showAds && (
     <>
       <script is:inline>
-        // ═══ SMART AD MANAGER ═══
-        // Full ads run — but blocked only on critical interactive elements
-        // This preserves revenue while keeping site usable
+        // ═══ SMART AD MANAGER — Protects UI, keeps revenue ═══
         (function() {
           try {
             var origOpen = window.open;
             var recentClicks = [];
             
-            // Track user clicks with context
             document.addEventListener('click', function(e) {
               var target = e.target;
               var isProtected = false;
               
-              // Only block if click is on ESSENTIAL interactive UI
               var protectedSelectors = [
-                '#search-input',
-                '.search-input',
-                '.search-btn',
-                '#search-btn',
-                'input[type="text"]',
-                'input[type="search"]',
-                'input[type="email"]',
-                'input[type="password"]',
-                'textarea',
-                'select',
-                '.rp-server-btn',
-                '.rp-download-btn',
-                '.rp-btn-next',
-                '.rp-c-btn',
-                '.rp-c-reply-btn',
-                '.rp-submit-btn',
-                '.rp-cancel-btn',
-                '.rp-comment-input',
-                '.rp-torrent-btn',
-                '.rp-torrent-close',
-                '.filter-pill',
-                '.rp-ep-header',
-                '.rp-ep-chevron',
-                'header a',
-                'header button',
-                'nav a',
-                'nav button',
-                '.rp-btn'
+                '#search-input', '.search-input', '.search-btn', '#search-btn',
+                'input[type="text"]', 'input[type="search"]', 'input[type="email"]',
+                'input[type="password"]', 'textarea', 'select',
+                '.rp-server-btn', '.rp-download-btn', '.rp-btn-next',
+                '.rp-c-btn', '.rp-c-reply-btn', '.rp-submit-btn', '.rp-cancel-btn',
+                '.rp-comment-input', '.rp-torrent-btn', '.rp-torrent-close',
+                '.filter-pill', '.rp-ep-header', '.rp-ep-chevron',
+                'header a', 'header button', 'nav a', 'nav button',
+                '.rp-btn', '.rp-desc-tgl', '.rp-sort-btn'
               ];
               
               for (var i = 0; i < protectedSelectors.length; i++) {
                 try {
-                  if (target.matches && target.matches(protectedSelectors[i])) {
-                    isProtected = true;
-                    break;
-                  }
-                  if (target.closest && target.closest(protectedSelectors[i])) {
-                    isProtected = true;
-                    break;
-                  }
-                } catch(e) {}
+                  if (target.matches && target.matches(protectedSelectors[i])) { isProtected = true; break; }
+                  if (target.closest && target.closest(protectedSelectors[i])) { isProtected = true; break; }
+                } catch(err) {}
               }
               
-              recentClicks.push({
-                time: Date.now(),
-                protected: isProtected
-              });
-              // Keep last 3 clicks only
+              recentClicks.push({ time: Date.now(), protected: isProtected });
               if (recentClicks.length > 3) recentClicks.shift();
             }, true);
             
-            // Override window.open — block ONLY when recent click was on protected UI
             window.open = function(url, name, features) {
-              // Check if the LAST click was on protected UI (within 1 second)
               if (recentClicks.length > 0) {
                 var lastClick = recentClicks[recentClicks.length - 1];
                 var timeSince = Date.now() - lastClick.time;
-                
                 if (timeSince < 1500 && lastClick.protected) {
-                  // Block ad — user was interacting with essential UI
                   console.log('[AniTube] Ad blocked on essential UI click');
                   return null;
                 }
               }
-              
-              // Otherwise, allow ad normally
               return origOpen.call(window, url, name, features);
             };
           } catch(e) {}
         })();
       </script>
+      
+      <!-- Monetag Zone 261500 — Popunder/Push (your existing) -->
       <script
         is:inline
         src="https://quge5.com/88/tag.min.js"
