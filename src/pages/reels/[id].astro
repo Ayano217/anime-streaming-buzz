@@ -77,8 +77,7 @@ let tmdbId: number | null = externalAnime?.tmdb_id ?? null;
 let seasonNum: number = externalAnime?.season_number ?? 1;
 let mediaType: string = externalAnime?.media_type ?? 'tv';
 
-// ═══ FALLBACK: If TMDB not found via AnimoTV, use admin-added title ═══
-// This handles cases where user manually added anime to KV database
+// Fallback 1: use KV admin title
 if (!tmdbId && kvAnimeInfo && kvAnimeInfo.animeTitle) {
   try {
     const findUrl = new URL('/api/anime-external', Astro.url.origin);
@@ -91,7 +90,6 @@ if (!tmdbId && kvAnimeInfo && kvAnimeInfo.animeTitle) {
         tmdbId = findData.tmdb_id;
         seasonNum = kvAnimeInfo.season || findData.season_number || 1;
         mediaType = findData.media_type || 'tv';
-        // Update externalAnime with TMDB episodes if we didn't have them
         if (!externalAnime && findData.episodes) {
           externalAnime = {
             title: kvAnimeInfo.animeTitle,
@@ -109,7 +107,7 @@ if (!tmdbId && kvAnimeInfo && kvAnimeInfo.animeTitle) {
   } catch (e) {}
 }
 
-// Second fallback: try TMDB search using slug converted to title
+// Fallback 2: slug to title
 if (!tmdbId && animeSlug) {
   try {
     const titleFromSlug = animeSlug.replace(/-/g, ' ');
@@ -146,25 +144,20 @@ function getPlatformData(vid: string, tmdbIdParam: number | null = null, seasonP
     if (m) {
       const slugPart = m[1];
       const epNum = m[2];
-
       if (tmdbIdParam) {
         return {
           source: 'multi',
           embedUrl: `https://vidsrc.to/embed/tv/${tmdbIdParam}/${seasonParam}/${epNum}`,
-          aspect: 'landscape',
-          isShort: false,
-          tmdbId: tmdbIdParam,
-          season: seasonParam,
+          aspect: 'landscape', isShort: false,
+          tmdbId: tmdbIdParam, season: seasonParam,
           episode: parseInt(epNum, 10),
           hasMultiSource: true,
         };
       }
-
       return {
         source: 'animotv',
         embedUrl: `https://animotvslash.org/${slugPart}-episode-${epNum}/`,
-        aspect: 'landscape',
-        isShort: false,
+        aspect: 'landscape', isShort: false,
         hasMultiSource: false,
       };
     }
@@ -213,10 +206,7 @@ function extractSeriesFromTitle(title: string) {
 }
 
 function slugToTitle(slug: string) {
-  return String(slug || '')
-    .replace(/-/g, ' ')
-    .replace(/\b\w/g, l => l.toUpperCase())
-    .trim();
+  return String(slug || '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).trim();
 }
 
 let video: any = null;
@@ -227,79 +217,56 @@ if (isAnimeExternal) {
 
   if (kvAnimeInfo) {
     const currentEp = (externalAnime && externalAnime.episodes)
-      ? externalAnime.episodes.find((e: any) => e.number === animeEpNum)
-      : null;
-    const heroImage = kvAnimeInfo.thumbnail
-      || (currentEp && currentEp.thumbnail)
-      || (externalAnime && externalAnime.poster)
-      || '';
+      ? externalAnime.episodes.find((e: any) => e.number === animeEpNum) : null;
+    const heroImage = kvAnimeInfo.thumbnail || (currentEp && currentEp.thumbnail) || (externalAnime && externalAnime.poster) || '';
 
     video = {
       id: videoId,
       title: `${kvAnimeInfo.animeTitle} - Episode ${animeEpNum}${kvAnimeInfo.season > 1 ? ` (Season ${kvAnimeInfo.season})` : ''}`,
       channel: 'AniTubeBuzz',
-      thumbnail: heroImage,
-      poster: heroImage,
-      embedUrl: platformData.embedUrl,
-      source: platformData.source,
-      aspect: 'landscape',
-      isShort: false,
-      type: 'anime',
+      thumbnail: heroImage, poster: heroImage,
+      embedUrl: platformData.embedUrl, source: platformData.source,
+      aspect: 'landscape', isShort: false, type: 'anime',
       description: kvAnimeInfo.caption || (externalAnime && externalAnime.description) || '',
-      isAnimeExternal: true,
-      animeSlug: animeSlug,
+      isAnimeExternal: true, animeSlug: animeSlug,
       episodeNumber: animeEpNum,
       totalEpisodes: (externalAnime && externalAnime.episodes) ? externalAnime.episodes.length : 26,
       seasonNumber: kvAnimeInfo.season || seasonNum,
       fromDatabase: true,
       hasMultiSource: platformData.hasMultiSource || false,
     };
-  }
-  else if (externalAnime) {
+  } else if (externalAnime) {
     const currentEp = (externalAnime.episodes || []).find((e: any) => e.number === animeEpNum);
     const heroImage = (currentEp && currentEp.thumbnail) ? currentEp.thumbnail : (externalAnime.poster || '');
     video = {
       id: videoId,
       title: `${externalAnime.title} - Episode ${animeEpNum}`,
       channel: 'AniTubeBuzz',
-      thumbnail: heroImage,
-      poster: externalAnime.poster || '',
-      embedUrl: platformData.embedUrl,
-      source: platformData.source,
-      aspect: 'landscape',
-      isShort: false,
-      type: 'anime',
+      thumbnail: heroImage, poster: externalAnime.poster || '',
+      embedUrl: platformData.embedUrl, source: platformData.source,
+      aspect: 'landscape', isShort: false, type: 'anime',
       description: externalAnime.description || '',
-      isAnimeExternal: true,
-      animeSlug: animeSlug,
+      isAnimeExternal: true, animeSlug: animeSlug,
       episodeNumber: animeEpNum,
       totalEpisodes: externalAnime.episodes ? externalAnime.episodes.length : 26,
       seasonNumber: seasonNum,
       fromDatabase: false,
       hasMultiSource: platformData.hasMultiSource || false,
     };
-  }
-  else {
+  } else {
     const readableTitle = slugToTitle(animeSlug);
     video = {
       id: videoId,
       title: `${readableTitle} - Episode ${animeEpNum}`,
       channel: 'AniTubeBuzz',
-      thumbnail: '',
-      poster: '',
-      embedUrl: platformData.embedUrl,
-      source: platformData.source,
-      aspect: 'landscape',
-      isShort: false,
-      type: 'anime',
+      thumbnail: '', poster: '',
+      embedUrl: platformData.embedUrl, source: platformData.source,
+      aspect: 'landscape', isShort: false, type: 'anime',
       description: '',
-      isAnimeExternal: true,
-      animeSlug: animeSlug,
+      isAnimeExternal: true, animeSlug: animeSlug,
       episodeNumber: animeEpNum,
-      totalEpisodes: 26,
-      seasonNumber: 1,
-      fromDatabase: false,
-      hasMultiSource: false,
+      totalEpisodes: 26, seasonNumber: 1,
+      fromDatabase: false, hasMultiSource: false,
     };
   }
 } else {
@@ -358,7 +325,6 @@ const metaText = metaParts.join(' • ');
 const externalEpisodes = (isAnimeExternal && externalAnime) ? externalAnime.episodes : [];
 const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).length;
 ---
-
 <BaseLayout title={`${video.title} | AniTubeBuzz`}>
   <Header slot="header" />
 
@@ -405,7 +371,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
                   </div>
                 </div>
 
-                <div class="rp-server-switcher" id="serverSwitcher" style="display:none;">
+                <div class="rp-server-switcher" id="serverSwitcher">
                   <div class="rp-server-label">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                     <span>Server:</span>
@@ -482,8 +448,6 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
                 </button>
               </div>
             </div>
-
-
 
             {isAnimeExternal && externalEpisodes.length > 0 && (
               <div class="rp-ep-box rp-ep-mobile collapsed" id="epBoxMobile">
@@ -580,8 +544,6 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
                 </div>
               </div>
             )}
-
-
 
             <section class="rp-comments">
               <div class="rp-comments-head">
@@ -705,8 +667,6 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
               </div>
             )}
 
-
-
             {!isAnimeExternal && (
               <>
                 <div class="rp-sidebar-head">
@@ -819,29 +779,6 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
       aspect-ratio: 16 / 9;
     }
-    /* Popup ad blocker overlays - only cover edge zones (not controls) */
-    .rp-click-shield-tl {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 60px;
-      height: 60px;
-      z-index: 20;
-      background: transparent;
-      cursor: default;
-      pointer-events: auto;
-    }
-    .rp-click-shield-tr {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 60px;
-      height: 60px;
-      z-index: 20;
-      background: transparent;
-      cursor: default;
-      pointer-events: auto;
-    }
     .rp-ext-iframe {
       position: absolute;
       left: 0;
@@ -857,8 +794,6 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       height: 100% !important;
       transform: none !important;
     }
-    
-    /* Force proper video aspect ratio on mobile — helps caption positioning */
     @media (max-width: 768px) {
       .rp-external-wrap {
         aspect-ratio: 16 / 9 !important;
@@ -952,7 +887,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
     }
 
     .rp-server-switcher {
-      display: flex !important;
+      display: flex;
       align-items: center;
       gap: 10px;
       margin-top: 10px;
@@ -962,14 +897,6 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       border-radius: 10px;
       flex-wrap: wrap;
       min-height: 42px;
-    }
-    .rp-server-btns {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      align-items: center;
-      flex: 1;
-      min-width: 0;
     }
     .rp-server-label {
       display: flex;
@@ -983,7 +910,14 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       font-family: 'JetBrains Mono', monospace;
     }
     .rp-server-label svg { color: #c084fc; }
-    .rp-server-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .rp-server-btns {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+    }
     .rp-server-btn {
       padding: 5px 12px;
       border-radius: 14px;
@@ -1006,11 +940,8 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       border-color: transparent;
       color: #fff;
     }
-    .rp-server-btn.checking { opacity: 0.6; cursor: wait; }
-    .rp-server-btn.dead { opacity: 0.35; text-decoration: line-through; }
     .rp-server-btn.dead { opacity: 0.35; text-decoration: line-through; }
 
-    /* ═══ DOWNLOAD BUTTON (inside server row) ═══ */
     .rp-download-btn {
       display: inline-flex;
       align-items: center;
@@ -1024,11 +955,10 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       font-weight: 700;
       font-family: inherit;
       cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
       box-shadow: 0 2px 10px rgba(34, 197, 94, 0.4);
       white-space: nowrap;
       line-height: 1;
-      height: auto;
     }
     .rp-download-btn:hover {
       transform: translateY(-1px);
@@ -1036,20 +966,12 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       background: linear-gradient(135deg, #34d399, #10b981);
     }
     .rp-download-btn svg { flex-shrink: 0; }
-    .rp-download-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.5);
-    }
-    .rp-download-btn svg { flex-shrink: 0; }
-    @keyframes torrentBadgeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-    /* ═══ TORRENT MODAL ═══ */
+
     .rp-torrent-modal {
       position: fixed;
       inset: 0;
@@ -1060,15 +982,11 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       padding: 20px;
       animation: modalFadeIn 0.2s ease;
     }
-    @keyframes modalFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
+    @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
     .rp-torrent-modal-backdrop {
       position: absolute;
       inset: 0;
       background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(8px);
     }
     .rp-torrent-modal-content {
       position: relative;
@@ -1124,11 +1042,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       line-height: 1.5;
     }
     .rp-torrent-hint strong { color: #e879f9; }
-    .rp-torrent-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
+    .rp-torrent-list { display: flex; flex-direction: column; gap: 10px; }
     .rp-torrent-item {
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid rgba(192, 132, 252, 0.15);
@@ -1163,11 +1077,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
     }
     .rp-torrent-size { color: #fbbf24; }
     .rp-torrent-seeds { color: #34d399; }
-    .rp-torrent-item-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+    .rp-torrent-item-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .rp-torrent-btn {
       flex: 1;
       display: inline-flex;
@@ -1194,11 +1104,11 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       border: 1px solid rgba(59, 130, 246, 0.4);
     }
     @media (max-width: 640px) {
-      .rp-torrent-badge { top: 50px; right: 8px; padding: 5px 10px; font-size: 10px; }
       .rp-torrent-modal-content { padding: 16px; }
       .rp-torrent-item-actions { flex-direction: column; }
       .rp-torrent-btn { min-width: 100%; }
     }
+
     .rp-vloader {
       position: absolute;
       inset: 0;
@@ -1913,10 +1823,6 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
     .rp-side-title { font-size: 13px; font-weight: 700; color: #fff; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; transition: color 0.2s; }
     .rp-side-channel { font-size: 11px; color: rgba(255, 255, 255, 0.55); font-family: 'JetBrains Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .rp-side-meta { font-size: 10px; color: rgba(255, 255, 255, 0.4); font-family: 'JetBrains Mono', monospace; }
-    .rp-side-ad { display: grid; grid-template-columns: 168px 1fr; gap: 10px; cursor: pointer; text-decoration: none; color: inherit; border-radius: 10px; padding: 6px; background: rgba(251, 191, 36, 0.08); border: 1px solid rgba(251, 191, 36, 0.3); }
-    .rp-side-ad:hover { background: rgba(251, 191, 36, 0.15); }
-    .rp-side-ad .rp-side-badge { background: linear-gradient(135deg, #fbbf24, #f97316); }
-    .rp-side-ad-price { font-size: 13px; font-weight: 800; color: #fbbf24; font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
 
     .at-na-card { display: block; cursor: pointer; text-decoration: none; color: inherit; transition: transform 0.25s ease; }
     .at-na-card:hover { transform: translateY(-3px); }
@@ -1935,10 +1841,6 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
     .at-na-title { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 6px; transition: color 0.2s; }
     .at-na-card:hover .at-na-title { color: #e879f9; }
     .at-na-channel { font-size: 12px; color: rgba(255, 255, 255, 0.55); font-family: 'JetBrains Mono', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .at-na-ad { background: rgba(251, 191, 36, 0.05); border-radius: 12px; padding: 4px; border: 1px solid rgba(251, 191, 36, 0.3); }
-    .at-na-ad .at-na-thumb { border-color: rgba(251, 191, 36, 0.3); }
-    .at-na-ad .at-na-badge { background: linear-gradient(135deg, #fbbf24, #f97316); }
-    .at-na-ad-price { font-size: 14px; font-weight: 800; color: #fbbf24; font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
 
     @media (max-width: 1280px) {
       .rp-grid { grid-template-columns: minmax(0, 1fr) 380px; gap: 20px; }
@@ -1967,6 +1869,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       .rp-title { font-size: 17px; margin: 12px 0 10px; }
       .rp-server-switcher { padding: 6px 10px; gap: 6px; }
       .rp-server-btn { padding: 4px 10px; font-size: 10px; }
+      .rp-download-btn { padding: 4px 10px; font-size: 10px; }
     }
     @media (max-width: 380px) {
       .rp-ext-ep-card { grid-template-columns: 100px 1fr; }
@@ -1995,6 +1898,9 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
     HAS_MULTI: (video && video.hasMultiSource) ? true : false
   }}>
     (function() {
+      'use strict';
+      
+      // ═══ STATE ═══
       var currentVideo = INITIAL_VIDEO;
       var currentId = CURRENT_ID;
       var seriesName = SERIES_NAME || '';
@@ -2010,10 +1916,10 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       var hasMulti = HAS_MULTI;
       var sidebarItems = [];
       var moreItems = [];
-      var productPool = [];
       var moreRendered = 0;
       var loadingMore = false;
 
+      // ═══ HELPERS ═══
       function escapeHtml(s) {
         return String(s || '').replace(/[&<>"']/g, function(c) {
           return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -2056,6 +1962,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       function typeName(type) { return ({ anime: 'ANIME', kdrama: 'K-DRAMA', donghua: 'DONGHUA', movies: 'MOVIE' })[type] || 'VIDEO'; }
       function getInitial(name) { return (name || 'A').charAt(0).toUpperCase(); }
 
+      // ═══ HISTORY / LIKE / SAVE ═══
       function saveToHistory() {
         try {
           var hist = JSON.parse(localStorage.getItem('anitube_history') || '[]');
@@ -2323,6 +2230,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         input.addEventListener('keydown', function(e) { if (e.key === 'Enter' && input.value.trim()) submit.click(); });
       }
 
+      // ═══ SIDEBAR / FEED ═══
       function makeSidebarCard(v) {
         var badge = '';
         if (v.isNew) badge = '<div class="rp-side-badge">NEW</div>';
@@ -2339,19 +2247,6 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         html += '<div class="rp-side-title">' + escapeHtml(v.title) + '</div>';
         html += '<div class="rp-side-channel">' + escapeHtml(v.channel || 'AniTube') + '</div>';
         html += '<div class="rp-side-meta">' + meta + '</div>';
-        html += '</div></a>';
-        return html;
-      }
-      function makeSidebarAd(p) {
-        var html = '<a class="rp-side-ad" href="' + escapeHtml(p.affiliateUrl || '#') + '" target="_blank" rel="noopener sponsored">';
-        html += '<div class="rp-side-thumb">';
-        html += '<div class="rp-side-badge">💎 AD</div>';
-        html += '<img class="rp-side-img" src="' + escapeHtml(p.image || '') + '" alt="" loading="lazy" onerror="this.style.opacity=0.3" />';
-        html += '</div>';
-        html += '<div class="rp-side-info">';
-        html += '<div class="rp-side-title">' + escapeHtml(p.title || 'Product') + '</div>';
-        html += '<div class="rp-side-channel">Sponsored</div>';
-        html += '<div class="rp-side-ad-price">' + escapeHtml(p.price || '') + '</div>';
         html += '</div></a>';
         return html;
       }
@@ -2375,31 +2270,12 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         html += '</div></a>';
         return html;
       }
-      function makeFeedAd(p) {
-        var html = '<a class="at-na-card at-na-ad" href="' + escapeHtml(p.affiliateUrl || '#') + '" target="_blank" rel="noopener sponsored">';
-        html += '<div class="at-na-thumb">';
-        html += '<div class="at-na-badge">💎 AD</div>';
-        html += '<img class="at-na-img" src="' + escapeHtml(p.image || '') + '" alt="" loading="lazy" onerror="this.style.opacity=0.3" />';
-        html += '</div>';
-        html += '<div class="at-na-info">';
-        html += '<div class="at-na-title">' + escapeHtml(p.title || 'Product') + '</div>';
-        html += '<div class="at-na-ad-price">' + escapeHtml(p.price || '') + '</div>';
-        html += '</div></a>';
-        return html;
-      }
       function renderSidebar() {
         var el = document.getElementById('relatedFeed');
         if (!el) return;
         var html = '';
-        var adCounter = 0;
         for (var i = 0; i < sidebarItems.length; i++) {
           html += makeSidebarCard(sidebarItems[i]);
-          adCounter++;
-          if (adCounter >= 5 && productPool.length > 0) {
-            var p = productPool[Math.floor(Math.random() * productPool.length)];
-            html += makeSidebarAd(p);
-            adCounter = 0;
-          }
         }
         el.innerHTML = html;
       }
@@ -2410,14 +2286,8 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         var end = Math.min(moreRendered + 12, moreItems.length);
         if (start >= end) return;
         var html = '';
-        var adCounter = moreRendered;
         for (var i = start; i < end; i++) {
           html += makeFeedCard(moreItems[i]);
-          adCounter++;
-          if (adCounter % 6 === 0 && productPool.length > 0) {
-            var p = productPool[Math.floor(Math.random() * productPool.length)];
-            html += makeFeedAd(p);
-          }
         }
         el.insertAdjacentHTML('beforeend', html);
         moreRendered = end;
@@ -2452,9 +2322,7 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
           });
       }
       function initFeeds() {
-        // For anime pages we still want to fetch social feed for "More Like This" section
         if (isExternal && (!allFeed || allFeed.length === 0)) {
-          // Fetch social feed on client side
           fetch('/api/social-feed?limit=50&format=all')
             .then(function(r) { return r.json(); })
             .then(function(data) {
@@ -2497,15 +2365,6 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         moreItems = combined.slice(0, 40);
         if (!isExternal) renderSidebar();
         renderMoreBatch();
-      }
-      function loadProducts() {
-        fetch('/api/products?limit=30')
-          .then(function(r) { return r.json(); })
-          .then(function(data) {
-            if (data.success && data.products) productPool = data.products;
-            if (!isExternal) renderSidebar();
-          })
-          .catch(function() {});
       }
       function goNext() {
         if (isExternal && extEpisodes.length > 0) {
@@ -2554,40 +2413,40 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       }
 
       // ═══════════════════════════════════════════════════════════
-      // MULTI-SOURCE EXTERNAL PLAYER
-      // Vidsrc.to → 2embed → Vidsrc.xyz → MultiEmbed → AnimoTV
+      // MULTI-SOURCE EXTERNAL PLAYER + DOWNLOAD BUTTON
       // ═══════════════════════════════════════════════════════════
       function setupExternalPlayer() {
-        var root = document.getElementById('reels-root');
         var wrap = document.getElementById('externalWrap');
         var placeholder = document.getElementById('extPlaceholder');
         var placeholderText = document.getElementById('extPlaceholderText');
         var switcher = document.getElementById('serverSwitcher');
         var serverBtns = document.getElementById('serverBtns');
-        if (!root || !wrap) return;
+        if (!wrap) return;
 
+        // ═══ TORRENT STATE ═══
+        var torrentsData = null;
+        var torrentFetchInProgress = false;
+        var torrentFetchDone = false;
 
+        // ═══ TORRENT FUNCTIONS ═══
+        function torEscape(s) {
+          return String(s || '').replace(/[&<>"']/g, function(c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+          });
+        }
         
         async function fetchTorrents() {
           if (torrentFetchInProgress || torrentFetchDone) return;
           torrentFetchInProgress = true;
-          
           try {
             var q = animeSlug ? animeSlug.replace(/-/g, ' ') : '';
             if (!q) { torrentFetchDone = true; return; }
-            
-            // Build URL with TMDB ID for smart search (uses Japanese title on Nyaa)
             var apiUrl = '/api/stream-race?q=' + encodeURIComponent(q) + '&ep=' + extCurrentEp;
-            if (tmdbId) {
-              apiUrl += '&tmdb=' + tmdbId;
-            }
-            
+            if (tmdbId) apiUrl += '&tmdb=' + tmdbId;
             var controller = new AbortController();
-            var timer = setTimeout(function() { controller.abort(); }, 15000); // 15s for multi-query search
-            
+            var timer = setTimeout(function() { controller.abort(); }, 15000);
             var res = await fetch(apiUrl, { signal: controller.signal });
             clearTimeout(timer);
-            
             var data = await res.json();
             if (data.success && data.found && data.torrents && data.torrents.length > 0) {
               torrentsData = data;
@@ -2600,115 +2459,27 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
           }
         }
         
-        // Schedule fetch after page settles (not immediately)
-        // Torrent button will be shown by tryShowDownloadBtn (see above)
-        
-        function showTorrentBadge() {
-          // Already added?
-          if (document.getElementById('torrentBadge')) return;
-          
-          var btnsContainer = document.getElementById('serverBtns');
-          if (!btnsContainer) {
-            console.warn('[TorrentBadge] serverBtns container not found');
-            return;
-          }
-          
-          // Make sure server switcher is visible
-          var switcherEl = document.getElementById('serverSwitcher');
-          if (switcherEl && switcherEl.style.display === 'none') {
-            switcherEl.style.display = 'flex';
-          }
-          
-          try {
-            var btn = document.createElement('button');
-            btn.id = 'torrentBadge';
-            btn.type = 'button';
-            btn.className = 'rp-download-btn';
-            btn.innerHTML = 
-              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
-                '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>' +
-              '</svg>' +
-              '<span>Download HD</span>';
-            btn.addEventListener('click', function(e) {
-              e.preventDefault();
-              e.stopPropagation();
-              handleDownloadClick(btn);
-            });
-            btnsContainer.appendChild(btn);
-          } catch (e) {
-            console.error('[TorrentBadge] Failed to add button:', e);
-          }
-        }
-        
-        async function handleDownloadClick(btn) {
-          // If already have data, just show modal
-          if (torrentsData && torrentsData.torrents && torrentsData.torrents.length > 0) {
-            showTorrentModal();
-            return;
-          }
-          
-          // Show loading state on button
-          var originalHtml = btn.innerHTML;
-          btn.innerHTML = 
-            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite;">' +
-              '<path d="M21 12a9 9 0 11-6.219-8.56"/>' +
-            '</svg>' +
-            '<span>Searching...</span>';
-          btn.disabled = true;
-          btn.style.opacity = '0.7';
-          
-          // Fetch torrents now
-          await fetchTorrents();
-          
-          // Restore button
-          btn.disabled = false;
-          btn.style.opacity = '1';
-          
-          if (torrentsData && torrentsData.torrents && torrentsData.torrents.length > 0) {
-            btn.innerHTML = originalHtml;
-            showTorrentModal();
-          } else {
-            btn.innerHTML = 
-              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
-                '<path d="M12 9v2m0 4h.01M5.07 19H19a2 2 0 002-2V7a2 2 0 00-2-2H5.07A2 2 0 003 7v10a2 2 0 002.07 2z"/>' +
-              '</svg>' +
-              '<span>No downloads</span>';
-            btn.style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
-            btn.style.cursor = 'default';
-            btn.onclick = null;
-          }
-        }
-        
-        function escapeHtmlTor(s) {
-          return String(s || '').replace(/[&<>"']/g, function(c) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-          });
-        }
-        
         function showTorrentModal() {
           if (!torrentsData || !torrentsData.torrents) return;
           var existing = document.getElementById('torrentModal');
           if (existing) existing.remove();
-          
           var modal = document.createElement('div');
           modal.id = 'torrentModal';
           modal.className = 'rp-torrent-modal';
-          
           var itemsHtml = torrentsData.torrents.map(function(t) {
             return '<div class="rp-torrent-item">' +
-              '<div class="rp-torrent-item-title">' + escapeHtmlTor(t.title) + '</div>' +
+              '<div class="rp-torrent-item-title">' + torEscape(t.title) + '</div>' +
               '<div class="rp-torrent-item-meta">' +
                 '<span class="rp-torrent-quality">' + t.quality + '</span>' +
                 '<span class="rp-torrent-size">📦 ' + t.size + '</span>' +
                 '<span class="rp-torrent-seeds">🌐 ' + t.seeders + ' seeds</span>' +
               '</div>' +
               '<div class="rp-torrent-item-actions">' +
-                (t.magnet ? '<a href="' + t.magnet + '" class="rp-torrent-btn rp-torrent-btn-magnet" title="Open in torrent client">🧲 Magnet</a>' : '') +
+                (t.magnet ? '<a href="' + t.magnet + '" class="rp-torrent-btn rp-torrent-btn-magnet">🧲 Magnet</a>' : '') +
                 (t.torrentUrl ? '<a href="' + t.torrentUrl + '" target="_blank" class="rp-torrent-btn rp-torrent-btn-download" download>⬇ .torrent</a>' : '') +
               '</div>' +
             '</div>';
           }).join('');
-          
           modal.innerHTML = 
             '<div class="rp-torrent-modal-backdrop"></div>' +
             '<div class="rp-torrent-modal-content">' +
@@ -2722,109 +2493,44 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
                 '<a href="https://instant.io/" target="_blank" style="color:#c084fc;">Instant.io</a></div>' +
               '<div class="rp-torrent-list">' + itemsHtml + '</div>' +
             '</div>';
-          
           document.body.appendChild(modal);
-          
           document.getElementById('closeTorrentModal').addEventListener('click', function() { modal.remove(); });
           modal.querySelector('.rp-torrent-modal-backdrop').addEventListener('click', function() { modal.remove(); });
         }
-
-        // Inject poster image safely via JS (avoids Astro parser bugs)
-
-        // ═══ TORRENT FETCH — runs in background, shows if servers fail ═══
-        var torrentsData = null;
-        var torrentsPromise = fetchTorrents();
         
-        async function fetchTorrents() {
-          try {
-            var q = animeSlug ? animeSlug.replace(/-/g, ' ') : '';
-            if (!q) return;
-            var res = await fetch('/api/stream-race?q=' + encodeURIComponent(q) + '&ep=' + extCurrentEp + '&torrent=1');
-            var data = await res.json();
-            if (data.success && data.found && data.torrents && data.torrents.length > 0) {
-              torrentsData = data;
-              showTorrentBadge();
-            }
-          } catch (e) {}
-        }
-        
-        function showTorrentBadge() {
-          if (!torrentsData) return;
-          // Add small badge showing "Download available"
-          var existing = document.getElementById('torrentBadge');
-          if (existing) return;
-          
-          var badge = document.createElement('div');
-          badge.id = 'torrentBadge';
-          badge.className = 'rp-torrent-badge';
-          badge.innerHTML = 
-            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
-              '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>' +
+        async function handleDownloadClick(btn) {
+          if (torrentsData && torrentsData.torrents && torrentsData.torrents.length > 0) {
+            showTorrentModal();
+            return;
+          }
+          var originalHtml = btn.innerHTML;
+          btn.innerHTML = 
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin 1s linear infinite;">' +
+              '<path d="M21 12a9 9 0 11-6.219-8.56"/>' +
             '</svg>' +
-            '<span>Download HD</span>';
-          badge.addEventListener('click', showTorrentModal);
-          wrap.appendChild(badge);
-        }
-        
-        function showTorrentModal() {
-          if (!torrentsData || !torrentsData.torrents) return;
-          
-          // Remove existing modal
-          var existing = document.getElementById('torrentModal');
-          if (existing) existing.remove();
-          
-          var modal = document.createElement('div');
-          modal.id = 'torrentModal';
-          modal.className = 'rp-torrent-modal';
-          
-          var itemsHtml = torrentsData.torrents.map(function(t, i) {
-            return '<div class="rp-torrent-item">' +
-              '<div class="rp-torrent-item-info">' +
-                '<div class="rp-torrent-item-title">' + escapeHtml(t.title) + '</div>' +
-                '<div class="rp-torrent-item-meta">' +
-                  '<span class="rp-torrent-quality">' + t.quality + '</span>' +
-                  '<span class="rp-torrent-size">📦 ' + t.size + '</span>' +
-                  '<span class="rp-torrent-seeds">🌐 ' + t.seeders + ' seeds</span>' +
-                '</div>' +
-              '</div>' +
-              '<div class="rp-torrent-item-actions">' +
-                (t.magnet ? '<a href="' + t.magnet + '" class="rp-torrent-btn rp-torrent-btn-magnet" title="Open in torrent client">🧲 Magnet</a>' : '') +
-                (t.torrentUrl ? '<a href="' + t.torrentUrl + '" target="_blank" class="rp-torrent-btn rp-torrent-btn-download" download>⬇ .torrent</a>' : '') +
-              '</div>' +
-            '</div>';
-          }).join('');
-          
-          modal.innerHTML = 
-            '<div class="rp-torrent-modal-backdrop"></div>' +
-            '<div class="rp-torrent-modal-content">' +
-              '<div class="rp-torrent-modal-head">' +
-                '<h3>📥 Download Options</h3>' +
-                '<button class="rp-torrent-close" id="closeTorrentModal">×</button>' +
-              '</div>' +
-              '<div class="rp-torrent-hint">💡 <strong>Magnet:</strong> Open in µTorrent, qBittorrent, Vuze, etc. <br><strong>Or play online:</strong> ' +
-                '<a href="https://webtorrent.io/desktop/" target="_blank" style="color:#c084fc;">WebTorrent</a>, ' +
-                '<a href="https://www.bytesized.tech/" target="_blank" style="color:#c084fc;">Bytesized</a></div>' +
-              '<div class="rp-torrent-list">' + itemsHtml + '</div>' +
-            '</div>';
-          
-          document.body.appendChild(modal);
-          
-          // Close handlers
-          document.getElementById('closeTorrentModal').addEventListener('click', function() {
-            modal.remove();
-          });
-          modal.querySelector('.rp-torrent-modal-backdrop').addEventListener('click', function() {
-            modal.remove();
-          });
-        }
-        
-        function escapeHtml(s) {
-          return String(s || '').replace(/[&<>"']/g, function(c) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-          });
+            '<span>Searching...</span>';
+          btn.disabled = true;
+          btn.style.opacity = '0.7';
+          await fetchTorrents();
+          btn.disabled = false;
+          btn.style.opacity = '1';
+          if (torrentsData && torrentsData.torrents && torrentsData.torrents.length > 0) {
+            btn.innerHTML = originalHtml;
+            showTorrentModal();
+          } else {
+            btn.innerHTML = 
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
+                '<path d="M12 9v2m0 4h.01"/>' +
+                '<circle cx="12" cy="12" r="10"/>' +
+              '</svg>' +
+              '<span>No downloads</span>';
+            btn.style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
+            btn.style.cursor = 'default';
+            btn.onclick = null;
+          }
         }
 
-        // Inject poster image safely via JS (avoids Astro parser bugs)
+        // ═══ Inject poster via JS (avoids Astro parser bugs) ═══
         if (placeholder) {
           var posterUrl = placeholder.getAttribute('data-poster');
           var posterAlt = placeholder.getAttribute('data-alt') || 'Video';
@@ -2838,123 +2544,37 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
             placeholder.insertBefore(img, placeholder.firstChild);
           }
         }
-        // Build server list
-        var servers = [];
 
+        // ═══ BUILD SERVER LIST ═══
+        var servers = [];
         if (tmdbId && hasMulti) {
           if (mediaType === 'movie') {
-            // MOVIE URLs — different endpoints
-            servers.push({
-              name: 'Server 1',
-              url: 'https://vidsrc.to/embed/movie/' + tmdbId + '?ds_lang=en',
-              type: 'clean',
-            });
-            servers.push({
-              name: 'Server 2',
-              url: 'https://vidsrc.xyz/embed/movie?tmdb=' + tmdbId,
-              type: 'clean',
-            });
-            servers.push({
-              name: 'Server 3',
-              url: 'https://www.2embed.cc/embed/' + tmdbId,
-              type: 'clean',
-            });
-            servers.push({
-              name: 'Server 4',
-              url: 'https://multiembed.mov/directstream.php?video_id=' + tmdbId + '&tmdb=1',
-              type: 'clean',
-            });
-            servers.push({
-              name: 'Server 5',
-              url: 'https://vidsrc.pro/embed/movie/' + tmdbId,
-              type: 'clean',
-            });
-            servers.push({
-              name: 'Server 6',
-              url: 'https://autoembed.co/movie/tmdb/' + tmdbId,
-              type: 'clean',
-            });
-            servers.push({
-              name: 'Server 7',
-              url: 'https://embed.smashystream.com/playere.php?tmdb=' + tmdbId,
-              type: 'clean',
-            });
+            servers.push({ name: 'Server 1', url: 'https://vidsrc.to/embed/movie/' + tmdbId + '?ds_lang=en' });
+            servers.push({ name: 'Server 2', url: 'https://vidsrc.xyz/embed/movie?tmdb=' + tmdbId });
+            servers.push({ name: 'Server 3', url: 'https://www.2embed.cc/embed/' + tmdbId });
+            servers.push({ name: 'Server 4', url: 'https://multiembed.mov/directstream.php?video_id=' + tmdbId + '&tmdb=1' });
+            servers.push({ name: 'Server 5', url: 'https://vidsrc.pro/embed/movie/' + tmdbId });
+            servers.push({ name: 'Server 6', url: 'https://autoembed.co/movie/tmdb/' + tmdbId });
+            servers.push({ name: 'Server 7', url: 'https://embed.smashystream.com/playere.php?tmdb=' + tmdbId });
           } else {
-            // TV SHOW URLs
-            servers.push({
-              name: 'Server 1',
-              url: 'https://vidsrc.to/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp + '?ds_lang=en',
-              type: 'clean',
-            });
-            servers.push({
-              name: 'Server 2',
-              url: 'https://vidsrc.xyz/embed/tv?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp,
-              type: 'clean',
-            });
-            servers.push({
-              name: 'Server 3',
-              url: 'https://www.2embed.cc/embedtv/' + tmdbId + '&s=' + seasonNum + '&e=' + extCurrentEp,
-              type: 'clean',
-            });
-            servers.push({
-              name: 'Server 4',
-              url: 'https://multiembed.mov/directstream.php?video_id=' + tmdbId + '&tmdb=1&s=' + seasonNum + '&e=' + extCurrentEp,
-              type: 'clean',
-            });
-            servers.push({
-              name: 'Server 5',
-              url: 'https://vidsrc.pro/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp,
-              type: 'clean',
-            });
-            servers.push({
-              name: 'Server 6',
-              url: 'https://autoembed.co/tv/tmdb/' + tmdbId + '-' + seasonNum + '-' + extCurrentEp,
-              type: 'clean',
-            });
-            servers.push({
-              name: 'Server 7',
-              url: 'https://embed.smashystream.com/playere.php?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp,
-              type: 'clean',
-            });
+            servers.push({ name: 'Server 1', url: 'https://vidsrc.to/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp + '?ds_lang=en' });
+            servers.push({ name: 'Server 2', url: 'https://vidsrc.xyz/embed/tv?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp });
+            servers.push({ name: 'Server 3', url: 'https://www.2embed.cc/embedtv/' + tmdbId + '&s=' + seasonNum + '&e=' + extCurrentEp });
+            servers.push({ name: 'Server 4', url: 'https://multiembed.mov/directstream.php?video_id=' + tmdbId + '&tmdb=1&s=' + seasonNum + '&e=' + extCurrentEp });
+            servers.push({ name: 'Server 5', url: 'https://vidsrc.pro/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp });
+            servers.push({ name: 'Server 6', url: 'https://autoembed.co/tv/tmdb/' + tmdbId + '-' + seasonNum + '-' + extCurrentEp });
+            servers.push({ name: 'Server 7', url: 'https://embed.smashystream.com/playere.php?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp });
           }
         }
-
-        // AnimoTV as last fallback
         if (animeSlug) {
-          servers.push({
-            name: 'Server ' + (servers.length + 1),
-            url: 'https://animotvslash.org/' + animeSlug + '-episode-' + extCurrentEp + '/',
-            type: 'crop',
-          });
-        }
-        if (servers.length === 0) {
-          if (placeholderText) {
-            placeholderText.innerHTML = 
-              '<div style="text-align:center;">' +
-                '<div style="font-size:14px;margin-bottom:8px;color:#e879f9;font-weight:700;">⚠️ Video source not available</div>' +
-                '<div style="font-size:11px;opacity:0.7;">This anime could not be found on any server.</div>' +
-                '<div style="font-size:11px;opacity:0.7;margin-top:4px;">Try searching a different title or check back later.</div>' +
-              '</div>';
-          }
-          if (placeholder) placeholder.style.opacity = '1';
-          return;
+          servers.push({ name: 'Server ' + (servers.length + 1), url: 'https://animotvslash.org/' + animeSlug + '-episode-' + extCurrentEp + '/' });
         }
 
+        // ═══ RENDER SERVER BUTTONS + DOWNLOAD BUTTON ═══
         var currentIframe = null;
         var currentServerIdx = 0;
         var loadTimeout = null;
         var iframeLoaded = false;
-        var safetyTimeout = null;
-
-        // Crop config (AnimoTV only)
-        var CROP = {
-          viewportW: 1121,
-          videoW: 950,
-          videoH: 513,
-          videoLeft: 86,
-          videoTop: 320,
-          pageHeight: 2000,
-        };
 
         function clearIframe() {
           if (currentIframe && currentIframe.parentNode) {
@@ -2964,33 +2584,12 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
           iframeLoaded = false;
         }
 
-        function applyCrop() {
-          if (!currentIframe) return;
-          var cw = wrap.clientWidth;
-          if (cw < 10) return;
-          var s = cw / CROP.videoW;
-          if (s < 0.25) s = 0.25;
-          if (s > 2.0) s = 2.0;
-          var tx = -CROP.videoLeft * s;
-          var ty = -CROP.videoTop * s;
-          currentIframe.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + s + ')';
-          var h = Math.ceil(CROP.videoH * s);
-          wrap.style.aspectRatio = 'auto';
-          wrap.style.height = h + 'px';
-        }
-
-        function resetToClean() {
-          wrap.style.aspectRatio = '16 / 9';
-          wrap.style.height = '';
-        }
-
         function updateActiveButton(idx) {
           if (!serverBtns) return;
           var btns = serverBtns.querySelectorAll('.rp-server-btn');
           for (var i = 0; i < btns.length; i++) {
             if (parseInt(btns[i].getAttribute('data-idx')) === idx) {
               btns[i].classList.add('active');
-              btns[i].classList.remove('checking');
             } else {
               btns[i].classList.remove('active');
             }
@@ -3000,62 +2599,34 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         function loadServer(idx) {
           if (idx >= servers.length) {
             if (placeholderText) {
-              var hasTorrents = torrentsData && torrentsData.torrents && torrentsData.torrents.length > 0;
               placeholderText.innerHTML = 
                 '<div style="text-align:center;padding:20px;">' +
-                  '<div style="font-size:14px;margin-bottom:8px;color:#e879f9;font-weight:700;">⚠️ Streaming not available right now</div>' +
-                  '<div style="font-size:11px;opacity:0.7;margin-bottom:15px;">All streaming servers are down or blocked.</div>' +
-                  (hasTorrents 
-                    ? '<button id="showTorrentBtn" style="padding:12px 24px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:20px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;box-shadow:0 4px 15px rgba(16,185,129,0.4);">📥 Download ' + torrentsData.torrents.length + ' HD Options Available</button>' 
-                    : '<div style="font-size:11px;opacity:0.5;">Try refreshing the page in a few minutes.</div>') +
+                  '<div style="font-size:14px;color:#e879f9;font-weight:700;margin-bottom:8px;">⚠️ Streaming unavailable</div>' +
+                  '<div style="font-size:11px;opacity:0.7;">Try Download HD button below.</div>' +
                 '</div>';
-              if (hasTorrents) {
-                setTimeout(function() {
-                  var btn = document.getElementById('showTorrentBtn');
-                  if (btn) btn.addEventListener('click', showTorrentModal);
-                }, 100);
-              }
             }
             if (placeholder) placeholder.style.opacity = '1';
             return;
           }
-
           currentServerIdx = idx;
           var server = servers[idx];
           clearIframe();
-          
-          // Show placeholder again when switching
-          if (placeholder) {
-            placeholder.style.display = 'flex';
-            placeholder.style.pointerEvents = 'auto';
-            placeholder.classList.remove('hidden');
-          }
-
           if (loadTimeout) clearTimeout(loadTimeout);
-          if (safetyTimeout) clearTimeout(safetyTimeout);
-
           if (placeholder) placeholder.classList.remove('hidden');
           if (placeholderText) placeholderText.textContent = 'Loading ' + server.name + '...';
-
           updateActiveButton(idx);
 
           var iframe = document.createElement('iframe');
-          iframe.className = 'rp-ext-iframe' + (server.type === 'clean' ? ' clean' : '');
+          iframe.className = 'rp-ext-iframe clean';
           iframe.setAttribute('src', server.url);
           iframe.setAttribute('frameborder', '0');
-          iframe.setAttribute('scrolling', 'no');
           iframe.setAttribute('allow', 'accelerometer; autoplay; encrypted-media; picture-in-picture; fullscreen');
           iframe.setAttribute('allowfullscreen', '');
           iframe.setAttribute('referrerpolicy', 'no-referrer');
-
-          if (server.type === 'crop') {
-            iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
-            iframe.style.width = CROP.viewportW + 'px';
-            iframe.style.height = CROP.pageHeight + 'px';
-          } else {
-            resetToClean();
-          }
-
+          iframe.style.width = '100%';
+          iframe.style.height = '100%';
+          iframe.style.position = 'absolute';
+          iframe.style.inset = '0';
           currentIframe = iframe;
 
           iframe.addEventListener('load', function() {
@@ -3064,95 +2635,41 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
             setTimeout(function() {
               if (placeholder) {
                 placeholder.classList.add('hidden');
-                // Fully remove from DOM after fade to prevent interference
                 setTimeout(function() {
                   placeholder.style.pointerEvents = 'none';
                   placeholder.style.display = 'none';
                 }, 600);
               }
             }, 400);
-            if (server.type === 'crop') {
-              requestAnimationFrame(applyCrop);
-            }
           });
 
           wrap.appendChild(iframe);
 
-          // ═══ POPUP AD BLOCKER ═══
-          // Small corner shields ONLY (don't block video controls at bottom)
-          if (server.type === 'clean') {
-            if (!wrap.querySelector('.rp-click-shield-tl')) {
-              var shieldTL = document.createElement('div');
-              shieldTL.className = 'rp-click-shield-tl';
-              wrap.appendChild(shieldTL);
-
-              var shieldTR = document.createElement('div');
-              shieldTR.className = 'rp-click-shield-tr';
-              wrap.appendChild(shieldTR);
-            }
-          }
-
-          // ═══ WINDOW.OPEN OVERRIDE — Block popup redirects ═══
-          try {
-            var originalOpen = window.open;
-            window.open = function(url, name, features) {
-              // Block ads/popups from iframe
-              if (url && typeof url === 'string') {
-                var blockedDomains = [
-                  'phaseganging', 'tabup', 'popads', 'popcash', 
-                  'propellerads', 'adsterra', 'clicksor', 'exoclick',
-                  'juicyads', 'trafficjunky', 'plugrush', 'ero-advertising',
-                  'ads.', 'popup', 'redirect', 'track.', 'clk.',
-                   'onclickcash', 'popmyads'
-                ];
-                for (var i = 0; i < blockedDomains.length; i++) {
-                  if (url.indexOf(blockedDomains[i]) !== -1) {
-                    console.log('[AniTube] Blocked popup:', url.substring(0, 60));
-                    return null;
-                  }
-                }
-              }
-              return originalOpen.call(window, url, name, features);
-            };
-          } catch (e) {}
-
-          // If iframe doesn't fire load event in 7s, try next server
           loadTimeout = setTimeout(function() {
             if (!iframeLoaded && idx < servers.length - 1) {
               var btn = serverBtns ? serverBtns.querySelector('.rp-server-btn[data-idx="' + idx + '"]') : null;
               if (btn) btn.classList.add('dead');
               loadServer(idx + 1);
+            } else if (!iframeLoaded) {
+              if (placeholder) placeholder.classList.add('hidden');
             }
           }, 7000);
-
-          // Safety: hide placeholder anyway after 10s
-          safetyTimeout = setTimeout(function() {
-            if (placeholder) placeholder.classList.add('hidden');
-          }, 10000);
         }
 
-        // Torrent state
-        var torrentsData = null;
-        var torrentFetchInProgress = false;
-        var torrentFetchDone = false;
-
-        // Render server buttons + Download button (all at once, no timing issues)
+        // Build HTML for all buttons at once (no timing issues)
         if (switcher && serverBtns) {
           switcher.style.display = 'flex';
           var btnsHtml = '';
-          if (servers.length > 0) {
-            for (var i = 0; i < servers.length; i++) {
-              btnsHtml += '<button class="rp-server-btn' + (i === 0 ? ' active' : '') + '" data-idx="' + i + '">' + servers[i].name + '</button>';
-            }
+          for (var i = 0; i < servers.length; i++) {
+            btnsHtml += '<button class="rp-server-btn' + (i === 0 ? ' active' : '') + '" data-idx="' + i + '">' + servers[i].name + '</button>';
           }
-          // Add Download HD button at the end (always)
+          // Download button at end
           btnsHtml += '<button id="torrentBadge" type="button" class="rp-download-btn">' +
             '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">' +
               '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>' +
             '</svg>' +
             '<span>Download HD</span>' +
           '</button>';
-          
           serverBtns.innerHTML = btnsHtml;
 
           // Wire up server buttons
@@ -3178,148 +2695,18 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
           }
         }
 
-        // Torrent fetch function
-        async function fetchTorrents() {
-          if (torrentFetchInProgress || torrentFetchDone) return;
-          torrentFetchInProgress = true;
-          
-          try {
-            var q = animeSlug ? animeSlug.replace(/-/g, ' ') : '';
-            if (!q) { torrentFetchDone = true; return; }
-            
-            var searchQueries = [
-              q,
-              q.split(/\s+/).slice(0, 3).join(' '),
-            ];
-            
-            for (var i = 0; i < searchQueries.length; i++) {
-              try {
-                var controller = new AbortController();
-                var timer = setTimeout(function() { controller.abort(); }, 8000);
-                
-                var res = await fetch('/api/stream-race?q=' + encodeURIComponent(searchQueries[i]) + '&ep=' + extCurrentEp, {
-                  signal: controller.signal
-                });
-                clearTimeout(timer);
-                
-                var data = await res.json();
-                if (data.success && data.found && data.torrents && data.torrents.length > 0) {
-                  torrentsData = data;
-                  torrentFetchDone = true;
-                  return;
-                }
-              } catch (e) { continue; }
-            }
-            
-            torrentFetchDone = true;
-          } catch (e) {
-            torrentFetchDone = true;
-          } finally {
-            torrentFetchInProgress = false;
-          }
-        }
-
-        // Download button click handler
-        async function handleDownloadClick(btn) {
-          if (torrentsData && torrentsData.torrents && torrentsData.torrents.length > 0) {
-            showTorrentModal();
-            return;
-          }
-          
-          var originalHtml = btn.innerHTML;
-          btn.innerHTML = '<span>Searching...</span>';
-          btn.disabled = true;
-          btn.style.opacity = '0.7';
-          
-          await fetchTorrents();
-          
-          btn.disabled = false;
-          btn.style.opacity = '1';
-          
-          if (torrentsData && torrentsData.torrents && torrentsData.torrents.length > 0) {
-            btn.innerHTML = originalHtml;
-            showTorrentModal();
-          } else {
-            btn.innerHTML = '<span>No downloads found</span>';
-            btn.style.background = 'linear-gradient(135deg, #6b7280, #4b5563)';
-            btn.style.cursor = 'default';
-            btn.onclick = null;
-          }
-        }
-
-        // Escape HTML
-        function escapeHtmlTor(s) {
-          return String(s || '').replace(/[&<>"']/g, function(c) {
-            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-          });
-        }
-
-        // Show torrent modal
-        function showTorrentModal() {
-          if (!torrentsData || !torrentsData.torrents) return;
-          var existing = document.getElementById('torrentModal');
-          if (existing) existing.remove();
-          
-          var modal = document.createElement('div');
-          modal.id = 'torrentModal';
-          modal.className = 'rp-torrent-modal';
-          
-          var itemsHtml = torrentsData.torrents.map(function(t) {
-            return '<div class="rp-torrent-item">' +
-              '<div class="rp-torrent-item-title">' + escapeHtmlTor(t.title) + '</div>' +
-              '<div class="rp-torrent-item-meta">' +
-                '<span class="rp-torrent-quality">' + t.quality + '</span>' +
-                '<span class="rp-torrent-size">📦 ' + t.size + '</span>' +
-                '<span class="rp-torrent-seeds">🌐 ' + t.seeders + ' seeds</span>' +
-              '</div>' +
-              '<div class="rp-torrent-item-actions">' +
-                (t.magnet ? '<a href="' + t.magnet + '" class="rp-torrent-btn rp-torrent-btn-magnet">🧲 Magnet</a>' : '') +
-                (t.torrentUrl ? '<a href="' + t.torrentUrl + '" target="_blank" class="rp-torrent-btn rp-torrent-btn-download" download>⬇ .torrent</a>' : '') +
-              '</div>' +
-            '</div>';
-          }).join('');
-          
-          modal.innerHTML = 
-            '<div class="rp-torrent-modal-backdrop"></div>' +
-            '<div class="rp-torrent-modal-content">' +
-              '<div class="rp-torrent-modal-head">' +
-                '<h3>📥 Download Options</h3>' +
-                '<button class="rp-torrent-close" id="closeTorrentModal">×</button>' +
-              '</div>' +
-              '<div class="rp-torrent-hint">💡 <strong>Magnet:</strong> Open in µTorrent, qBittorrent.<br>' +
-                '<strong>Play online:</strong> ' +
-                '<a href="https://webtorrent.io/desktop/" target="_blank" style="color:#c084fc;">WebTorrent</a> or ' +
-                '<a href="https://instant.io/" target="_blank" style="color:#c084fc;">Instant.io</a></div>' +
-              '<div class="rp-torrent-list">' + itemsHtml + '</div>' +
-            '</div>';
-          
-          document.body.appendChild(modal);
-          
-          document.getElementById('closeTorrentModal').addEventListener('click', function() { modal.remove(); });
-          modal.querySelector('.rp-torrent-modal-backdrop').addEventListener('click', function() { modal.remove(); });
-        }
-
-        // Resize handler (only matters for crop mode)
-        var resizeTimer = null;
-        function onResize() {
-          if (resizeTimer) clearTimeout(resizeTimer);
-          resizeTimer = setTimeout(function() {
-            var server = servers[currentServerIdx];
-            if (server && server.type === 'crop') applyCrop();
-          }, 300);
-        }
-        window.addEventListener('resize', onResize, { passive: true });
-        window.addEventListener('orientationchange', onResize, { passive: true });
+        // Prevent right-click
         wrap.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
-        // Start loading first server (small delay for smoother initial render)
-        var startLoad = function() {
-          setTimeout(function() { loadServer(0); }, 200);
-        };
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(startLoad, { timeout: 500 });
+        // Start loading first server
+        if (servers.length > 0) {
+          if ('requestIdleCallback' in window) {
+            requestIdleCallback(function() { setTimeout(function() { loadServer(0); }, 200); }, { timeout: 500 });
+          } else {
+            setTimeout(function() { loadServer(0); }, 200);
+          }
         } else {
-          startLoad();
+          if (placeholderText) placeholderText.textContent = 'No servers available';
         }
       }
 
@@ -3356,17 +2743,8 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         }, 600);
       }
 
+      // ═══ INIT ═══
       function init() {
-        // Inject Monetag ad script if not already loaded
-        if (!document.querySelector('script[src*="quge5.com"]')) {
-          var monetag = document.createElement('script');
-          monetag.src = 'https://quge5.com/88/tag.min.js';
-          monetag.setAttribute('data-zone', '261500');
-          monetag.setAttribute('data-cfasync', 'false');
-          monetag.async = true;
-          document.head.appendChild(monetag);
-        }
-        
         saveToHistory();
         updateLikeBtn();
         updateSaveBtn();
@@ -3377,7 +2755,6 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         setupAutoplay();
         renderComments();
         initFeeds();
-        loadProducts();
         if (isExternal) {
           setupExternalPlayer();
           setupMobileAccordion();
