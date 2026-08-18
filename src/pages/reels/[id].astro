@@ -860,6 +860,15 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
       height: 100% !important;
       transform: none !important;
     }
+    /* Crop mode for AnimoTV — hides site UI, shows only video */
+    .rp-ext-iframe.crop {
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      border: 0 !important;
+      background: #000 !important;
+      display: block !important;
+    }
     @media (max-width: 768px) {
       .rp-external-wrap {
         aspect-ratio: 16 / 9 !important;
@@ -2615,25 +2624,37 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
         var servers = [];
         if (tmdbId && hasMulti) {
           if (mediaType === 'movie') {
-            servers.push({ name: 'Server 1', url: 'https://vidsrc.to/embed/movie/' + tmdbId + '?ds_lang=en' });
-            servers.push({ name: 'Server 2', url: 'https://vidsrc.xyz/embed/movie?tmdb=' + tmdbId });
-            servers.push({ name: 'Server 3', url: 'https://www.2embed.cc/embed/' + tmdbId });
-            servers.push({ name: 'Server 4', url: 'https://multiembed.mov/directstream.php?video_id=' + tmdbId + '&tmdb=1' });
-            servers.push({ name: 'Server 5', url: 'https://vidsrc.pro/embed/movie/' + tmdbId });
-            servers.push({ name: 'Server 6', url: 'https://autoembed.co/movie/tmdb/' + tmdbId });
-            servers.push({ name: 'Server 7', url: 'https://embed.smashystream.com/playere.php?tmdb=' + tmdbId });
+            servers.push({ name: 'Server 1', url: 'https://vidsrc.to/embed/movie/' + tmdbId + '?ds_lang=en', type: 'clean' });
+            servers.push({ name: 'Server 2', url: 'https://vidsrc.xyz/embed/movie?tmdb=' + tmdbId, type: 'clean' });
+            servers.push({ name: 'Server 3', url: 'https://www.2embed.cc/embed/' + tmdbId, type: 'clean' });
+            servers.push({ name: 'Server 4', url: 'https://multiembed.mov/directstream.php?video_id=' + tmdbId + '&tmdb=1', type: 'clean' });
+            servers.push({ name: 'Server 5', url: 'https://vidsrc.pro/embed/movie/' + tmdbId, type: 'clean' });
+            servers.push({ name: 'Server 6', url: 'https://autoembed.co/movie/tmdb/' + tmdbId, type: 'clean' });
+            servers.push({ name: 'Server 7', url: 'https://embed.smashystream.com/playere.php?tmdb=' + tmdbId, type: 'clean' });
           } else {
-            servers.push({ name: 'Server 1', url: 'https://vidsrc.to/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp + '?ds_lang=en' });
-            servers.push({ name: 'Server 2', url: 'https://vidsrc.xyz/embed/tv?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp });
-            servers.push({ name: 'Server 3', url: 'https://www.2embed.cc/embedtv/' + tmdbId + '&s=' + seasonNum + '&e=' + extCurrentEp });
-            servers.push({ name: 'Server 4', url: 'https://multiembed.mov/directstream.php?video_id=' + tmdbId + '&tmdb=1&s=' + seasonNum + '&e=' + extCurrentEp });
-            servers.push({ name: 'Server 5', url: 'https://vidsrc.pro/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp });
-            servers.push({ name: 'Server 6', url: 'https://autoembed.co/tv/tmdb/' + tmdbId + '-' + seasonNum + '-' + extCurrentEp });
-            servers.push({ name: 'Server 7', url: 'https://embed.smashystream.com/playere.php?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp });
+            servers.push({ name: 'Server 1', url: 'https://vidsrc.to/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp + '?ds_lang=en', type: 'clean' });
+            servers.push({ name: 'Server 2', url: 'https://vidsrc.xyz/embed/tv?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp, type: 'clean' });
+            servers.push({ name: 'Server 3', url: 'https://www.2embed.cc/embedtv/' + tmdbId + '&s=' + seasonNum + '&e=' + extCurrentEp, type: 'clean' });
+            servers.push({ name: 'Server 4', url: 'https://multiembed.mov/directstream.php?video_id=' + tmdbId + '&tmdb=1&s=' + seasonNum + '&e=' + extCurrentEp, type: 'clean' });
+            servers.push({ name: 'Server 5', url: 'https://vidsrc.pro/embed/tv/' + tmdbId + '/' + seasonNum + '/' + extCurrentEp, type: 'clean' });
+            servers.push({ name: 'Server 6', url: 'https://autoembed.co/tv/tmdb/' + tmdbId + '-' + seasonNum + '-' + extCurrentEp, type: 'clean' });
+            servers.push({ name: 'Server 7', url: 'https://embed.smashystream.com/playere.php?tmdb=' + tmdbId + '&season=' + seasonNum + '&episode=' + extCurrentEp, type: 'clean' });
           }
         }
         if (animeSlug) {
-          servers.push({ name: 'Server ' + (servers.length + 1), url: 'https://animotvslash.org/' + animeSlug + '-episode-' + extCurrentEp + '/' });
+          servers.push({ 
+            name: 'Server ' + (servers.length + 1), 
+            url: 'https://animotvslash.org/' + animeSlug + '-episode-' + extCurrentEp + '/',
+            type: 'crop',
+            crop: {
+              viewportW: 1121,
+              videoW: 950,
+              videoH: 513,
+              videoLeft: 86,
+              videoTop: 320,
+              pageHeight: 2000,
+            }
+          });
         }
 
         // ═══ RENDER SERVER BUTTONS + DOWNLOAD BUTTON ═══
@@ -2662,42 +2683,99 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
           }
         }
 
-        function loadServer(idx) {
+        // Track which servers are known dead
+        var deadServers = new Set();
+        var manualSwitch = false; // true when user manually clicked
+
+        function loadServer(idx, isManual) {
           if (idx >= servers.length) {
             if (placeholderText) {
               placeholderText.innerHTML = 
                 '<div style="text-align:center;padding:20px;">' +
-                  '<div style="font-size:14px;color:#e879f9;font-weight:700;margin-bottom:8px;">⚠️ Streaming unavailable</div>' +
-                  '<div style="font-size:11px;opacity:0.7;">Try Download HD button below.</div>' +
+                  '<div style="font-size:14px;color:#e879f9;font-weight:700;margin-bottom:8px;">⚠️ All servers unavailable</div>' +
+                  '<div style="font-size:11px;opacity:0.7;">Try Download HD button below, or refresh page.</div>' +
                 '</div>';
             }
-            if (placeholder) placeholder.style.opacity = '1';
+            if (placeholder) {
+              placeholder.style.display = 'flex';
+              placeholder.style.pointerEvents = 'auto';
+              placeholder.classList.remove('hidden');
+              placeholder.style.opacity = '1';
+            }
             return;
           }
+
+          manualSwitch = !!isManual;
           currentServerIdx = idx;
           var server = servers[idx];
+          
+          // Reset iframe state
           clearIframe();
+          iframeLoaded = false;
           if (loadTimeout) clearTimeout(loadTimeout);
-          if (placeholder) placeholder.classList.remove('hidden');
+
+          // Show placeholder
+          if (placeholder) {
+            placeholder.style.display = 'flex';
+            placeholder.style.pointerEvents = 'auto';
+            placeholder.classList.remove('hidden');
+            placeholder.style.opacity = '1';
+          }
           if (placeholderText) placeholderText.textContent = 'Loading ' + server.name + '...';
           updateActiveButton(idx);
 
           var iframe = document.createElement('iframe');
-          iframe.className = 'rp-ext-iframe clean';
           iframe.setAttribute('src', server.url);
           iframe.setAttribute('frameborder', '0');
           iframe.setAttribute('allow', 'accelerometer; autoplay; encrypted-media; picture-in-picture; fullscreen');
           iframe.setAttribute('allowfullscreen', '');
           iframe.setAttribute('referrerpolicy', 'no-referrer');
-          iframe.style.width = '100%';
-          iframe.style.height = '100%';
-          iframe.style.position = 'absolute';
-          iframe.style.inset = '0';
+          
+          if (server.type === 'crop' && server.crop) {
+            // AnimoTV crop mode — hide site UI, show only video area
+            iframe.className = 'rp-ext-iframe crop';
+            iframe.setAttribute('scrolling', 'no');
+            iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups');
+            iframe.style.width = server.crop.viewportW + 'px';
+            iframe.style.height = server.crop.pageHeight + 'px';
+            iframe.style.transformOrigin = '0 0';
+            // Apply crop transform on next frame (need wrap width)
+            requestAnimationFrame(function() {
+              var cw = wrap.clientWidth;
+              if (cw > 0) {
+                var scale = cw / server.crop.videoW;
+                if (scale < 0.25) scale = 0.25;
+                if (scale > 2.0) scale = 2.0;
+                var tx = -server.crop.videoLeft * scale;
+                var ty = -server.crop.videoTop * scale;
+                iframe.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + scale + ')';
+                // Adjust wrap height to fit cropped video
+                var h = Math.ceil(server.crop.videoH * scale);
+                wrap.style.aspectRatio = 'auto';
+                wrap.style.height = h + 'px';
+              }
+            });
+          } else {
+            // Clean iframe (Vidsrc, 2embed, etc)
+            iframe.className = 'rp-ext-iframe clean';
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.position = 'absolute';
+            iframe.style.inset = '0';
+            wrap.style.aspectRatio = '16 / 9';
+            wrap.style.height = '';
+          }
           currentIframe = iframe;
 
+          // Track if content actually loaded
+          var loadFiredAt = 0;
           iframe.addEventListener('load', function() {
+            loadFiredAt = Date.now();
             iframeLoaded = true;
             if (loadTimeout) clearTimeout(loadTimeout);
+            
+            // Give iframe 1.5 sec to actually render content
+            // Then hide placeholder
             setTimeout(function() {
               if (placeholder) {
                 placeholder.classList.add('hidden');
@@ -2706,20 +2784,42 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
                   placeholder.style.display = 'none';
                 }, 600);
               }
-            }, 400);
+            }, 1200);
           });
 
           wrap.appendChild(iframe);
 
-          loadTimeout = setTimeout(function() {
-            if (!iframeLoaded && idx < servers.length - 1) {
-              var btn = serverBtns ? serverBtns.querySelector('.rp-server-btn[data-idx="' + idx + '"]') : null;
-              if (btn) btn.classList.add('dead');
-              loadServer(idx + 1);
-            } else if (!iframeLoaded) {
+          // Auto-fallback ONLY on initial load (not manual clicks)
+          // User manual click = stay on that server no matter what
+          if (!isManual) {
+            loadTimeout = setTimeout(function() {
+              if (!iframeLoaded) {
+                var btn = serverBtns ? serverBtns.querySelector('.rp-server-btn[data-idx="' + idx + '"]') : null;
+                if (btn) btn.classList.add('dead');
+                deadServers.add(idx);
+                
+                if (idx < servers.length - 1) {
+                  // Try next server that's not dead
+                  var nextIdx = idx + 1;
+                  while (nextIdx < servers.length && deadServers.has(nextIdx)) {
+                    nextIdx++;
+                  }
+                  if (nextIdx < servers.length) {
+                    loadServer(nextIdx, false);
+                  } else {
+                    loadServer(servers.length, false); // trigger "all dead" screen
+                  }
+                } else {
+                  loadServer(servers.length, false);
+                }
+              }
+            }, 8000);
+          } else {
+            // Manual click — give it 15 sec chance, but don't auto-switch
+            loadTimeout = setTimeout(function() {
               if (placeholder) placeholder.classList.add('hidden');
-            }
-          }, 7000);
+            }, 15000);
+          }
         }
 
         // Build HTML for all buttons at once (no timing issues)
@@ -2743,10 +2843,10 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
           for (var j = 0; j < btns.length; j++) {
             btns[j].addEventListener('click', function() {
               var idx = parseInt(this.getAttribute('data-idx'));
-              if (idx !== currentServerIdx) {
-                this.classList.remove('dead');
-                loadServer(idx);
-              }
+              // Always allow click — even on dead/active servers
+              this.classList.remove('dead');
+              deadServers.delete(idx);
+              loadServer(idx, true); // isManual = true (no auto-fallback)
             });
           }
           
@@ -2761,15 +2861,41 @@ const totalRealThumbs = externalEpisodes.filter((e: any) => e.hasRealThumb).leng
           }
         }
 
+        // Handle window resize for crop mode
+        var resizeTimer = null;
+        function reapplyCrop() {
+          if (!currentIframe) return;
+          var server = servers[currentServerIdx];
+          if (!server || server.type !== 'crop' || !server.crop) return;
+          var cw = wrap.clientWidth;
+          if (cw <= 0) return;
+          var scale = cw / server.crop.videoW;
+          if (scale < 0.25) scale = 0.25;
+          if (scale > 2.0) scale = 2.0;
+          var tx = -server.crop.videoLeft * scale;
+          var ty = -server.crop.videoTop * scale;
+          currentIframe.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + scale + ')';
+          var h = Math.ceil(server.crop.videoH * scale);
+          wrap.style.aspectRatio = 'auto';
+          wrap.style.height = h + 'px';
+        }
+        window.addEventListener('resize', function() {
+          if (resizeTimer) clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(reapplyCrop, 200);
+        }, { passive: true });
+        window.addEventListener('orientationchange', function() {
+          setTimeout(reapplyCrop, 300);
+        }, { passive: true });
+
         // Prevent right-click
         wrap.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
-        // Start loading first server
+        // Start loading first server (auto-mode, will fallback if fails)
         if (servers.length > 0) {
           if ('requestIdleCallback' in window) {
-            requestIdleCallback(function() { setTimeout(function() { loadServer(0); }, 200); }, { timeout: 500 });
+            requestIdleCallback(function() { setTimeout(function() { loadServer(0, false); }, 200); }, { timeout: 500 });
           } else {
-            setTimeout(function() { loadServer(0); }, 200);
+            setTimeout(function() { loadServer(0, false); }, 200);
           }
         } else {
           if (placeholderText) placeholderText.textContent = 'No servers available';
