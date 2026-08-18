@@ -201,8 +201,9 @@ export async function POST({ request, locals }: any) {
     index = index.filter(id => id !== recordId);
     index.unshift(recordId);
     
-    // Keep last 500
-    if (index.length > 500) index = index.slice(0, 500);
+    // ═══ TRUE INFINITE ANIME SUPPORT — NO LIMIT ═══
+    // Cloudflare KV supports up to 25MB per value
+    // Each ID = ~30 bytes, so 25MB = ~800,000 anime IDs (basically infinite)
     await kv.put('index:all', JSON.stringify(index));
 
     return new Response(JSON.stringify({ 
