@@ -105,10 +105,29 @@ const fullTitle = title.includes('AniTube') ? title : `${title} | AniTube Buzz`;
       
       <!-- ═══ MONETAG ZONE 2: Vignette Banner - Fullscreen (11594508) ═══ -->
       <script is:inline>
-        (function(s){
-          s.dataset.zone='11594508';
-          s.src='https://n6wxm.com/vignette.min.js';
-        })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')));
+        (function() {
+          function loadVignette() {
+            try {
+              var container = document.body || document.documentElement;
+              if (!container) {
+                setTimeout(loadVignette, 200);
+                return;
+              }
+              var s = document.createElement('script');
+              s.dataset.zone = '11594508';
+              s.src = 'https://n6wxm.com/vignette.min.js';
+              s.async = true;
+              container.appendChild(s);
+            } catch(e) {
+              console.warn('[Vignette] Load failed:', e);
+            }
+          }
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadVignette);
+          } else {
+            loadVignette();
+          }
+        })();
       </script>
       
       <!-- ═══ MONETAG ZONE 3: In-Page Push (11594511) ═══ -->
