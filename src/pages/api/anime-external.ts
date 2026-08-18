@@ -106,9 +106,71 @@ function detectSeasonNumber(title: string): number {
 
 // Search TMDB — tries TV first, then Movie as fallback
 async function tmdbSearchTv(title: string, apiKey: string): Promise<any | null> {
+  if (!apiKey || !title) return null;
+  
   try {
-    const clean = cleanAnimeTitle(title);
     const isBearer = apiKey.length > 40;
+    const headers: Record<string, string> = { 'Accept': 'application/json' };
+    if (isBearer) headers['Authorization'] = `Bearer ${apiKey}`;
+    
+    // Try multiple title variations for better matching
+    const queries = new Set<string>();
+    
+    // 1. Full cleaned title
+    const clean = cleanAnimeTitle(title);
+    queries.add(clean);
+    
+    // 2. First 3 words (short queries work better on TMDB)
+    const words = clean.split(/\s+/).filter(w => w.length > 2);
+    if (words.length > 3) queries.add(words.slice(0, 3).join(' '));
+    if (words.length > 2) queries.add(words.slice(0, 2).join(' '));
+    
+    // 3. Raw title (no cleaning)
+    queries.add(title);
+    
+    // Try each query
+    for (const query of queries) {
+      // TV search
+      const tvUrl = isBearer
+        ? `${TMDB_BASE}/search/tv?query=${encodeURIComponent(query)}&language=en-US&include_adult=false`
+        : `${TMDB_BASE}/search/tv?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=en-US&include_adult=false`;
+      
+      const tvRes = await fetch(tvUrl, { headers });
+      if (tvRes.ok) {
+        const tvData: any = await tvRes.json();
+        if (tvData.results && tvData.results.length > 0) {
+          const animeMatch = tvData.results.find((r: any) =>
+            r.genre_ids && r.genre_ids.includes(16) && r.origin_country && r.origin_country.includes('JP')
+          );
+          if (animeMatch) return { ...animeMatch, media_type: 'tv' };
+          const animeAny = tvData.results.find((r: any) => r.genre_ids && r.genre_ids.includes(16));
+          if (animeAny) return { ...animeAny, media_type: 'tv' };
+          if (tvData.results[0]) return { ...tvData.results[0], media_type: 'tv' };
+        }
+      }
+      
+      // Movie search fallback
+      const movieUrl = isBearer
+        ? `${TMDB_BASE}/search/movie?query=${encodeURIComponent(query)}&language=en-US&include_adult=false`
+        : `${TMDB_BASE}/search/movie?api_key=${apiKey}&query=${encodeURIComponent(query)}&language=en-US&include_adult=false`;
+      const movieRes = await fetch(movieUrl, { headers });
+      if (movieRes.ok) {
+        const movieData: any = await movieRes.json();
+        if (movieData.results && movieData.results.length > 0) {
+          const animeMovie = movieData.results.find((r: any) =>
+            r.genre_ids && r.genre_ids.includes(16)
+          );
+          if (animeMovie) return { ...animeMovie, media_type: 'movie' };
+          if (movieData.results[0]) return { ...movieData.results[0], media_type: 'movie' };
+        }
+      }
+    }
+    
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
 
     // Step 1: TV search
     const tvUrl = isBearer
