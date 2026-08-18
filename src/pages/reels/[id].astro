@@ -108,34 +108,100 @@ if (!tmdbId && kvAnimeInfo && kvAnimeInfo.animeTitle) {
 }
 
 // Fallback 2: slug to title
+// Second fallback: try TMDB search using slug converted to title
+// With MULTIPLE query variations (handles Japanese romaji → English names)
 if (!tmdbId && animeSlug) {
-  try {
-    const titleFromSlug = animeSlug.replace(/-/g, ' ');
-    const findUrl = new URL('/api/anime-external', Astro.url.origin);
-    findUrl.searchParams.set('action', 'find');
-    findUrl.searchParams.set('q', titleFromSlug);
-    const findRes = await fetch(findUrl);
-    if (findRes.ok) {
-      const findData = await findRes.json();
-      if (findData.success && findData.tmdb_id) {
-        tmdbId = findData.tmdb_id;
-        seasonNum = findData.season_number || 1;
-        mediaType = findData.media_type || 'tv';
-        if (!externalAnime && findData.episodes) {
-          externalAnime = {
-            title: findData.anime?.title || titleFromSlug,
-            slug: animeSlug,
-            poster: findData.anime?.poster || '',
-            description: '',
-            episodes: findData.episodes,
-            tmdb_id: tmdbId,
-            season_number: seasonNum,
-            media_type: mediaType,
-          };
+  const baseTitleFromSlug = animeSlug.replace(/-/g, ' ');
+  
+  // Build query variations — helps find anime by different name conventions
+  const searchVariations: string[] = [];
+  const seenVariations = new Set<string>();
+  
+  function addVar(v: string) {
+    const trimmed = v.trim();
+    if (trimmed && trimmed.length >= 3 && !seenVariations.has(trimmed.toLowerCase())) {
+      seenVariations.add(trimmed.toLowerCase());
+      searchVariations.push(trimmed);
+    }
+  }
+  
+  addVar(baseTitleFromSlug);
+  
+  // Common Japanese romaji → English translations
+  const translations: Record<string, string> = {
+    'danshiryou': 'dormitory',
+    'gakuen': 'academy',
+    'gakkou': 'school',
+    'sensou': 'war',
+    'monogatari': 'story',
+    'no ken': 'sword',
+    'no jouou': 'queen',
+    'no ou': 'king',
+    'majutsushi': 'sorcerer',
+    'mahou': 'magic',
+    'shinigami': 'reaper',
+    'yuusha': 'hero',
+    'kishi': 'knight',
+    'onna no ko': 'girl',
+    'otoko no ko': 'boy',
+    'yoru': 'night',
+    'hi': 'day',
+    'tsuki': 'moon',
+    'taiyou': 'sun',
+    'seishun': 'youth',
+    'ai': 'love',
+    'koi': 'love',
+    'no mahou': 'magic',
+    'no meikyuu': 'labyrinth',
+    'no yuusha': 'hero',
+  };
+  
+  let translated = baseTitleFromSlug.toLowerCase();
+  let hasTranslation = false;
+  for (const [jp, en] of Object.entries(translations)) {
+    if (translated.includes(jp)) {
+      translated = translated.replace(new RegExp(jp, 'gi'), en);
+      hasTranslation = true;
+    }
+  }
+  if (hasTranslation) addVar(translated);
+  
+  // Short version (first 3 words)
+  const words = baseTitleFromSlug.split(/\s+/).filter(w => w.length > 2);
+  if (words.length > 3) addVar(words.slice(0, 3).join(' '));
+  if (words.length > 2) addVar(words.slice(0, 2).join(' '));
+  
+  // Try each variation until we find a TMDB match
+  for (const variation of searchVariations) {
+    if (tmdbId) break;
+    try {
+      const findUrl = new URL('/api/anime-external', Astro.url.origin);
+      findUrl.searchParams.set('action', 'find');
+      findUrl.searchParams.set('q', variation);
+      const findRes = await fetch(findUrl);
+      if (findRes.ok) {
+        const findData = await findRes.json();
+        if (findData.success && findData.tmdb_id) {
+          tmdbId = findData.tmdb_id;
+          seasonNum = findData.season_number || 1;
+          mediaType = findData.media_type || 'tv';
+          if (!externalAnime && findData.episodes) {
+            externalAnime = {
+              title: findData.anime?.title || variation,
+              slug: animeSlug,
+              poster: findData.anime?.poster || '',
+              description: '',
+              episodes: findData.episodes,
+              tmdb_id: tmdbId,
+              season_number: seasonNum,
+              media_type: mediaType,
+            };
+          }
+          break; // Found! Stop trying more variations
         }
       }
-    }
-  } catch (e) {}
+    } catch (e) {}
+  }
 }
 
 function getPlatformData(vid: string, tmdbIdParam: number | null = null, seasonParam: number = 1): any {
