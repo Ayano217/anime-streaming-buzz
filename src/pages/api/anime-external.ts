@@ -103,9 +103,49 @@ function detectSeasonNumber(title: string): number {
   }
   return 1;
 }
-
 // ═══════════════════════════════════════════════════════════════
-// TMDB SEARCH — Multi-query with TV + Movie fallback
+// JIKAN (MAL) FALLBACK — Best for Japanese romaji names
+// ═══════════════════════════════════════════════════════════════
+async function jikanSearchAnime(query: string): Promise<any | null> {
+  if (!query) return null;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    
+    const url = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=5&sfw=false`;
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timer);
+    
+    if (!res.ok) return null;
+    const data: any = await res.json();
+    if (!data.data || data.data.length === 0) return null;
+    
+    // Best match = first result (Jikan orders by relevance)
+    const best = data.data[0];
+    if (!best) return null;
+    
+    // Get English title if available, else Japanese
+    const englishTitle = best.title_english || best.titles?.find((t: any) => t.type === 'English')?.title;
+    const japaneseTitle = best.title || best.title_japanese;
+    const finalTitle = englishTitle || japaneseTitle;
+    
+    return {
+      mal_id: best.mal_id,
+      title: finalTitle,
+      title_english: englishTitle,
+      title_japanese: japaneseTitle,
+      synonyms: (best.titles || []).map((t: any) => t.title),
+      image: best.images?.jpg?.large_image_url || best.images?.jpg?.image_url || '',
+      synopsis: best.synopsis || '',
+      episodes: best.episodes || 12,
+      type: best.type, // TV, Movie, OVA, etc
+    };
+  } catch (e) {
+    return null;
+  }
+}
+// ═══════════════════════════════════════════════════════════════
+// TMDB SEARCH — Multi-query + Jikan fallback for Japanese titles
 // ═══════════════════════════════════════════════════════════════
 async function tmdbSearchTv(title: string, apiKey: string): Promise<any | null> {
   if (!apiKey || !title) return null;
@@ -115,7 +155,7 @@ async function tmdbSearchTv(title: string, apiKey: string): Promise<any | null> 
     const headers: Record<string, string> = { 'Accept': 'application/json' };
     if (isBearer) headers['Authorization'] = `Bearer ${apiKey}`;
 
-    // Build multiple query variations
+    // Build query variations
     const queries: string[] = [];
     const seen = new Set<string>();
 
@@ -129,13 +169,27 @@ async function tmdbSearchTv(title: string, apiKey: string): Promise<any | null> 
 
     const clean = cleanAnimeTitle(title);
     addQuery(clean);
-
+    
     const words = clean.split(/\s+/).filter(w => w.length > 2);
     if (words.length > 3) addQuery(words.slice(0, 3).join(' '));
     if (words.length > 2) addQuery(words.slice(0, 2).join(' '));
     addQuery(title);
 
-    // Try each query
+    // ═══ Try Jikan (MAL) FIRST for Japanese titles ═══
+    // Get English + Japanese names, then search TMDB with them
+    const jikanResult = await jikanSearchAnime(clean);
+    if (jikanResult) {
+      // Add all Jikan-found titles to search queries
+      if (jikanResult.title_english) addQuery(jikanResult.title_english);
+      if (jikanResult.title_japanese) addQuery(jikanResult.title_japanese);
+      if (jikanResult.synonyms && Array.isArray(jikanResult.synonyms)) {
+        for (const syn of jikanResult.synonyms.slice(0, 5)) {
+          if (syn && syn.length > 2 && syn.length < 60) addQuery(syn);
+        }
+      }
+    }
+
+    // Try each query on TMDB
     for (const query of queries) {
       const encQ = encodeURIComponent(query);
 
