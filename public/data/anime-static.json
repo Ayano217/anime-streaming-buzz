@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-07T00:20:55Z",
+  "updated": "2026-10-07T09:38:55Z",
   "total": 290,
   "source": "anilist",
   "categories": {
@@ -149,9 +149,10 @@
       "rating": "",
       "studios": [
         "Toho",
-        "OLM"
+        "OLM",
+        "Nippon Television Network"
       ],
-      "members": 89722,
+      "members": 90687,
       "rank": null,
       "start_date": "2026-10-02T00:00:00+00:00",
       "end_date": "",
@@ -240,15 +241,16 @@
       "type": "TV",
       "rating": "",
       "studios": [
-        "Studio Pierrot"
+        "Studio Pierrot",
+        "TV Tokyo",
+        "Shueisha"
       ],
-      "members": 81517,
+      "members": 82884,
       "rank": null,
       "start_date": "2026-10-03T00:00:00+00:00",
       "end_date": "",
       "categories": [
-        "airing",
-        "top"
+        "airing"
       ]
     },
     {
@@ -681,10 +683,11 @@
       "type": "TV",
       "rating": "",
       "studios": [
-        "UNLIMITED PRODUCE by TMS",
-        "Electric Circus"
+        "Electric Circus",
+        "TMS Entertainment",
+        "Shueisha"
       ],
-      "members": 42412,
+      "members": 43219,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -844,7 +847,7 @@
     },
     {
       "id": "178083",
-      "title": "Tokyo Revengers: Santen Sensou-hen",
+      "title": "Tokyo Revengers: War of the Three Titans Arc",
       "title_japanese": "東京リベンジャーズ 三天戦争編",
       "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx178083-bg7pg6TCHwtG.jpg",
       "score": 7.6,
@@ -858,12 +861,13 @@
         "Supernatural"
       ],
       "year": 2026,
-      "slug": "tokyo-revengers-santen-sensou-hen",
+      "slug": "tokyo-revengers-war-of-the-three-titans-arc",
       "type": "TV",
       "rating": "",
       "studios": [
         "Pony Canyon",
-        "LIDENFILMS"
+        "LIDENFILMS",
+        "Kodansha"
       ],
       "members": 31017,
       "rank": null,
@@ -897,7 +901,7 @@
         "TBS",
         "Universal Music"
       ],
-      "members": 29240,
+      "members": 29752,
       "rank": null,
       "start_date": "2026-10-01T00:00:00+00:00",
       "end_date": "",
@@ -928,7 +932,7 @@
         "Aniplex",
         "Kodansha"
       ],
-      "members": 27348,
+      "members": 29011,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -989,9 +993,38 @@
         "david production",
         "Fuji TV"
       ],
-      "members": 22856,
+      "members": 23140,
       "rank": null,
       "start_date": "2026-10-09T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "191788",
+      "title": "Aoashi Season 2",
+      "title_japanese": "アオアシ 第2期",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx191788-XC6F24LdX6a4.jpg",
+      "score": 7.8,
+      "episodes": 24,
+      "status": "current",
+      "synopsis": "Aoi Ashito’s game has now earned him a spot on the A team, but he is quickly overwhelmed by his harsh new reality. Surrounded by elite players like Kuribayashi and Akutsu, practices are just as merciless as the matches. In this U-18 Premier League of powerhouse talent, Ashito must evolve or be crushed, if he’s ever to be acknowledged.\n  \n(Source: Crunchyroll)",
+      "genres": [
+        "Sports"
+      ],
+      "year": 2026,
+      "slug": "aoashi-season-2",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "TMS Entertainment",
+        "Shogakukan-Shueisha Productions",
+        "Shogakukan"
+      ],
+      "members": 21120,
+      "rank": null,
+      "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1020,34 +1053,6 @@
       "members": 20803,
       "rank": null,
       "start_date": "2026-09-27T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "191788",
-      "title": "Aoashi Season 2",
-      "title_japanese": "アオアシ 第2期",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx191788-XC6F24LdX6a4.jpg",
-      "score": 7.8,
-      "episodes": 24,
-      "status": "current",
-      "synopsis": "Aoi Ashito’s game has now earned him a spot on the A team, but he is quickly overwhelmed by his harsh new reality. Surrounded by elite players like Kuribayashi and Akutsu, practices are just as merciless as the matches. In this U-18 Premier League of powerhouse talent, Ashito must evolve or be crushed, if he’s ever to be acknowledged.\n  \n(Source: Crunchyroll)",
-      "genres": [
-        "Sports"
-      ],
-      "year": 2026,
-      "slug": "aoashi-season-2",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "TMS Entertainment",
-        "NHK"
-      ],
-      "members": 20680,
-      "rank": null,
-      "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1118,8 +1123,8 @@
       "title": "I'm Dating a Dark Summoner",
       "title_japanese": "ダークサモナーとデキている",
       "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx208025-JKvqWNr8rz8l.jpg",
-      "score": 6.7,
-      "episodes": 0,
+      "score": 6.8,
+      "episodes": 12,
       "status": "current",
       "synopsis": "Amona’s a dark summoner with demonic powers. Roni’s a devout priest who’s way too uptight. By all rights, they should hate each other. Instead, they end up fast-tracking their enemies-to-lovers arc with a one-night stand that somehow insists on becoming a recurring event. Now they must hide their situationship from the rest of the party while denying their growing attraction to one another, all while dealing with an imp who’s far too invested in their love life.\n  \n(Source: HIDIVE)",
       "genres": [
@@ -1137,9 +1142,70 @@
         "AtoriE",
         "Nyan Pollution-ω-"
       ],
-      "members": 16307,
+      "members": 17677,
       "rank": null,
       "start_date": "2026-10-05T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "207191",
+      "title": "Hello, I am a Witch and my Crush Wants me to Make a Love Potion!",
+      "title_japanese": "どうも、好きな人に惚れ薬を依頼された魔女です。",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx207191-VgkIzfH92WoZ.jpg",
+      "score": 6.9,
+      "episodes": 12,
+      "status": "current",
+      "synopsis": "<b>“Make me a love potion.”</b>\n  \nAnd with that single sentence, the Good Witch of the Lake’s secret crush on the dashing Sir Harij ends in heartbreak. Still, when he promises to help her gather the ingredients, Rose is thrilled at the chance to gaze upon a man she’d normally never get to interact with. She learns to brace her pounding heart for their usual stilted conversations…but what is she to do when he inexplicably shows up at her doorstep with bread and a jar of apple butter?\n  \n(Source:",
+      "genres": [
+        "Fantasy",
+        "Romance"
+      ],
+      "year": 2026,
+      "slug": "hello-i-am-a-witch-and-my-crush-wants-me-to-make-a-love-potion",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "diomedéa",
+        "KADOKAWA",
+        "Futabasha"
+      ],
+      "members": 16964,
+      "rank": null,
+      "start_date": "2026-10-05T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "204650",
+      "title": "TOUGEN ANKI: Nikko Kegon Falls Arc",
+      "title_japanese": "桃源暗鬼 日光・華厳の滝編",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx204650-cAQOzQ84Lwk8.png",
+      "score": 7.1,
+      "episodes": 12,
+      "status": "current",
+      "synopsis": "After battling in Kyoto and Nerima, the Rasetsu Academy students have grown stronger. But Yaoroshi leaves the academy to join the Oni Brigade for their \"the total eradication of the Momotaro.\"\n  \nWhen Shiki realizes that they also target noncombatants, he sets out after Yaoroshi to bring him back. Meanwhile in Nikko, there's a research facility for horrific experiments atop the old Kegon Falls…\n  \n(Source: REMOW)",
+      "genres": [
+        "Action",
+        "Mystery",
+        "Supernatural"
+      ],
+      "year": 2026,
+      "slug": "tougen-anki-nikko-kegon-falls-arc",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "Studio Hibari",
+        "Pony Canyon",
+        "Dentsu"
+      ],
+      "members": 15722,
+      "rank": null,
+      "start_date": "2026-10-02T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1167,98 +1233,10 @@
       "rating": "",
       "studios": [
         "studio A-CAT",
-        "HAYATE",
-        "Aniplex"
+        "Aniplex",
+        "KADOKAWA"
       ],
       "members": 15529,
-      "rank": null,
-      "start_date": "2026-10-04T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "204650",
-      "title": "TOUGEN ANKI: Nikko Kegon Falls Arc",
-      "title_japanese": "桃源暗鬼 日光・華厳の滝編",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx204650-cAQOzQ84Lwk8.png",
-      "score": 7.1,
-      "episodes": 24,
-      "status": "current",
-      "synopsis": "After battling in Kyoto and Nerima, the Rasetsu Academy students have grown stronger. But Yaoroshi leaves the academy to join the Oni Brigade for their \"the total eradication of the Momotaro.\"\n  \nWhen Shiki realizes that they also target noncombatants, he sets out after Yaoroshi to bring him back. Meanwhile in Nikko, there's a research facility for horrific experiments atop the old Kegon Falls…\n  \n(Source: REMOW)",
-      "genres": [
-        "Action",
-        "Mystery",
-        "Supernatural"
-      ],
-      "year": 2026,
-      "slug": "tougen-anki-nikko-kegon-falls-arc",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "Studio Hibari"
-      ],
-      "members": 15482,
-      "rank": null,
-      "start_date": "2026-10-02T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "207191",
-      "title": "Hello, I am a Witch and my Crush Wants me to Make a Love Potion!",
-      "title_japanese": "どうも、好きな人に惚れ薬を依頼された魔女です。",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx207191-4rkciwfBGi2A.jpg",
-      "score": 6.8,
-      "episodes": 12,
-      "status": "current",
-      "synopsis": "<b>“Make me a love potion.”</b>\n  \nAnd with that single sentence, the Good Witch of the Lake’s secret crush on the dashing Sir Harij ends in heartbreak. Still, when he promises to help her gather the ingredients, Rose is thrilled at the chance to gaze upon a man she’d normally never get to interact with. She learns to brace her pounding heart for their usual stilted conversations…but what is she to do when he inexplicably shows up at her doorstep with bread and a jar of apple butter?\n  \n(Source:",
-      "genres": [
-        "Fantasy",
-        "Romance"
-      ],
-      "year": 2026,
-      "slug": "hello-i-am-a-witch-and-my-crush-wants-me-to-make-a-love-potion",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "diomedéa"
-      ],
-      "members": 15161,
-      "rank": null,
-      "start_date": "2026-10-05T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "209872",
-      "title": "Ranma1/2 (2024) Season 3",
-      "title_japanese": "らんま1/2 (2024) 第3期",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209872-RBeVPqwejHFp.jpg",
-      "score": 7.5,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "The third season of Ranma 1/2 (2024).",
-      "genres": [
-        "Action",
-        "Comedy",
-        "Romance"
-      ],
-      "year": 2026,
-      "slug": "ranma12-2024-season-3",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "MAPPA",
-        "Shogakukan-Shueisha Productions",
-        "MAPPA"
-      ],
-      "members": 14317,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -1286,11 +1264,135 @@
       "rating": "",
       "studios": [
         "Satelight",
+        "Shueisha",
         "REMOW"
       ],
-      "members": 13370,
+      "members": 15182,
       "rank": null,
       "start_date": "2026-10-05T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "209872",
+      "title": "Ranma1/2 (2024) Season 3",
+      "title_japanese": "らんま1/2 (2024) 第3期",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209872-RBeVPqwejHFp.jpg",
+      "score": 7.6,
+      "episodes": 0,
+      "status": "current",
+      "synopsis": "The third season of Ranma 1/2 (2024).",
+      "genres": [
+        "Action",
+        "Comedy",
+        "Romance"
+      ],
+      "year": 2026,
+      "slug": "ranma12-2024-season-3",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "MAPPA",
+        "Shogakukan-Shueisha Productions",
+        "MAPPA"
+      ],
+      "members": 14604,
+      "rank": null,
+      "start_date": "2026-10-04T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "207329",
+      "title": "The Laid-Off Cheat-Granting Mage Enjoys a Second Lease on Life",
+      "title_japanese": "追放されたチート付与魔術師は気ままなセカンドライフを謳歌する。　～俺は武器だけじゃなく、あらゆるものに『強化ポイント』を付与できるし、俺の意思でいつでも効果を解除できるけど、残った人たち大丈夫？～",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b207329-6VPeZIDfF4Sr.png",
+      "score": 7.1,
+      "episodes": 0,
+      "status": "current",
+      "synopsis": "Rein, an enchanter, is suddenly expelled from his guild one day. But instead of despairing, he declares, “Now I can do anything!” and begins reclaiming the massive number of enhancement points he once poured into his guildmates’ gear, setting off on a brand-new path as an adventurer.  \nGathering around him are people carrying wounds that don’t fade easily: a genius adventurer who shut her heart after her party was slaughtered, a warrior who lost her family, and an assassin raised from childhood ",
+      "genres": [
+        "Adventure",
+        "Comedy",
+        "Fantasy",
+        "Slice of Life"
+      ],
+      "year": 2026,
+      "slug": "the-laid-off-cheat-granting-mage-enjoys-a-second-lease-on-life",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "P.A.WORKS",
+        "Shouchiku",
+        "Kodansha"
+      ],
+      "members": 14148,
+      "rank": null,
+      "start_date": "2026-10-07T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "206949",
+      "title": "Nia Liston: The Merciless Maiden",
+      "title_japanese": "凶乱令嬢ニア・リストン",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx206949-4HYI3YuP0eLI.png",
+      "score": 7.3,
+      "episodes": 25,
+      "status": "current",
+      "synopsis": "A great hero lies undefeated on her deathbed, regretting that she never found a foe who could take her down. She never intended to meet her fate anywhere other than on the battlefield, and her peaceful demise has her wishing desperately that things could have been different... But when she suddenly comes to in the body of the young, frail Nia Liston, she’s got an all-new fight ahead of her. Nia is a sickly child, meaning she has a long way to go before she’s in fighting form. Now that she’s been",
+      "genres": [
+        "Fantasy"
+      ],
+      "year": 2026,
+      "slug": "nia-liston-the-merciless-maiden",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "KONAMI animation",
+        "Mainichi Broadcasting System",
+        "SANKYO"
+      ],
+      "members": 13453,
+      "rank": null,
+      "start_date": "2026-10-06T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "202250",
+      "title": "Magic Repo Man: Dumped by My Party, I’ll Cash In With a Cute Support Fairy to Become the Strongest!",
+      "title_japanese": "貸した魔力は【リボ払い】で強制徴収",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx202250-mpm2cvr92Au2.jpg",
+      "score": 6.0,
+      "episodes": 0,
+      "status": "current",
+      "synopsis": "If there's one thing you can never have enough of in a world of RPG-style swords and sorcery, it's magic points! Whether you're fueling spells, techniques, or showing off an incredible ability, you've gotta spend those points to do real damage. But what if you run out?\n  \nLent is part of the up-and-coming party known as the “Skypiercers,” and thanks to his unique Gift, he can loan massive amounts of magic to others. No MP? No problem with Lent around! Except, now that his companions have become ",
+      "genres": [
+        "Action",
+        "Adventure",
+        "Fantasy"
+      ],
+      "year": 2026,
+      "slug": "magic-repo-man-dumped-by-my-party-i’ll-cash-in-with-a-cute-support-fairy-to-beco",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "SynergySP",
+        "TV Asahi",
+        "TV Asahi Music"
+      ],
+      "members": 13268,
+      "rank": null,
+      "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1315,13 +1417,43 @@
       "type": "ONA",
       "rating": "",
       "studios": [
-        "Earth Star Entertainment",
         "Felix Film",
-        "Hakuhodo DY Music & Pictures"
+        "Hakuhodo DY Music & Pictures",
+        "Earth Star Entertainment"
       ],
       "members": 12852,
       "rank": null,
       "start_date": "2026-10-03T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "209502",
+      "title": "The Cold Sato-san is Only Sweet to Me",
+      "title_japanese": "塩対応の佐藤さんが俺にだけ甘い",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209502-C81oN8M4Smlo.jpg",
+      "score": 6.7,
+      "episodes": 12,
+      "status": "current",
+      "synopsis": "Sato-san is the unattainable flower of the class. She is always cold and curt with classmates, but only I know she's actually very cute when she smiles, even if she's not much of a photographer.\n  \nOshio-kun is friendly and lively, but only I know he works at his family's cafe after school. He does a great job with the cafe's SNS account, and his mischievous smile makes my heart skip a beat!\n  \nInnocent and sweet, but sometimes frustrating, this is a 120%-pure fluffy story about two people falli",
+      "genres": [
+        "Comedy",
+        "Romance"
+      ],
+      "year": 2026,
+      "slug": "the-cold-sato-san-is-only-sweet-to-me",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "Tezuka Productions",
+        "Shouchiku",
+        "Good Smile Company"
+      ],
+      "members": 12760,
+      "rank": null,
+      "start_date": "2026-10-06T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1357,30 +1489,33 @@
       ]
     },
     {
-      "id": "202250",
-      "title": "Magic Repo Man: Dumped by My Party, I’ll Cash In With a Cute Support Fairy to Become the Strongest!",
-      "title_japanese": "貸した魔力は【リボ払い】で強制徴収",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx202250-duq4XpZP8TU3.jpg",
-      "score": 6.0,
+      "id": "209219",
+      "title": "So What's Wrong with Getting Reborn as a Goblin?",
+      "title_japanese": "転生ゴブリンだけど質問ある？",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209219-3yhKlRx0LX3p.jpg",
+      "score": 6.6,
       "episodes": 0,
       "status": "current",
-      "synopsis": "If there's one thing you can never have enough of in a world of RPG-style swords and sorcery, it's magic points! Whether you're fueling spells, techniques, or showing off an incredible ability, you've gotta spend those points to do real damage. But what if you run out?\n  \nLent is part of the up-and-coming party known as the “Skypiercers,” and thanks to his unique Gift, he can loan massive amounts of magic to others. No MP? No problem with Lent around! Except, now that his companions have become ",
+      "synopsis": "Office worker Akira Yagami’s altruistic nature usually gets him the short end of the stick. When he dies after saving a kid from oncoming traffic...he reincarnates in another world as a goblin?! Normally, goblins only live for seven days, but Akira’s newfound powers let him defy the species’ normal life span...and are the key to his path to becoming the strongest goblin ever!\n  \n(Source: Yen Press)  \n\nNote: Tensei Goblin Dakedo Shitsumon Aru? is streaming 1 week in advance of the TV broadcast on",
       "genres": [
         "Action",
         "Adventure",
+        "Comedy",
+        "Drama",
         "Fantasy"
       ],
       "year": 2026,
-      "slug": "magic-repo-man-dumped-by-my-party-i’ll-cash-in-with-a-cute-support-fairy-to-beco",
-      "type": "TV",
+      "slug": "so-whats-wrong-with-getting-reborn-as-a-goblin",
+      "type": "ONA",
       "rating": "",
       "studios": [
-        "SynergySP",
-        "TV Asahi"
+        " BAKKKA",
+        "Hakuhodo DY Music & Pictures",
+        "INCS toenter"
       ],
-      "members": 12324,
+      "members": 11684,
       "rank": null,
-      "start_date": "2026-10-04T00:00:00+00:00",
+      "start_date": "2026-10-05T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1419,63 +1554,6 @@
       ]
     },
     {
-      "id": "206949",
-      "title": "Nia Liston: The Merciless Maiden",
-      "title_japanese": "凶乱令嬢ニア・リストン",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx206949-4HYI3YuP0eLI.png",
-      "score": null,
-      "episodes": 25,
-      "status": "current",
-      "synopsis": "A great hero lies undefeated on her deathbed, regretting that she never found a foe who could take her down. She never intended to meet her fate anywhere other than on the battlefield, and her peaceful demise has her wishing desperately that things could have been different... But when she suddenly comes to in the body of the young, frail Nia Liston, she’s got an all-new fight ahead of her. Nia is a sickly child, meaning she has a long way to go before she’s in fighting form. Now that she’s been",
-      "genres": [
-        "Fantasy"
-      ],
-      "year": 2026,
-      "slug": "nia-liston-the-merciless-maiden",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "KONAMI animation",
-        "Mainichi Broadcasting System"
-      ],
-      "members": 9644,
-      "rank": null,
-      "start_date": "2026-10-06T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "209502",
-      "title": "The Cold Sato-san is Only Sweet to Me",
-      "title_japanese": "塩対応の佐藤さんが俺にだけ甘い",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209502-C81oN8M4Smlo.jpg",
-      "score": null,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "Sato-san is the unattainable flower of the class. She is always cold and curt with classmates, but only I know she's actually very cute when she smiles, even if she's not much of a photographer.\n  \nOshio-kun is friendly and lively, but only I know he works at his family's cafe after school. He does a great job with the cafe's SNS account, and his mischievous smile makes my heart skip a beat!\n  \nInnocent and sweet, but sometimes frustrating, this is a 120%-pure fluffy story about two people falli",
-      "genres": [
-        "Comedy",
-        "Romance"
-      ],
-      "year": 2026,
-      "slug": "the-cold-sato-san-is-only-sweet-to-me",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "Tezuka Productions",
-        "Shouchiku"
-      ],
-      "members": 9584,
-      "rank": null,
-      "start_date": "2026-10-06T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
       "id": "211877",
       "title": "My Girlfriend's Friend",
       "title_japanese": "彼女の友達",
@@ -1497,41 +1575,10 @@
         "WWWave",
         "Quad"
       ],
-      "members": 9212,
+      "members": 9707,
       "rank": null,
       "start_date": "2026-10-05T00:00:00+00:00",
       "end_date": "2026-12-21T00:00:00+00:00",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "209219",
-      "title": "So What's Wrong with Getting Reborn as a Goblin?",
-      "title_japanese": "転生ゴブリンだけど質問ある？",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209219-3yhKlRx0LX3p.jpg",
-      "score": 6.5,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "Office worker Akira Yagami’s altruistic nature usually gets him the short end of the stick. When he dies after saving a kid from oncoming traffic...he reincarnates in another world as a goblin?! Normally, goblins only live for seven days, but Akira’s newfound powers let him defy the species’ normal life span...and are the key to his path to becoming the strongest goblin ever!\n  \n(Source: Yen Press)  \n\nNote: Tensei Goblin Dakedo Shitsumon Aru? is streaming 1 week in advance of the TV broadcast on",
-      "genres": [
-        "Action",
-        "Adventure",
-        "Comedy",
-        "Drama",
-        "Fantasy"
-      ],
-      "year": 2026,
-      "slug": "so-whats-wrong-with-getting-reborn-as-a-goblin",
-      "type": "ONA",
-      "rating": "",
-      "studios": [
-        " BAKKKA"
-      ],
-      "members": 9196,
-      "rank": null,
-      "start_date": "2026-10-05T00:00:00+00:00",
-      "end_date": "",
       "categories": [
         "airing"
       ]
@@ -1556,7 +1603,8 @@
       "rating": "",
       "studios": [
         "Pony Canyon",
-        "Atra"
+        "Atra",
+        "Rakuten"
       ],
       "members": 9094,
       "rank": null,
@@ -1586,9 +1634,10 @@
       "rating": "",
       "studios": [
         "Jumondou",
-        "KADOKAWA"
+        "KADOKAWA",
+        "Docomo Anime Store"
       ],
-      "members": 8175,
+      "members": 8679,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -1600,7 +1649,7 @@
       "id": "199007",
       "title": "#I'm Looking For a Zombie",
       "title_japanese": "#ゾンビさがしてます",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx199007-qxUDe3KA6AGI.jpg",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx199007-8R1HsnflnHJE.jpg",
       "score": 6.0,
       "episodes": 12,
       "status": "current",
@@ -1617,9 +1666,11 @@
       "type": "TV",
       "rating": "",
       "studios": [
-        "Studio Comet"
+        "Studio Comet",
+        "KADOKAWA",
+        "TV Asahi"
       ],
-      "members": 7946,
+      "members": 8206,
       "rank": null,
       "start_date": "2026-10-03T00:00:00+00:00",
       "end_date": "",
@@ -1628,32 +1679,30 @@
       ]
     },
     {
-      "id": "207329",
-      "title": "The Laid-Off Cheat-Granting Mage Enjoys a Second Lease on Life",
-      "title_japanese": "追放されたチート付与魔術師は気ままなセカンドライフを謳歌する。　～俺は武器だけじゃなく、あらゆるものに『強化ポイント』を付与できるし、俺の意思でいつでも効果を解除できるけど、残った人たち大丈夫？～",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b207329-6VPeZIDfF4Sr.png",
-      "score": null,
+      "id": "209499",
+      "title": "TANK CHAIR",
+      "title_japanese": "TANK CHAIR-戦車椅子-",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209499-S0sWFrCpft85.jpg",
+      "score": 5.9,
       "episodes": 0,
       "status": "current",
-      "synopsis": "Rein, an enchanter, is suddenly expelled from his guild one day. But instead of despairing, he declares, “Now I can do anything!” and begins reclaiming the massive number of enhancement points he once poured into his guildmates’ gear, setting off on a brand-new path as an adventurer.  \nGathering around him are people carrying wounds that don’t fade easily: a genius adventurer who shut her heart after her party was slaughtered, a warrior who lost her family, and an assassin raised from childhood ",
+      "synopsis": "Shizuka takes on the most dangerous of assassin jobs, but she's not the one doing the killing. Rather, it's her brother, Nagi, a strong assassin who took a bullet to protect his sister, leaving him in a comatose state and having to use a wheelchair. However, Shizuka has figured out the key to waking her brother up: he must be faced with killing intent! Thus begins a violent journey of recovery, battling the most dangerous foes!\n  \n(Source: Kodansha USA)",
       "genres": [
-        "Adventure",
-        "Comedy",
-        "Fantasy",
-        "Slice of Life"
+        "Action",
+        "Sci-Fi"
       ],
       "year": 2026,
-      "slug": "the-laid-off-cheat-granting-mage-enjoys-a-second-lease-on-life",
+      "slug": "tank-chair",
       "type": "TV",
       "rating": "",
       "studios": [
-        "P.A.WORKS",
-        "Shouchiku",
-        "TV Tokyo"
+        "POLYGON PICTURES",
+        "Bandai Namco Filmworks",
+        "Kodansha"
       ],
-      "members": 7814,
+      "members": 6277,
       "rank": null,
-      "start_date": "2026-10-07T00:00:00+00:00",
+      "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1679,6 +1728,8 @@
       "type": "TV",
       "rating": "",
       "studios": [
+        "SynergySP",
+        "Odd Entertainment",
         "SynergySP"
       ],
       "members": 6120,
@@ -1690,29 +1741,30 @@
       ]
     },
     {
-      "id": "209499",
-      "title": "TANK CHAIR",
-      "title_japanese": "TANK CHAIR-戦車椅子-",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209499-S0sWFrCpft85.jpg",
-      "score": 5.9,
-      "episodes": 0,
+      "id": "206774",
+      "title": "Now That I Can Control Reality With A Mouse Cursor, I'm Gonna Click Away On The Girls!",
+      "title_japanese": "マウスカーソルで現実を操作できるようになったので、女の子をいっぱいクリックしまーす",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx206774-gXVdrySlLY6y.jpg",
+      "score": 5.0,
+      "episodes": 8,
       "status": "current",
-      "synopsis": "Shizuka takes on the most dangerous of assassin jobs, but she's not the one doing the killing. Rather, it's her brother, Nagi, a strong assassin who took a bullet to protect his sister, leaving him in a comatose state and having to use a wheelchair. However, Shizuka has figured out the key to waking her brother up: he must be faced with killing intent! Thus begins a violent journey of recovery, battling the most dangerous foes!\n  \n(Source: Kodansha USA)",
+      "synopsis": "What if you could control reality with a mouse cursor?\n  \nOne day during class, Takumi— an otaku — notices his mouse cursor has sprung out of the screen.\n  \nPanicked, he asks his childhood friend Mone, sitting next to him, to take a look, only to be brushed off...\n  \nOnce Takumi realizes he could actually control it himself, he uses the mouse cursor— visible only to him— to slip it in between Mone's clothes and starts clicking away...\n  \nHere's Japan’s (probably) first new genre of romcom, \"Clic",
       "genres": [
-        "Action",
-        "Sci-Fi"
+        "Ecchi",
+        "Romance",
+        "Supernatural"
       ],
       "year": 2026,
-      "slug": "tank-chair",
+      "slug": "now-that-i-can-control-reality-with-a-mouse-cursor-im-gonna-click-away-on-the-gi",
       "type": "TV",
       "rating": "",
       "studios": [
-        "POLYGON PICTURES",
-        "Bandai Namco Filmworks"
+        "Suiseisha",
+        "Studio Houkiboshi"
       ],
-      "members": 5927,
+      "members": 5422,
       "rank": null,
-      "start_date": "2026-10-04T00:00:00+00:00",
+      "start_date": "2026-10-05T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1739,7 +1791,7 @@
       "studios": [
         "KONAMI animation",
         "NBCUniversal Entertainment Japan",
-        "Konami Digital Entertainment"
+        "KADOKAWA"
       ],
       "members": 5416,
       "rank": null,
@@ -1750,41 +1802,11 @@
       ]
     },
     {
-      "id": "206774",
-      "title": "Now That I Can Control Reality With A Mouse Cursor, I'm Gonna Click Away On The Girls!",
-      "title_japanese": "マウスカーソルで現実を操作できるようになったので、女の子をいっぱいクリックしまーす",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx206774-S65hVQp46NUf.jpg",
-      "score": 5.1,
-      "episodes": 8,
-      "status": "current",
-      "synopsis": "What if you could control reality with a mouse cursor?\n  \nOne day during class, Takumi— an otaku — notices his mouse cursor has sprung out of the screen.\n  \nPanicked, he asks his childhood friend Mone, sitting next to him, to take a look, only to be brushed off...\n  \nOnce Takumi realizes he could actually control it himself, he uses the mouse cursor— visible only to him— to slip it in between Mone's clothes and starts clicking away...\n  \nHere's Japan’s (probably) first new genre of romcom, \"Clic",
-      "genres": [
-        "Ecchi",
-        "Romance",
-        "Supernatural"
-      ],
-      "year": 2026,
-      "slug": "now-that-i-can-control-reality-with-a-mouse-cursor-im-gonna-click-away-on-the-gi",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "Suiseisha",
-        "Studio Houkiboshi"
-      ],
-      "members": 5130,
-      "rank": null,
-      "start_date": "2026-10-05T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
       "id": "212799",
       "title": "The Seven Knights of the Marronnier Kingdom",
       "title_japanese": "マロニエ王国の七人の騎士",
       "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx212799-n7WDdic7IL1z.png",
-      "score": 5.9,
+      "score": 6.0,
       "episodes": 20,
       "status": "current",
       "synopsis": "At the heart of a continent of eight kingdoms lies the Marronnier Kingdom. Its general, Baribara, has seven sons, each with a unique gift and serving as a knight commander. Bound by a single noble cause of heroically rescuing a princess someday, the brothers set out as goodwill ambassadors to the seven neighboring kingdoms. What encounters, trials, and destinies await them in these unknown lands?\n  \n(Source: Amazon Prime Video)",
@@ -1799,11 +1821,42 @@
       "rating": "",
       "studios": [
         "J.C.STAFF",
+        "NHK",
         "NHK Enterprises"
       ],
-      "members": 5062,
+      "members": 5225,
       "rank": null,
       "start_date": "2026-10-03T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "200294",
+      "title": "Super Psychic Policeman Chojo",
+      "title_japanese": "超巡！超条先輩",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx200294-E6KIgkFaJOfG.jpg",
+      "score": 6.1,
+      "episodes": 0,
+      "status": "current",
+      "synopsis": "The ultimate police duo is here to keep the peace! Rookie officer Nao just joined the force. She’s got a black belt in judo and earned the nickname “Gorilla” for her insane strength. Then there’s her partner Chojo, who wields every psychic power imaginable. But for a guy who can read minds, he still can’t seem to read the room. Now, these two are taking on crime together in Chinjuku.\n  \n(Source: Crunchyroll)",
+      "genres": [
+        "Comedy",
+        "Slice of Life"
+      ],
+      "year": 2026,
+      "slug": "super-psychic-policeman-chojo",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "Arvo Animation",
+        "Good Smile Company",
+        "Dentsu"
+      ],
+      "members": 4612,
+      "rank": null,
+      "start_date": "2026-10-06T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1829,9 +1882,10 @@
       "rating": "",
       "studios": [
         "Studio DEEN",
+        "Rakuten",
         "NBCUniversal Entertainment Japan"
       ],
-      "members": 4414,
+      "members": 4612,
       "rank": null,
       "start_date": "2026-10-05T00:00:00+00:00",
       "end_date": "",
@@ -1844,8 +1898,8 @@
       "title": "Uncle's Obsession with Cute Things",
       "title_japanese": "おじさんはカワイイものがお好き。",
       "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx202079-nwBpDUms0Bab.png",
-      "score": 5.7,
-      "episodes": 0,
+      "score": 5.9,
+      "episodes": 12,
       "status": "current",
       "synopsis": "By day, Mitsutaka Oji is the handsome, dependable boss everyone admires. By night, he dotes on his favorite mascot, Pugtaro, and indulges his secret obsession with all things cute! He's kept his double life hidden for years—but one unexpected encounter turns everything upside down and forces Oji to face his feelings head-on!\n  \n(Source: Crunchyroll)",
       "genres": [
@@ -1857,9 +1911,11 @@
       "type": "TV",
       "rating": "",
       "studios": [
-        "LIDENFILMS"
+        "LIDENFILMS",
+        "Yomiuri TV Enterprise",
+        "Flex Comics"
       ],
-      "members": 4060,
+      "members": 4267,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -1886,39 +1942,12 @@
       "rating": "",
       "studios": [
         "Aniplex",
-        "Shogakukan Music & Digital Entertainment"
+        "Shogakukan Music & Digital Entertainment",
+        "U-NEXT"
       ],
-      "members": 3571,
+      "members": 3653,
       "rank": null,
       "start_date": "2026-10-03T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "200294",
-      "title": "Super Psychic Policeman Chojo",
-      "title_japanese": "超巡！超条先輩",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx200294-E6KIgkFaJOfG.jpg",
-      "score": null,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "The ultimate police duo is here to keep the peace! Rookie officer Nao just joined the force. She’s got a black belt in judo and earned the nickname “Gorilla” for her insane strength. Then there’s her partner Chojo, who wields every psychic power imaginable. But for a guy who can read minds, he still can’t seem to read the room. Now, these two are taking on crime together in Chinjuku.\n  \n(Source: Crunchyroll)",
-      "genres": [
-        "Comedy",
-        "Slice of Life"
-      ],
-      "year": 2026,
-      "slug": "super-psychic-policeman-chojo",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "Arvo Animation"
-      ],
-      "members": 3219,
-      "rank": null,
-      "start_date": "2026-10-06T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1942,9 +1971,11 @@
       "type": "TV",
       "rating": "",
       "studios": [
-        "Bridge"
+        "Bridge",
+        "TV Tokyo",
+        "DMM.com"
       ],
-      "members": 2896,
+      "members": 2955,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -2002,7 +2033,7 @@
         "China Literature",
         "Tencent Penguin Pictures"
       ],
-      "members": 1920,
+      "members": 1950,
       "rank": null,
       "start_date": "2026-10-03T00:00:00+00:00",
       "end_date": "",
@@ -2032,7 +2063,7 @@
         "Imagica Infos",
         "AnimationID"
       ],
-      "members": 1716,
+      "members": 1748,
       "rank": null,
       "start_date": "2026-10-02T00:00:00+00:00",
       "end_date": "",
@@ -2074,7 +2105,7 @@
       "title_japanese": "蒼き伝承 ウェルシュ&シェーダー",
       "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx216895-Ofx4FSKFa4CQ.jpg",
       "score": null,
-      "episodes": 0,
+      "episodes": 12,
       "status": "current",
       "synopsis": "The story of Aoki Denshou Welsh & Shedar follows Welsh, a teenage boy from the country who loves to cook, and Shedar, a young prince who is destined to become king one day. When the two young men with very different lives are thrown together by a chance encounter, the wheels of fate begin to turn, and soon they must work together to bring about a peaceful future by stopping a cruel despot from conquering the world.  \n(Source: Crunchyroll)",
       "genres": [
@@ -2089,7 +2120,7 @@
         "Studio Massket",
         "Ankama"
       ],
-      "members": 1518,
+      "members": 1570,
       "rank": null,
       "start_date": "2026-10-02T00:00:00+00:00",
       "end_date": "",
@@ -2101,7 +2132,7 @@
       "id": "216557",
       "title": "KERORO☆",
       "title_japanese": "ケロロ軍曹☆",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx216557-9CXz04CEmXOi.png",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx216557-b72dAqbVEDO7.jpg",
       "score": 5.5,
       "episodes": 0,
       "status": "current",
@@ -2115,9 +2146,11 @@
       "type": "TV",
       "rating": "",
       "studios": [
-        "Bandai Namco Pictures"
+        "Bandai Namco Pictures",
+        "Bandai Namco Pictures",
+        "Bandai Namco Filmworks"
       ],
-      "members": 1456,
+      "members": 1498,
       "rank": null,
       "start_date": "2026-10-03T00:00:00+00:00",
       "end_date": "",
@@ -2143,10 +2176,11 @@
       "type": "TV",
       "rating": "",
       "studios": [
-        "Bandai Namco Filmworks",
-        "Studio Pierrot"
+        "Studio Pierrot",
+        "Studio Pierrot",
+        "Bandai Namco Filmworks"
       ],
-      "members": 1226,
+      "members": 1258,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -2227,7 +2261,9 @@
       "type": "TV",
       "rating": "",
       "studios": [
-        "Bandai Namco Pictures"
+        "Bandai Namco Pictures",
+        "Bandai Namco Pictures",
+        "Bandai"
       ],
       "members": 969,
       "rank": null,
@@ -2316,7 +2352,7 @@
         "Shin-Ei Animation",
         "NHK"
       ],
-      "members": 413,
+      "members": 428,
       "rank": null,
       "start_date": "2026-10-02T00:00:00+00:00",
       "end_date": "",
@@ -2402,7 +2438,7 @@
         "TV Asahi",
         "Lesprit"
       ],
-      "members": 285,
+      "members": 291,
       "rank": null,
       "start_date": "2026-10-03T00:00:00+00:00",
       "end_date": "",
@@ -2528,6 +2564,35 @@
       ]
     },
     {
+      "id": "217782",
+      "title": "My Girlfriend's Friend Mini Anime",
+      "title_japanese": "彼女の友達 ミニアニメ",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx217782-DV0vODQ68ZRk.png",
+      "score": null,
+      "episodes": 12,
+      "status": "current",
+      "synopsis": "A weekly mini anime shown with each episode of Kanojo no Tomodachi exclusively on the AT-X broadcast of the TV anime and online on OceanVeil.",
+      "genres": [
+        "Drama",
+        "Ecchi",
+        "Romance"
+      ],
+      "year": 2026,
+      "slug": "my-girlfriends-friend-mini-anime",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "WWWave"
+      ],
+      "members": 174,
+      "rank": null,
+      "start_date": "2026-10-05T00:00:00+00:00",
+      "end_date": "2026-12-21T00:00:00+00:00",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
       "id": "213298",
       "title": "Yuruyuru Zukan",
       "title_japanese": "ゆるゆる図鑑",
@@ -2546,7 +2611,7 @@
         "Gakken",
         "Imagica Infos"
       ],
-      "members": 149,
+      "members": 156,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -2608,35 +2673,6 @@
       "rank": null,
       "start_date": "2026-08-16T00:00:00+00:00",
       "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "217782",
-      "title": "My Girlfriend's Friend Mini Anime",
-      "title_japanese": "彼女の友達 ミニアニメ",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx217782-DV0vODQ68ZRk.png",
-      "score": null,
-      "episodes": 12,
-      "status": "current",
-      "synopsis": "A weekly mini anime shown with each episode of Kanojo no Tomodachi exclusively on the AT-X broadcast of the TV anime and online on OceanVeil.",
-      "genres": [
-        "Drama",
-        "Ecchi",
-        "Romance"
-      ],
-      "year": 2026,
-      "slug": "my-girlfriends-friend-mini-anime",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "WWWave"
-      ],
-      "members": 142,
-      "rank": null,
-      "start_date": "2026-10-05T00:00:00+00:00",
-      "end_date": "2026-12-21T00:00:00+00:00",
       "categories": [
         "airing"
       ]
@@ -2720,7 +2756,7 @@
         "Fanworks",
         "Fuji TV"
       ],
-      "members": 101,
+      "members": 104,
       "rank": null,
       "start_date": "2026-10-05T00:00:00+00:00",
       "end_date": "",
@@ -2748,7 +2784,7 @@
       "studios": [
         "IKIF+"
       ],
-      "members": 87,
+      "members": 92,
       "rank": null,
       "start_date": "2026-10-01T00:00:00+00:00",
       "end_date": "",
@@ -2816,6 +2852,33 @@
       ]
     },
     {
+      "id": "214968",
+      "title": "Nezumi-kun no Chokki (TV) 2nd Season",
+      "title_japanese": "ねずみくんのチョッキ (TV) 第2期",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx214968-rrPSP2nKF40C.jpg",
+      "score": null,
+      "episodes": 0,
+      "status": "current",
+      "synopsis": "Second season of Nezumi-kun no Chokki (TV)",
+      "genres": [
+        "Fantasy"
+      ],
+      "year": 2026,
+      "slug": "nezumi-kun-no-chokki-tv-2nd-season",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "Creadom8"
+      ],
+      "members": 58,
+      "rank": null,
+      "start_date": "2026-10-03T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
       "id": "217628",
       "title": "Wanmei Shijie 7",
       "title_japanese": "完美世界 第七季",
@@ -2840,33 +2903,6 @@
       "members": 56,
       "rank": null,
       "start_date": "2026-09-18T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "214968",
-      "title": "Nezumi-kun no Chokki (TV) 2nd Season",
-      "title_japanese": "ねずみくんのチョッキ (TV) 第2期",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx214968-rrPSP2nKF40C.jpg",
-      "score": null,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "Second season of Nezumi-kun no Chokki (TV)",
-      "genres": [
-        "Fantasy"
-      ],
-      "year": 2026,
-      "slug": "nezumi-kun-no-chokki-tv-2nd-season",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "Creadom8"
-      ],
-      "members": 55,
-      "rank": null,
-      "start_date": "2026-10-03T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -2922,7 +2958,7 @@
         "TV Tokyo",
         "OLM"
       ],
-      "members": 46,
+      "members": 48,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -3006,7 +3042,7 @@
       "studios": [
         "Studio Nanahoshi"
       ],
-      "members": 23,
+      "members": 27,
       "rank": null,
       "start_date": "2026-10-02T00:00:00+00:00",
       "end_date": "",
@@ -3034,7 +3070,7 @@
         "Shin-Ei Animation",
         "MOZU STUDIOS"
       ],
-      "members": 18,
+      "members": 23,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -3201,6 +3237,39 @@
         "top",
         "popular",
         "movies"
+      ]
+    },
+    {
+      "id": "110277",
+      "title": "Attack on Titan Final Season",
+      "title_japanese": "進撃の巨人 The Final Season",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx110277-sKUNXAsWMNFw.jpg",
+      "score": 8.7,
+      "episodes": 16,
+      "status": "finished",
+      "synopsis": "It’s been four years since the Scout Regiment reached the shoreline, and the world looks different now. Things are heating up as the fate of the Scout Regiment—and the people of Paradis—are determined at last. However, Eren is missing. Will he reappear before age-old tensions between Marleyans and Eldians result in the war of all wars? \n \n(Source: Crunchyroll)",
+      "genres": [
+        "Action",
+        "Drama",
+        "Fantasy",
+        "Mystery"
+      ],
+      "year": 2021,
+      "slug": "attack-on-titan-final-season",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "MAPPA",
+        "Pony Canyon",
+        "Kodansha"
+      ],
+      "members": 647584,
+      "rank": null,
+      "start_date": "2020-12-07T00:00:00+00:00",
+      "end_date": "2021-03-29T00:00:00+00:00",
+      "categories": [
+        "top",
+        "popular"
       ]
     },
     {
@@ -3999,7 +4068,7 @@
         "WHITE FOX",
         "Hakuhodo DY Music & Pictures"
       ],
-      "members": 148227,
+      "members": 148559,
       "rank": null,
       "start_date": "2026-04-08T00:00:00+00:00",
       "end_date": "2026-09-30T00:00:00+00:00",
@@ -4341,7 +4410,7 @@
         "Warner Bros. Japan",
         "david production"
       ],
-      "members": 81376,
+      "members": 81510,
       "rank": null,
       "start_date": "2026-03-19T00:00:00+00:00",
       "end_date": "2026-03-19T00:00:00+00:00",
@@ -4618,7 +4687,7 @@
         "Warner Bros. Japan",
         "Bandai Namco Pictures"
       ],
-      "members": 6621,
+      "members": 6637,
       "rank": null,
       "start_date": "2026-02-13T00:00:00+00:00",
       "end_date": "2026-02-13T00:00:00+00:00",
@@ -5038,38 +5107,6 @@
       "rank": null,
       "start_date": "2017-04-01T00:00:00+00:00",
       "end_date": "2017-09-30T00:00:00+00:00",
-      "categories": [
-        "popular"
-      ]
-    },
-    {
-      "id": "110277",
-      "title": "Attack on Titan Final Season",
-      "title_japanese": "進撃の巨人 The Final Season",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx110277-sKUNXAsWMNFw.jpg",
-      "score": 8.7,
-      "episodes": 16,
-      "status": "finished",
-      "synopsis": "It’s been four years since the Scout Regiment reached the shoreline, and the world looks different now. Things are heating up as the fate of the Scout Regiment—and the people of Paradis—are determined at last. However, Eren is missing. Will he reappear before age-old tensions between Marleyans and Eldians result in the war of all wars? \n \n(Source: Crunchyroll)",
-      "genres": [
-        "Action",
-        "Drama",
-        "Fantasy",
-        "Mystery"
-      ],
-      "year": 2021,
-      "slug": "attack-on-titan-final-season",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "MAPPA",
-        "Pony Canyon",
-        "Kodansha"
-      ],
-      "members": 647584,
-      "rank": null,
-      "start_date": "2020-12-07T00:00:00+00:00",
-      "end_date": "2021-03-29T00:00:00+00:00",
       "categories": [
         "popular"
       ]
@@ -6031,7 +6068,7 @@
         "CD PROJEKT RED",
         "Netflix"
       ],
-      "members": 74032,
+      "members": 74580,
       "rank": null,
       "start_date": "2026-10-20T00:00:00+00:00",
       "end_date": "",
@@ -6062,7 +6099,7 @@
       "studios": [
         "Science SARU"
       ],
-      "members": 52518,
+      "members": 52623,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -6182,7 +6219,7 @@
         "Toho",
         "MADHOUSE"
       ],
-      "members": 45550,
+      "members": 45688,
       "rank": null,
       "start_date": "2027-10-01T00:00:00+00:00",
       "end_date": "",
@@ -6306,7 +6343,7 @@
       "studios": [
         "C2C"
       ],
-      "members": 35780,
+      "members": 35995,
       "rank": null,
       "start_date": "2027-01-10T00:00:00+00:00",
       "end_date": "",
@@ -6337,7 +6374,7 @@
         "CloverWorks",
         "Aniplex"
       ],
-      "members": 31642,
+      "members": 31774,
       "rank": null,
       "start_date": "2026-10-16T00:00:00+00:00",
       "end_date": "2026-10-16T00:00:00+00:00",
@@ -6368,7 +6405,7 @@
         "CyberAgent",
         "Cypic"
       ],
-      "members": 30467,
+      "members": 30533,
       "rank": null,
       "start_date": "2027-04-01T00:00:00+00:00",
       "end_date": "",
@@ -6397,7 +6434,7 @@
         "Toho",
         "TOHO animation STUDIO"
       ],
-      "members": 28957,
+      "members": 29123,
       "rank": null,
       "start_date": "2026-12-11T00:00:00+00:00",
       "end_date": "2026-12-11T00:00:00+00:00",
@@ -6520,7 +6557,7 @@
         "Hakuhodo DY Music & Pictures",
         "Toho"
       ],
-      "members": 25812,
+      "members": 26158,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -6548,7 +6585,7 @@
       "studios": [
         "TMS Entertainment"
       ],
-      "members": 25751,
+      "members": 25935,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -6589,7 +6626,7 @@
       "id": "172192",
       "title": "A Returner's Magic Should be Special Season 2",
       "title_japanese": "帰還者の魔法は特別です 第2期",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx172192-L4pRzycNZOOF.jpg",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx172192-W7P5xEUaxF3y.jpg",
       "score": null,
       "episodes": 0,
       "status": "upcoming",
@@ -6680,6 +6717,38 @@
       ]
     },
     {
+      "id": "213457",
+      "title": "Fool Night",
+      "title_japanese": "フールナイト",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx213457-gN5p1GZjK3zi.jpg",
+      "score": null,
+      "episodes": 0,
+      "status": "upcoming",
+      "synopsis": "The earth of the distant future is covered in thick clouds, and the sun no longer shines. Plants wither, and oxygen is thin. To fight extinction, humankind has developed a technology that turns humans into plants, providing a small amount of oxygen. Is this process sustainable? Is it ethical? Toshiro Kamiya must consider these questions as he’s faced with a difficult choice—save his family or save himself.\n  \nKamiya is at the end of his rope. His mother is ill, and his job barely pays for her me",
+      "genres": [
+        "Drama",
+        "Psychological",
+        "Sci-Fi",
+        "Thriller"
+      ],
+      "year": 2026,
+      "slug": "fool-night",
+      "type": "ONA",
+      "rating": "",
+      "studios": [
+        "Shaft",
+        "Sunrise",
+        "Netflix"
+      ],
+      "members": 21472,
+      "rank": null,
+      "start_date": "2026-11-26T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "upcoming"
+      ]
+    },
+    {
       "id": "174871",
       "title": "Haikyuu!!: VS Chiisana Kyojin",
       "title_japanese": "ハイキュー!! VS 小さな巨人",
@@ -6705,38 +6774,6 @@
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "2027-01-01T00:00:00+00:00",
-      "categories": [
-        "upcoming"
-      ]
-    },
-    {
-      "id": "213457",
-      "title": "Fool Night",
-      "title_japanese": "フールナイト",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx213457-gN5p1GZjK3zi.jpg",
-      "score": null,
-      "episodes": 0,
-      "status": "upcoming",
-      "synopsis": "The earth of the distant future is covered in thick clouds, and the sun no longer shines. Plants wither, and oxygen is thin. To fight extinction, humankind has developed a technology that turns humans into plants, providing a small amount of oxygen. Is this process sustainable? Is it ethical? Toshiro Kamiya must consider these questions as he’s faced with a difficult choice—save his family or save himself.\n  \nKamiya is at the end of his rope. His mother is ill, and his job barely pays for her me",
-      "genres": [
-        "Drama",
-        "Psychological",
-        "Sci-Fi",
-        "Thriller"
-      ],
-      "year": 2026,
-      "slug": "fool-night",
-      "type": "ONA",
-      "rating": "",
-      "studios": [
-        "Shaft",
-        "Sunrise",
-        "Netflix"
-      ],
-      "members": 21211,
-      "rank": null,
-      "start_date": "2026-11-26T00:00:00+00:00",
-      "end_date": "",
       "categories": [
         "upcoming"
       ]
@@ -6793,7 +6830,7 @@
       "studios": [
         "Qzil.la"
       ],
-      "members": 17710,
+      "members": 17829,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -6823,7 +6860,7 @@
         "KADOKAWA",
         "Kinema Citrus"
       ],
-      "members": 17086,
+      "members": 17110,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -6880,7 +6917,7 @@
       "type": "TV",
       "rating": "",
       "studios": [],
-      "members": 15958,
+      "members": 16117,
       "rank": null,
       "start_date": "2027-07-01T00:00:00+00:00",
       "end_date": "",
@@ -6941,7 +6978,7 @@
         "BUG FILMS",
         "Kodansha"
       ],
-      "members": 35877,
+      "members": 35974,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -6973,7 +7010,7 @@
         "ufotable",
         "Shueisha"
       ],
-      "members": 33905,
+      "members": 34008,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7003,7 +7040,7 @@
       "studios": [
         "MAPPA"
       ],
-      "members": 30004,
+      "members": 30046,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7063,7 +7100,7 @@
         "KADOKAWA",
         "Shueisha"
       ],
-      "members": 29443,
+      "members": 29487,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7092,7 +7129,7 @@
       "studios": [
         "bones film"
       ],
-      "members": 27790,
+      "members": 27838,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7121,7 +7158,7 @@
       "studios": [
         "MAPPA"
       ],
-      "members": 25462,
+      "members": 25530,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7150,7 +7187,7 @@
         "Aniplex",
         "A-1 Pictures"
       ],
-      "members": 24030,
+      "members": 24091,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7179,7 +7216,7 @@
         "Aniplex",
         "A-1 Pictures"
       ],
-      "members": 23470,
+      "members": 23489,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7235,7 +7272,7 @@
       "type": "TV",
       "rating": "",
       "studios": [],
-      "members": 21934,
+      "members": 21978,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7320,7 +7357,7 @@
         "Studio KAI",
         "KADOKAWA"
       ],
-      "members": 18512,
+      "members": 18551,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7348,7 +7385,7 @@
       "type": "Movie",
       "rating": "",
       "studios": [],
-      "members": 18277,
+      "members": 18292,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7377,7 +7414,7 @@
       "type": "TV",
       "rating": "",
       "studios": [],
-      "members": 18262,
+      "members": 18285,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7437,7 +7474,7 @@
       "studios": [
         "KADOKAWA"
       ],
-      "members": 17591,
+      "members": 17617,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7467,7 +7504,7 @@
         "8-bit",
         "Kodansha"
       ],
-      "members": 16181,
+      "members": 16218,
       "rank": null,
       "start_date": "",
       "end_date": "",
