@@ -1,11 +1,11 @@
 {
-  "updated": "2026-10-11T00:05:22Z",
+  "updated": "2026-10-11T04:38:55Z",
   "total": 304,
   "source": "anilist",
   "categories": {
     "airing": 118,
     "top": 50,
-    "popular": 50,
+    "popular": 40,
     "upcoming": 50,
     "movies": 50
   },
@@ -3554,8 +3554,7 @@
       "start_date": "2011-10-02T00:00:00+00:00",
       "end_date": "2014-09-24T00:00:00+00:00",
       "categories": [
-        "top",
-        "popular"
+        "top"
       ]
     },
     {
@@ -3583,13 +3582,12 @@
         "Funimation",
         "Fuji TV"
       ],
-      "members": 758271,
+      "members": 758608,
       "rank": null,
       "start_date": "1999-10-20T00:00:00+00:00",
       "end_date": "",
       "categories": [
-        "top",
-        "popular"
+        "top"
       ]
     },
     {
@@ -3621,8 +3619,7 @@
       "start_date": "2009-04-05T00:00:00+00:00",
       "end_date": "2010-07-04T00:00:00+00:00",
       "categories": [
-        "top",
-        "popular"
+        "top"
       ]
     },
     {
@@ -3654,7 +3651,6 @@
       "end_date": "2016-09-17T00:00:00+00:00",
       "categories": [
         "top",
-        "popular",
         "movies"
       ]
     },
@@ -3687,8 +3683,7 @@
       "start_date": "2020-12-07T00:00:00+00:00",
       "end_date": "2021-03-29T00:00:00+00:00",
       "categories": [
-        "top",
-        "popular"
+        "top"
       ]
     },
     {
@@ -3720,8 +3715,7 @@
       "start_date": "2019-04-29T00:00:00+00:00",
       "end_date": "2019-07-01T00:00:00+00:00",
       "categories": [
-        "top",
-        "popular"
+        "top"
       ]
     },
     {
@@ -3753,8 +3747,7 @@
       "start_date": "2011-04-06T00:00:00+00:00",
       "end_date": "2011-09-14T00:00:00+00:00",
       "categories": [
-        "top",
-        "popular"
+        "top"
       ]
     },
     {
@@ -3785,8 +3778,7 @@
       "start_date": "2019-07-08T00:00:00+00:00",
       "end_date": "2019-12-30T00:00:00+00:00",
       "categories": [
-        "top",
-        "popular"
+        "top"
       ]
     },
     {
@@ -3941,7 +3933,7 @@
         "VAP",
         "Viz Media"
       ],
-      "members": 345800,
+      "members": 345996,
       "rank": null,
       "start_date": "2004-04-07T00:00:00+00:00",
       "end_date": "2005-09-28T00:00:00+00:00",
@@ -4518,7 +4510,7 @@
         "VAP",
         "NBCUniversal Entertainment Japan"
       ],
-      "members": 146333,
+      "members": 146425,
       "rank": null,
       "start_date": "2000-10-04T00:00:00+00:00",
       "end_date": "2002-03-27T00:00:00+00:00",
@@ -4734,7 +4726,7 @@
         "T.P.O",
         "K-Factory"
       ],
-      "members": 85899,
+      "members": 85940,
       "rank": null,
       "start_date": "1988-01-08T00:00:00+00:00",
       "end_date": "1997-03-17T00:00:00+00:00",
@@ -5433,38 +5425,6 @@
       "end_date": "2012-12-23T00:00:00+00:00",
       "categories": [
         "popular"
-      ]
-    },
-    {
-      "id": "21519",
-      "title": "Your Name.",
-      "title_japanese": "君の名は。",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21519-SUo3ZQuCbYhJ.png",
-      "score": 8.5,
-      "episodes": 1,
-      "status": "finished",
-      "synopsis": "Mitsuha Miyamizu, a high school girl, yearns to live the life of a boy in the bustling city of Tokyo—a dream that stands in stark contrast to her present life in the countryside. Meanwhile in the city, Taki Tachibana lives a busy life as a high school student while juggling his part-time job and hopes for a future in architecture. \n \nOne day, Mitsuha awakens in a room that is not her own and suddenly finds herself living the dream life in Tokyo—but in Taki's body! Elsewhere, Taki finds himself l",
-      "genres": [
-        "Drama",
-        "Romance",
-        "Supernatural"
-      ],
-      "year": 2016,
-      "slug": "your-name",
-      "type": "Movie",
-      "rating": "",
-      "studios": [
-        "CoMix Wave",
-        "Kadokawa Pictures Japan",
-        "Funimation"
-      ],
-      "members": 720775,
-      "rank": null,
-      "start_date": "2016-08-26T00:00:00+00:00",
-      "end_date": "2016-08-26T00:00:00+00:00",
-      "categories": [
-        "popular",
-        "movies"
       ]
     },
     {
@@ -6329,40 +6289,6 @@
       "end_date": "2016-03-17T00:00:00+00:00",
       "categories": [
         "popular"
-      ]
-    },
-    {
-      "id": "112151",
-      "title": "Demon Slayer -Kimetsu no Yaiba- The Movie: Mugen Train",
-      "title_japanese": "鬼滅の刃 無限列車編",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx112151-1qlQwPB1RrJe.png",
-      "score": 8.4,
-      "episodes": 1,
-      "status": "finished",
-      "synopsis": "This Demon Slayer movie sees Tanjiro Kamado and friends from the Demon Slayer corps board the Infinity Train on a new mission to investigate a mysterious series of disappearances, perpetrated by a demon who has been tormenting people and killing the demon slayers who oppose it.",
-      "genres": [
-        "Action",
-        "Adventure",
-        "Drama",
-        "Fantasy",
-        "Mystery"
-      ],
-      "year": 2020,
-      "slug": "demon-slayer-kimetsu-no-yaiba-the-movie-mugen-train",
-      "type": "Movie",
-      "rating": "",
-      "studios": [
-        "ufotable",
-        "Aniplex",
-        "Shueisha"
-      ],
-      "members": 512803,
-      "rank": null,
-      "start_date": "2020-10-16T00:00:00+00:00",
-      "end_date": "2020-10-16T00:00:00+00:00",
-      "categories": [
-        "popular",
-        "movies"
       ]
     },
     {
@@ -7929,24 +7855,24 @@
     },
     {
       "id": "162561",
-      "title": "NARUTO (2026)",
-      "title_japanese": "NARUTO -ナルト- (2026)",
+      "title": "NARUTO×NINKU",
+      "title_japanese": "NARUTO-ナルト-×NINKU-忍空-",
       "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx162561-Uk4eZAwcmcWk.jpg",
       "score": null,
       "episodes": 4,
       "status": "upcoming",
-      "synopsis": "The official website for the NARUTO anime franchise announced a new anime project: to air four \"brand-new\" episodes to celebrate the TV anime's 20th anniversary back in 2022.   (Source: Anime News Network, edited)   \nNote: Title, format, and relations are provisional and will be updated when more info is announced.",
+      "synopsis": "\"I'm heading out on a mission for the ages, ya hear me?!\"\n  \nTeam 7 members Naruto, Sasuke, and Sakura are given a mission by Kakashi.\nSince Kakashi cannot participate himself, Naruto is appointed acting leader.\nAs a result of this decision, Naruto is fully motivated to make the mission a success.\nHowever, on the way, Team 7 finds themselves lost in another world.  \nWhat appears before the bewildered trio is a boy with a face resembling a frog's, named Fūsuke.\nWhat awaits them in this strange ne",
       "genres": [
         "Action",
         "Adventure",
         "Comedy"
       ],
       "year": null,
-      "slug": "naruto-2026",
+      "slug": "naruto×ninku",
       "type": "TV",
       "rating": "",
       "studios": [
-        "Studio Pierrot"
+        "PIERROT FILMS"
       ],
       "members": 15056,
       "rank": null,
@@ -7954,6 +7880,70 @@
       "end_date": "",
       "categories": [
         "upcoming"
+      ]
+    },
+    {
+      "id": "21519",
+      "title": "Your Name.",
+      "title_japanese": "君の名は。",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx21519-SUo3ZQuCbYhJ.png",
+      "score": 8.5,
+      "episodes": 1,
+      "status": "finished",
+      "synopsis": "Mitsuha Miyamizu, a high school girl, yearns to live the life of a boy in the bustling city of Tokyo—a dream that stands in stark contrast to her present life in the countryside. Meanwhile in the city, Taki Tachibana lives a busy life as a high school student while juggling his part-time job and hopes for a future in architecture. \n \nOne day, Mitsuha awakens in a room that is not her own and suddenly finds herself living the dream life in Tokyo—but in Taki's body! Elsewhere, Taki finds himself l",
+      "genres": [
+        "Drama",
+        "Romance",
+        "Supernatural"
+      ],
+      "year": 2016,
+      "slug": "your-name",
+      "type": "Movie",
+      "rating": "",
+      "studios": [
+        "CoMix Wave",
+        "Kadokawa Pictures Japan",
+        "Funimation"
+      ],
+      "members": 720775,
+      "rank": null,
+      "start_date": "2016-08-26T00:00:00+00:00",
+      "end_date": "2016-08-26T00:00:00+00:00",
+      "categories": [
+        "movies"
+      ]
+    },
+    {
+      "id": "112151",
+      "title": "Demon Slayer -Kimetsu no Yaiba- The Movie: Mugen Train",
+      "title_japanese": "鬼滅の刃 無限列車編",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx112151-1qlQwPB1RrJe.png",
+      "score": 8.4,
+      "episodes": 1,
+      "status": "finished",
+      "synopsis": "This Demon Slayer movie sees Tanjiro Kamado and friends from the Demon Slayer corps board the Infinity Train on a new mission to investigate a mysterious series of disappearances, perpetrated by a demon who has been tormenting people and killing the demon slayers who oppose it.",
+      "genres": [
+        "Action",
+        "Adventure",
+        "Drama",
+        "Fantasy",
+        "Mystery"
+      ],
+      "year": 2020,
+      "slug": "demon-slayer-kimetsu-no-yaiba-the-movie-mugen-train",
+      "type": "Movie",
+      "rating": "",
+      "studios": [
+        "ufotable",
+        "Aniplex",
+        "Shueisha"
+      ],
+      "members": 512803,
+      "rank": null,
+      "start_date": "2020-10-16T00:00:00+00:00",
+      "end_date": "2020-10-16T00:00:00+00:00",
+      "categories": [
+        "movies"
       ]
     },
     {
@@ -7980,7 +7970,7 @@
         "Studio Hibari",
         "Walt Disney Studios"
       ],
-      "members": 484423,
+      "members": 484620,
       "rank": null,
       "start_date": "2001-07-20T00:00:00+00:00",
       "end_date": "2001-07-20T00:00:00+00:00",
@@ -8073,7 +8063,7 @@
         "d-rights",
         "Tokuma Shoten"
       ],
-      "members": 366505,
+      "members": 366654,
       "rank": null,
       "start_date": "2004-11-20T00:00:00+00:00",
       "end_date": "2004-11-20T00:00:00+00:00",
@@ -8137,7 +8127,7 @@
         "Tokuma Shoten",
         "GKIDS"
       ],
-      "members": 304637,
+      "members": 304766,
       "rank": null,
       "start_date": "1997-07-12T00:00:00+00:00",
       "end_date": "1997-07-12T00:00:00+00:00",
@@ -8169,7 +8159,7 @@
         "Studio Fantasia",
         "Walt Disney Studios"
       ],
-      "members": 282772,
+      "members": 282884,
       "rank": null,
       "start_date": "1988-04-16T00:00:00+00:00",
       "end_date": "1988-04-16T00:00:00+00:00",
@@ -8233,7 +8223,7 @@
         "Production I.G",
         "TV Tokyo"
       ],
-      "members": 255732,
+      "members": 255825,
       "rank": null,
       "start_date": "1997-07-19T00:00:00+00:00",
       "end_date": "1997-07-19T00:00:00+00:00",
@@ -8263,7 +8253,7 @@
         "CoMix Wave",
         "GKIDS"
       ],
-      "members": 252011,
+      "members": 252108,
       "rank": null,
       "start_date": "2007-02-11T00:00:00+00:00",
       "end_date": "2007-03-03T00:00:00+00:00",
@@ -8326,7 +8316,7 @@
         "Rex Entertainment ",
         "ONIRO"
       ],
-      "members": 247612,
+      "members": 247729,
       "rank": null,
       "start_date": "1998-02-28T00:00:00+00:00",
       "end_date": "1998-02-28T00:00:00+00:00",
@@ -8392,7 +8382,7 @@
         "Funimation",
         "Mainichi Broadcasting System"
       ],
-      "members": 233622,
+      "members": 233717,
       "rank": null,
       "start_date": "1988-07-16T00:00:00+00:00",
       "end_date": "1988-07-16T00:00:00+00:00",
@@ -8483,7 +8473,7 @@
         "Studio Ghibli",
         "Sentai Filmworks"
       ],
-      "members": 204522,
+      "members": 204618,
       "rank": null,
       "start_date": "1988-04-15T00:00:00+00:00",
       "end_date": "1988-04-15T00:00:00+00:00",
@@ -8769,7 +8759,7 @@
         "Studio Hibari",
         "Walt Disney Studios"
       ],
-      "members": 188126,
+      "members": 188200,
       "rank": null,
       "start_date": "1989-07-29T00:00:00+00:00",
       "end_date": "1989-07-29T00:00:00+00:00",
@@ -8800,7 +8790,7 @@
         "Bandai Visual",
         "Kodansha"
       ],
-      "members": 178311,
+      "members": 178402,
       "rank": null,
       "start_date": "1995-11-18T00:00:00+00:00",
       "end_date": "1995-11-18T00:00:00+00:00",
@@ -9277,7 +9267,7 @@
         "Tokuma Shoten",
         "Walt Disney Studios"
       ],
-      "members": 134128,
+      "members": 134174,
       "rank": null,
       "start_date": "1986-08-02T00:00:00+00:00",
       "end_date": "1986-08-02T00:00:00+00:00",
