@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-12T03:28:28Z",
+  "updated": "2026-10-12T14:01:32Z",
   "total": 308,
   "source": "anilist",
   "categories": {
@@ -607,6 +607,37 @@
       ]
     },
     {
+      "id": "189123",
+      "title": "Blue Box Season 2",
+      "title_japanese": "アオのハコ Season２",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx189123-0secXELIhkIW.jpg",
+      "score": 8.0,
+      "episodes": 12,
+      "status": "current",
+      "synopsis": "The second season of Ao no Hako.\n",
+      "genres": [
+        "Romance",
+        "Slice of Life",
+        "Sports"
+      ],
+      "year": 2026,
+      "slug": "blue-box-season-2",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "Electric Circus",
+        "TMS Entertainment",
+        "Shueisha"
+      ],
+      "members": 45937,
+      "rank": null,
+      "start_date": "2026-10-04T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
       "id": "159042",
       "title": "Reincarnated as a Sword Season 2",
       "title_japanese": "転生したら剣でした 第2期",
@@ -660,37 +691,6 @@
       "rank": 246,
       "start_date": "2026-07-04T00:00:00+00:00",
       "end_date": null,
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "189123",
-      "title": "Blue Box Season 2",
-      "title_japanese": "アオのハコ Season２",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx189123-0secXELIhkIW.jpg",
-      "score": 8.0,
-      "episodes": 12,
-      "status": "current",
-      "synopsis": "The second season of Ao no Hako.\n",
-      "genres": [
-        "Romance",
-        "Slice of Life",
-        "Sports"
-      ],
-      "year": 2026,
-      "slug": "blue-box-season-2",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "Electric Circus",
-        "TMS Entertainment",
-        "Shueisha"
-      ],
-      "members": 45032,
-      "rank": null,
-      "start_date": "2026-10-04T00:00:00+00:00",
-      "end_date": "",
       "categories": [
         "airing"
       ]
@@ -868,9 +868,38 @@
         "Aniplex",
         "Kodansha"
       ],
-      "members": 33234,
+      "members": 34706,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "205909",
+      "title": "Firefly Wedding",
+      "title_japanese": "ホタルの嫁入り",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx205909-DM0fAzNQulod.jpg",
+      "score": 7.5,
+      "episodes": 12,
+      "status": "current",
+      "synopsis": "On the surface, Satoko has it all—she’s beautiful, the daughter of a nobleman, and at a prime age for marriage. Unfortunately, she is also quite ill and only has a short time left to live. Before she can secure a marriage that will redeem her worth in her family’s eyes, she finds herself the target of the mysterious assassin Shinpei, and her plans are put in jeopardy. In order to save herself, she makes a desperate proposal—of marriage! When it comes to love, however, Shinpei takes “until death ",
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
+      "year": 2026,
+      "slug": "firefly-wedding",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "david production",
+        "Fuji TV"
+      ],
+      "members": 32360,
+      "rank": null,
+      "start_date": "2026-10-09T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -903,35 +932,6 @@
       "members": 31406,
       "rank": null,
       "start_date": "2026-10-03T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "205909",
-      "title": "Firefly Wedding",
-      "title_japanese": "ホタルの嫁入り",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx205909-DM0fAzNQulod.jpg",
-      "score": 7.5,
-      "episodes": 12,
-      "status": "current",
-      "synopsis": "On the surface, Satoko has it all—she’s beautiful, the daughter of a nobleman, and at a prime age for marriage. Unfortunately, she is also quite ill and only has a short time left to live. Before she can secure a marriage that will redeem her worth in her family’s eyes, she finds herself the target of the mysterious assassin Shinpei, and her plans are put in jeopardy. In order to save herself, she makes a desperate proposal—of marriage! When it comes to love, however, Shinpei takes “until death ",
-      "genres": [
-        "Drama",
-        "Romance"
-      ],
-      "year": 2026,
-      "slug": "firefly-wedding",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "david production",
-        "Fuji TV"
-      ],
-      "members": 30554,
-      "rank": null,
-      "start_date": "2026-10-09T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -991,7 +991,7 @@
         "Aniplex",
         "Arvo Animation"
       ],
-      "members": 27688,
+      "members": 28071,
       "rank": null,
       "start_date": "2026-10-08T00:00:00+00:00",
       "end_date": "",
@@ -1055,7 +1055,7 @@
         "Shouchiku",
         "Kodansha"
       ],
-      "members": 24665,
+      "members": 25784,
       "rank": null,
       "start_date": "2026-10-07T00:00:00+00:00",
       "end_date": "",
@@ -1087,7 +1087,7 @@
         "KADOKAWA",
         "ENGI"
       ],
-      "members": 24089,
+      "members": 24238,
       "rank": null,
       "start_date": "2026-10-07T00:00:00+00:00",
       "end_date": "",
@@ -1116,9 +1116,41 @@
         "Shogakukan-Shueisha Productions",
         "Shogakukan"
       ],
-      "members": 22246,
+      "members": 22886,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "208025",
+      "title": "I'm Dating a Dark Summoner",
+      "title_japanese": "ダークサモナーとデキている",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx208025-JKvqWNr8rz8l.jpg",
+      "score": 6.8,
+      "episodes": 12,
+      "status": "current",
+      "synopsis": "Amona’s a dark summoner with demonic powers. Roni’s a devout priest who’s way too uptight. By all rights, they should hate each other. Instead, they end up fast-tracking their enemies-to-lovers arc with a one-night stand that somehow insists on becoming a recurring event. Now they must hide their situationship from the rest of the party while denying their growing attraction to one another, all while dealing with an imp who’s far too invested in their love life.\n  \n(Source: HIDIVE)",
+      "genres": [
+        "Comedy",
+        "Ecchi",
+        "Fantasy",
+        "Romance"
+      ],
+      "year": 2026,
+      "slug": "im-dating-a-dark-summoner",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "WWWave",
+        "AtoriE",
+        "Nyan Pollution-ω-"
+      ],
+      "members": 20854,
+      "rank": null,
+      "start_date": "2026-10-05T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1153,32 +1185,33 @@
       ]
     },
     {
-      "id": "208025",
-      "title": "I'm Dating a Dark Summoner",
-      "title_japanese": "ダークサモナーとデキている",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx208025-JKvqWNr8rz8l.jpg",
+      "id": "186541",
+      "title": "Reborn as a Space Mercenary: I Woke Up Piloting the Strongest Starship!",
+      "title_japanese": "目覚めたら最強装備と宇宙船持ちだったので、一戸建て目指して傭兵として自由に生きたい",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx186541-caYpLsLmbCh7.jpg",
       "score": 6.8,
-      "episodes": 12,
+      "episodes": 0,
       "status": "current",
-      "synopsis": "Amona’s a dark summoner with demonic powers. Roni’s a devout priest who’s way too uptight. By all rights, they should hate each other. Instead, they end up fast-tracking their enemies-to-lovers arc with a one-night stand that somehow insists on becoming a recurring event. Now they must hide their situationship from the rest of the party while denying their growing attraction to one another, all while dealing with an imp who’s far too invested in their love life.\n  \n(Source: HIDIVE)",
+      "synopsis": "Sato Takahiro was an ordinary office worker and hobbyist gamer until the day he woke up on a spaceship–one that strangely resembled a craft from a favorite space-shooter game. With a decked-out ship, a crew full of babes, and a fantastic universe to explore, he's going to make the most of his good luck and create the life he's always dreamed of!  \n\n(Source: Seven Seas Entertainment)",
       "genres": [
+        "Action",
         "Comedy",
-        "Ecchi",
-        "Fantasy",
+        "Drama",
+        "Mecha",
         "Romance"
       ],
       "year": 2026,
-      "slug": "im-dating-a-dark-summoner",
+      "slug": "reborn-as-a-space-mercenary-i-woke-up-piloting-the-strongest-starship",
       "type": "TV",
       "rating": "",
       "studios": [
-        "WWWave",
-        "AtoriE",
-        "Nyan Pollution-ω-"
+        "studio A-CAT",
+        "Aniplex",
+        "KADOKAWA"
       ],
-      "members": 19752,
+      "members": 20220,
       "rank": null,
-      "start_date": "2026-10-05T00:00:00+00:00",
+      "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1206,7 +1239,7 @@
         "KADOKAWA",
         "Futabasha"
       ],
-      "members": 19421,
+      "members": 19890,
       "rank": null,
       "start_date": "2026-10-05T00:00:00+00:00",
       "end_date": "",
@@ -1215,33 +1248,30 @@
       ]
     },
     {
-      "id": "186541",
-      "title": "Reborn as a Space Mercenary: I Woke Up Piloting the Strongest Starship!",
-      "title_japanese": "目覚めたら最強装備と宇宙船持ちだったので、一戸建て目指して傭兵として自由に生きたい",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx186541-caYpLsLmbCh7.jpg",
-      "score": 6.8,
+      "id": "206814",
+      "title": "Dragon Ball Super: Beerus",
+      "title_japanese": "ドラゴンボール超 ビルス",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx206814-PVVzRbf1IQpe.jpg",
+      "score": 8.0,
       "episodes": 0,
       "status": "current",
-      "synopsis": "Sato Takahiro was an ordinary office worker and hobbyist gamer until the day he woke up on a spaceship–one that strangely resembled a craft from a favorite space-shooter game. With a decked-out ship, a crew full of babes, and a fantastic universe to explore, he's going to make the most of his good luck and create the life he's always dreamed of!  \n\n(Source: Seven Seas Entertainment)",
+      "synopsis": "Several years have passed since the fierce battle against Majin Buu, and Earth has finally regained a brief moment of peace. At the same time, Beerus, the God of Destruction, awakens from his long, deep sleep. \nEven Kai and Supreme Kai, aware of Beerus's overwhelming power to destroy entire planets, watch his awakening with great fear… Meanwhile, Beerus hears rumors of a Saiyan who defeated Frieza—and suddenly appears before Goku. \nTargeted by Beerus, the strongest being in the universe, Earth i",
       "genres": [
         "Action",
-        "Comedy",
-        "Drama",
-        "Mecha",
-        "Romance"
+        "Adventure",
+        "Sci-Fi"
       ],
       "year": 2026,
-      "slug": "reborn-as-a-space-mercenary-i-woke-up-piloting-the-strongest-starship",
+      "slug": "dragon-ball-super-beerus",
       "type": "TV",
       "rating": "",
       "studios": [
-        "studio A-CAT",
-        "Aniplex",
-        "KADOKAWA"
+        "Toei Animation",
+        "Shueisha"
       ],
-      "members": 18976,
+      "members": 18969,
       "rank": null,
-      "start_date": "2026-10-04T00:00:00+00:00",
+      "start_date": "2026-10-11T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1269,7 +1299,7 @@
         "Mainichi Broadcasting System",
         "SANKYO"
       ],
-      "members": 18141,
+      "members": 18643,
       "rank": null,
       "start_date": "2026-10-06T00:00:00+00:00",
       "end_date": "",
@@ -1360,39 +1390,9 @@
         "Shueisha",
         "REMOW"
       ],
-      "members": 17386,
+      "members": 17725,
       "rank": null,
       "start_date": "2026-10-05T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "212503",
-      "title": "The Iceblade Sorcerer Shall Rule the World II",
-      "title_japanese": "冰剣の魔術師が世界を統べるⅡ",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx212503-sXBpRZr96c4e.jpg",
-      "score": 6.7,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "Once dismissed as the sole ordinary student at the elite Arnold Academy of Sorcery, Ray White—secretly, the Iceblade Sorcerer—has finally earned his place. With a new school year comes a new challenge: The Magicks War, a grand competition pitting teams from rival schools against each other. But an ominous shadow looms over Ray and his friends as the other grand sorcerers plot their next moves.\n  \n(Source: Crunchyroll)",
-      "genres": [
-        "Action",
-        "Adventure",
-        "Fantasy"
-      ],
-      "year": 2026,
-      "slug": "the-iceblade-sorcerer-shall-rule-the-world-ii",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "Zero-G",
-        "TBS"
-      ],
-      "members": 16285,
-      "rank": null,
-      "start_date": "2026-10-09T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1421,7 +1421,98 @@
         "TV Asahi",
         "TV Asahi Music"
       ],
-      "members": 16226,
+      "members": 17168,
+      "rank": null,
+      "start_date": "2026-10-04T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "212503",
+      "title": "The Iceblade Sorcerer Shall Rule the World II",
+      "title_japanese": "冰剣の魔術師が世界を統べるⅡ",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx212503-sXBpRZr96c4e.jpg",
+      "score": 6.7,
+      "episodes": 0,
+      "status": "current",
+      "synopsis": "Once dismissed as the sole ordinary student at the elite Arnold Academy of Sorcery, Ray White—secretly, the Iceblade Sorcerer—has finally earned his place. With a new school year comes a new challenge: The Magicks War, a grand competition pitting teams from rival schools against each other. But an ominous shadow looms over Ray and his friends as the other grand sorcerers plot their next moves.\n  \n(Source: Crunchyroll)",
+      "genres": [
+        "Action",
+        "Adventure",
+        "Fantasy"
+      ],
+      "year": 2026,
+      "slug": "the-iceblade-sorcerer-shall-rule-the-world-ii",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "Zero-G",
+        "TBS"
+      ],
+      "members": 16751,
+      "rank": null,
+      "start_date": "2026-10-09T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "209502",
+      "title": "The Cold Sato-san is Only Sweet to Me",
+      "title_japanese": "塩対応の佐藤さんが俺にだけ甘い",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209502-C81oN8M4Smlo.jpg",
+      "score": 6.8,
+      "episodes": 12,
+      "status": "current",
+      "synopsis": "Sato-san is the unattainable flower of the class. She is always cold and curt with classmates, but only I know she's actually very cute when she smiles, even if she's not much of a photographer.\n  \nOshio-kun is friendly and lively, but only I know he works at his family's cafe after school. He does a great job with the cafe's SNS account, and his mischievous smile makes my heart skip a beat!\n  \nInnocent and sweet, but sometimes frustrating, this is a 120%-pure fluffy story about two people falli",
+      "genres": [
+        "Comedy",
+        "Romance"
+      ],
+      "year": 2026,
+      "slug": "the-cold-sato-san-is-only-sweet-to-me",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "Tezuka Productions",
+        "Shouchiku",
+        "Good Smile Company"
+      ],
+      "members": 15989,
+      "rank": null,
+      "start_date": "2026-10-06T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "209872",
+      "title": "Ranma1/2 (2024) Season 3",
+      "title_japanese": "らんま1/2 (2024) 第3期",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209872-RBeVPqwejHFp.jpg",
+      "score": 7.7,
+      "episodes": 0,
+      "status": "current",
+      "synopsis": "The third season of Ranma 1/2 (2024).",
+      "genres": [
+        "Action",
+        "Comedy",
+        "Romance"
+      ],
+      "year": 2026,
+      "slug": "ranma12-2024-season-3",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "MAPPA",
+        "Shogakukan-Shueisha Productions",
+        "MAPPA"
+      ],
+      "members": 15735,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -1461,67 +1552,6 @@
       ]
     },
     {
-      "id": "209502",
-      "title": "The Cold Sato-san is Only Sweet to Me",
-      "title_japanese": "塩対応の佐藤さんが俺にだけ甘い",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209502-C81oN8M4Smlo.jpg",
-      "score": 6.8,
-      "episodes": 12,
-      "status": "current",
-      "synopsis": "Sato-san is the unattainable flower of the class. She is always cold and curt with classmates, but only I know she's actually very cute when she smiles, even if she's not much of a photographer.\n  \nOshio-kun is friendly and lively, but only I know he works at his family's cafe after school. He does a great job with the cafe's SNS account, and his mischievous smile makes my heart skip a beat!\n  \nInnocent and sweet, but sometimes frustrating, this is a 120%-pure fluffy story about two people falli",
-      "genres": [
-        "Comedy",
-        "Romance"
-      ],
-      "year": 2026,
-      "slug": "the-cold-sato-san-is-only-sweet-to-me",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "Tezuka Productions",
-        "Shouchiku",
-        "Good Smile Company"
-      ],
-      "members": 15684,
-      "rank": null,
-      "start_date": "2026-10-06T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "209872",
-      "title": "Ranma1/2 (2024) Season 3",
-      "title_japanese": "らんま1/2 (2024) 第3期",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209872-RBeVPqwejHFp.jpg",
-      "score": 7.7,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "The third season of Ranma 1/2 (2024).",
-      "genres": [
-        "Action",
-        "Comedy",
-        "Romance"
-      ],
-      "year": 2026,
-      "slug": "ranma12-2024-season-3",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "MAPPA",
-        "Shogakukan-Shueisha Productions",
-        "MAPPA"
-      ],
-      "members": 15470,
-      "rank": null,
-      "start_date": "2026-10-04T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
       "id": "209219",
       "title": "So What's Wrong with Getting Reborn as a Goblin?",
       "title_japanese": "転生ゴブリンだけど質問ある？",
@@ -1542,43 +1572,13 @@
       "type": "ONA",
       "rating": "",
       "studios": [
-        " BAKKKA",
+        "BAKKKA",
         "Hakuhodo DY Music & Pictures",
         "INCS toenter"
       ],
-      "members": 14782,
+      "members": 15183,
       "rank": null,
       "start_date": "2026-10-05T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "206814",
-      "title": "Dragon Ball Super: Beerus",
-      "title_japanese": "ドラゴンボール超 ビルス",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx206814-PVVzRbf1IQpe.jpg",
-      "score": null,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "Several years have passed since the fierce battle against Majin Buu, and Earth has finally regained a brief moment of peace. At the same time, Beerus, the God of Destruction, awakens from his long, deep sleep. \nEven Kai and Supreme Kai, aware of Beerus's overwhelming power to destroy entire planets, watch his awakening with great fear… Meanwhile, Beerus hears rumors of a Saiyan who defeated Frieza—and suddenly appears before Goku. \nTargeted by Beerus, the strongest being in the universe, Earth i",
-      "genres": [
-        "Action",
-        "Adventure",
-        "Sci-Fi"
-      ],
-      "year": 2026,
-      "slug": "dragon-ball-super-beerus",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "Toei Animation",
-        "Shueisha"
-      ],
-      "members": 14322,
-      "rank": null,
-      "start_date": "2026-10-11T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1637,7 +1637,7 @@
         "KADOKAWA",
         "SILVER LINK."
       ],
-      "members": 13026,
+      "members": 13185,
       "rank": null,
       "start_date": "2026-10-07T00:00:00+00:00",
       "end_date": "",
@@ -1697,9 +1697,37 @@
         "Aisle",
         "Pony Canyon"
       ],
-      "members": 11600,
+      "members": 11875,
       "rank": null,
       "start_date": "2026-10-07T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "186742",
+      "title": "A Certain Dark Item",
+      "title_japanese": "とある暗部の少女共棲",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx186742-v7yfbefc8fuO.png",
+      "score": 6.9,
+      "episodes": 0,
+      "status": "current",
+      "synopsis": "This is a story of four girls living in the \"Dark Side\" of Academy City. \n \nIn Academy City where \"ESP\" has been recognized as a general science. Behind the peace, there is a Dark Side organization that undertakes missions that cannot be made public. \n \n\"ITEM\" is an elite unit consisting of four girls. Takitsubo Rikou is able to read and track the AIM fields emitted by those with abilities. Frenda Seivelun, who excels in combat using explosives and traps. \n \nKinuhata Saiai, who can manipulate ni",
+      "genres": [
+        "Action",
+        "Sci-Fi"
+      ],
+      "year": 2026,
+      "slug": "a-certain-dark-item",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "J.C.STAFF"
+      ],
+      "members": 11614,
+      "rank": null,
+      "start_date": "2026-10-09T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1738,28 +1766,30 @@
       ]
     },
     {
-      "id": "186742",
-      "title": "A Certain Dark Item",
-      "title_japanese": "とある暗部の少女共棲",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx186742-v7yfbefc8fuO.png",
-      "score": 6.8,
+      "id": "195571",
+      "title": "The Vermilion Mask",
+      "title_japanese": "朱色の仮面",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx195571-fvj7u5GI7BRT.jpg",
+      "score": 6.7,
       "episodes": 0,
       "status": "current",
-      "synopsis": "This is a story of four girls living in the \"Dark Side\" of Academy City. \n \nIn Academy City where \"ESP\" has been recognized as a general science. Behind the peace, there is a Dark Side organization that undertakes missions that cannot be made public. \n \n\"ITEM\" is an elite unit consisting of four girls. Takitsubo Rikou is able to read and track the AIM fields emitted by those with abilities. Frenda Seivelun, who excels in combat using explosives and traps. \n \nKinuhata Saiai, who can manipulate ni",
+      "synopsis": "\"The Mask” gives power to anyone who wears it.  \n\nAt times, that means endless possibility, or unimaginable tragedy…  \n\nPeru, pupil of the legendary mask maker Gaston Roux, becomes controlled by the “Mask of the Warrior God,” and unintentionally kills his friends, and even his own master.\n  \nIn order to prevent this type of tragedy from reoccurring, Peru swears to destroy all of Gaston’s masks that are spread around the world. Confronting the sins that he has committed, he embarks on his voyage.",
       "genres": [
         "Action",
-        "Sci-Fi"
+        "Drama",
+        "Supernatural"
       ],
       "year": 2026,
-      "slug": "a-certain-dark-item",
+      "slug": "the-vermilion-mask",
       "type": "TV",
       "rating": "",
       "studios": [
-        "J.C.STAFF"
+        "Yomiuri TV",
+        "100studio"
       ],
-      "members": 11188,
+      "members": 10981,
       "rank": null,
-      "start_date": "2026-10-09T00:00:00+00:00",
+      "start_date": "2026-10-10T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1801,7 +1831,7 @@
       "title": "My Girlfriend's Friend",
       "title_japanese": "彼女の友達",
       "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx211877-yWQ2r7XmWvG6.jpg",
-      "score": 4.9,
+      "score": 5.0,
       "episodes": 12,
       "status": "current",
       "synopsis": "For the first time in my life, I have a girlfriend. But her friend tempts me with a body that's so seductive... What would you do if your girlfriend's friend came on to you like this? \n  \n(Source: Yanmaga, translated)",
@@ -1818,72 +1848,10 @@
         "WWWave",
         "Quad"
       ],
-      "members": 10455,
+      "members": 10823,
       "rank": null,
       "start_date": "2026-10-05T00:00:00+00:00",
       "end_date": "2026-12-21T00:00:00+00:00",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "178868",
-      "title": "Magic Knight Rayearth (2026)",
-      "title_japanese": "魔法騎士レイアース (2026)",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx178868-mfp0HIHNJNAm.jpg",
-      "score": 6.6,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "Hikaru Shidou, Umi Ryuuzaki, and Fuu Hououji aren't from Cephiro. While on a school field trip to the Tokyo Tower, the three girls' minds are on anything but different worlds filled with magic and wonder. That is, until Princess Emeraude, the Pillar of Cephiro, cries out for the Magic Knights to save her world--and that just happens to be those three!\n  \n\n(Source: Crunchyroll)",
-      "genres": [
-        "Adventure",
-        "Fantasy",
-        "Mahou Shoujo",
-        "Mecha"
-      ],
-      "year": 2026,
-      "slug": "magic-knight-rayearth-2026",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "E&H Production",
-        "Kodansha",
-        "TMS Entertainment"
-      ],
-      "members": 10043,
-      "rank": null,
-      "start_date": "2026-10-07T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "195571",
-      "title": "The Vermilion Mask",
-      "title_japanese": "朱色の仮面",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx195571-fvj7u5GI7BRT.jpg",
-      "score": 6.6,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "\"The Mask” gives power to anyone who wears it.  \n\nAt times, that means endless possibility, or unimaginable tragedy…  \n\nPeru, pupil of the legendary mask maker Gaston Roux, becomes controlled by the “Mask of the Warrior God,” and unintentionally kills his friends, and even his own master.\n  \nIn order to prevent this type of tragedy from reoccurring, Peru swears to destroy all of Gaston’s masks that are spread around the world. Confronting the sins that he has committed, he embarks on his voyage.",
-      "genres": [
-        "Action",
-        "Drama",
-        "Supernatural"
-      ],
-      "year": 2026,
-      "slug": "the-vermilion-mask",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "Yomiuri TV",
-        "100studio"
-      ],
-      "members": 9985,
-      "rank": null,
-      "start_date": "2026-10-10T00:00:00+00:00",
-      "end_date": "",
       "categories": [
         "airing"
       ]
@@ -1911,9 +1879,70 @@
         "KADOKAWA",
         "Docomo Anime Store"
       ],
-      "members": 9767,
+      "members": 10270,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "178868",
+      "title": "Magic Knight Rayearth (2026)",
+      "title_japanese": "魔法騎士レイアース (2026)",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx178868-mfp0HIHNJNAm.jpg",
+      "score": 6.7,
+      "episodes": 0,
+      "status": "current",
+      "synopsis": "Hikaru Shidou, Umi Ryuuzaki, and Fuu Hououji aren't from Cephiro. While on a school field trip to the Tokyo Tower, the three girls' minds are on anything but different worlds filled with magic and wonder. That is, until Princess Emeraude, the Pillar of Cephiro, cries out for the Magic Knights to save her world--and that just happens to be those three!\n  \n\n(Source: Crunchyroll)",
+      "genres": [
+        "Adventure",
+        "Fantasy",
+        "Mahou Shoujo",
+        "Mecha"
+      ],
+      "year": 2026,
+      "slug": "magic-knight-rayearth-2026",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "E&H Production",
+        "Kodansha",
+        "TMS Entertainment"
+      ],
+      "members": 10196,
+      "rank": null,
+      "start_date": "2026-10-07T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "205896",
+      "title": "Full Clearing Another World under a Goddess with Zero Believers",
+      "title_japanese": "信者ゼロの女神サマと始める異世界攻略",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx205896-ElrV8oVAsuax.jpg",
+      "score": 6.2,
+      "episodes": 0,
+      "status": "current",
+      "synopsis": "RPG player Makoto Takatsuki is hurled into another world with awful skills and stats. But he soon meets a goddess named Noah, who asks him to become her 1st believer in return for blessings. \n \n(Source: J-Novel Club)",
+      "genres": [
+        "Adventure",
+        "Fantasy"
+      ],
+      "year": 2026,
+      "slug": "full-clearing-another-world-under-a-goddess-with-zero-believers",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "HORNETS",
+        "Hakuhodo DY Music & Pictures"
+      ],
+      "members": 8849,
+      "rank": null,
+      "start_date": "2026-10-11T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -1953,6 +1982,35 @@
       ]
     },
     {
+      "id": "213657",
+      "title": "Mission: Yozakura Family Season 2 Part 2",
+      "title_japanese": "夜桜さんちの大作戦 第2期 第2クール",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx213657-ORNXVEBCjXaz.jpg",
+      "score": 6.8,
+      "episodes": 0,
+      "status": "current",
+      "synopsis": "The second cour of the second season of Yozakura-san Chi no Daisakusen.",
+      "genres": [
+        "Action",
+        "Comedy",
+        "Romance"
+      ],
+      "year": 2026,
+      "slug": "mission-yozakura-family-season-2-part-2",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "SILVER LINK."
+      ],
+      "members": 7840,
+      "rank": null,
+      "start_date": "2026-10-11T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
       "id": "209499",
       "title": "TANK CHAIR",
       "title_japanese": "TANK CHAIR-戦車椅子-",
@@ -1974,38 +2032,9 @@
         "Bandai Namco Filmworks",
         "Kodansha"
       ],
-      "members": 6943,
+      "members": 7275,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "213657",
-      "title": "Mission: Yozakura Family Season 2 Part 2",
-      "title_japanese": "夜桜さんちの大作戦 第2期 第2クール",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx213657-ORNXVEBCjXaz.jpg",
-      "score": 6.0,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "The second cour of the second season of Yozakura-san Chi no Daisakusen.",
-      "genres": [
-        "Action",
-        "Comedy",
-        "Romance"
-      ],
-      "year": 2026,
-      "slug": "mission-yozakura-family-season-2-part-2",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "SILVER LINK."
-      ],
-      "members": 6915,
-      "rank": null,
-      "start_date": "2026-10-11T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -2035,7 +2064,7 @@
         "Odd Entertainment",
         "SynergySP"
       ],
-      "members": 6689,
+      "members": 6731,
       "rank": null,
       "start_date": "2026-10-06T00:00:00+00:00",
       "end_date": "",
@@ -2065,7 +2094,7 @@
         "Suiseisha",
         "Studio Houkiboshi"
       ],
-      "members": 5914,
+      "members": 6074,
       "rank": null,
       "start_date": "2026-10-05T00:00:00+00:00",
       "end_date": "",
@@ -2136,35 +2165,6 @@
       ]
     },
     {
-      "id": "205896",
-      "title": "Full Clearing Another World under a Goddess with Zero Believers",
-      "title_japanese": "信者ゼロの女神サマと始める異世界攻略",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx205896-ElrV8oVAsuax.jpg",
-      "score": null,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "RPG player Makoto Takatsuki is hurled into another world with awful skills and stats. But he soon meets a goddess named Noah, who asks him to become her 1st believer in return for blessings. \n \n(Source: J-Novel Club)",
-      "genres": [
-        "Adventure",
-        "Fantasy"
-      ],
-      "year": 2026,
-      "slug": "full-clearing-another-world-under-a-goddess-with-zero-believers",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "HORNETS",
-        "Hakuhodo DY Music & Pictures"
-      ],
-      "members": 5723,
-      "rank": null,
-      "start_date": "2026-10-11T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
       "id": "200294",
       "title": "Super Psychic Policeman Chojo",
       "title_japanese": "超巡！超条先輩",
@@ -2186,7 +2186,7 @@
         "Good Smile Company",
         "Dentsu"
       ],
-      "members": 5679,
+      "members": 5776,
       "rank": null,
       "start_date": "2026-10-06T00:00:00+00:00",
       "end_date": "",
@@ -2199,7 +2199,7 @@
       "title": "HORROR COLLECTOR",
       "title_japanese": "恐怖コレクター",
       "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/b203473-pzyaqV432Qko.jpg",
-      "score": 4.9,
+      "score": 5.0,
       "episodes": 12,
       "status": "current",
       "synopsis": "Urban legends come to life…Everyone’s heard an urban legend before, but few have ever come face-to-face with one. These phenomena are everywhere, existing in the shadows of reality. More and more of them have been appearing in the wake of the faceless kid sighted all over Japan. If you see her or one of the urban legends she brings―pray the boy in the red hood finds you before it’s too late. You won’t stand a chance on your own. But with his help, you may just live to see another day…\n  \n(Source",
@@ -2217,7 +2217,7 @@
         "Studio Palette",
         "NHK Enterprises"
       ],
-      "members": 4975,
+      "members": 5298,
       "rank": null,
       "start_date": "2026-10-10T00:00:00+00:00",
       "end_date": "",
@@ -2248,7 +2248,7 @@
         "Rakuten",
         "NBCUniversal Entertainment Japan"
       ],
-      "members": 4961,
+      "members": 5120,
       "rank": null,
       "start_date": "2026-10-05T00:00:00+00:00",
       "end_date": "",
@@ -2278,10 +2278,39 @@
         "Yomiuri TV Enterprise",
         "Flex Comics"
       ],
-      "members": 4670,
+      "members": 4809,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "188034",
+      "title": "Girls und Panzer: Motto Love Love Sakusen desu!",
+      "title_japanese": "ガールズ＆パンツァー もっとらぶらぶ作戦です！",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx188034-oRwVKBMezOOk.jpg",
+      "score": 7.3,
+      "episodes": 12,
+      "status": "current",
+      "synopsis": "A deep dive into the untold daily lives and the inter-school interactions of the Ooarai Girls' team and the other students (along with the colorful characters that surround them) who are wholeheartedly dedicated to the way of the tank!  \n\n(Source: Official Website, translated)  \n\nNote: The series had a four-part theatrical pre-screening in Japan starting in December 2025. Regular TV broadcast began in October 2026.  \n• Part 1 releasing theatrically on December 26, 2025. \n• Part 2 releasing theat",
+      "genres": [
+        "Comedy"
+      ],
+      "year": 2026,
+      "slug": "girls-und-panzer-motto-love-love-sakusen-desu",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "P.A.WORKS",
+        "Actas",
+        "Bandai Namco Filmworks"
+      ],
+      "members": 3880,
+      "rank": null,
+      "start_date": "2026-10-08T00:00:00+00:00",
+      "end_date": "2026-12-24T00:00:00+00:00",
       "categories": [
         "airing"
       ]
@@ -2317,35 +2346,6 @@
       ]
     },
     {
-      "id": "188034",
-      "title": "Girls und Panzer: Motto Love Love Sakusen desu!",
-      "title_japanese": "ガールズ＆パンツァー もっとらぶらぶ作戦です！",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx188034-oRwVKBMezOOk.jpg",
-      "score": 7.3,
-      "episodes": 12,
-      "status": "current",
-      "synopsis": "A deep dive into the untold daily lives and the inter-school interactions of the Ooarai Girls' team and the other students (along with the colorful characters that surround them) who are wholeheartedly dedicated to the way of the tank!  \n\n(Source: Official Website, translated)  \n\nNote: The series had a four-part theatrical pre-screening in Japan starting in December 2025. Regular TV broadcast began in October 2026.  \n• Part 1 releasing theatrically on December 26, 2025. \n• Part 2 releasing theat",
-      "genres": [
-        "Comedy"
-      ],
-      "year": 2026,
-      "slug": "girls-und-panzer-motto-love-love-sakusen-desu",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "P.A.WORKS",
-        "Actas",
-        "Bandai Namco Filmworks"
-      ],
-      "members": 3860,
-      "rank": null,
-      "start_date": "2026-10-08T00:00:00+00:00",
-      "end_date": "2026-12-24T00:00:00+00:00",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
       "id": "199594",
       "title": "TETSURYO! Meet With Tetsudou Musume",
       "title_japanese": "てつりょー！meet with 鉄道むすめ",
@@ -2366,9 +2366,36 @@
         "East Fish Studio",
         "TOMYTEC"
       ],
-      "members": 3417,
+      "members": 3489,
       "rank": null,
       "start_date": "2026-10-09T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
+      "id": "213658",
+      "title": "Ace of the Diamond act II -Second Season-",
+      "title_japanese": "ダイヤのA actⅡ -Second Season- 第2クール",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx213658-D3BPJaqawLxS.png",
+      "score": 7.1,
+      "episodes": 0,
+      "status": "current",
+      "synopsis": "The Seido baseball club has been invited to the spring invitational at the hallowed Koshien Stadium. Sawamura will finally stand on the mound! Standing between Seido and the national title are the winners of last year's summer tournament Komadai Fujimaki and their unstoppable ace Masamune Hongo. Can Seido triumph over Komadai? It's the start of another heated battle in youth baseball!\n  \n(Source: Crunchyroll)",
+      "genres": [
+        "Sports"
+      ],
+      "year": 2026,
+      "slug": "ace-of-the-diamond-act-ii-second-season",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "OLM"
+      ],
+      "members": 3379,
+      "rank": null,
+      "start_date": "2026-10-11T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -2379,7 +2406,7 @@
       "title": "HOTEL INHUMANS Season 2",
       "title_japanese": "ホテル・インヒューマンズ 第2期",
       "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx199426-0nBgTV9BrcJn.jpg",
-      "score": 5.8,
+      "score": 5.7,
       "episodes": 13,
       "status": "current",
       "synopsis": "The second season of Hotel Inhumans.",
@@ -2396,36 +2423,9 @@
         "TV Tokyo",
         "DMM.com"
       ],
-      "members": 3131,
+      "members": 3229,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "213658",
-      "title": "Ace of the Diamond act II -Second Season-",
-      "title_japanese": "ダイヤのA actⅡ -Second Season- 第2クール",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx213658-D3BPJaqawLxS.png",
-      "score": 6.9,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "The Seido baseball club has been invited to the spring invitational at the hallowed Koshien Stadium. Sawamura will finally stand on the mound! Standing between Seido and the national title are the winners of last year's summer tournament Komadai Fujimaki and their unstoppable ace Masamune Hongo. Can Seido triumph over Komadai? It's the start of another heated battle in youth baseball!\n  \n(Source: Crunchyroll)",
-      "genres": [
-        "Sports"
-      ],
-      "year": 2026,
-      "slug": "ace-of-the-diamond-act-ii-second-season",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "OLM"
-      ],
-      "members": 3044,
-      "rank": null,
-      "start_date": "2026-10-11T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -2481,7 +2481,7 @@
         "Good Smile Company",
         "Kayac Animation"
       ],
-      "members": 2356,
+      "members": 2407,
       "rank": null,
       "start_date": "2026-10-08T00:00:00+00:00",
       "end_date": "",
@@ -2550,6 +2550,36 @@
       ]
     },
     {
+      "id": "216557",
+      "title": "KERORO☆",
+      "title_japanese": "ケロロ軍曹☆",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx216557-b72dAqbVEDO7.jpg",
+      "score": 5.5,
+      "episodes": 0,
+      "status": "current",
+      "synopsis": "Sergeant Keroro comes to conquer Earth, only to get captured and stuck living with the Hinata family! \n \n(Source: Crunchyroll)",
+      "genres": [
+        "Comedy",
+        "Sci-Fi"
+      ],
+      "year": 2026,
+      "slug": "keroro☆",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "Bandai Namco Pictures",
+        "Bandai Namco Pictures",
+        "Bandai Namco Filmworks"
+      ],
+      "members": 1683,
+      "rank": null,
+      "start_date": "2026-10-03T00:00:00+00:00",
+      "end_date": "",
+      "categories": [
+        "airing"
+      ]
+    },
+    {
       "id": "211220",
       "title": "Raised by Demons: Panda Li",
       "title_japanese": "李熊猫",
@@ -2572,36 +2602,6 @@
       "members": 1653,
       "rank": null,
       "start_date": "2026-07-29T00:00:00+00:00",
-      "end_date": "",
-      "categories": [
-        "airing"
-      ]
-    },
-    {
-      "id": "216557",
-      "title": "KERORO☆",
-      "title_japanese": "ケロロ軍曹☆",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx216557-b72dAqbVEDO7.jpg",
-      "score": 5.5,
-      "episodes": 0,
-      "status": "current",
-      "synopsis": "Sergeant Keroro comes to conquer Earth, only to get captured and stuck living with the Hinata family! \n \n(Source: Crunchyroll)",
-      "genres": [
-        "Comedy",
-        "Sci-Fi"
-      ],
-      "year": 2026,
-      "slug": "keroro☆",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "Bandai Namco Pictures",
-        "Bandai Namco Pictures",
-        "Bandai Namco Filmworks"
-      ],
-      "members": 1645,
-      "rank": null,
-      "start_date": "2026-10-03T00:00:00+00:00",
       "end_date": "",
       "categories": [
         "airing"
@@ -2658,7 +2658,7 @@
         "Bandai Namco Pictures",
         "Bandai"
       ],
-      "members": 1563,
+      "members": 1575,
       "rank": null,
       "start_date": "2026-10-06T00:00:00+00:00",
       "end_date": "",
@@ -2671,7 +2671,7 @@
       "title": "Magical Sisters LuluttoLilly Part 2",
       "title_japanese": "魔法の姉妹ルルットリリィ 第2クール",
       "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx209032-R0gP5IFdk7Vd.jpg",
-      "score": null,
+      "score": 5.5,
       "episodes": 0,
       "status": "current",
       "synopsis": "The second half of Mahou no Shimai LuluttoLilly.",
@@ -2688,7 +2688,7 @@
         "Studio Pierrot",
         "Bandai Namco Filmworks"
       ],
-      "members": 1333,
+      "members": 1348,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -2945,7 +2945,7 @@
         "J.C.STAFF",
         "Shogakukan Music & Digital Entertainment"
       ],
-      "members": 281,
+      "members": 286,
       "rank": null,
       "start_date": "2026-10-09T00:00:00+00:00",
       "end_date": "",
@@ -3034,7 +3034,7 @@
       "studios": [
         "WWWave"
       ],
-      "members": 224,
+      "members": 246,
       "rank": null,
       "start_date": "2026-10-05T00:00:00+00:00",
       "end_date": "2026-12-21T00:00:00+00:00",
@@ -3118,7 +3118,7 @@
         "Gakken",
         "Imagica Infos"
       ],
-      "members": 168,
+      "members": 171,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -3318,7 +3318,7 @@
       "studios": [
         "Akatsuki Media Studio"
       ],
-      "members": 77,
+      "members": 90,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -3520,7 +3520,7 @@
         "Shin-Ei Animation",
         "MOZU STUDIOS"
       ],
-      "members": 35,
+      "members": 39,
       "rank": null,
       "start_date": "2026-10-04T00:00:00+00:00",
       "end_date": "",
@@ -3664,7 +3664,7 @@
         "VAP",
         "Viz Media"
       ],
-      "members": 848039,
+      "members": 848464,
       "rank": null,
       "start_date": "2011-10-02T00:00:00+00:00",
       "end_date": "2014-09-24T00:00:00+00:00",
@@ -3698,7 +3698,7 @@
         "Funimation",
         "Fuji TV"
       ],
-      "members": 758608,
+      "members": 759071,
       "rank": null,
       "start_date": "1999-10-20T00:00:00+00:00",
       "end_date": "",
@@ -3731,7 +3731,7 @@
         "Aniplex",
         "Square Enix"
       ],
-      "members": 735558,
+      "members": 735962,
       "rank": null,
       "start_date": "2009-04-05T00:00:00+00:00",
       "end_date": "2010-07-04T00:00:00+00:00",
@@ -3797,7 +3797,7 @@
         "Pony Canyon",
         "Kodansha"
       ],
-      "members": 648820,
+      "members": 649056,
       "rank": null,
       "start_date": "2020-12-07T00:00:00+00:00",
       "end_date": "2021-03-29T00:00:00+00:00",
@@ -3863,7 +3863,7 @@
         "Funimation",
         "Media Factory"
       ],
-      "members": 600261,
+      "members": 600537,
       "rank": null,
       "start_date": "2011-04-06T00:00:00+00:00",
       "end_date": "2011-09-14T00:00:00+00:00",
@@ -3927,7 +3927,7 @@
         "MADHOUSE",
         "Shogakukan"
       ],
-      "members": 488724,
+      "members": 489088,
       "rank": null,
       "start_date": "2023-09-29T00:00:00+00:00",
       "end_date": "2024-03-22T00:00:00+00:00",
@@ -3993,7 +3993,7 @@
         "Bandai Visual",
         "Mainichi Broadcasting System"
       ],
-      "members": 366418,
+      "members": 366598,
       "rank": null,
       "start_date": "2008-04-06T00:00:00+00:00",
       "end_date": "2008-09-28T00:00:00+00:00",
@@ -4056,7 +4056,7 @@
         "VAP",
         "Viz Media"
       ],
-      "members": 345996,
+      "members": 346233,
       "rank": null,
       "start_date": "2004-04-07T00:00:00+00:00",
       "end_date": "2005-09-28T00:00:00+00:00",
@@ -4086,7 +4086,7 @@
         "OLM",
         "TOHO animation STUDIO"
       ],
-      "members": 333896,
+      "members": 334340,
       "rank": null,
       "start_date": "2023-10-22T00:00:00+00:00",
       "end_date": "2024-03-24T00:00:00+00:00",
@@ -4118,7 +4118,7 @@
         "Shueisha",
         "A-1 Pictures"
       ],
-      "members": 295293,
+      "members": 295430,
       "rank": null,
       "start_date": "2022-04-09T00:00:00+00:00",
       "end_date": "2022-06-25T00:00:00+00:00",
@@ -4149,7 +4149,7 @@
         "MAPPA",
         "Dentsu"
       ],
-      "members": 278958,
+      "members": 279122,
       "rank": null,
       "start_date": "2023-01-10T00:00:00+00:00",
       "end_date": "2023-06-20T00:00:00+00:00",
@@ -4182,7 +4182,7 @@
         "Warner Bros. Japan",
         "KLOCKWORX"
       ],
-      "members": 267602,
+      "members": 267737,
       "rank": null,
       "start_date": "2022-10-06T00:00:00+00:00",
       "end_date": "2022-12-22T00:00:00+00:00",
@@ -4215,7 +4215,7 @@
         "Pony Canyon",
         "Kodansha"
       ],
-      "members": 253596,
+      "members": 253741,
       "rank": null,
       "start_date": "2023-03-04T00:00:00+00:00",
       "end_date": "2023-03-04T00:00:00+00:00",
@@ -4248,7 +4248,7 @@
         "Shueisha",
         "Toho"
       ],
-      "members": 244733,
+      "members": 245058,
       "rank": null,
       "start_date": "2025-09-19T00:00:00+00:00",
       "end_date": "2025-09-19T00:00:00+00:00",
@@ -4280,7 +4280,7 @@
         "MADHOUSE",
         "Shogakukan"
       ],
-      "members": 230364,
+      "members": 230620,
       "rank": null,
       "start_date": "2026-01-16T00:00:00+00:00",
       "end_date": "2026-03-27T00:00:00+00:00",
@@ -4312,7 +4312,7 @@
         "Pony Canyon",
         "TBS"
       ],
-      "members": 225403,
+      "members": 225508,
       "rank": null,
       "start_date": "2008-10-03T00:00:00+00:00",
       "end_date": "2009-03-27T00:00:00+00:00",
@@ -4343,7 +4343,7 @@
         "Shueisha",
         "TV Tokyo"
       ],
-      "members": 210687,
+      "members": 210812,
       "rank": null,
       "start_date": "2022-10-11T00:00:00+00:00",
       "end_date": "2022-12-27T00:00:00+00:00",
@@ -4373,7 +4373,7 @@
         "TOHO animation STUDIO",
         "OLM"
       ],
-      "members": 210220,
+      "members": 210548,
       "rank": null,
       "start_date": "2025-01-10T00:00:00+00:00",
       "end_date": "2025-07-04T00:00:00+00:00",
@@ -4438,7 +4438,7 @@
         "TMS Music",
         "Funimation"
       ],
-      "members": 178282,
+      "members": 178341,
       "rank": null,
       "start_date": "2021-04-06T00:00:00+00:00",
       "end_date": "2021-06-29T00:00:00+00:00",
@@ -4504,41 +4504,10 @@
         "Pony Canyon",
         "Kodansha"
       ],
-      "members": 169422,
+      "members": 169511,
       "rank": null,
       "start_date": "2023-11-05T00:00:00+00:00",
       "end_date": "2023-11-05T00:00:00+00:00",
-      "categories": [
-        "top"
-      ]
-    },
-    {
-      "id": "151384",
-      "title": "Kaguya-sama: Love is War -The First Kiss That Never Ends-",
-      "title_japanese": "かぐや様は告らせたい -ファーストキッスは終わらない-",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx151384-gv0q8wOE6D58.jpg",
-      "score": 8.7,
-      "episodes": 4,
-      "status": "finished",
-      "synopsis": "Shuchiin Academy’s student council room: the place where Student Council Vice President Kaguya Shinomiya and President Miyuki Shirogane met. After a long battle in love, these two geniuses communicated their feelings and, at the Hoshin Festival, had their very first kiss. However, there was no clear confession of love. The relationship between these two, who assumed they would be a couple, remains ambiguous. Now, overly conscious of their feelings, they must face the biggest challenge yet: Chris",
-      "genres": [
-        "Comedy",
-        "Psychological",
-        "Romance",
-        "Slice of Life"
-      ],
-      "year": 2023,
-      "slug": "kaguya-sama-love-is-war-the-first-kiss-that-never-ends",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "A-1 Pictures",
-        "Aniplex"
-      ],
-      "members": 149993,
-      "rank": null,
-      "start_date": "2023-04-01T00:00:00+00:00",
-      "end_date": "2023-04-03T00:00:00+00:00",
       "categories": [
         "top"
       ]
@@ -4568,10 +4537,41 @@
         "WHITE FOX",
         "Hakuhodo DY Music & Pictures"
       ],
-      "members": 149797,
+      "members": 150115,
       "rank": null,
       "start_date": "2026-04-08T00:00:00+00:00",
       "end_date": "2026-09-30T00:00:00+00:00",
+      "categories": [
+        "top"
+      ]
+    },
+    {
+      "id": "151384",
+      "title": "Kaguya-sama: Love is War -The First Kiss That Never Ends-",
+      "title_japanese": "かぐや様は告らせたい -ファーストキッスは終わらない-",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx151384-gv0q8wOE6D58.jpg",
+      "score": 8.7,
+      "episodes": 4,
+      "status": "finished",
+      "synopsis": "Shuchiin Academy’s student council room: the place where Student Council Vice President Kaguya Shinomiya and President Miyuki Shirogane met. After a long battle in love, these two geniuses communicated their feelings and, at the Hoshin Festival, had their very first kiss. However, there was no clear confession of love. The relationship between these two, who assumed they would be a couple, remains ambiguous. Now, overly conscious of their feelings, they must face the biggest challenge yet: Chris",
+      "genres": [
+        "Comedy",
+        "Psychological",
+        "Romance",
+        "Slice of Life"
+      ],
+      "year": 2023,
+      "slug": "kaguya-sama-love-is-war-the-first-kiss-that-never-ends",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "A-1 Pictures",
+        "Aniplex"
+      ],
+      "members": 150086,
+      "rank": null,
+      "start_date": "2023-04-01T00:00:00+00:00",
+      "end_date": "2023-04-03T00:00:00+00:00",
       "categories": [
         "top"
       ]
@@ -4633,7 +4633,7 @@
         "VAP",
         "NBCUniversal Entertainment Japan"
       ],
-      "members": 146425,
+      "members": 146532,
       "rank": null,
       "start_date": "2000-10-04T00:00:00+00:00",
       "end_date": "2002-03-27T00:00:00+00:00",
@@ -4663,7 +4663,7 @@
         "bones film",
         "Yomiuri TV"
       ],
-      "members": 136700,
+      "members": 136834,
       "rank": null,
       "start_date": "2025-10-04T00:00:00+00:00",
       "end_date": "2025-12-13T00:00:00+00:00",
@@ -4788,7 +4788,7 @@
         "TV Tokyo",
         "Aniplex"
       ],
-      "members": 110818,
+      "members": 110856,
       "rank": null,
       "start_date": "2011-04-04T00:00:00+00:00",
       "end_date": "2012-03-26T00:00:00+00:00",
@@ -4819,7 +4819,7 @@
         "Shueisha",
         "TV Tokyo"
       ],
-      "members": 92313,
+      "members": 92526,
       "rank": null,
       "start_date": "2026-07-25T00:00:00+00:00",
       "end_date": "2026-10-26T00:00:00+00:00",
@@ -4849,7 +4849,7 @@
         "T.P.O",
         "K-Factory"
       ],
-      "members": 85940,
+      "members": 85985,
       "rank": null,
       "start_date": "1988-01-08T00:00:00+00:00",
       "end_date": "1997-03-17T00:00:00+00:00",
@@ -4944,7 +4944,7 @@
         "Warner Bros. Japan",
         "david production"
       ],
-      "members": 82219,
+      "members": 82408,
       "rank": null,
       "start_date": "2026-03-19T00:00:00+00:00",
       "end_date": "2026-03-19T00:00:00+00:00",
@@ -4973,7 +4973,7 @@
       "studios": [
         "Toei Animation"
       ],
-      "members": 59244,
+      "members": 59291,
       "rank": null,
       "start_date": "2024-10-20T00:00:00+00:00",
       "end_date": "2024-10-20T00:00:00+00:00",
@@ -5036,7 +5036,7 @@
         "Shueisha",
         "Aniplex"
       ],
-      "members": 56310,
+      "members": 56332,
       "rank": null,
       "start_date": "2021-01-08T00:00:00+00:00",
       "end_date": "2021-01-08T00:00:00+00:00",
@@ -5097,7 +5097,7 @@
         "Pony Canyon",
         "ABC Animation"
       ],
-      "members": 52078,
+      "members": 52146,
       "rank": null,
       "start_date": "2026-01-04T00:00:00+00:00",
       "end_date": "2026-03-29T00:00:00+00:00",
@@ -5128,7 +5128,7 @@
         "Kyoto Animation",
         "Pony Canyon"
       ],
-      "members": 36827,
+      "members": 36843,
       "rank": null,
       "start_date": "2024-04-07T00:00:00+00:00",
       "end_date": "2024-06-30T00:00:00+00:00",
@@ -5159,7 +5159,7 @@
         "Tokyo Movie Shinsha",
         "Nippon Television Network"
       ],
-      "members": 22168,
+      "members": 22182,
       "rank": null,
       "start_date": "1980-10-13T00:00:00+00:00",
       "end_date": "1981-08-31T00:00:00+00:00",
@@ -5190,7 +5190,7 @@
         "Kinema Citrus",
         "Sentai Filmworks"
       ],
-      "members": 21352,
+      "members": 21360,
       "rank": null,
       "start_date": "2021-06-04T00:00:00+00:00",
       "end_date": "2021-06-04T00:00:00+00:00",
@@ -5221,7 +5221,7 @@
         "Warner Bros. Japan",
         "Bandai Namco Pictures"
       ],
-      "members": 6721,
+      "members": 6741,
       "rank": null,
       "start_date": "2026-02-13T00:00:00+00:00",
       "end_date": "2026-02-13T00:00:00+00:00",
@@ -5317,7 +5317,7 @@
         "MAPPA",
         "Shueisha"
       ],
-      "members": 982959,
+      "members": 983412,
       "rank": null,
       "start_date": "2020-10-03T00:00:00+00:00",
       "end_date": "2021-03-27T00:00:00+00:00",
@@ -5349,7 +5349,7 @@
         "VAP",
         "Viz Media"
       ],
-      "members": 970637,
+      "members": 971157,
       "rank": null,
       "start_date": "2006-10-04T00:00:00+00:00",
       "end_date": "2007-06-27T00:00:00+00:00",
@@ -5510,7 +5510,7 @@
         "TV Tokyo",
         "Aniplex"
       ],
-      "members": 732241,
+      "members": 732679,
       "rank": null,
       "start_date": "2002-10-03T00:00:00+00:00",
       "end_date": "2007-02-08T00:00:00+00:00",
@@ -5542,7 +5542,7 @@
         "A-1 Pictures",
         "Genco"
       ],
-      "members": 725025,
+      "members": 725343,
       "rank": null,
       "start_date": "2012-07-08T00:00:00+00:00",
       "end_date": "2012-12-23T00:00:00+00:00",
@@ -5668,7 +5668,7 @@
         "MAPPA",
         "Shueisha"
       ],
-      "members": 641503,
+      "members": 641885,
       "rank": null,
       "start_date": "2022-10-12T00:00:00+00:00",
       "end_date": "2022-12-28T00:00:00+00:00",
@@ -5864,7 +5864,7 @@
         "TV Tokyo",
         "Aniplex"
       ],
-      "members": 615811,
+      "members": 616147,
       "rank": null,
       "start_date": "2007-02-15T00:00:00+00:00",
       "end_date": "2017-03-23T00:00:00+00:00",
@@ -6056,7 +6056,7 @@
         "WIT STUDIO",
         "Toho"
       ],
-      "members": 576275,
+      "members": 576549,
       "rank": null,
       "start_date": "2022-04-09T00:00:00+00:00",
       "end_date": "2022-06-25T00:00:00+00:00",
@@ -6180,7 +6180,7 @@
         "Aniplex",
         "Mainichi Broadcasting System"
       ],
-      "members": 547850,
+      "members": 548159,
       "rank": null,
       "start_date": "2021-01-10T00:00:00+00:00",
       "end_date": "2021-04-04T00:00:00+00:00",
@@ -6212,7 +6212,7 @@
         "Starchild Records",
         "Magic Capsule"
       ],
-      "members": 546560,
+      "members": 546790,
       "rank": null,
       "start_date": "2008-10-02T00:00:00+00:00",
       "end_date": "2009-03-26T00:00:00+00:00",
@@ -6406,7 +6406,7 @@
         "TV Tokyo",
         "Dentsu"
       ],
-      "members": 528028,
+      "members": 528376,
       "rank": null,
       "start_date": "2004-10-05T00:00:00+00:00",
       "end_date": "2012-03-27T00:00:00+00:00",
@@ -6471,7 +6471,7 @@
         "Aniplex",
         "Shueisha"
       ],
-      "members": 513005,
+      "members": 513175,
       "rank": null,
       "start_date": "2020-10-16T00:00:00+00:00",
       "end_date": "2020-10-16T00:00:00+00:00",
@@ -6505,7 +6505,7 @@
         "Mainichi Broadcasting System",
         "Bandai Entertainment"
       ],
-      "members": 506064,
+      "members": 506383,
       "rank": null,
       "start_date": "2006-10-06T00:00:00+00:00",
       "end_date": "2007-07-28T00:00:00+00:00",
@@ -6602,7 +6602,7 @@
         "CD PROJEKT RED",
         "Netflix"
       ],
-      "members": 76531,
+      "members": 77081,
       "rank": null,
       "start_date": "2026-10-20T00:00:00+00:00",
       "end_date": "",
@@ -6633,7 +6633,7 @@
       "studios": [
         "Science SARU"
       ],
-      "members": 53072,
+      "members": 53185,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -6663,7 +6663,7 @@
         "KADOKAWA",
         "Doga Kobo"
       ],
-      "members": 50479,
+      "members": 50571,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -6693,7 +6693,7 @@
         "KADOKAWA",
         "Nexus"
       ],
-      "members": 49680,
+      "members": 49745,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "2027-01-01T00:00:00+00:00",
@@ -6723,7 +6723,7 @@
         "Toho",
         "MADHOUSE"
       ],
-      "members": 46131,
+      "members": 46254,
       "rank": null,
       "start_date": "2027-10-01T00:00:00+00:00",
       "end_date": "",
@@ -6753,7 +6753,7 @@
         "KADOKAWA",
         "TRIGGER"
       ],
-      "members": 46072,
+      "members": 46139,
       "rank": null,
       "start_date": "2027-10-01T00:00:00+00:00",
       "end_date": "",
@@ -6784,7 +6784,7 @@
       "studios": [
         "Kinema Citrus"
       ],
-      "members": 42986,
+      "members": 43143,
       "rank": null,
       "start_date": "2026-10-23T00:00:00+00:00",
       "end_date": "",
@@ -6815,7 +6815,7 @@
         "Aniplex",
         "Notes"
       ],
-      "members": 41354,
+      "members": 41522,
       "rank": null,
       "start_date": "2026-11-20T00:00:00+00:00",
       "end_date": "",
@@ -6846,7 +6846,7 @@
         "Shueisha",
         "A-1 Pictures"
       ],
-      "members": 37800,
+      "members": 38029,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -6877,7 +6877,7 @@
       "studios": [
         "C2C"
       ],
-      "members": 36723,
+      "members": 36900,
       "rank": null,
       "start_date": "2027-01-10T00:00:00+00:00",
       "end_date": "",
@@ -6908,7 +6908,7 @@
         "CloverWorks",
         "Aniplex"
       ],
-      "members": 32226,
+      "members": 32360,
       "rank": null,
       "start_date": "2026-10-16T00:00:00+00:00",
       "end_date": "2026-10-16T00:00:00+00:00",
@@ -6939,7 +6939,7 @@
         "CyberAgent",
         "Cypic"
       ],
-      "members": 30846,
+      "members": 30946,
       "rank": null,
       "start_date": "2027-04-01T00:00:00+00:00",
       "end_date": "",
@@ -6968,7 +6968,7 @@
         "Toho",
         "TOHO animation STUDIO"
       ],
-      "members": 29872,
+      "members": 30100,
       "rank": null,
       "start_date": "2026-12-11T00:00:00+00:00",
       "end_date": "2026-12-11T00:00:00+00:00",
@@ -7000,7 +7000,7 @@
         "KADOKAWA",
         "SILVER LINK."
       ],
-      "members": 28837,
+      "members": 28948,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -7030,7 +7030,7 @@
         "Aniplex",
         "Crunchyroll"
       ],
-      "members": 28383,
+      "members": 28429,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -7059,7 +7059,7 @@
         "Netflix",
         "Fuji TV"
       ],
-      "members": 28311,
+      "members": 28422,
       "rank": null,
       "start_date": "2027-02-01T00:00:00+00:00",
       "end_date": "",
@@ -7088,7 +7088,7 @@
         "CloverWorks",
         "Aniplex"
       ],
-      "members": 27788,
+      "members": 28374,
       "rank": null,
       "start_date": "2027-01-08T00:00:00+00:00",
       "end_date": "",
@@ -7120,7 +7120,7 @@
         "Hakuhodo DY Music & Pictures",
         "Toho"
       ],
-      "members": 27222,
+      "members": 27621,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -7148,7 +7148,7 @@
       "studios": [
         "TMS Entertainment"
       ],
-      "members": 26652,
+      "members": 26827,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -7180,7 +7180,7 @@
         "KADOKAWA",
         "ENGI"
       ],
-      "members": 22669,
+      "members": 22724,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -7212,7 +7212,7 @@
         "Sunrise",
         "Netflix"
       ],
-      "members": 22456,
+      "members": 22692,
       "rank": null,
       "start_date": "2026-11-26T00:00:00+00:00",
       "end_date": "",
@@ -7242,7 +7242,7 @@
         "Production I.G",
         "Toho"
       ],
-      "members": 21541,
+      "members": 21564,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "2027-01-01T00:00:00+00:00",
@@ -7272,7 +7272,7 @@
         "P.A.WORKS",
         "DMM pictures"
       ],
-      "members": 20744,
+      "members": 20770,
       "rank": null,
       "start_date": "2027-04-01T00:00:00+00:00",
       "end_date": "",
@@ -7302,7 +7302,7 @@
       "studios": [
         "Qzil.la"
       ],
-      "members": 18305,
+      "members": 18444,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -7332,7 +7332,7 @@
         "KADOKAWA",
         "Kinema Citrus"
       ],
-      "members": 17219,
+      "members": 17242,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -7361,7 +7361,7 @@
       "studios": [
         "Passione"
       ],
-      "members": 17005,
+      "members": 17021,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -7389,7 +7389,7 @@
       "type": "TV",
       "rating": "",
       "studios": [],
-      "members": 16748,
+      "members": 16919,
       "rank": null,
       "start_date": "2027-07-01T00:00:00+00:00",
       "end_date": "",
@@ -7420,7 +7420,7 @@
         "J.C.STAFF",
         "Bandai Namco Filmworks"
       ],
-      "members": 15050,
+      "members": 15209,
       "rank": null,
       "start_date": "2027-01-01T00:00:00+00:00",
       "end_date": "",
@@ -7451,7 +7451,7 @@
         "Aniplex",
         "Houbunsha"
       ],
-      "members": 41161,
+      "members": 41205,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7481,7 +7481,7 @@
         "BUG FILMS",
         "Kodansha"
       ],
-      "members": 36305,
+      "members": 36391,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7513,7 +7513,7 @@
         "ufotable",
         "Shueisha"
       ],
-      "members": 34378,
+      "members": 34475,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7543,7 +7543,7 @@
       "studios": [
         "MAPPA"
       ],
-      "members": 30226,
+      "members": 30290,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7571,7 +7571,7 @@
       "type": "TV",
       "rating": "",
       "studios": [],
-      "members": 29829,
+      "members": 29866,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7603,7 +7603,7 @@
         "KADOKAWA",
         "Shueisha"
       ],
-      "members": 29662,
+      "members": 29729,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7632,7 +7632,7 @@
       "studios": [
         "bones film"
       ],
-      "members": 28004,
+      "members": 28066,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7661,7 +7661,7 @@
       "studios": [
         "MAPPA"
       ],
-      "members": 25793,
+      "members": 25904,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7690,7 +7690,7 @@
         "Aniplex",
         "A-1 Pictures"
       ],
-      "members": 24318,
+      "members": 24388,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7719,7 +7719,7 @@
         "Aniplex",
         "A-1 Pictures"
       ],
-      "members": 23553,
+      "members": 23578,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7747,7 +7747,7 @@
       "studios": [
         "GREE Entertainment"
       ],
-      "members": 23278,
+      "members": 23299,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7775,7 +7775,7 @@
       "type": "TV",
       "rating": "",
       "studios": [],
-      "members": 22167,
+      "members": 22216,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7802,7 +7802,7 @@
         "Aniplex",
         "ABC Animation"
       ],
-      "members": 19338,
+      "members": 19344,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7832,7 +7832,7 @@
         "Studio KAI",
         "KADOKAWA"
       ],
-      "members": 18696,
+      "members": 18727,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7860,7 +7860,7 @@
       "studios": [
         "ufotable"
       ],
-      "members": 18569,
+      "members": 18575,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7888,7 +7888,7 @@
       "type": "Movie",
       "rating": "",
       "studios": [],
-      "members": 18381,
+      "members": 18405,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7917,7 +7917,7 @@
       "type": "TV",
       "rating": "",
       "studios": [],
-      "members": 18346,
+      "members": 18362,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7949,7 +7949,7 @@
         "Aniplex",
         "bones film"
       ],
-      "members": 17881,
+      "members": 17895,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -7977,7 +7977,7 @@
       "studios": [
         "KADOKAWA"
       ],
-      "members": 17766,
+      "members": 17811,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -8007,34 +8007,7 @@
         "8-bit",
         "Kodansha"
       ],
-      "members": 16369,
-      "rank": null,
-      "start_date": "",
-      "end_date": "",
-      "categories": [
-        "upcoming"
-      ]
-    },
-    {
-      "id": "185543",
-      "title": "Nozomanu Fushi no Boukensha 2nd Season",
-      "title_japanese": "望まぬ不死の冒険者 第2期",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx185543-4QjQQx36Rx6V.png",
-      "score": null,
-      "episodes": 0,
-      "status": "upcoming",
-      "synopsis": "The second season of Nozomanu Fushi no Boukensha.",
-      "genres": [
-        "Action",
-        "Adventure",
-        "Fantasy"
-      ],
-      "year": null,
-      "slug": "nozomanu-fushi-no-boukensha-2nd-season",
-      "type": "ONA",
-      "rating": "",
-      "studios": [],
-      "members": 15351,
+      "members": 16413,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -8063,7 +8036,34 @@
       "studios": [
         "PIERROT FILMS"
       ],
-      "members": 15197,
+      "members": 15430,
+      "rank": null,
+      "start_date": "",
+      "end_date": "",
+      "categories": [
+        "upcoming"
+      ]
+    },
+    {
+      "id": "185543",
+      "title": "Nozomanu Fushi no Boukensha 2nd Season",
+      "title_japanese": "望まぬ不死の冒険者 第2期",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx185543-4QjQQx36Rx6V.png",
+      "score": null,
+      "episodes": 0,
+      "status": "upcoming",
+      "synopsis": "The second season of Nozomanu Fushi no Boukensha.",
+      "genres": [
+        "Action",
+        "Adventure",
+        "Fantasy"
+      ],
+      "year": null,
+      "slug": "nozomanu-fushi-no-boukensha-2nd-season",
+      "type": "ONA",
+      "rating": "",
+      "studios": [],
+      "members": 15375,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -8095,7 +8095,7 @@
         "Studio Hibari",
         "Walt Disney Studios"
       ],
-      "members": 484620,
+      "members": 484836,
       "rank": null,
       "start_date": "2001-07-20T00:00:00+00:00",
       "end_date": "2001-07-20T00:00:00+00:00",
@@ -8125,7 +8125,7 @@
         "Shueisha",
         "Toho"
       ],
-      "members": 442006,
+      "members": 442257,
       "rank": null,
       "start_date": "2021-12-24T00:00:00+00:00",
       "end_date": "2021-12-24T00:00:00+00:00",
@@ -8188,7 +8188,7 @@
         "d-rights",
         "Tokuma Shoten"
       ],
-      "members": 366654,
+      "members": 366819,
       "rank": null,
       "start_date": "2004-11-20T00:00:00+00:00",
       "end_date": "2004-11-20T00:00:00+00:00",
@@ -8220,7 +8220,7 @@
         "JR Higashi Nihon Kikaku",
         "Toho"
       ],
-      "members": 359424,
+      "members": 359558,
       "rank": null,
       "start_date": "2019-07-19T00:00:00+00:00",
       "end_date": "2019-07-19T00:00:00+00:00",
@@ -8252,7 +8252,7 @@
         "Tokuma Shoten",
         "GKIDS"
       ],
-      "members": 304766,
+      "members": 304906,
       "rank": null,
       "start_date": "1997-07-12T00:00:00+00:00",
       "end_date": "1997-07-12T00:00:00+00:00",
@@ -8284,7 +8284,7 @@
         "Studio Fantasia",
         "Walt Disney Studios"
       ],
-      "members": 282884,
+      "members": 283014,
       "rank": null,
       "start_date": "1988-04-16T00:00:00+00:00",
       "end_date": "1988-04-16T00:00:00+00:00",
@@ -8328,7 +8328,7 @@
       "title": "Neon Genesis Evangelion: The End of Evangelion",
       "title_japanese": "新世紀エヴァンゲリオン劇場版 Air/まごころを、君に",
       "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx32-5JYsv0wc122I.jpg",
-      "score": 8.5,
+      "score": 8.6,
       "episodes": 1,
       "status": "finished",
       "synopsis": "NERV faces a brutal attack from SEELE, but with Asuka in a coma, and Shinji in a nervous breakdown, things soon turn into the surreal. This movie provides a concurrent ending to the final two episodes of the show <b>Neon Genesis Evangelion</b>. \n \n(Source: IMDb)",
@@ -8348,7 +8348,7 @@
         "Production I.G",
         "TV Tokyo"
       ],
-      "members": 255825,
+      "members": 255974,
       "rank": null,
       "start_date": "1997-07-19T00:00:00+00:00",
       "end_date": "1997-07-19T00:00:00+00:00",
@@ -8378,7 +8378,7 @@
         "CoMix Wave",
         "GKIDS"
       ],
-      "members": 252108,
+      "members": 252204,
       "rank": null,
       "start_date": "2007-02-11T00:00:00+00:00",
       "end_date": "2007-03-03T00:00:00+00:00",
@@ -8441,7 +8441,7 @@
         "Rex Entertainment ",
         "ONIRO"
       ],
-      "members": 247729,
+      "members": 247863,
       "rank": null,
       "start_date": "1998-02-28T00:00:00+00:00",
       "end_date": "1998-02-28T00:00:00+00:00",
@@ -8507,7 +8507,7 @@
         "Funimation",
         "Mainichi Broadcasting System"
       ],
-      "members": 233717,
+      "members": 233824,
       "rank": null,
       "start_date": "1988-07-16T00:00:00+00:00",
       "end_date": "1988-07-16T00:00:00+00:00",
@@ -8598,7 +8598,7 @@
         "Studio Ghibli",
         "Sentai Filmworks"
       ],
-      "members": 204618,
+      "members": 204716,
       "rank": null,
       "start_date": "1988-04-15T00:00:00+00:00",
       "end_date": "1988-04-15T00:00:00+00:00",
@@ -8630,7 +8630,7 @@
         "STORY Inc.",
         "Toho"
       ],
-      "members": 203892,
+      "members": 204001,
       "rank": null,
       "start_date": "2022-11-11T00:00:00+00:00",
       "end_date": "2022-11-11T00:00:00+00:00",
@@ -8663,7 +8663,7 @@
         "ufotable",
         "ufotable"
       ],
-      "members": 202613,
+      "members": 202841,
       "rank": null,
       "start_date": "2025-07-18T00:00:00+00:00",
       "end_date": "2025-07-18T00:00:00+00:00",
@@ -8728,7 +8728,7 @@
         "Brain's Base",
         "Hakusensha"
       ],
-      "members": 196342,
+      "members": 196392,
       "rank": null,
       "start_date": "2011-09-17T00:00:00+00:00",
       "end_date": "2011-09-17T00:00:00+00:00",
@@ -8760,7 +8760,7 @@
         "VAP",
         "Dentsu"
       ],
-      "members": 195251,
+      "members": 195313,
       "rank": null,
       "start_date": "2012-06-25T00:00:00+00:00",
       "end_date": "2012-06-25T00:00:00+00:00",
@@ -8791,7 +8791,7 @@
         "Tohokushinsha Film Corporation",
         "BS Fuji"
       ],
-      "members": 192680,
+      "members": 192748,
       "rank": null,
       "start_date": "2020-06-18T00:00:00+00:00",
       "end_date": "2020-06-18T00:00:00+00:00",
@@ -8821,7 +8821,7 @@
         "Dentsu",
         "d-rights"
       ],
-      "members": 189698,
+      "members": 189795,
       "rank": null,
       "start_date": "2008-07-19T00:00:00+00:00",
       "end_date": "2008-07-19T00:00:00+00:00",
@@ -8852,7 +8852,7 @@
         "KADOKAWA",
         "JR Higashi Nihon Kikaku"
       ],
-      "members": 188344,
+      "members": 188448,
       "rank": null,
       "start_date": "2020-12-25T00:00:00+00:00",
       "end_date": "2020-12-25T00:00:00+00:00",
@@ -8884,7 +8884,7 @@
         "Studio Hibari",
         "Walt Disney Studios"
       ],
-      "members": 188200,
+      "members": 188282,
       "rank": null,
       "start_date": "1989-07-29T00:00:00+00:00",
       "end_date": "1989-07-29T00:00:00+00:00",
@@ -8915,7 +8915,7 @@
         "Bandai Visual",
         "Kodansha"
       ],
-      "members": 178402,
+      "members": 178512,
       "rank": null,
       "start_date": "1995-11-18T00:00:00+00:00",
       "end_date": "1995-11-18T00:00:00+00:00",
@@ -8945,7 +8945,7 @@
         "Toho",
         "Nippon Television Network"
       ],
-      "members": 176117,
+      "members": 176168,
       "rank": null,
       "start_date": "2019-12-20T00:00:00+00:00",
       "end_date": "2019-12-20T00:00:00+00:00",
@@ -8976,7 +8976,7 @@
         "Kadokawa Shoten",
         "Bandai"
       ],
-      "members": 175891,
+      "members": 175956,
       "rank": null,
       "start_date": "2006-07-15T00:00:00+00:00",
       "end_date": "2006-07-15T00:00:00+00:00",
@@ -9009,7 +9009,7 @@
         "Shaft",
         "Kodansha"
       ],
-      "members": 168073,
+      "members": 168136,
       "rank": null,
       "start_date": "2016-01-08T00:00:00+00:00",
       "end_date": "2016-01-08T00:00:00+00:00",
@@ -9074,7 +9074,7 @@
         "Sony Pictures Entertainment",
         "Techno Sound"
       ],
-      "members": 157869,
+      "members": 157941,
       "rank": null,
       "start_date": "2006-11-25T00:00:00+00:00",
       "end_date": "2006-11-25T00:00:00+00:00",
@@ -9106,7 +9106,7 @@
         "Kadokawa Shoten",
         "Bandai Entertainment"
       ],
-      "members": 149305,
+      "members": 149352,
       "rank": null,
       "start_date": "2010-02-06T00:00:00+00:00",
       "end_date": "2010-02-06T00:00:00+00:00",
@@ -9198,7 +9198,7 @@
       "studios": [
         "Kyoto Animation"
       ],
-      "members": 146731,
+      "members": 146782,
       "rank": null,
       "start_date": "2019-09-06T00:00:00+00:00",
       "end_date": "2019-09-06T00:00:00+00:00",
@@ -9231,7 +9231,7 @@
         "Studio Khara",
         "Funimation"
       ],
-      "members": 145967,
+      "members": 146038,
       "rank": null,
       "start_date": "2007-09-01T00:00:00+00:00",
       "end_date": "2007-09-01T00:00:00+00:00",
@@ -9328,7 +9328,7 @@
         "Media Factory",
         "Movic"
       ],
-      "members": 141194,
+      "members": 141248,
       "rank": null,
       "start_date": "2013-04-20T00:00:00+00:00",
       "end_date": "2013-04-20T00:00:00+00:00",
@@ -9361,7 +9361,7 @@
         "Studio Khara",
         "Funimation"
       ],
-      "members": 135213,
+      "members": 135274,
       "rank": null,
       "start_date": "2009-06-27T00:00:00+00:00",
       "end_date": "2009-06-27T00:00:00+00:00",
@@ -9392,7 +9392,7 @@
         "Tokuma Shoten",
         "Walt Disney Studios"
       ],
-      "members": 134174,
+      "members": 134228,
       "rank": null,
       "start_date": "1986-08-02T00:00:00+00:00",
       "end_date": "1986-08-02T00:00:00+00:00",
@@ -9454,7 +9454,7 @@
         "Studio Durian",
         "Avex Pictures"
       ],
-      "members": 127212,
+      "members": 127301,
       "rank": null,
       "start_date": "2024-06-28T00:00:00+00:00",
       "end_date": "2024-06-28T00:00:00+00:00",
