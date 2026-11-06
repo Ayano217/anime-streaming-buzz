@@ -1,10 +1,10 @@
 {
-  "updated": "2026-11-06T10:14:35Z",
+  "updated": "2026-11-06T18:47:39Z",
   "total": 326,
   "source": "anilist",
   "categories": {
     "airing": 134,
-    "top": 51,
+    "top": 52,
     "popular": 50,
     "upcoming": 54,
     "movies": 50
@@ -1211,7 +1211,7 @@
         "ENGI",
         "Sammy"
       ],
-      "members": 26615,
+      "members": 26707,
       "rank": null,
       "start_date": "2026-10-07T00:00:00+00:00",
       "end_date": "",
@@ -4023,7 +4023,7 @@
         "VAP",
         "Viz Media"
       ],
-      "members": 855589,
+      "members": 855841,
       "rank": null,
       "start_date": "2011-10-02T00:00:00+00:00",
       "end_date": "2014-09-24T00:00:00+00:00",
@@ -4057,7 +4057,7 @@
         "Funimation",
         "Fuji TV"
       ],
-      "members": 766598,
+      "members": 766942,
       "rank": null,
       "start_date": "1999-10-20T00:00:00+00:00",
       "end_date": "",
@@ -4090,7 +4090,7 @@
         "Aniplex",
         "Square Enix"
       ],
-      "members": 742252,
+      "members": 742465,
       "rank": null,
       "start_date": "2009-04-05T00:00:00+00:00",
       "end_date": "2010-07-04T00:00:00+00:00",
@@ -4122,7 +4122,7 @@
         "ABC Animation",
         "Kodansha"
       ],
-      "members": 730838,
+      "members": 731089,
       "rank": null,
       "start_date": "2016-09-17T00:00:00+00:00",
       "end_date": "2016-09-17T00:00:00+00:00",
@@ -4130,6 +4130,39 @@
         "top",
         "popular",
         "movies"
+      ]
+    },
+    {
+      "id": "110277",
+      "title": "Attack on Titan Final Season",
+      "title_japanese": "進撃の巨人 The Final Season",
+      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx110277-sKUNXAsWMNFw.jpg",
+      "score": 8.7,
+      "episodes": 16,
+      "status": "finished",
+      "synopsis": "It’s been four years since the Scout Regiment reached the shoreline, and the world looks different now. Things are heating up as the fate of the Scout Regiment—and the people of Paradis—are determined at last. However, Eren is missing. Will he reappear before age-old tensions between Marleyans and Eldians result in the war of all wars? \n \n(Source: Crunchyroll)",
+      "genres": [
+        "Action",
+        "Drama",
+        "Fantasy",
+        "Mystery"
+      ],
+      "year": 2021,
+      "slug": "attack-on-titan-final-season",
+      "type": "TV",
+      "rating": "",
+      "studios": [
+        "MAPPA",
+        "Pony Canyon",
+        "Kodansha"
+      ],
+      "members": 655087,
+      "rank": null,
+      "start_date": "2020-12-07T00:00:00+00:00",
+      "end_date": "2021-03-29T00:00:00+00:00",
+      "categories": [
+        "top",
+        "popular"
       ]
     },
     {
@@ -4156,7 +4189,7 @@
         "Pony Canyon",
         "Kodansha"
       ],
-      "members": 622321,
+      "members": 622504,
       "rank": null,
       "start_date": "2019-04-29T00:00:00+00:00",
       "end_date": "2019-07-01T00:00:00+00:00",
@@ -4189,7 +4222,7 @@
         "Funimation",
         "Media Factory"
       ],
-      "members": 605513,
+      "members": 605683,
       "rank": null,
       "start_date": "2011-04-06T00:00:00+00:00",
       "end_date": "2011-09-14T00:00:00+00:00",
@@ -4221,7 +4254,7 @@
         "Twin Engine",
         "Kodansha"
       ],
-      "members": 558469,
+      "members": 558679,
       "rank": null,
       "start_date": "2019-07-08T00:00:00+00:00",
       "end_date": "2019-12-30T00:00:00+00:00",
@@ -4253,7 +4286,7 @@
         "MADHOUSE",
         "Shogakukan"
       ],
-      "members": 496630,
+      "members": 496885,
       "rank": null,
       "start_date": "2023-09-29T00:00:00+00:00",
       "end_date": "2024-03-22T00:00:00+00:00",
@@ -4286,7 +4319,7 @@
         "Warner Bros. Japan",
         "Shogakukan-Shueisha Productions"
       ],
-      "members": 456310,
+      "members": 456437,
       "rank": null,
       "start_date": "2019-01-07T00:00:00+00:00",
       "end_date": "2019-04-01T00:00:00+00:00",
@@ -4319,7 +4352,7 @@
         "Bandai Visual",
         "Mainichi Broadcasting System"
       ],
-      "members": 369874,
+      "members": 369989,
       "rank": null,
       "start_date": "2008-04-06T00:00:00+00:00",
       "end_date": "2008-09-28T00:00:00+00:00",
@@ -4349,7 +4382,7 @@
         "Production I.G",
         "Sentai Filmworks"
       ],
-      "members": 367387,
+      "members": 367467,
       "rank": null,
       "start_date": "2016-10-08T00:00:00+00:00",
       "end_date": "2016-12-10T00:00:00+00:00",
@@ -4382,7 +4415,7 @@
         "VAP",
         "Viz Media"
       ],
-      "members": 350400,
+      "members": 350539,
       "rank": null,
       "start_date": "2004-04-07T00:00:00+00:00",
       "end_date": "2005-09-28T00:00:00+00:00",
@@ -4444,7 +4477,7 @@
         "Shueisha",
         "A-1 Pictures"
       ],
-      "members": 298007,
+      "members": 298087,
       "rank": null,
       "start_date": "2022-04-09T00:00:00+00:00",
       "end_date": "2022-06-25T00:00:00+00:00",
@@ -4475,7 +4508,7 @@
         "MAPPA",
         "Dentsu"
       ],
-      "members": 282777,
+      "members": 282913,
       "rank": null,
       "start_date": "2023-01-10T00:00:00+00:00",
       "end_date": "2023-06-20T00:00:00+00:00",
@@ -4508,7 +4541,7 @@
         "Warner Bros. Japan",
         "KLOCKWORX"
       ],
-      "members": 270579,
+      "members": 270663,
       "rank": null,
       "start_date": "2022-10-06T00:00:00+00:00",
       "end_date": "2022-12-22T00:00:00+00:00",
@@ -4541,7 +4574,7 @@
         "Pony Canyon",
         "Kodansha"
       ],
-      "members": 257018,
+      "members": 257148,
       "rank": null,
       "start_date": "2023-03-04T00:00:00+00:00",
       "end_date": "2023-03-04T00:00:00+00:00",
@@ -4638,7 +4671,7 @@
         "Pony Canyon",
         "TBS"
       ],
-      "members": 226984,
+      "members": 227040,
       "rank": null,
       "start_date": "2008-10-03T00:00:00+00:00",
       "end_date": "2009-03-27T00:00:00+00:00",
@@ -4699,7 +4732,7 @@
         "Shueisha",
         "TV Tokyo"
       ],
-      "members": 214175,
+      "members": 214298,
       "rank": null,
       "start_date": "2022-10-11T00:00:00+00:00",
       "end_date": "2022-12-27T00:00:00+00:00",
@@ -4730,7 +4763,7 @@
         "Kyoto Animation",
         "Pony Canyon"
       ],
-      "members": 204649,
+      "members": 204717,
       "rank": null,
       "start_date": "2020-09-18T00:00:00+00:00",
       "end_date": "2020-09-18T00:00:00+00:00",
@@ -4764,7 +4797,7 @@
         "TMS Music",
         "Funimation"
       ],
-      "members": 179527,
+      "members": 179573,
       "rank": null,
       "start_date": "2021-04-06T00:00:00+00:00",
       "end_date": "2021-06-29T00:00:00+00:00",
@@ -4797,7 +4830,7 @@
         "Kodansha",
         "Aniplex of America"
       ],
-      "members": 173732,
+      "members": 173774,
       "rank": null,
       "start_date": "2013-07-07T00:00:00+00:00",
       "end_date": "2013-12-29T00:00:00+00:00",
@@ -4927,7 +4960,7 @@
         "Toho",
         "Aniplex"
       ],
-      "members": 149868,
+      "members": 149901,
       "rank": null,
       "start_date": "2017-01-06T00:00:00+00:00",
       "end_date": "2017-01-06T00:00:00+00:00",
@@ -5018,7 +5051,7 @@
         "Shaft",
         "Aniplex"
       ],
-      "members": 131342,
+      "members": 131368,
       "rank": null,
       "start_date": "2017-10-14T00:00:00+00:00",
       "end_date": "2018-03-31T00:00:00+00:00",
@@ -5051,7 +5084,7 @@
         "Kodansha",
         "Aniplex"
       ],
-      "members": 125085,
+      "members": 125126,
       "rank": null,
       "start_date": "2017-08-12T00:00:00+00:00",
       "end_date": "2017-08-13T00:00:00+00:00",
@@ -5082,7 +5115,7 @@
         "Bandai Namco Pictures",
         "Aniplex"
       ],
-      "members": 121157,
+      "members": 121186,
       "rank": null,
       "start_date": "2015-04-08T00:00:00+00:00",
       "end_date": "2016-03-30T00:00:00+00:00",
@@ -5114,7 +5147,7 @@
         "TV Tokyo",
         "Aniplex"
       ],
-      "members": 111467,
+      "members": 111491,
       "rank": null,
       "start_date": "2011-04-04T00:00:00+00:00",
       "end_date": "2012-03-26T00:00:00+00:00",
@@ -5207,7 +5240,7 @@
         "T.P.O",
         "K-Factory"
       ],
-      "members": 86716,
+      "members": 86733,
       "rank": null,
       "start_date": "1988-01-08T00:00:00+00:00",
       "end_date": "1997-03-17T00:00:00+00:00",
@@ -5271,7 +5304,7 @@
         "TV Tokyo",
         "Aniplex"
       ],
-      "members": 85459,
+      "members": 85482,
       "rank": null,
       "start_date": "2012-10-04T00:00:00+00:00",
       "end_date": "2013-03-28T00:00:00+00:00",
@@ -5302,7 +5335,7 @@
         "Bandai Namco Pictures",
         "Aniplex"
       ],
-      "members": 83888,
+      "members": 83907,
       "rank": null,
       "start_date": "2017-01-09T00:00:00+00:00",
       "end_date": "2017-03-27T00:00:00+00:00",
@@ -5362,7 +5395,7 @@
         "Bandai Namco Pictures",
         "Aniplex"
       ],
-      "members": 56988,
+      "members": 57008,
       "rank": null,
       "start_date": "2018-07-09T00:00:00+00:00",
       "end_date": "2018-10-08T00:00:00+00:00",
@@ -5394,7 +5427,7 @@
         "Shueisha",
         "Aniplex"
       ],
-      "members": 56776,
+      "members": 56792,
       "rank": null,
       "start_date": "2021-01-08T00:00:00+00:00",
       "end_date": "2021-01-08T00:00:00+00:00",
@@ -5425,7 +5458,7 @@
         "TV Tokyo",
         "Aniplex"
       ],
-      "members": 56279,
+      "members": 56290,
       "rank": null,
       "start_date": "2013-07-06T00:00:00+00:00",
       "end_date": "2013-07-06T00:00:00+00:00",
@@ -5486,7 +5519,7 @@
         "Kyoto Animation",
         "Pony Canyon"
       ],
-      "members": 37209,
+      "members": 37220,
       "rank": null,
       "start_date": "2024-04-07T00:00:00+00:00",
       "end_date": "2024-06-30T00:00:00+00:00",
@@ -5517,7 +5550,7 @@
         "Tokyo Movie Shinsha",
         "Nippon Television Network"
       ],
-      "members": 22453,
+      "members": 22462,
       "rank": null,
       "start_date": "1980-10-13T00:00:00+00:00",
       "end_date": "1981-08-31T00:00:00+00:00",
@@ -5548,7 +5581,7 @@
         "Kinema Citrus",
         "Sentai Filmworks"
       ],
-      "members": 21589,
+      "members": 21593,
       "rank": null,
       "start_date": "2021-06-04T00:00:00+00:00",
       "end_date": "2021-06-04T00:00:00+00:00",
@@ -5579,7 +5612,7 @@
         "Studio Tumble",
         "Flint Sugar"
       ],
-      "members": 20191,
+      "members": 20258,
       "rank": null,
       "start_date": "2026-08-02T00:00:00+00:00",
       "end_date": "2026-08-30T00:00:00+00:00",
@@ -5642,7 +5675,7 @@
         "Pony Canyon",
         "Kodansha"
       ],
-      "members": 1075444,
+      "members": 1075820,
       "rank": null,
       "start_date": "2013-04-07T00:00:00+00:00",
       "end_date": "2013-09-28T00:00:00+00:00",
@@ -5675,7 +5708,7 @@
         "Aniplex",
         "Shueisha"
       ],
-      "members": 1012086,
+      "members": 1012373,
       "rank": null,
       "start_date": "2019-04-06T00:00:00+00:00",
       "end_date": "2019-09-28T00:00:00+00:00",
@@ -5706,7 +5739,7 @@
         "MAPPA",
         "Shueisha"
       ],
-      "members": 993221,
+      "members": 993566,
       "rank": null,
       "start_date": "2020-10-03T00:00:00+00:00",
       "end_date": "2021-03-27T00:00:00+00:00",
@@ -5738,7 +5771,7 @@
         "VAP",
         "Viz Media"
       ],
-      "members": 980114,
+      "members": 980415,
       "rank": null,
       "start_date": "2006-10-04T00:00:00+00:00",
       "end_date": "2007-06-27T00:00:00+00:00",
@@ -5769,7 +5802,7 @@
         "Dentsu",
         "Mainichi Broadcasting System"
       ],
-      "members": 888366,
+      "members": 888613,
       "rank": null,
       "start_date": "2016-04-03T00:00:00+00:00",
       "end_date": "2016-06-26T00:00:00+00:00",
@@ -5801,7 +5834,7 @@
         "TV Tokyo",
         "Bandai Visual"
       ],
-      "members": 778913,
+      "members": 779117,
       "rank": null,
       "start_date": "2015-10-05T00:00:00+00:00",
       "end_date": "2015-12-21T00:00:00+00:00",
@@ -5834,7 +5867,7 @@
         "Marvelous",
         "TC Entertainment"
       ],
-      "members": 752776,
+      "members": 752999,
       "rank": null,
       "start_date": "2014-07-04T00:00:00+00:00",
       "end_date": "2014-09-19T00:00:00+00:00",
@@ -5866,7 +5899,7 @@
         "Pony Canyon",
         "Kodansha"
       ],
-      "members": 746693,
+      "members": 746913,
       "rank": null,
       "start_date": "2017-04-01T00:00:00+00:00",
       "end_date": "2017-06-17T00:00:00+00:00",
@@ -5899,7 +5932,7 @@
         "TV Tokyo",
         "Aniplex"
       ],
-      "members": 739453,
+      "members": 739678,
       "rank": null,
       "start_date": "2002-10-03T00:00:00+00:00",
       "end_date": "2007-02-08T00:00:00+00:00",
@@ -5931,7 +5964,7 @@
         "A-1 Pictures",
         "Genco"
       ],
-      "members": 731081,
+      "members": 731276,
       "rank": null,
       "start_date": "2012-07-08T00:00:00+00:00",
       "end_date": "2012-12-23T00:00:00+00:00",
@@ -5962,7 +5995,7 @@
         "Kadokawa Pictures Japan",
         "Funimation"
       ],
-      "members": 727076,
+      "members": 727284,
       "rank": null,
       "start_date": "2016-08-26T00:00:00+00:00",
       "end_date": "2016-08-26T00:00:00+00:00",
@@ -5995,7 +6028,7 @@
         "Pony Canyon",
         "Kodansha"
       ],
-      "members": 698883,
+      "members": 699105,
       "rank": null,
       "start_date": "2018-07-23T00:00:00+00:00",
       "end_date": "2018-10-15T00:00:00+00:00",
@@ -6026,42 +6059,10 @@
         "Yomiuri TV",
         "Dentsu"
       ],
-      "members": 664727,
+      "members": 664887,
       "rank": null,
       "start_date": "2017-04-01T00:00:00+00:00",
       "end_date": "2017-09-30T00:00:00+00:00",
-      "categories": [
-        "popular"
-      ]
-    },
-    {
-      "id": "110277",
-      "title": "Attack on Titan Final Season",
-      "title_japanese": "進撃の巨人 The Final Season",
-      "image": "https://s4.anilist.co/file/anilistcdn/media/anime/cover/large/bx110277-sKUNXAsWMNFw.jpg",
-      "score": 8.7,
-      "episodes": 16,
-      "status": "finished",
-      "synopsis": "It’s been four years since the Scout Regiment reached the shoreline, and the world looks different now. Things are heating up as the fate of the Scout Regiment—and the people of Paradis—are determined at last. However, Eren is missing. Will he reappear before age-old tensions between Marleyans and Eldians result in the war of all wars? \n \n(Source: Crunchyroll)",
-      "genres": [
-        "Action",
-        "Drama",
-        "Fantasy",
-        "Mystery"
-      ],
-      "year": 2021,
-      "slug": "attack-on-titan-final-season",
-      "type": "TV",
-      "rating": "",
-      "studios": [
-        "MAPPA",
-        "Pony Canyon",
-        "Kodansha"
-      ],
-      "members": 654892,
-      "rank": null,
-      "start_date": "2020-12-07T00:00:00+00:00",
-      "end_date": "2021-03-29T00:00:00+00:00",
       "categories": [
         "popular"
       ]
@@ -6089,7 +6090,7 @@
         "MAPPA",
         "Shueisha"
       ],
-      "members": 650118,
+      "members": 650407,
       "rank": null,
       "start_date": "2022-10-12T00:00:00+00:00",
       "end_date": "2022-12-28T00:00:00+00:00",
@@ -6122,7 +6123,7 @@
         "Aniplex",
         "Dentsu"
       ],
-      "members": 642047,
+      "members": 642198,
       "rank": null,
       "start_date": "2019-01-10T00:00:00+00:00",
       "end_date": "2019-03-29T00:00:00+00:00",
@@ -6154,7 +6155,7 @@
         "Funimation",
         "Kansai TV"
       ],
-      "members": 638038,
+      "members": 638216,
       "rank": null,
       "start_date": "2015-01-10T00:00:00+00:00",
       "end_date": "2015-06-20T00:00:00+00:00",
@@ -6187,7 +6188,7 @@
         "BS Fuji",
         "Shogakukan-Shueisha Productions"
       ],
-      "members": 637663,
+      "members": 637847,
       "rank": null,
       "start_date": "2016-07-12T00:00:00+00:00",
       "end_date": "2016-09-27T00:00:00+00:00",
@@ -6220,7 +6221,7 @@
         "Funimation",
         "Kadokawa Shoten"
       ],
-      "members": 636411,
+      "members": 636624,
       "rank": null,
       "start_date": "2016-04-04T00:00:00+00:00",
       "end_date": "2016-09-19T00:00:00+00:00",
@@ -6252,7 +6253,7 @@
         "Aniplex",
         "Dentsu"
       ],
-      "members": 623712,
+      "members": 623880,
       "rank": null,
       "start_date": "2014-10-10T00:00:00+00:00",
       "end_date": "2015-03-20T00:00:00+00:00",
@@ -6285,7 +6286,7 @@
         "TV Tokyo",
         "Aniplex"
       ],
-      "members": 621745,
+      "members": 621932,
       "rank": null,
       "start_date": "2007-02-15T00:00:00+00:00",
       "end_date": "2017-03-23T00:00:00+00:00",
@@ -6318,7 +6319,7 @@
         "Kansai TV",
         "Aniplex of America"
       ],
-      "members": 615085,
+      "members": 615246,
       "rank": null,
       "start_date": "2016-01-08T00:00:00+00:00",
       "end_date": "2016-03-25T00:00:00+00:00",
@@ -6350,7 +6351,7 @@
         "Toho",
         "Shueisha"
       ],
-      "members": 609353,
+      "members": 609505,
       "rank": null,
       "start_date": "2018-04-07T00:00:00+00:00",
       "end_date": "2018-09-29T00:00:00+00:00",
@@ -6382,7 +6383,7 @@
         "Funimation",
         "TV Tokyo"
       ],
-      "members": 602167,
+      "members": 602505,
       "rank": null,
       "start_date": "2017-10-03T00:00:00+00:00",
       "end_date": "2021-03-30T00:00:00+00:00",
@@ -6412,7 +6413,7 @@
         "Production I.G",
         "Sentai Filmworks"
       ],
-      "members": 592277,
+      "members": 592435,
       "rank": null,
       "start_date": "2014-04-06T00:00:00+00:00",
       "end_date": "2014-09-21T00:00:00+00:00",
@@ -6445,7 +6446,7 @@
         "Aniplex",
         "ABC Animation"
       ],
-      "members": 590732,
+      "members": 590916,
       "rank": null,
       "start_date": "2018-10-04T00:00:00+00:00",
       "end_date": "2018-12-27T00:00:00+00:00",
@@ -6477,7 +6478,7 @@
         "WIT STUDIO",
         "Toho"
       ],
-      "members": 581861,
+      "members": 582073,
       "rank": null,
       "start_date": "2022-04-09T00:00:00+00:00",
       "end_date": "2022-06-25T00:00:00+00:00",
@@ -6509,7 +6510,7 @@
         "Aniplex",
         "Shueisha"
       ],
-      "members": 568961,
+      "members": 569110,
       "rank": null,
       "start_date": "2019-01-12T00:00:00+00:00",
       "end_date": "2019-03-30T00:00:00+00:00",
@@ -6539,7 +6540,7 @@
       "studios": [
         "TMS Entertainment"
       ],
-      "members": 564476,
+      "members": 564651,
       "rank": null,
       "start_date": "2019-07-05T00:00:00+00:00",
       "end_date": "2019-12-13T00:00:00+00:00",
@@ -6570,7 +6571,7 @@
         "Lantis",
         "Pony Canyon"
       ],
-      "members": 556571,
+      "members": 556727,
       "rank": null,
       "start_date": "2018-01-11T00:00:00+00:00",
       "end_date": "2018-04-05T00:00:00+00:00",
@@ -6601,7 +6602,7 @@
         "Aniplex",
         "Mainichi Broadcasting System"
       ],
-      "members": 554092,
+      "members": 554299,
       "rank": null,
       "start_date": "2021-01-10T00:00:00+00:00",
       "end_date": "2021-04-04T00:00:00+00:00",
@@ -6633,7 +6634,7 @@
         "Starchild Records",
         "Magic Capsule"
       ],
-      "members": 550691,
+      "members": 550821,
       "rank": null,
       "start_date": "2008-10-02T00:00:00+00:00",
       "end_date": "2009-03-26T00:00:00+00:00",
@@ -6665,7 +6666,7 @@
         "Media Factory",
         "Movic"
       ],
-      "members": 548402,
+      "members": 548510,
       "rank": null,
       "start_date": "2014-04-09T00:00:00+00:00",
       "end_date": "2014-06-25T00:00:00+00:00",
@@ -6698,7 +6699,7 @@
         "Sentai Filmworks",
         "Toho"
       ],
-      "members": 548153,
+      "members": 548299,
       "rank": null,
       "start_date": "2014-07-07T00:00:00+00:00",
       "end_date": "2014-12-15T00:00:00+00:00",
@@ -6730,7 +6731,7 @@
         "Avex Entertainment",
         "Dentsu"
       ],
-      "members": 546226,
+      "members": 546339,
       "rank": null,
       "start_date": "2014-01-05T00:00:00+00:00",
       "end_date": "2014-03-23T00:00:00+00:00",
@@ -6763,7 +6764,7 @@
         "Toho",
         "Shueisha"
       ],
-      "members": 540471,
+      "members": 540611,
       "rank": null,
       "start_date": "2019-10-12T00:00:00+00:00",
       "end_date": "2020-04-04T00:00:00+00:00",
@@ -6796,7 +6797,7 @@
         "Funimation",
         "Aniplex"
       ],
-      "members": 537398,
+      "members": 537561,
       "rank": null,
       "start_date": "2014-10-05T00:00:00+00:00",
       "end_date": "2015-03-29T00:00:00+00:00",
@@ -6827,7 +6828,7 @@
         "TV Tokyo",
         "Dentsu"
       ],
-      "members": 535265,
+      "members": 535510,
       "rank": null,
       "start_date": "2004-10-05T00:00:00+00:00",
       "end_date": "2012-03-27T00:00:00+00:00",
@@ -6859,7 +6860,7 @@
         "Nippon Columbia",
         "Half H.P Studio"
       ],
-      "members": 527585,
+      "members": 527728,
       "rank": null,
       "start_date": "2016-01-14T00:00:00+00:00",
       "end_date": "2016-03-17T00:00:00+00:00",
@@ -6892,7 +6893,7 @@
         "Aniplex",
         "Shueisha"
       ],
-      "members": 517237,
+      "members": 517375,
       "rank": null,
       "start_date": "2020-10-16T00:00:00+00:00",
       "end_date": "2020-10-16T00:00:00+00:00",
@@ -6926,7 +6927,7 @@
         "Mainichi Broadcasting System",
         "Bandai Entertainment"
       ],
-      "members": 511942,
+      "members": 512127,
       "rank": null,
       "start_date": "2006-10-06T00:00:00+00:00",
       "end_date": "2007-07-28T00:00:00+00:00",
@@ -6959,7 +6960,7 @@
         "Aniplex",
         "CloverWorks"
       ],
-      "members": 508917,
+      "members": 509073,
       "rank": null,
       "start_date": "2018-01-13T00:00:00+00:00",
       "end_date": "2018-07-07T00:00:00+00:00",
@@ -6992,7 +6993,7 @@
         "VAP",
         "Kodansha"
       ],
-      "members": 508283,
+      "members": 508435,
       "rank": null,
       "start_date": "2014-10-09T00:00:00+00:00",
       "end_date": "2015-03-26T00:00:00+00:00",
@@ -7205,7 +7206,7 @@
         "Aniplex",
         "Notes"
       ],
-      "members": 43204,
+      "members": 43257,
       "rank": null,
       "start_date": "2026-11-20T00:00:00+00:00",
       "end_date": "",
@@ -8400,7 +8401,7 @@
       "studios": [
         "ufotable"
       ],
-      "members": 18626,
+      "members": 18624,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -8460,7 +8461,7 @@
         "Aniplex",
         "bones film"
       ],
-      "members": 18072,
+      "members": 18073,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -8577,7 +8578,7 @@
       "studios": [
         "Sunrise"
       ],
-      "members": 14575,
+      "members": 14580,
       "rank": null,
       "start_date": "",
       "end_date": "",
@@ -8641,7 +8642,7 @@
         "Studio Hibari",
         "Walt Disney Studios"
       ],
-      "members": 488619,
+      "members": 488778,
       "rank": null,
       "start_date": "2001-07-20T00:00:00+00:00",
       "end_date": "2001-07-20T00:00:00+00:00",
@@ -8671,7 +8672,7 @@
         "Shueisha",
         "Toho"
       ],
-      "members": 447159,
+      "members": 447341,
       "rank": null,
       "start_date": "2021-12-24T00:00:00+00:00",
       "end_date": "2021-12-24T00:00:00+00:00",
@@ -8702,7 +8703,7 @@
         "Half H.P Studio",
         "Futabasha"
       ],
-      "members": 382813,
+      "members": 382969,
       "rank": null,
       "start_date": "2018-09-01T00:00:00+00:00",
       "end_date": "2018-09-01T00:00:00+00:00",
@@ -8734,7 +8735,7 @@
         "d-rights",
         "Tokuma Shoten"
       ],
-      "members": 369727,
+      "members": 369844,
       "rank": null,
       "start_date": "2004-11-20T00:00:00+00:00",
       "end_date": "2004-11-20T00:00:00+00:00",
@@ -8766,7 +8767,7 @@
         "JR Higashi Nihon Kikaku",
         "Toho"
       ],
-      "members": 362384,
+      "members": 362484,
       "rank": null,
       "start_date": "2019-07-19T00:00:00+00:00",
       "end_date": "2019-07-19T00:00:00+00:00",
@@ -8798,7 +8799,7 @@
         "Tokuma Shoten",
         "GKIDS"
       ],
-      "members": 307274,
+      "members": 307364,
       "rank": null,
       "start_date": "1997-07-12T00:00:00+00:00",
       "end_date": "1997-07-12T00:00:00+00:00",
@@ -8830,7 +8831,7 @@
         "Studio Fantasia",
         "Walt Disney Studios"
       ],
-      "members": 285077,
+      "members": 285155,
       "rank": null,
       "start_date": "1988-04-16T00:00:00+00:00",
       "end_date": "1988-04-16T00:00:00+00:00",
@@ -8861,7 +8862,7 @@
         "CloverWorks",
         "Aniplex of America"
       ],
-      "members": 265677,
+      "members": 265742,
       "rank": null,
       "start_date": "2019-06-15T00:00:00+00:00",
       "end_date": "2019-06-15T00:00:00+00:00",
@@ -8894,7 +8895,7 @@
         "Production I.G",
         "TV Tokyo"
       ],
-      "members": 258196,
+      "members": 258276,
       "rank": null,
       "start_date": "1997-07-19T00:00:00+00:00",
       "end_date": "1997-07-19T00:00:00+00:00",
@@ -8924,7 +8925,7 @@
         "CoMix Wave",
         "GKIDS"
       ],
-      "members": 253835,
+      "members": 253892,
       "rank": null,
       "start_date": "2007-02-11T00:00:00+00:00",
       "end_date": "2007-03-03T00:00:00+00:00",
@@ -8955,7 +8956,7 @@
         "CoMix Wave",
         "Sentai Filmworks"
       ],
-      "members": 251134,
+      "members": 251190,
       "rank": null,
       "start_date": "2013-05-31T00:00:00+00:00",
       "end_date": "2013-05-31T00:00:00+00:00",
@@ -8987,7 +8988,7 @@
         "Rex Entertainment ",
         "ONIRO"
       ],
-      "members": 250102,
+      "members": 250167,
       "rank": null,
       "start_date": "1998-02-28T00:00:00+00:00",
       "end_date": "1998-02-28T00:00:00+00:00",
@@ -9020,7 +9021,7 @@
         "Kadokawa Media House",
         "Madman Entertainment"
       ],
-      "members": 246939,
+      "members": 247013,
       "rank": null,
       "start_date": "2019-08-30T00:00:00+00:00",
       "end_date": "2019-08-30T00:00:00+00:00",
@@ -9053,7 +9054,7 @@
         "Funimation",
         "Mainichi Broadcasting System"
       ],
-      "members": 235781,
+      "members": 235854,
       "rank": null,
       "start_date": "1988-07-16T00:00:00+00:00",
       "end_date": "1988-07-16T00:00:00+00:00",
@@ -9086,7 +9087,7 @@
         "AT-X",
         "Movic"
       ],
-      "members": 233273,
+      "members": 233317,
       "rank": null,
       "start_date": "2017-07-15T00:00:00+00:00",
       "end_date": "2017-07-15T00:00:00+00:00",
@@ -9116,7 +9117,7 @@
       "studios": [
         "bones"
       ],
-      "members": 225265,
+      "members": 225309,
       "rank": null,
       "start_date": "2018-08-03T00:00:00+00:00",
       "end_date": "2018-08-03T00:00:00+00:00",
@@ -9177,7 +9178,7 @@
         "Studio Ghibli",
         "Sentai Filmworks"
       ],
-      "members": 206459,
+      "members": 206529,
       "rank": null,
       "start_date": "1988-04-15T00:00:00+00:00",
       "end_date": "1988-04-15T00:00:00+00:00",
@@ -9209,7 +9210,7 @@
         "STORY Inc.",
         "Toho"
       ],
-      "members": 206328,
+      "members": 206409,
       "rank": null,
       "start_date": "2022-11-11T00:00:00+00:00",
       "end_date": "2022-11-11T00:00:00+00:00",
@@ -9242,7 +9243,7 @@
         "Genco",
         "Aniplex of America"
       ],
-      "members": 198123,
+      "members": 198162,
       "rank": null,
       "start_date": "2017-02-18T00:00:00+00:00",
       "end_date": "2017-02-18T00:00:00+00:00",
@@ -9274,7 +9275,7 @@
         "Brain's Base",
         "Hakusensha"
       ],
-      "members": 197379,
+      "members": 197413,
       "rank": null,
       "start_date": "2011-09-17T00:00:00+00:00",
       "end_date": "2011-09-17T00:00:00+00:00",
@@ -9306,7 +9307,7 @@
         "VAP",
         "Dentsu"
       ],
-      "members": 196390,
+      "members": 196432,
       "rank": null,
       "start_date": "2012-06-25T00:00:00+00:00",
       "end_date": "2012-06-25T00:00:00+00:00",
@@ -9337,7 +9338,7 @@
         "Tohokushinsha Film Corporation",
         "BS Fuji"
       ],
-      "members": 194435,
+      "members": 194494,
       "rank": null,
       "start_date": "2020-06-18T00:00:00+00:00",
       "end_date": "2020-06-18T00:00:00+00:00",
@@ -9367,7 +9368,7 @@
         "Dentsu",
         "d-rights"
       ],
-      "members": 191260,
+      "members": 191316,
       "rank": null,
       "start_date": "2008-07-19T00:00:00+00:00",
       "end_date": "2008-07-19T00:00:00+00:00",
@@ -9398,7 +9399,7 @@
         "KADOKAWA",
         "JR Higashi Nihon Kikaku"
       ],
-      "members": 190349,
+      "members": 190419,
       "rank": null,
       "start_date": "2020-12-25T00:00:00+00:00",
       "end_date": "2020-12-25T00:00:00+00:00",
@@ -9430,7 +9431,7 @@
         "Studio Hibari",
         "Walt Disney Studios"
       ],
-      "members": 189732,
+      "members": 189781,
       "rank": null,
       "start_date": "1989-07-29T00:00:00+00:00",
       "end_date": "1989-07-29T00:00:00+00:00",
@@ -9461,7 +9462,7 @@
         "Bandai Visual",
         "Kodansha"
       ],
-      "members": 180280,
+      "members": 180338,
       "rank": null,
       "start_date": "1995-11-18T00:00:00+00:00",
       "end_date": "1995-11-18T00:00:00+00:00",
@@ -9491,7 +9492,7 @@
         "Toho",
         "Nippon Television Network"
       ],
-      "members": 177345,
+      "members": 177384,
       "rank": null,
       "start_date": "2019-12-20T00:00:00+00:00",
       "end_date": "2019-12-20T00:00:00+00:00",
@@ -9522,7 +9523,7 @@
         "Kadokawa Shoten",
         "Bandai"
       ],
-      "members": 176950,
+      "members": 176974,
       "rank": null,
       "start_date": "2006-07-15T00:00:00+00:00",
       "end_date": "2006-07-15T00:00:00+00:00",
@@ -9555,7 +9556,7 @@
         "Shaft",
         "Kodansha"
       ],
-      "members": 169197,
+      "members": 169229,
       "rank": null,
       "start_date": "2016-01-08T00:00:00+00:00",
       "end_date": "2016-01-08T00:00:00+00:00",
@@ -9587,7 +9588,7 @@
         "Kinema Citrus",
         "Sentai Filmworks"
       ],
-      "members": 166064,
+      "members": 166108,
       "rank": null,
       "start_date": "2020-01-17T00:00:00+00:00",
       "end_date": "2020-01-17T00:00:00+00:00",
@@ -9620,7 +9621,7 @@
         "Sony Pictures Entertainment",
         "Techno Sound"
       ],
-      "members": 159328,
+      "members": 159374,
       "rank": null,
       "start_date": "2006-11-25T00:00:00+00:00",
       "end_date": "2006-11-25T00:00:00+00:00",
@@ -9652,7 +9653,7 @@
         "Kadokawa Shoten",
         "Bandai Entertainment"
       ],
-      "members": 150254,
+      "members": 150285,
       "rank": null,
       "start_date": "2010-02-06T00:00:00+00:00",
       "end_date": "2010-02-06T00:00:00+00:00",
@@ -9683,7 +9684,7 @@
         "Lantis",
         "Hakuhodo DY Music & Pictures"
       ],
-      "members": 149292,
+      "members": 149336,
       "rank": null,
       "start_date": "2018-02-24T00:00:00+00:00",
       "end_date": "2018-02-24T00:00:00+00:00",
@@ -9712,7 +9713,7 @@
       "studios": [
         "Kyoto Animation"
       ],
-      "members": 147900,
+      "members": 147945,
       "rank": null,
       "start_date": "2019-09-06T00:00:00+00:00",
       "end_date": "2019-09-06T00:00:00+00:00",
@@ -9744,7 +9745,7 @@
         "Aniplex",
         "KADOKAWA"
       ],
-      "members": 147863,
+      "members": 147896,
       "rank": null,
       "start_date": "2017-10-14T00:00:00+00:00",
       "end_date": "2017-10-14T00:00:00+00:00",
@@ -9777,7 +9778,7 @@
         "Studio Khara",
         "Funimation"
       ],
-      "members": 146978,
+      "members": 147011,
       "rank": null,
       "start_date": "2007-09-01T00:00:00+00:00",
       "end_date": "2007-09-01T00:00:00+00:00",
@@ -9809,7 +9810,7 @@
         "Studio Pierrot",
         "TV Tokyo"
       ],
-      "members": 145491,
+      "members": 145528,
       "rank": null,
       "start_date": "2014-12-06T00:00:00+00:00",
       "end_date": "2014-12-06T00:00:00+00:00",
@@ -9842,7 +9843,7 @@
         "Kodansha",
         "Aniplex"
       ],
-      "members": 145249,
+      "members": 145276,
       "rank": null,
       "start_date": "2016-08-19T00:00:00+00:00",
       "end_date": "2016-08-19T00:00:00+00:00",
@@ -9874,7 +9875,7 @@
         "Media Factory",
         "Movic"
       ],
-      "members": 142198,
+      "members": 142226,
       "rank": null,
       "start_date": "2013-04-20T00:00:00+00:00",
       "end_date": "2013-04-20T00:00:00+00:00",
@@ -9907,7 +9908,7 @@
         "Studio Khara",
         "Funimation"
       ],
-      "members": 136178,
+      "members": 136206,
       "rank": null,
       "start_date": "2009-06-27T00:00:00+00:00",
       "end_date": "2009-06-27T00:00:00+00:00",
@@ -9938,7 +9939,7 @@
         "Tokuma Shoten",
         "Walt Disney Studios"
       ],
-      "members": 135120,
+      "members": 135148,
       "rank": null,
       "start_date": "1986-08-02T00:00:00+00:00",
       "end_date": "1986-08-02T00:00:00+00:00",
@@ -9971,7 +9972,7 @@
         "Notes",
         "Aniplex of America"
       ],
-      "members": 132496,
+      "members": 132522,
       "rank": null,
       "start_date": "2019-01-12T00:00:00+00:00",
       "end_date": "2019-01-12T00:00:00+00:00",
